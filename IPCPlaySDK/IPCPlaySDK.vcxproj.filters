@@ -1,0 +1,145 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="AudioCodec\g726.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="AudioCodec\g711.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="DxSurface\DxTrace.cpp">
+      <Filter>DxSurface</Filter>
+    </ClCompile>
+    <ClCompile Include="DxSurface\DxSurface.cpp">
+      <Filter>DxSurface</Filter>
+    </ClCompile>
+    <ClCompile Include="VideoDecoder\VideoDecoder.cpp">
+      <Filter>VideoDecoder</Filter>
+    </ClCompile>
+    <ClCompile Include="Utility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TimeUtility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Runlog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IPCPlaySDK.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Autolock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AudioCodec\g726.h">
+      <Filter>Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioCodec\g711.h">
+      <Filter>Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="DxSurface\DxTrace.h">
+      <Filter>DxSurface</Filter>
+    </ClInclude>
+    <ClInclude Include="DxSurface\DxSurface.h">
+      <Filter>DxSurface</Filter>
+    </ClInclude>
+    <ClInclude Include="DxSurface\gpu_memcpy_sse4.h">
+      <Filter>DxSurface</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoDecoder\gpu_memcpy_sse4.h">
+      <Filter>VideoDecoder</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoDecoder\hi_config.h">
+      <Filter>VideoDecoder</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoDecoder\IHW265Dec_Api.h">
+      <Filter>VideoDecoder</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoDecoder\IHWVideo_Typedef.h">
+      <Filter>VideoDecoder</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoDecoder\VideoDecoder.h">
+      <Filter>VideoDecoder</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoDecoder\moreuuids.h">
+      <Filter>VideoDecoder</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioDecoder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AutoLock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectDraw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DSoundPlayer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IPCPlayer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IPCPlaySDK.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Media.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Runlog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TimeUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Audio">
+      <UniqueIdentifier>{e42fba54-6fa0-492d-94bb-a9c88ae57c3a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DxSurface">
+      <UniqueIdentifier>{6aab5c4f-4cae-49bc-bb3c-3730eeba14dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="VideoDecoder">
+      <UniqueIdentifier>{6791a20a-63fa-4528-b833-d04a67a78d76}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{8aa14007-4a97-4bcb-9847-f9df16198be9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{f5d7f791-2538-45d4-92be-a83233149b38}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{c22a52e2-b72c-477b-af58-51e7266180ca}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="IPCPlaySDK.def">
+      <Filter>Source Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="IPCPlaySDK.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
