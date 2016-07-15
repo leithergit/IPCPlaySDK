@@ -295,11 +295,11 @@ public:
 		TraceMsgA("%s Now() = %.5f.\n", __FUNCTION__, GetExactTime());
 		for (int i = 0; i < nPlayerCount;i ++)
 		if (hPlayer[i])
-			dvoplay_Close(hPlayer[i]);
+			ipcplay_Close(hPlayer[i]);
 		ZeroMemory(hPlayer, sizeof(IPC_PLAYHANDLE));
 		if (hPlayerStream)
 		{
-			dvoplay_Close(hPlayerStream);
+			ipcplay_Close(hPlayerStream);
 			hPlayerStream = NULL;
 		}
 		if (pClient)
@@ -608,7 +608,7 @@ public:
 // 		if (!pThis->m_pDDraw)
 // 		{
 // 			PlayerInfo pi;
-// 			if (dvoplay_GetPlayerInfo(pThis->m_pPlayContext->hPlayer[0], &pi) != IPC_Succeed)
+// 			if (ipcplay_GetPlayerInfo(pThis->m_pPlayContext->hPlayer[0], &pi) != IPC_Succeed)
 // 			{
 // 				assert(false);
 // 				return;
@@ -649,14 +649,14 @@ public:
 			pt.y = 0;
 			MoveWnd2Monitor(m_hFullScreen, m_nOriMonitorIndex, pt);				
 			m_FullScreen.SwitchFullScreen();
-			dvoplay_Reset(m_pPlayContext->hPlayer[0], m_hFullScreen);
+			ipcplay_Reset(m_pPlayContext->hPlayer[0], m_hFullScreen);
 			ShowWindow(SW_HIDE);
 		}
 		else
 		{// ÇÐ»Ø´°¿Ú
 			m_FullScreen.Restore();			
 			::SetParent(m_hFullScreen, m_pVideoWndFrame->GetSafeHwnd());
-			dvoplay_Reset(m_pPlayContext->hPlayer[0], m_hFullScreen);
+			ipcplay_Reset(m_pPlayContext->hPlayer[0], m_hFullScreen);
 			m_hFullScreen = NULL;
 			ShowWindow(SW_SHOW);
 		}
@@ -736,9 +736,9 @@ public:
 			if (nStreamListSize < 8)
 			{
 				int nFrameType = 0;
- 				if (nDvoError = dvoplay_GetFrame(pPlayCtx->hPlayer[0], &pFrameBuffer, nFrameSize) != IPC_Succeed)
+ 				if (nDvoError = ipcplay_GetFrame(pPlayCtx->hPlayer[0], &pFrameBuffer, nFrameSize) != IPC_Succeed)
  				{
- 					TraceMsgA("%s dvoplay_GetFrame Failed:%d.\n", __FUNCTION__, nDvoError);
+ 					TraceMsgA("%s ipcplay_GetFrame Failed:%d.\n", __FUNCTION__, nDvoError);
  					Sleep(5);
  					continue;
  				}
@@ -782,17 +782,17 @@ public:
 			}
 			
 			nLoopCount++;
-			if (nDvoError = dvoplay_InputStream(pPlayCtx->hPlayerStream, pStream->pStream, pStream->nStreamSize) != IPC_Succeed)
+			if (nDvoError = ipcplay_InputStream(pPlayCtx->hPlayerStream, pStream->pStream, pStream->nStreamSize) != IPC_Succeed)
 			{
 				
-				int nDvoError = dvoplay_GetPlayerInfo(pPlayCtx->hPlayerStream, pThis->m_pPlayerInfo.get());
-				TraceMsgA("%s dvoplay_InputStream Failed:%d\tVideocache size = %d.\n", __FUNCTION__, nDvoError, pThis->m_pPlayerInfo->nCacheSize);
+				int nDvoError = ipcplay_GetPlayerInfo(pPlayCtx->hPlayerStream, pThis->m_pPlayerInfo.get());
+				TraceMsgA("%s ipcplay_InputStream Failed:%d\tVideocache size = %d.\n", __FUNCTION__, nDvoError, pThis->m_pPlayerInfo->nCacheSize);
 				bInputList = false;
 				Sleep(5);
 				continue;
 			}
 			
-			int nDvoError = dvoplay_GetPlayerInfo(pPlayCtx->hPlayerStream, pThis->m_pPlayerInfo.get());
+			int nDvoError = ipcplay_GetPlayerInfo(pPlayCtx->hPlayerStream, pThis->m_pPlayerInfo.get());
 			if (nDvoError == IPC_Succeed ||
 				nDvoError == IPC_Error_FileNotExist)
 				pThis->PostMessage(WM_UPDATE_PLAYINFO, (WPARAM)pThis->m_pPlayerInfo.get(), (LPARAM)nDvoError);

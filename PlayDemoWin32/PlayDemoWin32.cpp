@@ -200,13 +200,13 @@ public:
 		}
 		if (hPlayer)
 		{
-			dvoplay_Close(hPlayer);
+			ipcplay_Close(hPlayer);
 			hPlayer = NULL;
 		}
 		
 		if (hPlayerStream)
 		{
-			dvoplay_Close(hPlayerStream);
+			ipcplay_Close(hPlayerStream);
 			hPlayerStream = NULL;
 		}
 		
@@ -344,7 +344,7 @@ BOOL ReOpenStream(int nIndex , int nStream,HWND hWnd)
 		IPC2_NET_StopRealPlay(m_pPlayContext[nIndex]->hStream);
 		if (m_pPlayContext[nIndex]->hPlayer)
 		{
-			dvoplay_Close(m_pPlayContext[nIndex]->hPlayer);
+			ipcplay_Close(m_pPlayContext[nIndex]->hPlayer);
 			m_pPlayContext[nIndex]->hPlayer = NULL;
 			m_pPlayContext[nIndex]->hStream = -1;
 		}
@@ -394,8 +394,8 @@ BOOL ReOpenStream(int nIndex , int nStream,HWND hWnd)
 		}
 		HWND hVideo = GetDlgItem(hWnd, IDC_VIDEO_FRAME1 + nIndex);
 		sprintf(szText, "dvoipcplaysdk_%s", g_vIPCamera[nIndex].c_str());
-		//m_pPlayContext[nIndex]->hPlayer = dvoplay_OpenStream(NULL, (byte *)&MediaHeader, sizeof(MediaHeader), 128, "dvoipcplaysdk");
-		m_pPlayContext[nIndex]->hPlayer = dvoplay_OpenStream(hVideo, (byte *)&MediaHeader, sizeof(MediaHeader), 128, szText);
+		//m_pPlayContext[nIndex]->hPlayer = ipcplay_OpenStream(NULL, (byte *)&MediaHeader, sizeof(MediaHeader), 128, "dvoipcplaysdk");
+		m_pPlayContext[nIndex]->hPlayer = ipcplay_OpenStream(hVideo, (byte *)&MediaHeader, sizeof(MediaHeader), 128, szText);
 		if (!m_pPlayContext[nIndex]->hPlayer)
 		{
 			sprintf(szText, "%s 打开流播放句柄失败[%d].",__FUNCTION__, nIndex);
@@ -403,8 +403,8 @@ BOOL ReOpenStream(int nIndex , int nStream,HWND hWnd)
 			return false;
 		}
 		m_pPlayContext[nIndex]->dwLastStreamTime = timeGetTime();
-		dvoplay_Refresh(m_pPlayContext[nIndex]->hPlayer);
-		dvoplay_Start(m_pPlayContext[nIndex]->hPlayer, false, true);
+		ipcplay_Refresh(m_pPlayContext[nIndex]->hPlayer);
+		ipcplay_Start(m_pPlayContext[nIndex]->hPlayer, false, true);
 		return TRUE;
 	}
 	else
@@ -437,7 +437,7 @@ BOOL SnapShot(int nIndex,HWND hDlg)
 			systime.wYear, systime.wMonth, systime.wDay,
 			systime.wHour, systime.wMinute, systime.wSecond, systime.wMilliseconds);
 		_tcscat_s(szPath, 1024, szFileName);
-		if (dvoplay_SnapShot(m_pPlayContext[nIndex]->hPlayer, szPath, XIFF_JPG) == IPC_Succeed)
+		if (ipcplay_SnapShot(m_pPlayContext[nIndex]->hPlayer, szPath, XIFF_JPG) == IPC_Succeed)
 		{
 			sprintf(szText, "%s 已经生成截图[%d]:%s.", __FUNCTION__, nIndex,szPath);
 			ListBox_InsertString(g_hListMessage,0, szText);
@@ -649,7 +649,7 @@ void OnButtonSwitchStream(HWND hDlg)
 // 		return;
 // 	}
 // 	
-// 	hPlayer = dvoplay_OpenStream(NULL, (byte *)&MediaHeader, sizeof(MediaHeader), 128, "dvoipcPlaySDK.LOG");
+// 	hPlayer = ipcplay_OpenStream(NULL, (byte *)&MediaHeader, sizeof(MediaHeader), 128, "dvoipcPlaySDK.LOG");
 // 
 // 	if (!m_pPlayContext[i]->hPlayer)
 // 	{
@@ -657,9 +657,9 @@ void OnButtonSwitchStream(HWND hDlg)
 // 		return;
 // 	}
 // 
-// 	dvoplay_Refresh(hPlayer);				// 把软件界面刷为黑色
-// 	dvoplay_Start(hPlayer, false, true);	// 启动视频解码和播放
-// 	dvoplay_SetCallBack(hPlayer, YUVCapture, _CaptureYUV, nullptr);		// 设置YUV数据捕捉回调
+// 	ipcplay_Refresh(hPlayer);				// 把软件界面刷为黑色
+// 	ipcplay_Start(hPlayer, false, true);	// 启动视频解码和播放
+// 	ipcplay_SetCallBack(hPlayer, YUVCapture, _CaptureYUV, nullptr);		// 设置YUV数据捕捉回调
 // 	
 // }
 
@@ -674,7 +674,7 @@ void  __stdcall StreamCallBack1(IN USER_HANDLE  lUserID,
 	byte *pFrameData = (byte *)(pStreamHeader)+ sizeof(app_net_tcp_enc_stream_head_t);
 	int nFrameLength = nDataLen - sizeof(app_net_tcp_enc_stream_head_t);
 	//if (hPlayer)
-	//	dvoplay_InputIPCStream(hPlayer, pFrameData, pStreamHeader->frame_type, nFrameLength, pStreamHeader->frame_num, 0);
+	//	ipcplay_InputIPCStream(hPlayer, pFrameData, pStreamHeader->frame_type, nFrameLength, pStreamHeader->frame_num, 0);
 }
 void OnButtonPlayStream(HWND hDlg)
 {
@@ -718,7 +718,7 @@ void OnButtonPlayStream(HWND hDlg)
 					{// 播放并解码
 						HWND hVideo = GetDlgItem(hDlg, (IDC_VIDEO_FRAME1 + i));
 						sprintf(szText, "dvoipcplaysdk_%s", g_vIPCamera[i].c_str());
-						m_pPlayContext[i]->hPlayer = dvoplay_OpenStream(hVideo, (byte *)&MediaHeader, sizeof(MediaHeader), 128, szText);
+						m_pPlayContext[i]->hPlayer = ipcplay_OpenStream(hVideo, (byte *)&MediaHeader, sizeof(MediaHeader), 128, szText);
 						if (!m_pPlayContext[i]->hPlayer)
 						{
 							sprintf(szText, "打开流播放句柄失败[%d].", i);
@@ -728,7 +728,7 @@ void OnButtonPlayStream(HWND hDlg)
 					}
 					if (IsDlgButtonChecked(hDlg, IDC_RADIO_DECODE) == BST_CHECKED)
 					{// 仅解码
-						m_pPlayContext[i]->hPlayer = dvoplay_OpenStream(NULL, (byte *)&MediaHeader, sizeof(MediaHeader), 128, szText);
+						m_pPlayContext[i]->hPlayer = ipcplay_OpenStream(NULL, (byte *)&MediaHeader, sizeof(MediaHeader), 128, szText);
 						if (!m_pPlayContext[i]->hPlayer)
 						{
 							sprintf(szText, "打开流播放句柄失败[%d].", i);
@@ -737,7 +737,7 @@ void OnButtonPlayStream(HWND hDlg)
 						}
 					}
 					//SetTimer(hDlg, ID_TIMER_CHECKSTREAM, 100,NULL);
-					dvoplay_Refresh(m_pPlayContext[i]->hPlayer);
+					ipcplay_Refresh(m_pPlayContext[i]->hPlayer);
 					if (IsDlgButtonChecked(hDlg,IDC_CHECK_SAVEYUV) == BST_CHECKED)
 					{
 						SYSTEMTIME sysTime;
@@ -768,9 +768,9 @@ void OnButtonPlayStream(HWND hDlg)
 							sprintf(szText, "打开文件%s失败，YVU数据将无法保存.", szYUVFile);
 							ListBox_InsertString(g_hListMessage,0, szText);
 						}
-						dvoplay_SetCallBack(m_pPlayContext[i]->hPlayer, YUVCapture, _CaptureYUV, m_pPlayContext[i].get());
+						ipcplay_SetCallBack(m_pPlayContext[i]->hPlayer, YUVCapture, _CaptureYUV, m_pPlayContext[i].get());
 					}
-					dvoplay_Start(m_pPlayContext[i]->hPlayer, false, true);
+					ipcplay_Start(m_pPlayContext[i]->hPlayer, false, true);
 				}
 				m_pPlayContext[i]->dwLastStreamTime = timeGetTime();
 			}
@@ -793,9 +793,9 @@ void OnButtonStopPlay(HWND hDlg)
 			EnableDlgItem(hDlg, IDC_COMBO_STREAM, TRUE);
 			if (m_pPlayContext[i]->hPlayer)
 			{
-				dvoplay_Stop(m_pPlayContext[i]->hPlayer);
-				//dvoplay_Refresh(m_pPlayContext[i]->hPlayer);
-				dvoplay_Close(m_pPlayContext[i]->hPlayer);
+				ipcplay_Stop(m_pPlayContext[i]->hPlayer);
+				//ipcplay_Refresh(m_pPlayContext[i]->hPlayer);
+				ipcplay_Close(m_pPlayContext[i]->hPlayer);
 				if (m_pPlayContext[i]->hYUVFile)
 				{
 					CloseHandle(m_pPlayContext[i]->hYUVFile);
@@ -1012,7 +1012,7 @@ void OnFilePlayClose(HWND hDlg)
 {
 	if (g_hFilePlay)
 	{
-		dvoplay_Close(g_hFilePlay);
+		ipcplay_Close(g_hFilePlay);
 		g_hFilePlay = nullptr;
 	}
 	EndDialog(hDlg, IDOK);
@@ -1101,12 +1101,12 @@ LRESULT OnFilePlayCommand(HWND hDlg, UINT nID, HWND hWndCtrl, UINT nCodeNotify)
 
 			HWND hVideoFrame = GetDlgItem(hDlg,IDC_STATIC_FRAME);
 			ShowWindow(hVideoFrame,SW_SHOW);
-			g_hFilePlay = dvoplay_OpenFile(hVideoFrame,ofn.lpstrFile);
+			g_hFilePlay = ipcplay_OpenFile(hVideoFrame,ofn.lpstrFile);
 			if (!g_hFilePlay)
 			{
 				MessageBox(hDlg,"打开文件失败",_T("提示"),MB_OK|MB_ICONSTOP);
 			}
-			dvoplay_Start(g_hFilePlay,true);
+			ipcplay_Start(g_hFilePlay,true);
 		}
 	
 	}
@@ -1194,7 +1194,7 @@ void  __stdcall StreamCallBack(IN USER_HANDLE  lUserID,
 	
 	//for (int i = 0; i < pContext->nPlayerCount; i++)
 	if (pContext->hPlayer)
-		dvoplay_InputIPCStream(pContext->hPlayer, pFrameData, pStreamHeader->frame_type, nFrameLength, pStreamHeader->frame_num, 0);
+		ipcplay_InputIPCStream(pContext->hPlayer, pFrameData, pStreamHeader->frame_type, nFrameLength, pStreamHeader->frame_num, 0);
 }
 
 /// @brief		解码后YVU数据回调

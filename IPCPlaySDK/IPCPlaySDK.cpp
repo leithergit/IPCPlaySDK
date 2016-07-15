@@ -59,7 +59,7 @@ struct IPCIPC_StreamHeader
 ///	@return			若操作成功，返回一个IPC_PLAYHANDLE类型的播放句柄，所有后续播
 ///	放函数都要使用些接口，若操作失败则返回NULL,错误原因可参考
 ///	GetLastError的返回值
-IPCPLAYSDK_API IPC_PLAYHANDLE	dvoplay_OpenFileA(IN HWND hWnd, IN char *szFileName, FilePlayProc pPlayCallBack, void *pUserPtr,char *szLogFile)
+IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenFileA(IN HWND hWnd, IN char *szFileName, FilePlayProc pPlayCallBack, void *pUserPtr,char *szLogFile)
 {
 	if (!szFileName)
 	{
@@ -100,13 +100,13 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	dvoplay_OpenFileA(IN HWND hWnd, IN char *szFileNam
 ///	@return			若操作成功，返回一个IPC_PLAYHANDLE类型的播放句柄，所有后续播
 ///	放函数都要使用些接口，若操作失败则返回NULL,错误原因可参考
 ///	GetLastError的返回值
-IPCPLAYSDK_API IPC_PLAYHANDLE	dvoplay_OpenFileW(IN HWND hWnd, IN WCHAR *szFileName, FilePlayProc pPlayCallBack, void *pUserPtr, char *szLogFile)
+IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenFileW(IN HWND hWnd, IN WCHAR *szFileName, FilePlayProc pPlayCallBack, void *pUserPtr, char *szLogFile)
 {
 	if (!szFileName || !PathFileExistsW(szFileName))
 		return nullptr;
 	char szFilenameA[MAX_PATH] = { 0 };
 	WideCharToMultiByte(CP_ACP, 0, szFileName, -1, szFilenameA, MAX_PATH, NULL, NULL);
-	return dvoplay_OpenFileA(hWnd, szFilenameA, pPlayCallBack,pUserPtr,szLogFile);
+	return ipcplay_OpenFileA(hWnd, szFilenameA, pPlayCallBack,pUserPtr,szLogFile);
 }
 
 ///	@brief			初始化流播放句柄,仅用于流播放
@@ -116,7 +116,7 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	dvoplay_OpenFileW(IN HWND hWnd, IN WCHAR *szFileNa
 /// @param [in]		szLogFile		日志文件名,若为null，则不开启日志
 ///	@return			若操作成功，返回一个IPC_PLAYHANDLE类型的播放句柄，所有后续播
 ///	放函数都要使用些接口，若操作失败则返回NULL,错误原因可参考GetLastError的返回值
-IPCPLAYSDK_API IPC_PLAYHANDLE	dvoplay_OpenStream(IN HWND hWnd, byte *szStreamHeader, int nHeaderSize, IN int nMaxFramesCache, char *szLogFile)
+IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenStream(IN HWND hWnd, byte *szStreamHeader, int nHeaderSize, IN int nMaxFramesCache, char *szLogFile)
 {
  	if ((hWnd && !IsWindow(hWnd))/* || !szStreamHeader || !nHeaderSize*/)
  		return nullptr;
@@ -162,14 +162,14 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	dvoplay_OpenStream(IN HWND hWnd, byte *szStreamHea
 }
 
 /// @brief			关闭播放句柄
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		bCacheD3d		是否启用D3D设备缓存，若播放时始终只在同一个窗口进行，则建议启用D3D缓存，否则应关闭D3D缓存
 ///	-# true			刷新画面以背景色填充
 ///	-# false			不刷新画面,保留最后一帧的图像
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
 /// @remark			关闭播放句柄会导致播放进度完全终止，相关内存全部被释放,要再度播放必须重新打开文件或流数据
-IPCPLAYSDK_API int dvoplay_Close(IN IPC_PLAYHANDLE hPlayHandle, bool bCacheD3d/* = true*/)
+IPCPLAYSDK_API int ipcplay_Close(IN IPC_PLAYHANDLE hPlayHandle, bool bCacheD3d/* = true*/)
 {
 	TraceFunction();
 	if (!hPlayHandle)
@@ -218,7 +218,7 @@ IPCPLAYSDK_API int	EnableLog(IN IPC_PLAYHANDLE hPlayHandle, char *szLogFile)
 	return 0;
 }
 
-IPCPLAYSDK_API int dvoplay_SetBorderRect(IN IPC_PLAYHANDLE hPlayHandle, RECT rtBorder)
+IPCPLAYSDK_API int ipcplay_SetBorderRect(IN IPC_PLAYHANDLE hPlayHandle, RECT rtBorder)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -231,7 +231,7 @@ IPCPLAYSDK_API int dvoplay_SetBorderRect(IN IPC_PLAYHANDLE hPlayHandle, RECT rtB
 	return IPC_Succeed;
 }
 
-IPCPLAYSDK_API int dvoplay_RemoveBorderRect(IN IPC_PLAYHANDLE hPlayHandle)
+IPCPLAYSDK_API int ipcplay_RemoveBorderRect(IN IPC_PLAYHANDLE hPlayHandle)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -243,13 +243,13 @@ IPCPLAYSDK_API int dvoplay_RemoveBorderRect(IN IPC_PLAYHANDLE hPlayHandle)
 }
 
 /// @brief			输入流数据
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @retval			0	操作成功
 /// @retval			1	流缓冲区已满
 /// @retval			-1	输入参数无效
-/// @remark			播放流数据时，相应的帧数据其实并未立即播放，而是被放了播放队列中，应该根据dvoplay_PlayStream
+/// @remark			播放流数据时，相应的帧数据其实并未立即播放，而是被放了播放队列中，应该根据ipcplay_PlayStream
 ///					的返回值来判断，是否继续播放，若说明队列已满，则应该暂停播放
-IPCPLAYSDK_API int dvoplay_InputStream(IN IPC_PLAYHANDLE hPlayHandle, unsigned char *szFrameData, int nFrameSize)
+IPCPLAYSDK_API int ipcplay_InputStream(IN IPC_PLAYHANDLE hPlayHandle, unsigned char *szFrameData, int nFrameSize)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -261,13 +261,13 @@ IPCPLAYSDK_API int dvoplay_InputStream(IN IPC_PLAYHANDLE hPlayHandle, unsigned c
 
 
 /// @brief			输入流相机实时码流
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @retval			0	操作成功
 /// @retval			1	流缓冲区已满
 /// @retval			-1	输入参数无效
-/// @remark			播放流数据时，相应的帧数据其实并未立即播放，而是被放了播放队列中，应该根据dvoplay_PlayStream
+/// @remark			播放流数据时，相应的帧数据其实并未立即播放，而是被放了播放队列中，应该根据ipcplay_PlayStream
 ///					的返回值来判断，是否继续播放，若说明队列已满，则应该暂停播放
-IPCPLAYSDK_API int dvoplay_InputIPCStream(IN IPC_PLAYHANDLE hPlayHandle, IN byte *pFrameData, IN int nFrameType, IN int nFrameLength, int nFrameNum, time_t nFrameTime)
+IPCPLAYSDK_API int ipcplay_InputIPCStream(IN IPC_PLAYHANDLE hPlayHandle, IN byte *pFrameData, IN int nFrameType, IN int nFrameLength, int nFrameNum, time_t nFrameTime)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -282,7 +282,7 @@ IPCPLAYSDK_API int dvoplay_InputIPCStream(IN IPC_PLAYHANDLE hPlayHandle, IN byte
 }
 
 /// @brief			开始播放
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 ///	@param [in]		bEnableAudio	是否播放音频
 ///	-# true			播放声音
 ///	-# false		关闭声音
@@ -292,8 +292,8 @@ IPCPLAYSDK_API int dvoplay_InputIPCStream(IN IPC_PLAYHANDLE hPlayHandle, IN byte
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
 /// @remark			当开启硬解码，而显卡不支持对应的视频编码的解码时，会自动切换到软件解码的状态,可通过
-///					dvoplay_GetHaccelStatus判断是否已经开启硬解码
-IPCPLAYSDK_API int dvoplay_Start(IN IPC_PLAYHANDLE hPlayHandle, 
+///					ipcplay_GetHaccelStatus判断是否已经开启硬解码
+IPCPLAYSDK_API int ipcplay_Start(IN IPC_PLAYHANDLE hPlayHandle, 
 									IN bool bEnableAudio/* = false*/, 
 									IN bool bFitWindow /*= true*/, 
 									IN bool bEnableHaccel/* = false*/)
@@ -307,11 +307,11 @@ IPCPLAYSDK_API int dvoplay_Start(IN IPC_PLAYHANDLE hPlayHandle,
 }
 
 /// @brief 复位播放器,在窗口大小变化较大或要切换播放窗口时，建议复位播放器，否则画面质量可能会严重下降
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		hWnd			显示视频的窗口
 /// @param [in]		nWidth			窗口宽度,该参数暂未使用,可设为0
 /// @param [in]		nHeight			窗口高度,该参数暂未使用,可设为0
-IPCPLAYSDK_API int  dvoplay_Reset(IN IPC_PLAYHANDLE hPlayHandle, HWND hWnd, int nWidth , int nHeight)
+IPCPLAYSDK_API int  ipcplay_Reset(IN IPC_PLAYHANDLE hPlayHandle, HWND hWnd, int nWidth , int nHeight)
 {
 // 	if (!hPlayHandle)
 // 		return IPC_Error_InvalidParameters;
@@ -328,7 +328,7 @@ IPCPLAYSDK_API int  dvoplay_Reset(IN IPC_PLAYHANDLE hPlayHandle, HWND hWnd, int 
 /// @param [in]		bFitWindow		视频是否适应窗口
 /// #- true			视频填满窗口,这样会把图像拉伸,可能会造成图像变形
 /// #- false		只按图像原始比例在窗口中显示,超出比例部分,则以原始背景显示
-IPCPLAYSDK_API int dvoplay_FitWindow(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow )
+IPCPLAYSDK_API int ipcplay_FitWindow(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow )
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -340,10 +340,10 @@ IPCPLAYSDK_API int dvoplay_FitWindow(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWin
 }
 
 /// @brief			停止播放
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int dvoplay_Stop(IN IPC_PLAYHANDLE hPlayHandle)
+IPCPLAYSDK_API int ipcplay_Stop(IN IPC_PLAYHANDLE hPlayHandle)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -355,12 +355,12 @@ IPCPLAYSDK_API int dvoplay_Stop(IN IPC_PLAYHANDLE hPlayHandle)
 }
 
 /// @brief			暂停文件播放
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-/// @remark			这是一个开关函数，若当前句柄已经处于播放状态，首次调用dvoplay_Pause时，会播放进度则会暂停
+/// @remark			这是一个开关函数，若当前句柄已经处于播放状态，首次调用ipcplay_Pause时，会播放进度则会暂停
 ///					再次调用时，则会再度播放
-IPCPLAYSDK_API int dvoplay_Pause(IN IPC_PLAYHANDLE hPlayHandle)
+IPCPLAYSDK_API int ipcplay_Pause(IN IPC_PLAYHANDLE hPlayHandle)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -372,10 +372,10 @@ IPCPLAYSDK_API int dvoplay_Pause(IN IPC_PLAYHANDLE hPlayHandle)
 }
 
 /// @brief			清空播放缓存
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int dvoplay_ClearCache(IN IPC_PLAYHANDLE hPlayHandle)
+IPCPLAYSDK_API int ipcplay_ClearCache(IN IPC_PLAYHANDLE hPlayHandle)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -388,14 +388,14 @@ IPCPLAYSDK_API int dvoplay_ClearCache(IN IPC_PLAYHANDLE hPlayHandle)
 
 
 /// @brief			开启硬解码功能
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		bEnableHaccel	是否开启硬解码功能
 /// #- true			开启硬解码功能
 /// #- false		关闭硬解码功能
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-/// @remark			开启和关闭硬解码功能必须要dvoplay_Start之前调用才能生效
-IPCPLAYSDK_API int  dvoplay_EnableHaccel(IN IPC_PLAYHANDLE hPlayHandle, IN bool bEnableHaccel/* = false*/)
+/// @remark			开启和关闭硬解码功能必须要ipcplay_Start之前调用才能生效
+IPCPLAYSDK_API int  ipcplay_EnableHaccel(IN IPC_PLAYHANDLE hPlayHandle, IN bool bEnableHaccel/* = false*/)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -406,13 +406,13 @@ IPCPLAYSDK_API int  dvoplay_EnableHaccel(IN IPC_PLAYHANDLE hPlayHandle, IN bool 
 }
 
 /// @brief			获取硬解码状态
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [out]	bEnableHaccel	返回当前hPlayHandle是否已开启硬解码功能
 /// #- true			已开启硬解码功能
 /// #- false		未开启硬解码功能
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int  dvoplay_GetHaccelStatus(IN IPC_PLAYHANDLE hPlayHandle, OUT bool &bEnableHaccel)
+IPCPLAYSDK_API int  ipcplay_GetHaccelStatus(IN IPC_PLAYHANDLE hPlayHandle, OUT bool &bEnableHaccel)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -427,17 +427,17 @@ IPCPLAYSDK_API int  dvoplay_GetHaccelStatus(IN IPC_PLAYHANDLE hPlayHandle, OUT b
 /// @param [in]		nCodec		视频编码格式,@see IPC_CODEC
 /// @retval			true		支持指定视频编码的硬解码
 /// @retval			false		不支持指定视频编码的硬解码
-IPCPLAYSDK_API bool  dvoplay_IsSupportHaccel(IN IPC_CODEC nCodec)
+IPCPLAYSDK_API bool  ipcplay_IsSupportHaccel(IN IPC_CODEC nCodec)
 {
 	return CIPCPlayer::IsSupportHaccel(nCodec);
 }
 
 /// @brief			取得当前播放视频的帧信息
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [out]	pFilePlayInfo	文件播放的相关信息，参见@see FilePlayInfo
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int  dvoplay_GetPlayerInfo(IN IPC_PLAYHANDLE hPlayHandle, OUT PlayerInfo *pPlayerInfo)
+IPCPLAYSDK_API int  ipcplay_GetPlayerInfo(IN IPC_PLAYHANDLE hPlayHandle, OUT PlayerInfo *pPlayerInfo)
 {
 	if (!hPlayHandle || !pPlayerInfo)
 		return IPC_Error_InvalidParameters;
@@ -448,12 +448,12 @@ IPCPLAYSDK_API int  dvoplay_GetPlayerInfo(IN IPC_PLAYHANDLE hPlayHandle, OUT Pla
 }
 
 /// @brief			截取正放播放的视频图像
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		szFileName		要保存的文件名
 /// @param [in]		nFileFormat		保存文件的编码格式,@see SNAPSHOT_FORMAT定义
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int  dvoplay_SnapShotW(IN IPC_PLAYHANDLE hPlayHandle, IN WCHAR *szFileName, IN SNAPSHOT_FORMAT nFileFormat/* = XIFF_JPG*/)
+IPCPLAYSDK_API int  ipcplay_SnapShotW(IN IPC_PLAYHANDLE hPlayHandle, IN WCHAR *szFileName, IN SNAPSHOT_FORMAT nFileFormat/* = XIFF_JPG*/)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -462,16 +462,16 @@ IPCPLAYSDK_API int  dvoplay_SnapShotW(IN IPC_PLAYHANDLE hPlayHandle, IN WCHAR *s
 		return IPC_Error_InvalidParameters;
 	CHAR szFileNameA[MAX_PATH] = { 0 };
 	WideCharToMultiByte(CP_ACP, 0, szFileName, -1, szFileNameA, MAX_PATH, NULL, NULL);
-	return dvoplay_SnapShotA(hPlayHandle, szFileNameA, nFileFormat);
+	return ipcplay_SnapShotA(hPlayHandle, szFileNameA, nFileFormat);
 }
 
 /// @brief			截取正放播放的视频图像
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		szFileName		要保存的文件名
 /// @param [in]		nFileFormat		保存文件的编码格式,@see SNAPSHOT_FORMAT定义
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int  dvoplay_SnapShotA(IN IPC_PLAYHANDLE hPlayHandle, IN CHAR *szFileName, IN SNAPSHOT_FORMAT nFileFormat/* = XIFF_JPG*/)
+IPCPLAYSDK_API int  ipcplay_SnapShotA(IN IPC_PLAYHANDLE hPlayHandle, IN CHAR *szFileName, IN SNAPSHOT_FORMAT nFileFormat/* = XIFF_JPG*/)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -482,11 +482,11 @@ IPCPLAYSDK_API int  dvoplay_SnapShotA(IN IPC_PLAYHANDLE hPlayHandle, IN CHAR *sz
 }
 
 /// @brief			设置播放的音量
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		nVolume			要设置的音量值，取值范围0~100，为0时，则为静音
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int  dvoplay_SetVolume(IN IPC_PLAYHANDLE hPlayHandle, IN int nVolume)
+IPCPLAYSDK_API int  ipcplay_SetVolume(IN IPC_PLAYHANDLE hPlayHandle, IN int nVolume)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -498,11 +498,11 @@ IPCPLAYSDK_API int  dvoplay_SetVolume(IN IPC_PLAYHANDLE hPlayHandle, IN int nVol
 }
 
 /// @brief			取得当前播放的音量
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [out]	nVolume			当前的音量值，取值范围0~100，为0时，则为静音
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int  dvoplay_GetVolume(IN IPC_PLAYHANDLE hPlayHandle, OUT int &nVolume)
+IPCPLAYSDK_API int  ipcplay_GetVolume(IN IPC_PLAYHANDLE hPlayHandle, OUT int &nVolume)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -514,11 +514,11 @@ IPCPLAYSDK_API int  dvoplay_GetVolume(IN IPC_PLAYHANDLE hPlayHandle, OUT int &nV
 }
 
 /// @brief			设置当前播放的速度的倍率
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		nPlayRate		当前的播放的倍率,大于1时为加速播放,小于1时为减速播放，不能为0或小于0
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int  dvoplay_SetRate(IN IPC_PLAYHANDLE hPlayHandle, IN float fPlayRate)
+IPCPLAYSDK_API int  ipcplay_SetRate(IN IPC_PLAYHANDLE hPlayHandle, IN float fPlayRate)
 {
 	if (!hPlayHandle ||fPlayRate <= 0.0f )
 		return IPC_Error_InvalidParameters;
@@ -533,7 +533,7 @@ IPCPLAYSDK_API int  dvoplay_SetRate(IN IPC_PLAYHANDLE hPlayHandle, IN float fPla
 /// @retval			-1	输入参数无效
 /// @retval			-24	播放器未暂停
 /// @remark			该函数仅适用于单帧播放
-IPCPLAYSDK_API int  dvoplay_SeekNextFrame(IN IPC_PLAYHANDLE hPlayHandle)
+IPCPLAYSDK_API int  ipcplay_SeekNextFrame(IN IPC_PLAYHANDLE hPlayHandle)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -549,7 +549,7 @@ IPCPLAYSDK_API int  dvoplay_SeekNextFrame(IN IPC_PLAYHANDLE hPlayHandle)
 }
 
 /// @brief			跳跃到指视频帧进行播放
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile返回的播放句柄
 /// @param [in]		nFrameID		要播放帧的起始ID
 /// @param [in]		bUpdate		是否更新画面,bUpdate为true则予以更新画面,画面则不更新
 /// @retval			0	操作成功
@@ -557,7 +557,7 @@ IPCPLAYSDK_API int  dvoplay_SeekNextFrame(IN IPC_PLAYHANDLE hPlayHandle)
 /// @remark			1.若所指定时间点对应帧为非关键帧，帧自动移动到就近的关键帧进行播放
 ///					2.若所指定帧为非关键帧，帧自动移动到就近的关键帧进行播放
 ///					3.只有在播放暂时,bUpdate参数才有效
-IPCPLAYSDK_API int  dvoplay_SeekFrame(IN IPC_PLAYHANDLE hPlayHandle, IN int nFrameID,bool bUpdate)
+IPCPLAYSDK_API int  ipcplay_SeekFrame(IN IPC_PLAYHANDLE hPlayHandle, IN int nFrameID,bool bUpdate)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -573,7 +573,7 @@ IPCPLAYSDK_API int  dvoplay_SeekFrame(IN IPC_PLAYHANDLE hPlayHandle, IN int nFra
 }
 
 /// @brief			跳跃到指定时间偏移进行播放
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		tTimeOffset		要播放的起始时间,单位为秒
 /// @param [in]		bUpdate		是否更新画面,bUpdate为true则予以更新画面,画面则不更新
 /// @retval			0	操作成功
@@ -581,7 +581,7 @@ IPCPLAYSDK_API int  dvoplay_SeekFrame(IN IPC_PLAYHANDLE hPlayHandle, IN int nFra
 /// @remark			1.若所指定时间点对应帧为非关键帧，帧自动移动到就近的关键帧进行播放
 ///					2.若所指定帧为非关键帧，帧自动移动到就近的关键帧进行播放
 ///					3.只有在播放暂时,bUpdate参数才有效
-IPCPLAYSDK_API int  dvoplay_SeekTime(IN IPC_PLAYHANDLE hPlayHandle, IN time_t tTimeOffset,bool bUpdate)
+IPCPLAYSDK_API int  ipcplay_SeekTime(IN IPC_PLAYHANDLE hPlayHandle, IN time_t tTimeOffset,bool bUpdate)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -595,10 +595,10 @@ IPCPLAYSDK_API int  dvoplay_SeekTime(IN IPC_PLAYHANDLE hPlayHandle, IN time_t tT
 }
 
 /// @brief 从文件中读取一帧，读取的起点默认值为0,SeekFrame或SeekTime可设定其起点位置
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [out]	pFrameBuffer	帧数据缓冲区
 /// @param [out]	nBufferSize		帧缓冲区的大小
-IPCPLAYSDK_API int  dvoplay_GetFrame(IN IPC_PLAYHANDLE hPlayHandle, OUT byte **pFrameBuffer, OUT UINT &nBufferSize)
+IPCPLAYSDK_API int  ipcplay_GetFrame(IN IPC_PLAYHANDLE hPlayHandle, OUT byte **pFrameBuffer, OUT UINT &nBufferSize)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -612,13 +612,13 @@ IPCPLAYSDK_API int  dvoplay_GetFrame(IN IPC_PLAYHANDLE hPlayHandle, OUT byte **p
 }
 
 /// @brief			设置最大视频帧的尺寸,默认最大的视频的尺寸为256K,当视频帧大于256K时,
-/// 可能会造文件读取文件错误,因此需要设置视频帧的大小,在dvoplay_Start前调用才有效
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// 可能会造文件读取文件错误,因此需要设置视频帧的大小,在ipcplay_Start前调用才有效
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		nMaxFrameSize	最大视频帧的尺寸
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
 /// @remark			若所指定时间点对应帧为非关键帧，帧自动移动到就近的关键帧进行播放
-IPCPLAYSDK_API int  dvoplay_SetMaxFrameSize(IN IPC_PLAYHANDLE hPlayHandle, IN UINT nMaxFrameSize)
+IPCPLAYSDK_API int  ipcplay_SetMaxFrameSize(IN IPC_PLAYHANDLE hPlayHandle, IN UINT nMaxFrameSize)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -633,13 +633,13 @@ IPCPLAYSDK_API int  dvoplay_SetMaxFrameSize(IN IPC_PLAYHANDLE hPlayHandle, IN UI
 
 
 /// @brief			取得文件播放时,支持的最大视频帧的尺寸,默认最大的视频的尺寸为256K,当视频帧
-/// 大于256K时,可能会造文件读取文件错误,因此需要设置视频帧的大小,在dvoplay_Start前调用才有效
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// 大于256K时,可能会造文件读取文件错误,因此需要设置视频帧的大小,在ipcplay_Start前调用才有效
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		nMaxFrameSize	最大视频帧的尺寸
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
 /// @remark			若所指定时间点对应帧为非关键帧，帧自动移动到就近的关键帧进行播放
-IPCPLAYSDK_API int  dvoplay_GetMaxFrameSize(IN IPC_PLAYHANDLE hPlayHandle, INOUT UINT &nMaxFrameSize)
+IPCPLAYSDK_API int  ipcplay_GetMaxFrameSize(IN IPC_PLAYHANDLE hPlayHandle, INOUT UINT &nMaxFrameSize)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -656,11 +656,11 @@ IPCPLAYSDK_API int  dvoplay_GetMaxFrameSize(IN IPC_PLAYHANDLE hPlayHandle, INOUT
 }
 
 /// @brief			播放下一帧
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
 /// @remark			该函数仅适用于单帧播放,该函数功能暂未实现
-// IPCIPCPLAYSDK_API int  dvoplay_SeekNextFrame(IN IPC_PLAYHANDLE hPlayHandle)
+// IPCIPCPLAYSDK_API int  ipcplay_SeekNextFrame(IN IPC_PLAYHANDLE hPlayHandle)
 // {
 // 	return IPC_Succeed;
 // }
@@ -672,7 +672,7 @@ IPCPLAYSDK_API int  dvoplay_GetMaxFrameSize(IN IPC_PLAYHANDLE hPlayHandle, INOUT
 /// @param nSampleBit	采样位置
 /// @remark 在播放音频之前，应先设置音频播放参数,SDK内部默认参数nPlayFPS = 50，nSampleFreq = 8000，nSampleBit = 16
 ///         若音频播放参数与SDK内部默认参数一致，可以不用设置这些参数
-IPCPLAYSDK_API int  dvoplay_SetAudioPlayParameters(IN IPC_PLAYHANDLE hPlayHandle, DWORD nPlayFPS /*= 50*/, DWORD nSampleFreq/* = 8000*/, WORD nSampleBit/* = 16*/)
+IPCPLAYSDK_API int  ipcplay_SetAudioPlayParameters(IN IPC_PLAYHANDLE hPlayHandle, DWORD nPlayFPS /*= 50*/, DWORD nSampleFreq/* = 8000*/, WORD nSampleBit/* = 16*/)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -684,13 +684,13 @@ IPCPLAYSDK_API int  dvoplay_SetAudioPlayParameters(IN IPC_PLAYHANDLE hPlayHandle
 }
 
 /// @brief			开/关音频播放
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		bEnable			是否播放音频
 /// -#	true		开启音频播放
 /// -#	false		禁用音频播放
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int  dvoplay_EnableAudio(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable/* = true*/)
+IPCPLAYSDK_API int  ipcplay_EnableAudio(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable/* = true*/)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -701,11 +701,11 @@ IPCPLAYSDK_API int  dvoplay_EnableAudio(IN IPC_PLAYHANDLE hPlayHandle, bool bEna
 }
 
 /// @brief			刷新播放窗口
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
 /// @remark			该功能一般用于播放结束后，刷新窗口，把画面置为黑色
-IPCPLAYSDK_API int  dvoplay_Refresh(IN IPC_PLAYHANDLE hPlayHandle)
+IPCPLAYSDK_API int  ipcplay_Refresh(IN IPC_PLAYHANDLE hPlayHandle)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -717,11 +717,11 @@ IPCPLAYSDK_API int  dvoplay_Refresh(IN IPC_PLAYHANDLE hPlayHandle)
 }
 
 /// @brief			设置获取用户回调接口,通过此回调，用户可通过回调得到一些数据,或对得到的数据作一些处理
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		回调函数的类型 @see IPC_CALLBACK
 /// @param [in]		pUserCallBack	回调函数指针
 /// @param [in]		pUserPtr		用户自定义指针，在调用回调时，将会传回此指针
-IPCPLAYSDK_API int dvoplay_SetCallBack(IN IPC_PLAYHANDLE hPlayHandle, IPC_CALLBACK nCallBackType, IN void *pUserCallBack, IN void *pUserPtr)
+IPCPLAYSDK_API int ipcplay_SetCallBack(IN IPC_PLAYHANDLE hPlayHandle, IPC_CALLBACK nCallBackType, IN void *pUserCallBack, IN void *pUserPtr)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -733,9 +733,9 @@ IPCPLAYSDK_API int dvoplay_SetCallBack(IN IPC_PLAYHANDLE hPlayHandle, IPC_CALLBA
 }
 
 /// @brief			设置外部绘制回调接口
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		pUserPtr		用户自定义指针，在调用回调时，将会传回此指针
-IPCPLAYSDK_API int dvoplay_SetExternDrawCallBack(IN IPC_PLAYHANDLE hPlayHandle, IN void *pExternCallBack,IN void *pUserPtr)
+IPCPLAYSDK_API int ipcplay_SetExternDrawCallBack(IN IPC_PLAYHANDLE hPlayHandle, IN void *pExternCallBack,IN void *pUserPtr)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -746,9 +746,9 @@ IPCPLAYSDK_API int dvoplay_SetExternDrawCallBack(IN IPC_PLAYHANDLE hPlayHandle, 
 }
 
 /// @brief			设置获取YUV数据回调接口,通过此回调，用户可直接获取解码后的YUV数据
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		pUserPtr		用户自定义指针，在调用回调时，将会传回此指针
-IPCPLAYSDK_API int dvoplay_SetYUVCapture(IN IPC_PLAYHANDLE hPlayHandle, IN void *pCaptureYUV, IN void *pUserPtr)
+IPCPLAYSDK_API int ipcplay_SetYUVCapture(IN IPC_PLAYHANDLE hPlayHandle, IN void *pCaptureYUV, IN void *pUserPtr)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -759,9 +759,9 @@ IPCPLAYSDK_API int dvoplay_SetYUVCapture(IN IPC_PLAYHANDLE hPlayHandle, IN void 
 }
 
 /// @brief			设置获取YUV数据回调接口,通过此回调，用户可直接获取解码后的YUV数据
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		pUserPtr		用户自定义指针，在调用回调时，将会传回此指针
-IPCPLAYSDK_API int dvoplay_SetYUVCaptureEx(IN IPC_PLAYHANDLE hPlayHandle, IN void *pCaptureYUVEx, IN void *pUserPtr)
+IPCPLAYSDK_API int ipcplay_SetYUVCaptureEx(IN IPC_PLAYHANDLE hPlayHandle, IN void *pCaptureYUVEx, IN void *pUserPtr)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -772,9 +772,9 @@ IPCPLAYSDK_API int dvoplay_SetYUVCaptureEx(IN IPC_PLAYHANDLE hPlayHandle, IN voi
 }
 
 /// @brief			设置IPC私用格式录像，帧解析回调,通过此回，用户可直接获取原始的帧数据
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		pUserPtr		用户自定义指针，在调用回调时，将会传回此指针
-IPCPLAYSDK_API int dvoplay_SetFrameParserCallback(IN IPC_PLAYHANDLE hPlayHandle, IN void *pCaptureFrame, IN void *pUserPtr)
+IPCPLAYSDK_API int ipcplay_SetFrameParserCallback(IN IPC_PLAYHANDLE hPlayHandle, IN void *pCaptureFrame, IN void *pUserPtr)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -792,7 +792,7 @@ IPCPLAYSDK_API int dvoplay_SetFrameParserCallback(IN IPC_PLAYHANDLE hPlayHandle,
 /// @param [in]		nVideoCodec		视频的编译类型
 /// @param [in]		nFPS			视频的帧率
 /// @remark		    若pMediaHeader为NULL,则pHeaderSize只返回所需缓冲区的长度
-IPCPLAYSDK_API int dvoplay_BuildMediaHeader(INOUT byte *pMediaHeader, INOUT int  *pHeaderSize,IN IPC_CODEC nAudioCodec,IN IPC_CODEC nVideoCodec,USHORT nFPS)
+IPCPLAYSDK_API int ipcplay_BuildMediaHeader(INOUT byte *pMediaHeader, INOUT int  *pHeaderSize,IN IPC_CODEC nAudioCodec,IN IPC_CODEC nVideoCodec,USHORT nFPS)
 {
 	if (!pHeaderSize)
 		return IPC_Error_InvalidParameters;
@@ -829,7 +829,7 @@ IPCPLAYSDK_API int dvoplay_BuildMediaHeader(INOUT byte *pMediaHeader, INOUT int 
 /// @param [in]		pIPCIpcStream	从IPC IPC得到的码流数据
 /// @param [in,out]	nStreamLength	输入时为从IPC IPC得到的码流数据长度，输出时为码流数据去头后的长度,即裸码流的长度
 /// @remark		    若pMediaFrame为NULL,则pFrameSize只返回IPC录像帧长度
-IPCPLAYSDK_API int dvoplay_BuildFrameHeader(OUT byte *pFrameHeader, INOUT int *HeaderSize, IN int nFrameID, IN byte *pIPCIpcStream, IN int &nStreamLength)
+IPCPLAYSDK_API int ipcplay_BuildFrameHeader(OUT byte *pFrameHeader, INOUT int *HeaderSize, IN int nFrameID, IN byte *pIPCIpcStream, IN int &nStreamLength)
 {
 	if (!pIPCIpcStream || !nStreamLength)
 		return sizeof(IPCFrameHeaderEx);
@@ -881,10 +881,10 @@ IPCPLAYSDK_API int dvoplay_BuildFrameHeader(OUT byte *pFrameHeader, INOUT int *H
 }
 
 /// @brief			设置探测码流类型时，等待码流的超时值
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		dwTimeout		等待码流的赶时值，单位毫秒
-/// @remark			该函数必须要在dvoplay_Start之前调用，才能生效
-IPCPLAYSDK_API int dvoplay_SetProbeStreamTimeout(IN IPC_PLAYHANDLE hPlayHandle, IN DWORD dwTimeout /*= 3000*/)
+/// @remark			该函数必须要在ipcplay_Start之前调用，才能生效
+IPCPLAYSDK_API int ipcplay_SetProbeStreamTimeout(IN IPC_PLAYHANDLE hPlayHandle, IN DWORD dwTimeout /*= 3000*/)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -896,11 +896,11 @@ IPCPLAYSDK_API int dvoplay_SetProbeStreamTimeout(IN IPC_PLAYHANDLE hPlayHandle, 
 }
 
 /// @brief			设置图像的像素格式
-/// @param [in]		hPlayHandle		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		nPixelFMT		要设置的像素格式，详见见@see PIXELFMORMAT
 /// @param [in]		pUserPtr		用户自定义指针，在调用回调时，将会传回此指针
 /// @remark			若要设置外部显示回调，必须把显示格式设置为R8G8B8格式
-IPCPLAYSDK_API int dvoplay_SetPixFormat(IN IPC_PLAYHANDLE hPlayHandle, IN PIXELFMORMAT nPixelFMT)
+IPCPLAYSDK_API int ipcplay_SetPixFormat(IN IPC_PLAYHANDLE hPlayHandle, IN PIXELFMORMAT nPixelFMT)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -910,7 +910,7 @@ IPCPLAYSDK_API int dvoplay_SetPixFormat(IN IPC_PLAYHANDLE hPlayHandle, IN PIXELF
 	return pPlayer->SetPixelFormat(nPixelFMT);
 }
 
-IPCPLAYSDK_API void dvoplay_ClearD3DCache()
+IPCPLAYSDK_API void ipcplay_ClearD3DCache()
 {
 	
 }

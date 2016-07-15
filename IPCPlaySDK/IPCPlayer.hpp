@@ -1953,7 +1953,7 @@ public:
 	/// @retval			0	操作成功
 	/// @retval			1	流缓冲区已满
 	/// @retval			-1	输入参数无效
-	/// @remark			播放流数据时，相应的帧数据其实并未立即播放，而是被放了播放队列中，应该根据dvoplay_PlayStream
+	/// @remark			播放流数据时，相应的帧数据其实并未立即播放，而是被放了播放队列中，应该根据ipcplay_PlayStream
 	///					的返回值来判断，是否继续播放，若说明队列已满，则应该暂停播放
 	int StartPlay(bool bEnaleAudio = false,bool bEnableHaccel = false,bool bFitWindow = true)
 	{
@@ -2135,7 +2135,7 @@ public:
 	/// @retval			0	操作成功
 	/// @retval			1	流缓冲区已满
 	/// @retval			-1	输入参数无效
-	/// @remark			播放流数据时，相应的帧数据其实并未立即播放，而是被放了播放队列中，应该根据dvoplay_PlayStream
+	/// @remark			播放流数据时，相应的帧数据其实并未立即播放，而是被放了播放队列中，应该根据ipcplay_PlayStream
 	///					的返回值来判断，是否继续播放，若说明队列已满，则应该暂停输入
 	int InputStream(unsigned char *szFrameData, int nFrameSize, UINT nCacheSize = 0, bool bThreadInside = false/*是否内部线程调用标志*/)
 	{
@@ -2266,7 +2266,7 @@ public:
 	/// @retval			0	操作成功
 	/// @retval			1	流缓冲区已满
 	/// @retval			-1	输入参数无效
-	/// @remark			播放流数据时，相应的帧数据其实并未立即播放，而是被放了播放队列中，应该根据dvoplay_PlayStream
+	/// @remark			播放流数据时，相应的帧数据其实并未立即播放，而是被放了播放队列中，应该根据ipcplay_PlayStream
 	///					的返回值来判断，是否继续播放，若说明队列已满，则应该暂停播放
 // 	UINT m_nAudioFrames1 = 0;
 // 	UINT m_nVideoFraems = 0;
@@ -3682,7 +3682,7 @@ public:
 	}
 
 	/// @brief			获取码流类型	
-	/// @param [in]		pVideoCodec		由dvoplay_OpenFile或dvoplay_OpenStream返回的播放句柄
+	/// @param [in]		pVideoCodec		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 	/// @param [out]	pAudioCodec	返回当前hPlayHandle是否已开启硬解码功能
 	/// @remark 码流类型定义请参考:@see IPC_CODEC
 	/// @retval			0	操作成功
