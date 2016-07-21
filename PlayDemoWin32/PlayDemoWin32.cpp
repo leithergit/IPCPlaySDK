@@ -1146,8 +1146,8 @@ void  __stdcall StreamCallBack(IN USER_HANDLE  lUserID,
 	switch (pStreamHeader->frame_type)
 	{
 	case 0:
-	case APP_NET_TCP_COM_DST_IDR_FRAME:
-	case APP_NET_TCP_COM_DST_I_FRAME:
+	case IPC_IDR_FRAME:
+	case IPC_I_FRAME:
 	{
 		if (!pContext->bRecvIFrame)
 		{
@@ -1163,8 +1163,8 @@ void  __stdcall StreamCallBack(IN USER_HANDLE  lUserID,
 			pContext->nFPS = 1000 / nFrameTimeSpan;
 		break;
 	}
-	case APP_NET_TCP_COM_DST_P_FRAME:
-	case APP_NET_TCP_COM_DST_B_FRAME:
+	case IPC_P_FRAME:
+	case IPC_B_FRAME:
 	{
 		// ÕâÀïÖ»¶ÔÊÓÆµÖ¡¼ÆËãÖ¡ID
 		if (pContext->bRecvIFrame)
@@ -1175,10 +1175,10 @@ void  __stdcall StreamCallBack(IN USER_HANDLE  lUserID,
 			pContext->nFPS = 1000 / nFrameTimeSpan;
 		break;
 	}
-	case APP_NET_TCP_COM_DST_711_ALAW:      // 711 AÂÉ±àÂëÖ¡
-	case APP_NET_TCP_COM_DST_711_ULAW:      // 711 UÂÉ±àÂëÖ¡
-	case APP_NET_TCP_COM_DST_726:           // 726±àÂëÖ¡
-	case APP_NET_TCP_COM_DST_AAC:           // AAC±àÂëÖ¡
+	case IPC_711_ALAW:      // 711 AÂÉ±àÂëÖ¡
+	case IPC_711_ULAW:      // 711 UÂÉ±àÂëÖ¡
+	case IPC_726:           // 726±àÂëÖ¡
+	case IPC_AAC:           // AAC±àÂëÖ¡
 		if (pContext->bRecvIFrame)
 			pContext->nAudioFrameID++;
 		pContext->nAudioCodec = pStreamHeader->frame_type;

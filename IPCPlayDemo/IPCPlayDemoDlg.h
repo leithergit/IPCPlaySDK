@@ -103,10 +103,11 @@ struct TimeTrace
 			nTimeCount = 0;
 	}
 };
-#define _Frame_PERIOD			30.0f		///< 一个帧率区间
+
 #define WM_UPDATE_STREAMINFO	WM_USER + 1024
 #define WM_UPDATE_PLAYINFO		WM_USER + 1025
 
+#define _Frame_PERIOD			30.0f		///< 一个帧率区间
 struct FrameInfo
 {
 	time_t  tRecvTime;				///< 收到帧的时间 单位毫秒
@@ -229,7 +230,7 @@ public:
 	CSocketClient *pClient;
 	volatile bool bThreadRecvIPCStream/* = false*/;
 	HANDLE hThreadRecvStream/* = NULL*/;
-	fnIPCCallback_RealAVData_T pStreamCallBack/* = NULL*/;
+	fnDVOCallback_RealAVData_T pStreamCallBack/* = NULL*/;
 	boost::shared_ptr<byte>pYuvBuffer /*= NULL*/;
 	int nYuvBufferSize/* = 0*/;
 	DWORD		nVideoFrames/* = 0*/;
@@ -279,7 +280,7 @@ public:
 		hStream = hStreamIn;
 		nPlayerCount = nCount;
 		hPlayer[0] = hPlayerIn;
-		nAudioCodec = APP_NET_TCP_COM_DST_711_ALAW;
+		nAudioCodec = IPC_711_ALAW;
 		InitializeCriticalSection(&csRecFile);
 		m_pInputStreamTimeTrace = new TimeTrace("StreamCallBack", __FUNCTION__);
 
@@ -289,7 +290,7 @@ public:
 		StopRecord();
 		if (hStream != -1)
 		{
-			IPC2_NET_StopRealPlay(hStream);
+			DVO2_NET_StopRealPlay(hStream);
 			hStream = -1;
 		}
 		TraceMsgA("%s Now() = %.5f.\n", __FUNCTION__, GetExactTime());
@@ -309,7 +310,7 @@ public:
 		}
 		if (hUser != -1)
 		{
-			IPC2_NET_Logout(hUser);
+			DVO2_NET_Logout(hUser);
 			hUser = -1;
 		}
 		if (pStreamInfo)
@@ -317,7 +318,7 @@ public:
 		
 		DeleteCriticalSection(&csRecFile);
 	}
-	void StartRecv(fnIPCCallback_RealAVData_T pCallBack)
+	void StartRecv(fnDVOCallback_RealAVData_T pCallBack)
 	{
 		bThreadRecvIPCStream = true;
 		pStreamCallBack = pCallBack;

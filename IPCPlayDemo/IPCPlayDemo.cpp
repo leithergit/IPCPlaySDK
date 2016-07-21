@@ -51,7 +51,7 @@ BOOL CIPCPlayDemoApp::InitInstance()
 	InitCommonControlsEx(&InitCtrls);
 
 	CWinApp::InitInstance();
-	IPC2_NET_Init(true);
+	DVO2_NET_Init(true);
 
 	AfxEnableControlContainer();
 
@@ -105,7 +105,7 @@ BOOL CIPCPlayDemoApp::InitInstance()
 
 int CIPCPlayDemoApp::ExitInstance()
 {
-	IPC2_NET_Release();
+	DVO2_NET_Release();
 
 	return CWinApp::ExitInstance();
 }

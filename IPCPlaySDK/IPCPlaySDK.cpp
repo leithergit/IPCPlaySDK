@@ -161,6 +161,16 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenStream(IN HWND hWnd, byte *szStreamHea
 	}
 }
 
+IPCPLAYSDK_API int	ipcplay_SetStreamHeader(IN IPC_PLAYHANDLE hPlayHandle, byte *szStreamHeader, int nHeaderSize)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	return pPlayer->SetStreamHeader((CHAR *)szStreamHeader, nHeaderSize);
+}
+
 /// @brief			关闭播放句柄
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		bCacheD3d		是否启用D3D设备缓存，若播放时始终只在同一个窗口进行，则建议启用D3D缓存，否则应关闭D3D缓存
@@ -306,6 +316,19 @@ IPCPLAYSDK_API int ipcplay_Start(IN IPC_PLAYHANDLE hPlayHandle,
 	return pPlayer->StartPlay(bEnableAudio, bEnableHaccel,bFitWindow);
 }
 
+/// @brief			判断播放器是否正在播放中
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @retval			true	播放器正在播放中
+/// @retval			false	插放器已停止播放
+IPCPLAYSDK_API bool ipcplay_IsPlaying(IN IPC_PLAYHANDLE hPlayHandle)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	return pPlayer->IsPlaying();
+}
 /// @brief 复位播放器,在窗口大小变化较大或要切换播放窗口时，建议复位播放器，否则画面质量可能会严重下降
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		hWnd			显示视频的窗口
@@ -625,10 +648,7 @@ IPCPLAYSDK_API int  ipcplay_SetMaxFrameSize(IN IPC_PLAYHANDLE hPlayHandle, IN UI
 	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
 	if (pPlayer->nSize != sizeof(CIPCPlayer))
 		return IPC_Error_InvalidParameters;
-	if (pPlayer->IsFilePlayer())
-		return pPlayer->SetMaxFrameSize(nMaxFrameSize);
-	else
-		return IPC_Error_NotFilePlayer;
+	return pPlayer->SetMaxFrameSize(nMaxFrameSize);
 }
 
 
@@ -851,16 +871,16 @@ IPCPLAYSDK_API int ipcplay_BuildFrameHeader(OUT byte *pFrameHeader, INOUT int *H
 	switch (pStreamHeader->frame_type)
 	{
 	case 0:									// 海思I帧号为0，这是固件的一个BUG，有待修正
-	case APP_NET_TCP_COM_DST_IDR_FRAME: 	// IDR帧
-	case APP_NET_TCP_COM_DST_I_FRAME:		// I帧
+	case IPC_IDR_FRAME: 	// IDR帧
+	case IPC_I_FRAME:		// I帧
 		FrameHeader.nType = FRAME_I;
 		break;
-	case APP_NET_TCP_COM_DST_P_FRAME:       // P帧
-	case APP_NET_TCP_COM_DST_B_FRAME:       // B帧
-	case APP_NET_TCP_COM_DST_711_ALAW:      // 711 A律编码帧
-	case APP_NET_TCP_COM_DST_711_ULAW:      // 711 U律编码帧
-	case APP_NET_TCP_COM_DST_726:           // 726编码帧
-	case APP_NET_TCP_COM_DST_AAC:           // AAC编码帧
+	case IPC_P_FRAME:       // P帧
+	case IPC_B_FRAME:       // B帧
+	case IPC_711_ALAW:      // 711 A律编码帧
+	case IPC_711_ULAW:      // 711 U律编码帧
+	case IPC_726:           // 726编码帧
+	case IPC_AAC:           // AAC编码帧
 		FrameHeader.nType = pStreamHeader->frame_type;
 		break;
 	default:

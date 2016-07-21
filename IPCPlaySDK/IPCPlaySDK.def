@@ -43,3 +43,5 @@ EXPORTS
 	ipcplay_RemoveBorderRect
 	ipcplay_SetProbeStreamTimeout
 	ipcplay_SetPixFormat
+	ipcplay_IsPlaying
+	ipcplay_SetStreamHeader

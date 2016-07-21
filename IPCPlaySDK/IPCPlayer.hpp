@@ -36,6 +36,8 @@
 #include "Runlog.h"
 #include "DirectDraw.h"
 
+#define  Win7MajorVersion	6
+
 #ifdef _DEBUG
 #define _New	new
 #else
@@ -562,16 +564,17 @@ struct StreamFrame
 		switch (nFrameType)
 		{
 		case 0:									// 海思I帧号为0，这是固件的一个BUG，有待修正
-		case APP_NET_TCP_COM_DST_IDR_FRAME: 	// IDR帧。
-		case APP_NET_TCP_COM_DST_I_FRAME:		// I帧。
-			pHeader->nType = FRAME_I;
-			break;
-		case APP_NET_TCP_COM_DST_P_FRAME:       // P帧
-		case APP_NET_TCP_COM_DST_B_FRAME:       // B帧
-		case APP_NET_TCP_COM_DST_711_ALAW:      // 711 A律编码帧
-		case APP_NET_TCP_COM_DST_711_ULAW:      // 711 U律编码帧
-		case APP_NET_TCP_COM_DST_726:           // 726编码帧
-		case APP_NET_TCP_COM_DST_AAC:           // AAC编码帧。
+		case IPC_IDR_FRAME: 	// IDR帧。
+		case IPC_I_FRAME:		// I帧。
+// 			pHeader->nType = FRAME_I;
+// 			break;
+		case IPC_P_FRAME:       // P帧
+		case IPC_B_FRAME:       // B帧
+		case IPC_711_ALAW:      // 711 A律编码帧
+		case IPC_711_ULAW:      // 711 U律编码帧
+		case IPC_726:           // 726编码帧
+		case IPC_AAC:           // AAC编码帧。
+		case IPC_GOV_FRAME:
 			pHeader->nType = nFrameType; 
 			break;
 		default:
@@ -625,10 +628,11 @@ struct StreamFrame
 	static bool IsIFrame(StreamFramePtr FramePtr)
 	{
 		//if (FramePtr->FrameHeader()->nType == FRAME_I)
-		// TraceMsgA("%s Get an  Frame [%d].\n", __FUNCTION__, FramePtr->FrameHeader()->nType);
-		return (FramePtr->FrameHeader()->nType == 0
-				||FramePtr->FrameHeader()->nType == FRAME_IDR 
-				|| FramePtr->FrameHeader()->nType == FRAME_I);
+		const IPCFrameHeaderEx* pHeader = FramePtr->FrameHeader();
+		return (pHeader->nType == 0
+				|| pHeader->nType == FRAME_IDR
+				|| pHeader->nType == FRAME_I
+				|| pHeader->nType == FRAME_GOV);
 	}
 	int		nSize;	
 	byte	*pInputData;
@@ -933,7 +937,7 @@ private:
 		m_nAudioPlayFPS = 50;
 		m_nSampleFreq = 8000;
 		m_nSampleBit = 16;
-		m_nProbeStreamTimeout = 3000;	// 毫秒
+		m_nProbeStreamTimeout = 10000;	// 毫秒
 		m_nTimerID = - 1;
 		m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
 	}
@@ -1225,7 +1229,7 @@ private:
 	bool InitizlizeDisplay()
 	{
 		// 初始显示组件
-		if (GetOsMajorVersion() < 6)
+		if (GetOsMajorVersion() < Win7MajorVersion)
 		{
 			if (m_pDDraw)
 			{
@@ -1503,7 +1507,7 @@ public:
 		m_nAudioPlayFPS = 50;
 		m_nSampleFreq = 8000;
 		m_nSampleBit = 16;
-		m_nProbeStreamTimeout = 3000;	// 毫秒
+		m_nProbeStreamTimeout = 10000;	// 毫秒
 #ifdef _DEBUG
 		OutputMsg("%s Alloc a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
 #endif
@@ -1676,7 +1680,7 @@ public:
 			//if (TimeSpanEx(g_dfProcessLoadTime) < 15)
 			//{// 进程启动15秒内，不从缓存中取CDxSurface 对象
 				//if (IsWindowsVistaOrGreater())
-				if (GetOsMajorVersion() >= 6)
+			if (GetOsMajorVersion() >= Win7MajorVersion)
 					m_pDxSurface = _New CDxSurfaceEx();
 				else
 					m_pDDraw = _New CDirectDraw();
@@ -2013,6 +2017,17 @@ public:
 		return IPC_Succeed;
 	}
 
+	/// @brief			判断播放器是否正在播放中	
+	/// @retval			true	播放器正在播放中
+	/// @retval			false	插放器已停止播放
+	bool IsPlaying()
+	{
+		if (m_hThreadPlayVideo)
+			return true;
+		else
+			return false;
+	}
+
 	/// @brief 复位播放窗口
 	bool Reset(HWND hWnd = nullptr, int nWidth = 0, int nHeight = 0)
 	{
@@ -2302,10 +2317,12 @@ public:
 		switch (nFrameType)
 		{
 			case 0:									// 海思I帧号为0，这是固件的一个BUG，有待修正
-			case APP_NET_TCP_COM_DST_IDR_FRAME: 	// IDR帧。
-			case APP_NET_TCP_COM_DST_I_FRAME:		// I帧。		
-			case APP_NET_TCP_COM_DST_P_FRAME:       // P帧。
-			case APP_NET_TCP_COM_DST_B_FRAME:       // B帧。
+			
+			case IPC_IDR_FRAME: 	// IDR帧。
+			case IPC_I_FRAME:		// I帧。		
+			case IPC_P_FRAME:       // P帧。
+			case IPC_B_FRAME:       // B帧。
+			case IPC_GOV_FRAME: 	// GOV帧。
 			{
 				//m_nVideoFraems++;
 				StreamFramePtr pStream = make_shared<StreamFrame>(pFrameData, nFrameType, nFrameLength, nFrameNum, nFrameTime);
@@ -2327,10 +2344,10 @@ public:
 				m_listVideoCache.push_back(pStream);
 			}
 				break;
-			case APP_NET_TCP_COM_DST_711_ALAW:      // 711 A律编码帧
-			case APP_NET_TCP_COM_DST_711_ULAW:      // 711 U律编码帧
-			case APP_NET_TCP_COM_DST_726:           // 726编码帧
-			case APP_NET_TCP_COM_DST_AAC:           // AAC编码帧。
+			case IPC_711_ALAW:      // 711 A律编码帧
+			case IPC_711_ULAW:      // 711 U律编码帧
+			case IPC_726:           // 726编码帧
+			case IPC_AAC:           // AAC编码帧。
 			{
 				m_nAudioCodec = (IPC_CODEC)nFrameType;
 // 				if ((timeGetTime() - m_dwInputStream) >= 20000)
@@ -3710,7 +3727,7 @@ public:
 			return false;
 		m_pStreamProbe->nProbeCount++;
 		m_pStreamProbe->GetProbeStream(szFrameBuffer, nBufferLength);
-		if (m_pStreamProbe->nProbeDataLength <= 128)
+		if (m_pStreamProbe->nProbeDataLength <= 64)
 			return false;
 		if (pDecodec->ProbeStream(this, ReadAvData, m_nMaxFrameSize) != 0)
 		{
@@ -4064,17 +4081,44 @@ public:
 			!pThis->m_nVideoWidth||
 			!pThis->m_nVideoHeight)
 		{
+			bool bGovInput = false;
+			while (true)
+			{
+				if ((timeGetTime() - tFirst) >= pThis->m_nProbeStreamTimeout)
+					break;
+				CAutoLock lock(&pThis->m_csVideoCache, false, __FILE__, __FUNCTION__, __LINE__);
+				if (pThis->m_listVideoCache.size() > 1)
+					break;
+				Sleep(25);
+			}
+			auto itPos = pThis->m_listVideoCache.begin();
 			while (!bProbeSucced && pThis->m_bThreadPlayVideoRun)
 			{
+#ifndef _DEBUG
 				if ((timeGetTime() - tFirst) < pThis->m_nProbeStreamTimeout)
+#else
+				if ((timeGetTime() - tFirst) < INFINITE)
+#endif
 				{
 					Sleep(5);
 					CAutoLock lock(&pThis->m_csVideoCache, false, __FILE__, __FUNCTION__, __LINE__);
-					auto it = find_if(pThis->m_listVideoCache.begin(), pThis->m_listVideoCache.end(), StreamFrame::IsIFrame);
-					if (it != pThis->m_listVideoCache.end())
+					auto it = find_if(itPos, pThis->m_listVideoCache.end(), StreamFrame::IsIFrame);
+					if (it != pThis->m_listVideoCache.end() )
 					{// 探测码流类型
-						if (bProbeSucced = pThis->ProbeStream((byte *)(*it)->Framedata(pThis->m_nSDKVersion), (*it)->FrameHeader()->nLength))
-							break;
+						itPos = it;
+						itPos++;
+						TraceMsgA("%s Probestream FrameType = %d\tFrameLength = %d.\n",__FUNCTION__, (*it)->FrameHeader()->nType,(*it)->FrameHeader()->nLength);
+						if ((*it)->FrameHeader()->nType == FRAME_GOV )
+						{
+							if (bGovInput)
+								continue;
+							bGovInput = true;
+							if (bProbeSucced = pThis->ProbeStream((byte *)(*it)->Framedata(pThis->m_nSDKVersion), (*it)->FrameHeader()->nLength))
+								break;
+						}
+						else
+							if (bProbeSucced = pThis->ProbeStream((byte *)(*it)->Framedata(pThis->m_nSDKVersion), (*it)->FrameHeader()->nLength))
+								break;
 					}
 				}
 				else
@@ -4163,7 +4207,7 @@ public:
 		if (pThis->m_hWnd)
 		{
 			bool bCacheDxSurface = false;		// 是否为缓存中取得的Surface对象
-			if (GetOsMajorVersion() < 6)
+			if (GetOsMajorVersion() < Win7MajorVersion)
 			{
 				if (!pThis->m_pDDraw)
 					pThis->m_pDDraw = _New CDirectDraw();

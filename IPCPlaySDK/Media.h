@@ -19,7 +19,7 @@
 /// @brief ÷°¿‡–Õ
 enum FrameType
 {
-	FRAME_UNKNOWN	 = -1,
+	FRAME_GOV		 = -1,
 	FRAME_IDR		 = 1,
 	FRAME_I			 = 2,
 	FRAME_P			 = 3,

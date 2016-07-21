@@ -690,7 +690,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonConnect()
 		case IDC_RADIO_IPCNETSDK:
 		{
 			app_net_tcp_sys_logo_info_t LoginInfo;
-			USER_HANDLE hUser = IPC2_NET_Login(szIPAddress, 6001, szAccount, szPassowd, &LoginInfo, &nError, 5000);
+			USER_HANDLE hUser = DVO2_NET_Login(szIPAddress, 6001, szAccount, szPassowd, &LoginInfo, &nError, 5000);
 			if (hUser != -1)
 			{
 				if (ComboBox_FindString(::GetDlgItem(m_hWnd, IDC_IPADDRESS), 0, szIPAddress) == CB_ERR)
@@ -840,13 +840,13 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlaystream()
 			{
 				nStream = SendDlgItemMessage(IDC_COMBO_STREAM, CB_GETCURSEL);
 				int nError = 0;
-				REAL_HANDLE hStreamHandle = IPC2_NET_StartRealPlay(m_pPlayContext->hUser,
+				REAL_HANDLE hStreamHandle = DVO2_NET_StartRealPlay(m_pPlayContext->hUser,
 					0,
 					nStream,
 					IPC_TCP,
 					0,
 					NULL,
-					(fnIPCCallback_RealAVData_T)StreamCallBack,
+					(fnDVOCallback_RealAVData_T)StreamCallBack,
 					(void *)m_pPlayContext.get(),
 					&nError);
 				if (hStreamHandle == -1)
@@ -995,7 +995,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlaystream()
 			{
 				if (!m_pPlayContext->pRecFile)		// ÈôÕýÔÚÂ¼Ïñ£¬Ôò²»Ó¦¶Ï¿ªÂëÁ÷
 				{
-					IPC2_NET_StopRealPlay(m_pPlayContext->hStream);
+					DVO2_NET_StopRealPlay(m_pPlayContext->hStream);
 					m_pPlayContext->hStream = -1;
 					EnableDlgItem(IDC_COMBO_STREAM, true);
 				}
@@ -1186,13 +1186,13 @@ void CIPCPlayDemoDlg::OnBnClickedButtonRecord()
 			if (m_pPlayContext->hStream == -1)
 			{
 				int nError = 0;
-				REAL_HANDLE hStreamHandle = IPC2_NET_StartRealPlay(m_pPlayContext->hUser,
+				REAL_HANDLE hStreamHandle = DVO2_NET_StartRealPlay(m_pPlayContext->hUser,
 					0,
 					nStream,
 					IPC_TCP,
 					0,
 					NULL,
-					(fnIPCCallback_RealAVData_T)StreamCallBack,
+					(fnDVOCallback_RealAVData_T)StreamCallBack,
 					(void *)m_pPlayContext.get(),
 					&nError);
 				if (hStreamHandle == -1)
@@ -1231,7 +1231,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonRecord()
 			m_pPlayContext->StopRecord();
 			if (!m_pPlayContext->hPlayer[0] && m_pPlayContext->hStream != -1)
 			{// Î´²¥·ÅÂëÁ÷,²¢ÇÒÂëÁ÷ÓÐÐ§,ÔòÒª¶Ï¿ªÂëÁ÷
-				IPC2_NET_StopRealPlay(m_pPlayContext->hStream);
+				DVO2_NET_StopRealPlay(m_pPlayContext->hStream);
 				m_pPlayContext->hStream = -1;
 				EnableDlgItem(IDC_COMBO_STREAM, true);
 			}
@@ -1521,10 +1521,10 @@ bool IsIPCVideoFrame(app_net_tcp_enc_stream_head_t *pStreamHeader)
 	switch (pStreamHeader->frame_type)
 	{
 	case 0:
-	case APP_NET_TCP_COM_DST_IDR_FRAME:
-	case APP_NET_TCP_COM_DST_I_FRAME:	
-	case APP_NET_TCP_COM_DST_P_FRAME:
-	case APP_NET_TCP_COM_DST_B_FRAME:
+	case IPC_IDR_FRAME:
+	case IPC_I_FRAME:	
+	case IPC_P_FRAME:
+	case IPC_B_FRAME:
 		return true;
 	default:
 		return false;
@@ -1535,10 +1535,10 @@ bool IsIPCAudioFrame(app_net_tcp_enc_stream_head_t *pStreamHeader)
 {
 	switch (pStreamHeader->frame_type)
 	{
-	case APP_NET_TCP_COM_DST_711_ALAW:      // 711 AÂÉ±àÂëÖ¡
-	case APP_NET_TCP_COM_DST_711_ULAW:      // 711 UÂÉ±àÂëÖ¡
-	case APP_NET_TCP_COM_DST_726:           // 726±àÂëÖ¡
-	case APP_NET_TCP_COM_DST_AAC:           // AAC±àÂëÖ¡
+	case IPC_711_ALAW:      // 711 AÂÉ±àÂëÖ¡
+	case IPC_711_ULAW:      // 711 UÂÉ±àÂëÖ¡
+	case IPC_726:           // 726±àÂëÖ¡
+	case IPC_AAC:           // AAC±àÂëÖ¡
 		return true;
 	default:
 		return false;
@@ -1587,16 +1587,16 @@ void CIPCPlayDemoDlg::StreamCallBack(IN USER_HANDLE  lUserID,
 	if (pContext->bHisiliconFrame)
 	{
 		if (pStreamHeader->frame_type == 0)
-			pStreamHeader->frame_type = APP_NET_TCP_COM_DST_IDR_FRAME;
+			pStreamHeader->frame_type = IPC_IDR_FRAME;
 		else if (pStreamHeader->frame_type == 1)
-			pStreamHeader->frame_type = APP_NET_TCP_COM_DST_P_FRAME;
+			pStreamHeader->frame_type = IPC_P_FRAME;
 		//TraceMsgA("FrameType = %d\tFrameLength = %d.\n", pStreamHeader->frame_type, nFrameLength);
 	}
 	switch (pStreamHeader->frame_type)
 	{
 	case 0:
-	case APP_NET_TCP_COM_DST_IDR_FRAME:
-	case APP_NET_TCP_COM_DST_I_FRAME:
+	case IPC_IDR_FRAME:
+	case IPC_I_FRAME:
 	{
 		if (pContext->bHisiliconFrame)
 			pStreamHeader->frame_type += 1;
@@ -1622,8 +1622,8 @@ void CIPCPlayDemoDlg::StreamCallBack(IN USER_HANDLE  lUserID,
 			pContext->nFPS = 1000 / nFrameTimeSpan;
 		break;
 	}
-	case APP_NET_TCP_COM_DST_P_FRAME:
-	case APP_NET_TCP_COM_DST_B_FRAME:
+	case IPC_P_FRAME:
+	case IPC_B_FRAME:
 	{
 		// ÕâÀïÖ»¶ÔÊÓÆµÖ¡¼ÆËãÖ¡ID
 		if (pContext->bRecvIFrame)
@@ -1641,15 +1641,15 @@ void CIPCPlayDemoDlg::StreamCallBack(IN USER_HANDLE  lUserID,
 			pContext->nFPS = 1000 / nFrameTimeSpan;
 		break;
 	}
-	case APP_NET_TCP_COM_DST_711_ALAW:      // 711 AÂÉ±àÂëÖ¡
-	case APP_NET_TCP_COM_DST_711_ULAW:      // 711 UÂÉ±àÂëÖ¡
-	case APP_NET_TCP_COM_DST_726:           // 726±àÂëÖ¡
-	case APP_NET_TCP_COM_DST_AAC:           // AAC±àÂëÖ¡
+	case IPC_711_ALAW:      // 711 AÂÉ±àÂëÖ¡
+	case IPC_711_ULAW:      // 711 UÂÉ±àÂëÖ¡
+	case IPC_726:           // 726±àÂëÖ¡
+	case IPC_AAC:           // AAC±àÂëÖ¡
 		if (pContext->bRecvIFrame)		
 			pContext->nAudioFrameID++;
 		pContext->nAudioCodec = pStreamHeader->frame_type;
 		pContext->pStreamInfo->nAudioFrameCount++;
-		//pStreamHeader->frame_type = APP_NET_TCP_COM_DST_711_ALAW;
+		//pStreamHeader->frame_type = IPC_711_ALAW;
 		break;
 	default:
 		//TraceMsgA("%s Audio Frame Length = %d.\n", __FUNCTION__, nFrameLength);
@@ -1658,10 +1658,10 @@ void CIPCPlayDemoDlg::StreamCallBack(IN USER_HANDLE  lUserID,
 	switch (pStreamHeader->frame_type)
 	{
 	case 0:
-	case APP_NET_TCP_COM_DST_IDR_FRAME:
-	case APP_NET_TCP_COM_DST_I_FRAME:
-	case APP_NET_TCP_COM_DST_P_FRAME:
-	case APP_NET_TCP_COM_DST_B_FRAME:
+	case IPC_IDR_FRAME:
+	case IPC_I_FRAME:
+	case IPC_P_FRAME:
+	case IPC_B_FRAME:
 	{
 		if (pContext->m_dfLastInputstream != 0.0f)
 		{

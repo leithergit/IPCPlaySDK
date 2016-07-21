@@ -408,7 +408,7 @@ public:
 	/// @retval			-1	操作失败	
 	/// @remark			用于探测码流的类型，尺寸等信息
 
-	int ProbeStream(void *Opaque,int(*read_packet)(void *opaque, uint8_t *buf, int buf_size), int nFrameBufferSize =1024*256 )
+	int ProbeStream(void *Opaque,int(*read_packet)(void *opaque, uint8_t *buf, int buf_size), int nFrameBufferSize =1024*512 )
 	{
 		int nAvError = 0;
 		char szAvError[1024] = { 0 };

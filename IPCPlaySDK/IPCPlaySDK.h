@@ -88,16 +88,17 @@ enum IPC_CALLBACK
 };
 
 typedef enum {
-	APP_NET_TCP_COM_DST_IDR_FRAME = 1,  ///< IDR帧。
-	APP_NET_TCP_COM_DST_I_FRAME,        ///< I帧。
-	APP_NET_TCP_COM_DST_P_FRAME,        ///< P帧。
-	APP_NET_TCP_COM_DST_B_FRAME,        ///< B帧。
-	APP_NET_TCP_COM_DST_JPEG_FRAME,     ///< JPEG帧
-	APP_NET_TCP_COM_DST_711_ALAW,       ///< 711 A律编码帧
-	APP_NET_TCP_COM_DST_711_ULAW,       ///< 711 U律编码帧
-	APP_NET_TCP_COM_DST_726,            ///< 726编码帧
-	APP_NET_TCP_COM_DST_AAC,            ///< AAC编码帧。
-	APP_NET_TCP_COM_DST_MAX,
+	IPC_GOV_FRAME = -1, ///< GOV帧
+	IPC_IDR_FRAME = 1,  ///< IDR帧。
+	IPC_I_FRAME,        ///< I帧。
+	IPC_P_FRAME,        ///< P帧。
+	IPC_B_FRAME,        ///< B帧。
+	IPC_JPEG_FRAME,     ///< JPEG帧
+	IPC_711_ALAW,       ///< 711 A律编码帧
+	IPC_711_ULAW,       ///< 711 U律编码帧
+	IPC_726,            ///< 726编码帧
+	IPC_AAC,            ///< AAC编码帧。
+	IPC_MAX,
 } APP_NET_TCP_STREAM_TYPE;
 
 #define		IPC_Succeed						(0)		///< 操作成功
@@ -269,6 +270,12 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenFileW(IN HWND hWnd, IN WCHAR *szFileNa
 ///	放函数都要使用些接口，若操作失败则返回NULL,错误原因可参考GetLastError的返回值
 IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenStream(IN HWND hWnd, byte *szStreamHeader, int nHeaderSize, IN int nMaxFramesCache = 100, char *szLogFile = nullptr);
 
+///	@brief			设置流播放头信息
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		szStreamHeader	IPC私有格式的录像文件头,播放相机实时码流时，应设置为null
+/// @param [in]		nHeaderSize		IPC录像文件头的长度播放相机实时码流时，应设置为0
+IPCPLAYSDK_API int	ipcplay_SetStreamHeader(IN IPC_PLAYHANDLE hPlayHandle, byte *szStreamHeader, int nHeaderSize);
+
 /// @brief			关闭播放句柄
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		bCacheD3d		是否启用D3D设备缓存，若播放时始终只在同一个窗口进行，则建议启用D3D缓存，否则应关闭D3D缓存
@@ -358,6 +365,12 @@ IPCPLAYSDK_API int ipcplay_InputIPCStream(IN IPC_PLAYHANDLE hPlayHandle, IN byte
 /// @remark			当开启硬解码，而显卡不支持对应的视频编码的解码时，会自动切换到软件解码的状态,可通过
 ///					ipcplay_GetHaccelStatus判断是否已经开启硬解码
 IPCPLAYSDK_API int ipcplay_Start(IN IPC_PLAYHANDLE hPlayHandle, IN bool bEnableAudio = false, bool bFitWindow = true, bool bEnableHaccel = false);
+
+/// @brief			判断播放器是否正在播放中
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @retval			true	播放器正在播放中
+/// @retval			false	插放器已停止播放
+IPCPLAYSDK_API bool ipcplay_IsPlaying(IN IPC_PLAYHANDLE hPlayHandle);
 
 /// @brief 复位播放器,在窗口大小变化较大或要切换播放窗口时，建议复位播放器，否则画面质量可能会严重下降
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄

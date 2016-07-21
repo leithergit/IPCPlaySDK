@@ -77,16 +77,16 @@
 // }app_net_tcp_enc_ctl_ack_t;
 // 
 // typedef enum {
-// 	APP_NET_TCP_COM_DST_IDR_FRAME = 1,  ///< IDRÖ¡¡£
-// 	APP_NET_TCP_COM_DST_I_FRAME,        ///< IÖ¡¡£
-// 	APP_NET_TCP_COM_DST_P_FRAME,        ///< PÖ¡¡£
-// 	APP_NET_TCP_COM_DST_B_FRAME,        ///< BÖ¡¡£
-// 	APP_NET_TCP_COM_DST_JPEG_FRAME,     ///< JPEGÖ¡
-// 	APP_NET_TCP_COM_DST_711_ALAW,       ///< 711 AÂÉ±àÂëÖ¡
-// 	APP_NET_TCP_COM_DST_711_ULAW,       ///< 711 UÂÉ±àÂëÖ¡
-// 	APP_NET_TCP_COM_DST_726,            ///< 726±àÂëÖ¡
-// 	APP_NET_TCP_COM_DST_AAC,            ///< AAC±àÂëÖ¡¡£
-// 	APP_NET_TCP_COM_DST_MAX,
+// 	IPCIDR_FRAME = 1,  ///< IDRÖ¡¡£
+// 	IPCI_FRAME,        ///< IÖ¡¡£
+// 	IPCP_FRAME,        ///< PÖ¡¡£
+// 	IPCB_FRAME,        ///< BÖ¡¡£
+// 	IPCJPEG_FRAME,     ///< JPEGÖ¡
+// 	IPC711_ALAW,       ///< 711 AÂÉ±àÂëÖ¡
+// 	IPC711_ULAW,       ///< 711 UÂÉ±àÂëÖ¡
+// 	IPC726,            ///< 726±àÂëÖ¡
+// 	IPCAAC,            ///< AAC±àÂëÖ¡¡£
+// 	IPCMAX,
 // } APP_NET_TCP_STREAM_TYPE;
 // // #ifdef _DEBUG
 // // #define new DEBUG_NEW
