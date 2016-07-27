@@ -139,7 +139,9 @@ typedef enum {
 #define		IPC_Error_InvalidCacheSize		(-34)	///< 播放器已经启动，不能执行初始化或其它设置操作
 #define		IPC_Error_UnsupportHaccel		(-35)	///< 当前系统不支持硬解码功能
 #define		IPC_Error_UnsupportedFormat		(-35)	///< 不支持的图像格式
+#define		IPC_Error_UnsupportedCodec		(-36)	///< 不支持的编码格式
 #define		IPC_Error_InsufficentMemory		(-255)	///< 内存不足
+
 #define		WM_IPCPLAYER_MESSAGE			WM_USER + 8192	///< 播放器出错时发出的消息 ,消息的LPARAM字段无意义,wparam字段定义如下：
 #define		IPCPLAYER_NOTRECVIFRAME			0		///< 未收到有效的I帧
 #define		IPCPLAYER_INITD3DFAILED			1		///< D3D初始化失败

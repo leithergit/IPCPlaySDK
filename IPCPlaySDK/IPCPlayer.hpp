@@ -158,6 +158,8 @@ class CSnapshot
 	int		 nImaageSize;
 	int		 nVideoWidth;
 	int		 nVideoHeight;
+	AVPixelFormat nAvFormat;
+	AVCodecID nCodecID;
 public:
 	CSnapshot(AVPixelFormat nAvFormat, int nWidth, int nHeight)
 	{
@@ -176,6 +178,9 @@ public:
 		pAvFrame->width = nWidth;
 		pAvFrame->height = nHeight;
 		pAvFrame->format = nAvFormat;
+		nVideoHeight = nHeight;
+		nVideoWidth = nWidth;
+		this->nAvFormat = nAvFormat;
 	}
 	~CSnapshot()
 	{
@@ -188,16 +193,92 @@ public:
 		pAvFrame = NULL;
 	}
 	
+	inline AVPixelFormat GetPixelFormat()
+	{
+		return nAvFormat;
+	}
+	inline int SetCodecID(IPC_CODEC nVideoCodec)
+	{
+		switch (nVideoCodec)
+		{
+		case CODEC_H264:
+			nCodecID = AV_CODEC_ID_H264;
+			break;
+		case CODEC_H265:
+			nCodecID = AV_CODEC_ID_H265;
+			break;
+		default:
+		{
+			return -1;
+			break;
+		}
+		}
+		return IPC_Succeed;
+	}
+
+	/// @brief 把Dxva硬解码帧转换成YUV420帧
+	int CopyDxvaFrame(AVFrame *pAvFrameDXVA)
+	{
+		if (!pAvFrameDXVA || !pAvFrame)
+			return -1;
+		
+		if (pAvFrameDXVA->format != AV_PIX_FMT_DXVA2_VLD)
+			return -1;
+
+		IDirect3DSurface9* pSurface = (IDirect3DSurface9 *)pAvFrameDXVA->data[3];
+		D3DLOCKED_RECT lRect;
+		D3DSURFACE_DESC SurfaceDesc;
+		pSurface->GetDesc(&SurfaceDesc);
+		HRESULT hr = pSurface->LockRect(&lRect, nullptr, D3DLOCK_READONLY);
+		if (FAILED(hr))
+		{
+			//OutputMsg("%s IDirect3DSurface9::LockRect failed:hr = %08.\n", __FUNCTION__, hr);
+			return -1;
+		}
+
+		// Y分量图像
+		byte *pSrcY = (byte *)lRect.pBits;
+		// UV分量图像
+		//byte *pSrcUV = (byte *)lRect.pBits + lRect.Pitch * SurfaceDesc.Height;
+		byte *pSrcUV = (byte *)lRect.pBits + lRect.Pitch * CVideoDecoder::GetAlignedDimension(nCodecID,pAvFrameDXVA->height);
+
+		byte* dstY = pAvFrame->data[0];
+		byte* dstU = pAvFrame->data[1];
+		byte* dstV = pAvFrame->data[2];
+
+		UINT heithtUV = pAvFrameDXVA->height / 2;
+		UINT widthUV = pAvFrameDXVA->width / 2;
+
+		// 复制Y分量
+		for (int i = 0; i < pAvFrameDXVA->height; i++)
+			memcpy(&dstY[i*pAvFrameDXVA->width], &pSrcY[i*lRect.Pitch], pAvFrameDXVA->width);
+
+		// 复制VU分量
+		for (int i = 0; i < heithtUV; i++)
+		{
+			for (int j = 0; j < widthUV; j++)
+			{
+				dstU[i*widthUV + j] = pSrcUV[i*lRect.Pitch + 2 * j];
+				dstV[i*widthUV + j] = pSrcUV[i*lRect.Pitch + 2 * j + 1];
+			}
+		}
+
+		pSurface->UnlockRect();
+		av_frame_copy_props(pAvFrame, pAvFrameDXVA);
+		pAvFrame->format = AV_PIX_FMT_YUV420P;
+		return 0;
+	}
+
 	int CopyFrame(AVFrame *pFrame)
 	{
-		if (pFrame && pAvFrame)
+		if ((pFrame && pAvFrame))
 		{
 			av_frame_copy(pAvFrame, pFrame);
 			av_frame_copy_props(pAvFrame, pFrame);
-			return -1;
+			return 0;
 		}
 		else
-			return 0;
+			return -1;
 	}
 
 	bool SaveJpeg(char *szJpegFile)
@@ -337,6 +418,7 @@ public:
 		fp = NULL;
 		return true;
 	}
+
 
 	bool SaveBmp(char *szBmpFile)
 	{
@@ -2416,11 +2498,13 @@ public:
 		EnterCriticalSection(&m_csVideoCache);
 		m_listVideoCache.clear();
 		LeaveCriticalSection(&m_csVideoCache);
-
-		if (WaitForMultipleObjects(nHandles, hArray, true, nTimeout) == WAIT_TIMEOUT)
+		if (nHandles > 0)
 		{
-			OutputMsg("%s Wait for thread exit timeout.\n", __FUNCTION__);
-			return false;
+			if (WaitForMultipleObjects(nHandles, hArray, true, nTimeout) == WAIT_TIMEOUT)
+			{
+				OutputMsg("%s Wait for thread exit timeout.\n", __FUNCTION__);
+				return false;
+			}
 		}
 		if (m_hThreadParser)
 		{
@@ -2746,15 +2830,24 @@ public:
 			if (WaitForSingleObject(m_hEvnetYUVReady, 5000) == WAIT_TIMEOUT)
 				return IPC_Error_PlayerNotStart;
 			char szAvError[1024] = { 0 };
+// 			if (m_pSnapshot && m_pSnapshot->GetPixelFormat() != m_nDecodePirFmt)
+// 				m_pSnapshot.reset();
+
 			if (!m_pSnapshot)
 			{
-				m_pSnapshot = make_shared<CSnapshot>(m_nDecodePirFmt, m_nVideoWidth, m_nVideoHeight);
-				//m_pSnapshot = make_shared<CSnapshot>(AV_PIX_FMT_YUV420P, m_nVideoWidth, m_nVideoHeight);
+				if (m_nDecodePirFmt == AV_PIX_FMT_DXVA2_VLD)
+					m_pSnapshot = make_shared<CSnapshot>(AV_PIX_FMT_YUV420P, m_nVideoWidth, m_nVideoHeight);
+				else 
+					m_pSnapshot = make_shared<CSnapshot>(m_nDecodePirFmt, m_nVideoWidth, m_nVideoHeight);
+				
 				if (!m_pSnapshot)
 					return IPC_Error_InsufficentMemory;
+				if (m_pSnapshot->SetCodecID(m_nVideoCodec) != IPC_Succeed)
+					return IPC_Error_UnsupportedCodec;
 			}
+			
 			SetEvent(m_hEventYUVRequire);
-			if (WaitForSingleObject(m_hEventFrameCopied, 1000) == WAIT_TIMEOUT)
+			if (WaitForSingleObject(m_hEventFrameCopied, 2000) == WAIT_TIMEOUT)
 				return IPC_Error_SnapShotFailed;
 			int nResult = IPC_Succeed;
 			switch (nFileFormat)
@@ -2771,7 +2864,7 @@ public:
 				nResult = IPC_Error_UnsupportedFormat;
 				break;
 			}
-			m_pSnapshot.reset();
+			//m_pSnapshot.reset();
 			return nResult;
 		}
 		else
@@ -2789,14 +2882,18 @@ public:
 		
 		if (pAvFrame->format == AV_PIX_FMT_YUV420P ||
 			pAvFrame->format == AV_PIX_FMT_YUVJ420P)
-// 		{// 暂不支持dxva 硬解码帧
-// 			//CopyDxvaFrame(pYUV, pAvFrame);
-// 		}
-// 		else
-		{
-			
+		{// 暂不支持dxva 硬解码帧
 			m_pSnapshot->CopyFrame(pAvFrame);
 			SetEvent(m_hEventFrameCopied);
+		}
+		else if (pAvFrame->format == AV_PIX_FMT_DXVA2_VLD)
+		{
+			m_pSnapshot->CopyDxvaFrame(pAvFrame);
+			SetEvent(m_hEventFrameCopied);			
+		}
+		else
+		{
+			return;
 		}
 	}
 
@@ -3140,8 +3237,8 @@ public:
 	int  EnableAudio(bool bEnable = true)
 	{
 		TraceFunction();
-		if (m_fPlayRate != 1.0f)
-			return IPC_Error_AudioFailed;
+// 		if (m_fPlayRate != 1.0f)
+// 			return IPC_Error_AudioFailed;
 		if (m_pDsoundEnum->GetAudioPlayDevices() <= 0)
 			return IPC_Error_AudioFailed;
 		if (bEnable)
@@ -3848,6 +3945,8 @@ public:
 		pSurface->UnlockRect();
 	}
 
+	
+
 	// 把YUVC420P帧复制到YV12缓存中
 	void CopyFrameYUV420(byte *pYUV420, int nYUV420Size, AVFrame *pFrame420P)
 	{
@@ -4382,6 +4481,7 @@ public:
 					dfDecodeStartTime = GetExactTime();
 					continue;
 				}
+				//avcodec_flush_buffers()
 				av_packet_unref(pAvPacket);
 				dfDecodeTimespan = TimeSpanEx(dfDecodeStartTime);
 				if (StreamFrame::IsIFrame(FramePtr))			// 统计I帧解码时间
@@ -4417,6 +4517,7 @@ public:
 					Sleep(10);
 					continue;
 				}
+
 				pAvPacket->data = (uint8_t *)FramePtr->Framedata(pThis->m_nSDKVersion);
 				pAvPacket->size = FramePtr->FrameHeader()->nLength;
 				pThis->m_tLastFrameTime = FramePtr->FrameHeader()->nTimestamp;
