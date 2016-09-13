@@ -36,7 +36,7 @@
 #include "Runlog.h"
 #include "DirectDraw.h"
 
-#define  Win7MajorVersion	6
+#define  Win7MajorVersion	7
 
 #ifdef _DEBUG
 #define _New	new
@@ -820,6 +820,130 @@ struct StreamProbe
 	int			nProbeCount;			///< 探测次数
 	int			nProbeOffset;			///< 码流探测时视频帧复制时的帧内偏移
 };
+
+struct FrameYV12
+{
+	int nWidth;
+	int nHeight;
+	int nStrideY;
+	int nStrideUV;
+	byte *pY;
+	byte *pU;
+	byte *pV;
+
+	FrameYV12()
+	{
+		ZeroMemory(this, sizeof(FrameYV12));
+	}
+	FrameYV12(const unsigned char* pY,
+		const unsigned char* pU,
+		const unsigned char* pV,
+		int nStrideY,
+		int nStrideUV,
+		int nWidth,
+		int nHeight,
+		INT64 nTime)
+	{
+		int nYSize = nStrideY*nHeight;
+		int nUVSize = nStrideUV*nHeight;
+		this->pY = new byte[nYSize];
+		this->pU = new byte[nUVSize/2];
+		this->pV = new byte[nUVSize/2];
+
+		// 复制Y分量
+		for (int i = 0; i < nHeight; i++)
+			memcpy(&this->pY[i*nWidth], &pY[i*nStrideY], nWidth);
+
+		// 复制VU分量
+		for (int i = 0; i < nHeight / 2; i++)
+		{
+			memcpy(&this->pU[i*nWidth], &pU[i*nStrideUV], nWidth);
+			memcpy(&this->pV[i*nWidth], &pV[i*nStrideUV], nWidth);
+		}
+
+		this->nHeight = nHeight;
+		this->nWidth = nWidth;
+		this->nStrideUV = nStrideUV;
+		this->nStrideY = nStrideY;
+	}
+	FrameYV12(AVFrame *pFrame,INT64 nTime)
+	{
+		nStrideY = pFrame->linesize[0];
+		nStrideUV = pFrame->linesize[1];
+		nHeight = pFrame->height;
+		nWidth = pFrame->width;
+		
+		pY = new byte[nStrideY*nHeight];
+		pU = new byte[nStrideUV*nHeight>>1];
+		pV = new byte[nStrideUV*nHeight>>1];
+
+		memcpy(pY, pFrame->data[0], nStrideY*nHeight);
+		memcpy(pU, pFrame->data[1], nStrideUV*nHeight >> 1);
+		memcpy(pY, pFrame->data[2], nStrideUV*nHeight >> 1);
+	}
+	~FrameYV12()
+	{
+		if (pY)
+			delete[]pY;
+		if (pU)
+			delete[]pU;
+		// 		if (pV)
+		// 			delete []pV;
+		ZeroMemory(this, sizeof(FrameYV12));
+	}
+
+};
+struct FrameNV12
+{
+	int nWidth;
+	int nHeight;
+	int nStrideY;
+	int nStrideUV;
+	byte *pNV12Surface;
+	
+	FrameNV12()
+	{
+		ZeroMemory(this, sizeof(FrameNV12));
+	}
+	FrameNV12(AVFrame *pAvFrame,INT64 nTime)
+	{
+		ZeroMemory(this, sizeof(FrameNV12));
+
+		if (pAvFrame->format != AV_PIX_FMT_DXVA2_VLD)
+			return;
+
+		IDirect3DSurface9* pSurface = (IDirect3DSurface9 *)pAvFrame->data[3];
+		D3DLOCKED_RECT lRect;
+		D3DSURFACE_DESC SurfaceDesc;
+		pSurface->GetDesc(&SurfaceDesc);
+		HRESULT hr = pSurface->LockRect(&lRect, nullptr, D3DLOCK_READONLY);
+		if (FAILED(hr))
+		{
+			TraceMsgA("%s IDirect3DSurface9::LockRect failed:hr = %08.\n", __FUNCTION__, hr);
+			return;
+		}
+		pNV12Surface = new byte[lRect.Pitch*SurfaceDesc.Height * 3 / 2];
+		memcpy(pNV12Surface, lRect.pBits, lRect.Pitch*SurfaceDesc.Height * 3 / 2);
+		nStrideUV = lRect.Pitch/2;
+		nStrideY = lRect.Pitch;
+		pSurface->UnlockRect();
+
+		nHeight = pAvFrame->height;
+		nWidth = pAvFrame->width;
+		
+	}
+	~FrameNV12()
+	{
+		if (pNV12Surface)
+			delete[]pNV12Surface;
+	
+		ZeroMemory(this, sizeof(FrameNV12));
+	}
+
+};
+typedef shared_ptr<FrameNV12> FrameNV12Ptr;
+typedef shared_ptr<FrameYV12> FrameYV12Ptr;
+
 extern volatile bool g_bThread_ClosePlayer/* = false*/;
 extern list<IPC_PLAYHANDLE > g_listPlayertoFree;
 extern CRITICAL_SECTION  g_csListPlayertoFree;
@@ -835,10 +959,14 @@ class CIPCPlayer
 public:
 	int		nSize;
 private:
+	list<FrameNV12Ptr>m_listNV12;		// YUV缓存，硬解码
+	list<FrameYV12Ptr>m_listYV12;		// YUV缓存，软解码
 	list<StreamFramePtr>m_listAudioCache;///< 流播放帧缓冲
 	list<StreamFramePtr>m_listVideoCache;///< 流播放帧缓冲
 	CRITICAL_SECTION	m_csVideoCache;
 	CRITICAL_SECTION	m_csAudioCache;	
+	CRITICAL_SECTION	m_csListYUV;
+	int					m_nMaxYUVCache;	// 允许最大的YUV缓存数量
 	int					m_nMaxFrameCache;///< 最大视频缓冲数量,默认值100
 		///< 当m_FrameCache中的视频帧数量超过m_nMaxFrameCache时，便无法再继续输入流数
 public:
@@ -856,7 +984,7 @@ private:
 	int			m_nTotalFrames;			///< 当前文件中有效视频帧的数量,仅当播放文件时有效
 	int			m_nTotalTime;			///< 当前文件中播放总时长,仅当播放文件时有效
 	shared_ptr<StreamProbe>m_pStreamProbe;
-	HWND		m_hWnd;					///< 播放视频的窗口句柄
+	HWND		m_hRenderWnd;					///< 播放视频的窗口句柄
 	
 	volatile bool m_bIpcStream;			///< 输入流为IPC流
 	volatile DWORD m_nProbeStreamTimeout;///< 探测码流超时间，单位毫秒
@@ -871,6 +999,8 @@ private:
 	DxSurfaceInitInfo	m_DxInitInfo;
 	CDxSurface* m_pDxSurface;			///< Direct3d Surface封装类,用于显示视频
 	CDirectDraw *m_pDDraw;				///< DirectDraw封装类对象，用于在xp下显示视频
+	
+	
 	shared_ptr<ImageSpace> m_pYUVImage = NULL;
 // 	bool		m_bDxReset;				///< 是否重置DxSurface
 // 	HWND		m_hDxReset;
@@ -880,7 +1010,7 @@ private:
 	bool		m_bRefreshWnd;			///< 停止播放时是否刷新画面
 	int			m_nVideoWidth;			///< 视频宽度
 	int			m_nVideoHeight;			///< 视频高度	
-	AVPixelFormat	m_nDecodePirFmt;	///< 解码后的象素格式
+	AVPixelFormat	m_nDecodePixelFmt;	///< 解码后的象素格式
 	int			m_nFrameEplased;		///< 已经播放帧数
 	int			m_nCurVideoFrame;		///< 当前正播放的视频帧ID
 	time_t		m_nFirstFrameTime;		///< 文件播放或流回放的第1帧的时间
@@ -948,7 +1078,7 @@ private:
 	// 截图操作相关句变量
 	HANDLE		m_hEvnetYUVReady;		///< YUV数据就绪事件
 	HANDLE		m_hEventYUVRequire;		///< YUV数据请求事件,立即把当前解码帧进行复制m_pAvFrameSnapshot
-	HANDLE		m_hEventFrameCopied;		///< 截图动作已完成复制事件
+	HANDLE		m_hEventFrameCopied;	///< 截图动作已完成复制事件
 	shared_ptr<CSnapshot>m_pSnapshot;
 	
 private:	// 文件播放相关变量
@@ -1014,6 +1144,7 @@ private:
 		InitializeCriticalSection(&m_csParser);
 		InitializeCriticalSection(&m_csBorderRect);
 		InitializeCriticalSection(&m_csAudioPlayEvent);
+		InitializeCriticalSection(&m_csListYUV);
 		m_nMaxFrameSize = 1024 * 256;
 		nSize = sizeof(CIPCPlayer);
 		m_nAudioPlayFPS = 50;
@@ -1021,6 +1152,7 @@ private:
 		m_nSampleBit = 16;
 		m_nProbeStreamTimeout = 10000;	// 毫秒
 		m_nTimerID = - 1;
+		m_nMaxYUVCache = 10;
 		m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
 	}
 	LONGLONG GetSeekOffset()
@@ -1315,15 +1447,28 @@ private:
 		{
 			if (m_pDDraw)
 			{
-				//构造DirectDraw表面  
-				DDSURFACEDESC2 ddsd = { 0 };
-				FormatYV12::Build(ddsd, m_nVideoWidth, m_nVideoHeight);
-				//m_pDDraw = _New CDirectDraw>;
-				m_pDDraw->Create<FormatYV12>(m_hWnd, ddsd);
-				m_pYUVImage = make_shared<ImageSpace>();
-				m_pYUVImage->dwLineSize[0] = m_nVideoWidth;
-				m_pYUVImage->dwLineSize[1] = m_nVideoWidth >> 1;
-				m_pYUVImage->dwLineSize[2] = m_nVideoWidth >> 1;
+				if (m_bEnableHaccel)
+				{
+					DDSURFACEDESC2 ddsd = { 0 };
+					FormatNV12::Build(ddsd, m_nVideoWidth, m_nVideoHeight);
+					m_pDDraw->Create<FormatNV12>(m_hRenderWnd, ddsd);
+					m_pYUVImage = make_shared<ImageSpace>();
+					m_pYUVImage->dwLineSize[0] = m_nVideoWidth;
+					m_pYUVImage->dwLineSize[1] = m_nVideoWidth >> 1;
+					
+				}
+				else
+				{
+					//构造DirectDraw表面  
+					DDSURFACEDESC2 ddsd = { 0 };
+					FormatYV12::Build(ddsd, m_nVideoWidth, m_nVideoHeight);
+					m_pDDraw->Create<FormatYV12>(m_hRenderWnd, ddsd);
+					m_pYUVImage = make_shared<ImageSpace>();
+					m_pYUVImage->dwLineSize[0] = m_nVideoWidth;
+					m_pYUVImage->dwLineSize[1] = m_nVideoWidth >> 1;
+					m_pYUVImage->dwLineSize[2] = m_nVideoWidth >> 1;
+				}
+				
 			}
 			return true;
 		}
@@ -1356,7 +1501,7 @@ private:
 				
 				InitInfo.bWindowed = TRUE;
 				//if (!pWndDxInit->GetSafeHwnd())
-				InitInfo.hPresentWnd = /*m_pSimpleWnd->GetSafeHwnd()*/m_hWnd;
+				InitInfo.hPresentWnd = /*m_pSimpleWnd->GetSafeHwnd()*/m_hRenderWnd;
 				//else
 				//	InitInfo.hPresentWnd = pWndDxInit->GetSafeHwnd();
 				m_pDxSurface->DisableVsync();		// 禁用垂直同步，播放帧才有可能超过显示器的刷新率，从而达到高速播放的目的
@@ -1386,6 +1531,8 @@ private:
 	/// @brief 渲染一帧
 	void RenderFrame(AVFrame *pAvFrame)
 	{
+		if (!m_hRenderWnd)
+			return;
 		if (m_bFitWindow)
 		{
 			if (m_pDxSurface)
@@ -1396,35 +1543,61 @@ private:
 				{
 					CopyRect(&rtBorder, m_pBorderRect.get());
 					lock.Unlock();
-					m_pDxSurface->Render(pAvFrame, m_hWnd, &rtBorder);
+					m_pDxSurface->Render(pAvFrame);
+					m_pDxSurface->Present(m_hRenderWnd, &rtBorder);
 				}
 				else
-					m_pDxSurface->Render(pAvFrame, m_hWnd);
+				{
+					m_pDxSurface->Render(pAvFrame);
+					m_pDxSurface->Present(m_hRenderWnd);
+				}
 			}
 			else if (m_pDDraw)
 			{
-				m_pYUVImage->pBuffer[0] = (PBYTE)pAvFrame->data[0];
-				m_pYUVImage->pBuffer[1] = (PBYTE)pAvFrame->data[1];
-				m_pYUVImage->pBuffer[2] = (PBYTE)pAvFrame->data[2];
-				m_pYUVImage->dwLineSize[0] = pAvFrame->linesize[0];
-				m_pYUVImage->dwLineSize[1] = pAvFrame->linesize[1];
-				m_pYUVImage->dwLineSize[2] = pAvFrame->linesize[2];
-				RECT rtBorder;
-				CAutoLock lock(&m_csBorderRect);
-				if (m_pBorderRect)
+				if (pAvFrame->format = AV_PIX_FMT_DXVA2_VLD)
 				{
-					CopyRect(&rtBorder, m_pBorderRect.get());
-					lock.Unlock();
-					m_pDDraw->Draw(*m_pYUVImage, &rtBorder, nullptr, true);
+					byte *pY = NULL , *pUV = NULL;
+					int nPitch;
+					LockDxvaFrame(pAvFrame, &pY, &pUV, nPitch);
+					m_pYUVImage->pBuffer[0] = (PBYTE)pY;
+					m_pYUVImage->pBuffer[1] = (PBYTE)pUV;
+					UnlockDxvaFrame(pAvFrame);
+					RECT rtBorder;
+					CAutoLock lock(&m_csBorderRect);
+					if (m_pBorderRect)
+					{
+						CopyRect(&rtBorder, m_pBorderRect.get());
+						lock.Unlock();
+						m_pDDraw->Draw(*m_pYUVImage, &rtBorder, nullptr, true);
+					}
+					else
+						m_pDDraw->Draw(*m_pYUVImage, nullptr, nullptr, true);					
 				}
 				else
-					m_pDDraw->Draw(*m_pYUVImage,nullptr,nullptr,true);
+				{
+					m_pYUVImage->pBuffer[0] = (PBYTE)pAvFrame->data[0];
+					m_pYUVImage->pBuffer[1] = (PBYTE)pAvFrame->data[1];
+					m_pYUVImage->pBuffer[2] = (PBYTE)pAvFrame->data[2];
+					m_pYUVImage->dwLineSize[0] = pAvFrame->linesize[0];
+					m_pYUVImage->dwLineSize[1] = pAvFrame->linesize[1];
+					m_pYUVImage->dwLineSize[2] = pAvFrame->linesize[2];
+					RECT rtBorder;
+					CAutoLock lock(&m_csBorderRect);
+					if (m_pBorderRect)
+					{
+						CopyRect(&rtBorder, m_pBorderRect.get());
+						lock.Unlock();
+						m_pDDraw->Draw(*m_pYUVImage, &rtBorder, nullptr, true);
+					}
+					else
+						m_pDDraw->Draw(*m_pYUVImage, nullptr, nullptr, true);
+				}
 			}
 		}
 		else
 		{
 			RECT rtRender;
-			GetWindowRect(m_hWnd, &rtRender);
+			GetWindowRect(m_hRenderWnd, &rtRender);
 			int nWndWidth = rtRender.right - rtRender.left;
 			int nWndHeight = rtRender.bottom - rtRender.top;
 			float fScaleWnd = (float)nWndHeight / nWndWidth;
@@ -1451,18 +1624,22 @@ private:
 			}
 			if (m_pDxSurface)
 			{
-				ScreenToClient(m_hWnd, (LPPOINT)&rtRender);
-				ScreenToClient(m_hWnd, ((LPPOINT)&rtRender) + 1);
+				ScreenToClient(m_hRenderWnd, (LPPOINT)&rtRender);
+				ScreenToClient(m_hRenderWnd, ((LPPOINT)&rtRender) + 1);
 				RECT rtBorder;
 				CAutoLock lock(&m_csBorderRect);
 				if (m_pBorderRect)
 				{
 					CopyRect(&rtBorder, m_pBorderRect.get());
 					lock.Unlock();
-					m_pDxSurface->Render(pAvFrame, m_hWnd, &rtBorder,&rtRender);
+					m_pDxSurface->Render(pAvFrame);
+					m_pDxSurface->Present(m_hRenderWnd, &rtBorder, &rtRender);
 				}
 				else
-					m_pDxSurface->Render(pAvFrame, m_hWnd, nullptr, &rtRender);
+				{
+					m_pDxSurface->Render(pAvFrame );
+					m_pDxSurface->Present(m_hRenderWnd, nullptr, &rtRender);
+				}
 			}
 			else if (m_pDDraw)
 			{
@@ -1548,6 +1725,7 @@ public:
 		DeleteCriticalSection(&m_csSeekOffset);
 		DeleteCriticalSection(&m_csParser);
 		DeleteCriticalSection(&m_csBorderRect);
+		DeleteCriticalSection(&m_csListYUV);
 		if (m_hDvoFile)
 			CloseHandle(m_hDvoFile);
 	}
@@ -1582,6 +1760,7 @@ public:
 		InitializeCriticalSection(&m_csParser);
 		InitializeCriticalSection(&m_csBorderRect);
 		InitializeCriticalSection(&m_csAudioPlayEvent);
+		InitializeCriticalSection(&m_csListYUV);
 		m_csDsoundEnum->Lock();
 		if (!m_pDsoundEnum)
 			m_pDsoundEnum = make_shared<CDSoundEnum>();	///< 音频设备枚举器
@@ -1590,6 +1769,7 @@ public:
 		m_nSampleFreq = 8000;
 		m_nSampleBit = 16;
 		m_nProbeStreamTimeout = 10000;	// 毫秒
+		m_nMaxYUVCache = 10;
 #ifdef _DEBUG
 		OutputMsg("%s Alloc a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
 #endif
@@ -1758,7 +1938,7 @@ public:
 		}
 		if (hWnd && IsWindow(hWnd))
 		{// 必采要有窗口才会播放视频和声音
-			m_hWnd = hWnd;
+			m_hRenderWnd = hWnd;
 			//if (TimeSpanEx(g_dfProcessLoadTime) < 15)
 			//{// 进程启动15秒内，不从缓存中取CDxSurface 对象
 				//if (IsWindowsVistaOrGreater())
@@ -1870,6 +2050,7 @@ public:
 		DeleteCriticalSection(&m_csParser);
 		DeleteCriticalSection(&m_csBorderRect);
 		DeleteCriticalSection(&m_csAudioPlayEvent);
+		DeleteCriticalSection(&m_csListYUV);
 
 #ifdef _DEBUG
 		OutputMsg("%s \tFinish Free a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
@@ -2082,9 +2263,14 @@ public:
 		m_bStopFlag = false;
 		// 启动流播放线程
 		m_bThreadPlayVideoRun = true;
+		m_bThreadRenderRun = true;
 		
-		//m_hThreadPlayVideo = CreateThread(nullptr, 0, ThreadPlayVideo, this, 0, 0);
-		m_hThreadPlayVideo = (HANDLE)_beginthreadex(nullptr, 0, ThreadPlayVideo, this, 0, 0);
+// 		m_hRenderFrameReady = CreateEvent(nullptr,FALSE,FALSE,nullptr);
+// 		m_hRenderFrameCopied = CreateEvent(nullptr,FALSE,FALSE,nullptr);
+		
+		if (m_hRenderWnd)
+			m_hThreadRender = (HANDLE)_beginthreadex(nullptr, 0, ThreadRender, this, CREATE_SUSPENDED, 0);
+		m_hThreadPlayVideo = (HANDLE)_beginthreadex(nullptr, 0, ThreadDecode, this, 0, 0);
 		if (!m_hThreadPlayVideo)
 		{
 #ifdef _DEBUG
@@ -2092,7 +2278,7 @@ public:
 #endif
 			return IPC_Error_VideoThreadStartFailed;
 		}
-		if (m_hWnd)
+		if (m_hRenderWnd)
 			EnableAudio(bEnaleAudio);
 		else
 			EnableAudio(false);
@@ -2468,6 +2654,7 @@ public:
 		m_bThreadParserRun = false;
 		m_bThreadPlayVideoRun = false;
 		m_bThreadPlayAudioRun = false;
+		m_bThreadRenderRun = false;
 		//m_bThreadSummaryRun = false;
 		HANDLE hArray[4] = { 0 };
 		int nHandles = 0;
@@ -2484,6 +2671,8 @@ public:
 			hArray[nHandles++] = m_hThreadParser;
 		if (m_hThreadPlayVideo)
 			hArray[nHandles++] = m_hThreadPlayVideo;
+		if (m_hThreadRender)
+			hArray[nHandles++] = m_hThreadRender;
 		if (m_hThreadPlayAudio)
 		{
 			hArray[nHandles++] = m_hThreadPlayAudio;
@@ -2498,6 +2687,8 @@ public:
 		EnterCriticalSection(&m_csVideoCache);
 		m_listVideoCache.clear();
 		LeaveCriticalSection(&m_csVideoCache);
+// 		SetEvent(m_hRenderFrameCopied);
+// 		SetEvent(m_hRenderFrameReady);
 		if (nHandles > 0)
 		{
 			if (WaitForMultipleObjects(nHandles, hArray, true, nTimeout) == WAIT_TIMEOUT)
@@ -2520,12 +2711,27 @@ public:
 			OutputMsg("%s ThreadPlayVideo Object:%d has exit.\n", __FUNCTION__,m_nObjIndex);
 #endif
 		}
+		if (m_hThreadRender)
+		{
+			CloseHandle(m_hThreadRender);
+			m_hThreadRender = nullptr;
+		}
 		if (m_hThreadPlayAudio)
 		{
 			CloseHandle(m_hThreadPlayAudio);
 			m_hThreadPlayAudio = nullptr;
 			OutputMsg("%s ThreadPlayAudio has exit.\n", __FUNCTION__);
 		}
+// 		if (m_hRenderFrameReady)
+// 		{
+// 			CloseHandle(m_hRenderFrameReady);
+// 			m_hRenderFrameReady = nullptr;
+// 		}
+// 		if (m_hRenderFrameCopied)
+// 		{
+// 			CloseHandle(m_hRenderFrameCopied);
+// 			m_hRenderFrameCopied = nullptr;
+// 		}
 		EnableAudio(false);
 		if (m_pFrameOffsetTable)
 		{
@@ -2835,10 +3041,10 @@ public:
 
 			if (!m_pSnapshot)
 			{
-				if (m_nDecodePirFmt == AV_PIX_FMT_DXVA2_VLD)
+				if (m_nDecodePixelFmt == AV_PIX_FMT_DXVA2_VLD)
 					m_pSnapshot = make_shared<CSnapshot>(AV_PIX_FMT_YUV420P, m_nVideoWidth, m_nVideoHeight);
 				else 
-					m_pSnapshot = make_shared<CSnapshot>(m_nDecodePirFmt, m_nVideoWidth, m_nVideoHeight);
+					m_pSnapshot = make_shared<CSnapshot>(m_nDecodePixelFmt, m_nVideoWidth, m_nVideoHeight);
 				
 				if (!m_pSnapshot)
 					return IPC_Error_InsufficentMemory;
@@ -3244,10 +3450,10 @@ public:
 		if (bEnable)
 		{
 			if (!m_pDsPlayer)
-				m_pDsPlayer = make_shared<CDSound>(m_hWnd);
+				m_pDsPlayer = make_shared<CDSound>(m_hRenderWnd);
 			if (!m_pDsPlayer->IsInitialized())
 			{
-				if (!m_pDsPlayer->Initialize(m_hWnd, m_nAudioPlayFPS,1,m_nSampleFreq,m_nSampleBit))
+				if (!m_pDsPlayer->Initialize(m_hRenderWnd, m_nAudioPlayFPS,1,m_nSampleFreq,m_nSampleBit))
 				{
 					m_pDsPlayer = nullptr;
 					m_bEnableAudio = false;
@@ -3317,8 +3523,8 @@ public:
 	/// @remark			该功能一般用于播放结束后，刷新窗口，把画面置为黑色
 	inline void  Refresh()
 	{
-		if (m_hWnd)
-			::InvalidateRect(m_hWnd, nullptr, true);
+		if (m_hRenderWnd)
+			::InvalidateRect(m_hRenderWnd, nullptr, true);
 	}
 
 	int SetCallBack(IPC_CALLBACK nCallBackType, IN void *pUserCallBack, IN void *pUserPtr)
@@ -3642,8 +3848,6 @@ public:
 			return 0;
 		}
 
-		pThis->OutputMsg("%s %d(%s) Exit.\n", __FILE__, __LINE__, __FUNCTION__);
-
 #ifdef _DEBUG
 		double dfT1 = GetExactTime();
 		bool bOuputTime = false;
@@ -3924,7 +4128,6 @@ public:
 		byte* dstV = pYuv420 + pAvFrameDXVA->width*pAvFrameDXVA->height;
 		byte* dstU = pYuv420 + pAvFrameDXVA->width*pAvFrameDXVA->height/ 4;
 
-
 		UINT heithtUV = pAvFrameDXVA->height / 2;
 		UINT widthUV = pAvFrameDXVA->width / 2;
 
@@ -3944,9 +4147,79 @@ public:
 
 		pSurface->UnlockRect();
 	}
-
 	
+	void CopyDxvaFrameNV12(byte *pYuv420, AVFrame *pAvFrameDXVA)
+	{
+		if (pAvFrameDXVA->format != AV_PIX_FMT_DXVA2_VLD)
+			return;
 
+		IDirect3DSurface9* pSurface = (IDirect3DSurface9 *)pAvFrameDXVA->data[3];
+		D3DLOCKED_RECT lRect;
+		D3DSURFACE_DESC SurfaceDesc;
+		pSurface->GetDesc(&SurfaceDesc);
+		HRESULT hr = pSurface->LockRect(&lRect, nullptr, D3DLOCK_READONLY);
+		if (FAILED(hr))
+		{
+			OutputMsg("%s IDirect3DSurface9::LockRect failed:hr = %08.\n", __FUNCTION__, hr);
+			return;
+		}
+
+		// Y分量图像
+		byte *pSrcY = (byte *)lRect.pBits;
+		// UV分量图像
+		byte *pSrcUV = (byte *)lRect.pBits + lRect.Pitch * pAvFrameDXVA->height;
+
+		byte* dstY = pYuv420;
+		byte* dstUV = pYuv420 + pAvFrameDXVA->width*pAvFrameDXVA->height;
+		
+		UINT heithtUV = pAvFrameDXVA->height / 2;
+		UINT widthUV = pAvFrameDXVA->width / 2;
+
+		// 复制Y分量
+		for (int i = 0; i < pAvFrameDXVA->height; i++)
+			memcpy(&dstY[i*pAvFrameDXVA->width], &pSrcY[i*lRect.Pitch], pAvFrameDXVA->width);
+
+		// 复制VU分量
+		for (int i = 0; i < heithtUV; i++)
+			memcpy(&dstUV[i*pAvFrameDXVA->width], &pSrcUV[i*lRect.Pitch], pAvFrameDXVA->width);
+
+		pSurface->UnlockRect();
+	}
+
+
+		
+	bool LockDxvaFrame(AVFrame *pAvFrameDXVA,byte **ppSrcY,byte **ppSrcUV,int &nPitch)
+	{
+		if (pAvFrameDXVA->format != AV_PIX_FMT_DXVA2_VLD)
+			return false;
+
+		IDirect3DSurface9* pSurface = (IDirect3DSurface9 *)pAvFrameDXVA->data[3];
+		D3DLOCKED_RECT lRect;
+		D3DSURFACE_DESC SurfaceDesc;
+		pSurface->GetDesc(&SurfaceDesc);
+		HRESULT hr = pSurface->LockRect(&lRect, nullptr, D3DLOCK_READONLY);
+		if (FAILED(hr))
+		{
+			OutputMsg("%s IDirect3DSurface9::LockRect failed:hr = %08.\n", __FUNCTION__, hr);
+			return false;
+		}
+		// Y分量图像
+		*ppSrcY = (byte *)lRect.pBits;
+		// UV分量图像
+		//(PBYTE)SrcRect.pBits + SrcRect.Pitch * m_pDDraw->m_dwHeight;
+		*ppSrcUV = (byte *)lRect.pBits + lRect.Pitch * pAvFrameDXVA->height;
+		nPitch = lRect.Pitch;
+		return true;
+	}
+
+	void UnlockDxvaFrame(AVFrame *pAvFrameDXVA)
+	{
+		if (pAvFrameDXVA->format != AV_PIX_FMT_DXVA2_VLD)
+			return;
+
+		IDirect3DSurface9* pSurface = (IDirect3DSurface9 *)pAvFrameDXVA->data[3];
+		pSurface->UnlockRect();
+	}
 	// 把YUVC420P帧复制到YV12缓存中
 	void CopyFrameYUV420(byte *pYUV420, int nYUV420Size, AVFrame *pFrame420P)
 	{
@@ -3988,8 +4261,8 @@ public:
 								m_pYUV,
 								pU,
 								pV,
-								pAvFrame->linesize[0],
-								pAvFrame->linesize[1],
+								pAvFrame->width,
+								pAvFrame->width/2,
 								pAvFrame->width,
 								pAvFrame->height,
 								nTimestamp,
@@ -4024,10 +4297,17 @@ public:
 						
 			if (pAvFrame->format == AV_PIX_FMT_DXVA2_VLD)
 			{// 暂不支持dxva 硬解码帧
+				
 				CopyDxvaFrame(m_pYUV, pAvFrame);	
 			}
 			else
 			{
+				if (!m_pYUV)
+				{
+					m_nYUVSize = pAvFrame->width * pAvFrame->height * 3 / 2;
+					m_pYUV = (byte *)av_malloc(m_nYUVSize);
+					m_pYUVPtr = shared_ptr<byte>(m_pYUV, av_free);
+				}
 				memcpy_s(m_pYUV, m_nYUVSize, pAvFrame->data[0], nPicSize);
 				memcpy_s(&m_pYUV[nPicSize], m_nYUVSize - nPicSize, pAvFrame->data[1], nPicSize / 4);
 				memcpy_s(&m_pYUV[nPicSize + nPicSize / 4], m_nYUVSize - nPicSize - nPicSize / 4, pAvFrame->data[2], nPicSize / 4);
@@ -4037,23 +4317,36 @@ public:
 		}
 		if (m_pfnCaptureYUVEx)
 		{
+			if (!m_pYUV)
+			{
+				m_nYUVSize = pAvFrame->width * pAvFrame->height * 3 / 2;
+				m_pYUV = (byte *)av_malloc(m_nYUVSize);
+				m_pYUVPtr = shared_ptr<byte>(m_pYUV, av_free);
+			}
 			if (pAvFrame->format == AV_PIX_FMT_DXVA2_VLD)
 			{// dxva 硬解码帧
-				CopyDxvaFrame(m_pYUV, pAvFrame);				
+				//CopyDxvaFrameNV12(m_pYUV, pAvFrame);
+				byte *pY = NULL;
+				byte *pUV = NULL;
+				int nPitch = 0;
+				LockDxvaFrame(pAvFrame,&pY,&pUV,nPitch);
 				byte* pU = m_pYUV + pAvFrame->width*pAvFrame->height;
-				byte* pV = m_pYUV + pAvFrame->width*pAvFrame->height / 4;
+				byte* pV = m_pYUV + pAvFrame->width*pAvFrame->height/4;
+				
 				m_pfnCaptureYUVEx(this,
-								  m_pYUV,
-								  pU,
-								  pV,
-								  pAvFrame->linesize[0],
-								  pAvFrame->linesize[1],
+								  pY,
+								  pUV,
+								  NULL,
+								  nPitch,
+								  nPitch/2,
 								  pAvFrame->width,
 								  pAvFrame->height,
 								  nTimestamp,
 								  m_pUserCaptureYUVEx);
+				UnlockDxvaFrame(pAvFrame);
 			}
 			else
+			{
 				m_pfnCaptureYUVEx(this,
 								 pAvFrame->data[0],
 								 pAvFrame->data[1],
@@ -4064,6 +4357,7 @@ public:
 								 pAvFrame->height,
 								 nTimestamp,
 								 m_pUserCaptureYUVEx);
+			}
 		}
 	}
 	
@@ -4140,9 +4434,155 @@ public:
 			ZeroMemory(this, sizeof(DecodeFrameStat));
 		}
 	};
-		
+// 	HANDLE	m_hRenderFrameReady = nullptr;
+// 	HANDLE	m_hRenderFrameCopied = nullptr;
+	volatile bool m_bThreadRenderRun = false;
+	HANDLE m_hThreadRender = nullptr;
+	AVFrame *m_pRenderFrame = nullptr;
+	static UINT __stdcall ThreadRender(void *p)
+	{
+		CIPCPlayer* pThis = (CIPCPlayer *)p;
+		int nRetry = 0;
+
+		// 若有指定了窗口句柄，则需要初始显示对象
+		if (pThis->m_hRenderWnd)
+		{
+			bool bCacheDxSurface = false;		// 是否为缓存中取得的Surface对象
+			if (GetOsMajorVersion() < Win7MajorVersion)
+			{
+				if (!pThis->m_pDDraw)
+					pThis->m_pDDraw = _New CDirectDraw();
+				pThis->InitizlizeDisplay();
+			}
+			else
+			{
+				if (!pThis->m_pDxSurface)
+				{
+					D3DFORMAT nPixFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+					if (pThis->m_bEnableHaccel)
+						nPixFormat = (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2');
+// 					pThis->m_pDxSurface = GetDxInCache(pThis->m_nVideoWidth, pThis->m_nVideoHeight, nPixFormat);
+// 					if (pThis->m_pDxSurface)
+// 						bCacheDxSurface = true;
+// 					else
+					pThis->m_pDxSurface = _New CDxSurfaceEx();
+				}
+				if (!bCacheDxSurface)
+				{
+					nRetry = 0;
+					while (pThis->m_bThreadPlayVideoRun)
+					{
+						if (!pThis->InitizlizeDisplay())
+						{
+							nRetry++;
+							Delay(2500, pThis->m_bThreadPlayVideoRun);
+							if (nRetry >= 3)
+							{
+								if (pThis->m_hRenderWnd)
+									::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_INITD3DFAILED, 0);
+								return 0;
+							}
+						}
+						else
+							break;
+					}
+				}
+			}
+
+			RECT rtWindow;
+			GetWindowRect(pThis->m_hRenderWnd, &rtWindow);
+			pThis->OutputMsg("%s Window Width = %d\tHeight = %d.\n", __FUNCTION__, (rtWindow.right - rtWindow.left), (rtWindow.bottom - rtWindow.top));
+#ifdef _DEBUG
+			pThis->OutputMsg("%s \tObject:%d Line %d Time = %d.\n", __FUNCTION__, pThis->m_nObjIndex, __LINE__, timeGetTime() - pThis->m_nLifeTime);
+#endif
+		}
+		while (pThis->m_bThreadRenderRun)
+		{
+			do 
+			{
+				CAutoLock lock(&pThis->m_csListYUV);
+				if (pThis->m_listNV12.size() > 0)
+				{
+					FrameNV12Ptr FramePtr = pThis->m_listNV12.front();
+					byte *pY = NULL, *pUV = NULL;
+					pThis->m_pYUVImage->dwLineSize[0] = FramePtr->nStrideY;
+					pThis->m_pYUVImage->dwLineSize[1] = FramePtr->nStrideUV;
+					pThis->m_pYUVImage->pBuffer[0] = (PBYTE)FramePtr->pNV12Surface;
+					pThis->m_pYUVImage->pBuffer[1] = (PBYTE)FramePtr->pNV12Surface + FramePtr->nStrideY*FramePtr->nHeight;
+					
+					pThis->m_pDDraw->Draw(*pThis->m_pYUVImage, nullptr, nullptr, true);
+					pThis->m_listNV12.pop_front();
+				}
+// 				else if (pThis->m_listYV12.size() > 0)
+// 				{
+// 					m_pYUVImage->pBuffer[0] = (PBYTE)pAvFrame->data[0];
+// 					m_pYUVImage->pBuffer[1] = (PBYTE)pAvFrame->data[1];
+// 					m_pYUVImage->pBuffer[2] = (PBYTE)pAvFrame->data[2];
+// 					m_pYUVImage->dwLineSize[0] = pAvFrame->linesize[0];
+// 					m_pYUVImage->dwLineSize[1] = pAvFrame->linesize[1];
+// 					m_pYUVImage->dwLineSize[2] = pAvFrame->linesize[2];
+// 					RECT rtBorder;
+// 					CAutoLock lock(&m_csBorderRect);
+// 					if (m_pBorderRect)
+// 					{
+// 						CopyRect(&rtBorder, m_pBorderRect.get());
+// 						lock.Unlock();
+// 						m_pDDraw->Draw(*m_pYUVImage, &rtBorder, nullptr, true);
+// 					}
+// 					else
+// 						m_pDDraw->Draw(*m_pYUVImage, nullptr, nullptr, true);
+// 				}
+			} while (false);
+
+			Sleep(10);
+		}
+		return 0;
+	}
+	// 把解码后的YUV帧放入YUV缓存
+	// 返回false时，表示缓存已经超过允许的最大数量,该帧被丢弃
+	// 返回true时，则操作成功
+	bool PushFrame(AVFrame *pFrame)
+	{
+		if (!pFrame)
+			return false;
+		if (pFrame->format == AV_PIX_FMT_DXVA2_VLD)
+		{
+			CAutoLock lock(&m_csListYUV);
+			if (m_listNV12.size() < m_nMaxYUVCache)
+			{
+				FrameNV12Ptr FramePtr = make_shared<FrameNV12>(pFrame, (INT64)(GetExactTime() * 1000));
+				m_listNV12.push_back(FramePtr);
+			}
+			else
+				return false;
+		}
+		else
+		{
+			CAutoLock lock(&m_csListYUV);
+			if (m_listYV12.size() < m_nMaxYUVCache)
+			{
+				FrameYV12Ptr FramePtr = make_shared<FrameYV12>(pFrame, (INT64)(GetExactTime() * 1000));
+				m_listYV12.push_back(FramePtr);
+			}
+			else
+				return false;
+		}
+		return true;
+	}
 	
-	static UINT __stdcall ThreadPlayVideo(void *p)
+	// 通知渲染线程，可以渲染解码解
+	bool NotifyRender(AVFrame *pAvFrame)
+	{
+// 		if (!m_hRenderFrameReady)
+// 			return false;
+// 		
+// 		if (!m_hRenderFrameCopied)
+// 			return false;
+		m_pRenderFrame = pAvFrame;
+//		SetEvent(m_hRenderFrameReady);
+//		return (WAIT_OBJECT_0 == WaitForSingleObject(m_hRenderFrameCopied, 40));
+	}
+	static UINT __stdcall ThreadDecode(void *p)
 	{
 		CIPCPlayer* pThis = (CIPCPlayer *)p;
 #ifdef _DEBUG
@@ -4154,7 +4594,7 @@ public:
 		sprintf_s(szAvError, 1024, "Object:%d.\n", pThis->m_nObjIndex);
 		TraceFunction1(szAvError);
 #endif
-		if (!pThis->m_hWnd)
+		if (!pThis->m_hRenderWnd)
 		{
 			pThis->OutputMsg("%s Warning!!!A Windows handle is Needed otherwith the video Will not showed..\n", __FUNCTION__);
 			//assert(false);
@@ -4226,8 +4666,8 @@ public:
 					pThis->OutputMsg("%s Warning!!!\nThere is No an I frame in %d second.m_listVideoCache.size() = %d.\n", __FUNCTION__, (int)pThis->m_nProbeStreamTimeout / 1000, pThis->m_listVideoCache.size());
 					pThis->OutputMsg("%s \tObject:%d Line %d Time = %d.\n", __FUNCTION__, pThis->m_nObjIndex, __LINE__, timeGetTime() - pThis->m_nLifeTime);
 #endif
-					if (pThis->m_hWnd)
-						::PostMessage(pThis->m_hWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_NOTRECVIFRAME, 0);
+					if (pThis->m_hRenderWnd)
+						::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_NOTRECVIFRAME, 0);
 					return 0;
 				}
 			}
@@ -4240,8 +4680,8 @@ public:
 #ifdef _DEBUG
 				pThis->OutputMsg("%s \tObject:%d Line %d Time = %d.\n", __FUNCTION__, pThis->m_nObjIndex, __LINE__, timeGetTime() - pThis->m_nLifeTime);
 #endif
-				if (pThis->m_hWnd)
-					::PostMessage(pThis->m_hWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_UNKNOWNSTREAM, 0);
+				if (pThis->m_hRenderWnd)
+					::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_UNKNOWNSTREAM, 0);
 				return 0;
 			}
 			// 把ffmpeg的码流ID转为IPC的码流ID,并且只支持H264和HEVC
@@ -4251,8 +4691,8 @@ public:
 			{
 				pThis->m_nVideoCodec = CODEC_UNKNOWN;
 				pThis->OutputMsg("%s Probed a unknown stream,Decode thread exit.\n", __FUNCTION__);
-				if (pThis->m_hWnd)
-					::PostMessage(pThis->m_hWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_UNKNOWNSTREAM, 0);
+				if (pThis->m_hRenderWnd)
+					::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_UNKNOWNSTREAM, 0);
 				return 0;
 			}
 		}
@@ -4268,8 +4708,8 @@ public:
 		default:
 		{
 			pThis->OutputMsg("%s You Input a unknown stream,Decode thread exit.\n", __FUNCTION__);
-			if (pThis->m_hWnd)	// 在线程中尽量避免使用SendMessage，因为可能会导致阻塞
-				::PostMessage(pThis->m_hWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_UNSURPPORTEDSTREAM, 0);
+			if (pThis->m_hRenderWnd)	// 在线程中尽量避免使用SendMessage，因为可能会导致阻塞
+				::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_UNSURPPORTEDSTREAM, 0);
 			return 0;
 			break;
 		}
@@ -4290,8 +4730,8 @@ public:
 				nRetry++;
 				if (nRetry >= 3)
 				{
-					if (pThis->m_hWnd)// 在线程中尽量避免使用SendMessage，因为可能会导致阻塞
-						::PostMessage(pThis->m_hWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_INITDECODERFAILED, 0);
+					if (pThis->m_hRenderWnd)// 在线程中尽量避免使用SendMessage，因为可能会导致阻塞
+						::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_INITDECODERFAILED, 0);
 					return 0;
 				}
 				Delay(2500,pThis->m_bThreadPlayVideoRun);
@@ -4301,9 +4741,11 @@ public:
 		}
 		if (!pThis->m_bThreadPlayVideoRun)
 			return 0;
+		if (pThis->m_hThreadRender)
+			ResumeThread(pThis->m_hThreadRender);
 
-		// 若有指定了窗口句柄，则需要初始显示对象
-		if (pThis->m_hWnd)
+// 		// 若有指定了窗口句柄，则需要初始显示对象
+/*		if (pThis->m_hRenderWnd)
 		{
 			bool bCacheDxSurface = false;		// 是否为缓存中取得的Surface对象
 			if (GetOsMajorVersion() < Win7MajorVersion)
@@ -4336,8 +4778,8 @@ public:
 							Delay(2500, pThis->m_bThreadPlayVideoRun);
 							if (nRetry >= 3)
 							{
-								if (pThis->m_hWnd)
-									::PostMessage(pThis->m_hWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_INITD3DFAILED, 0);
+								if (pThis->m_hRenderWnd)
+									::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_INITD3DFAILED, 0);
 								return 0;
 							}
 						}
@@ -4348,12 +4790,13 @@ public:
 			}
 
 			RECT rtWindow;
-			GetWindowRect(pThis->m_hWnd, &rtWindow);
+			GetWindowRect(pThis->m_hRenderWnd, &rtWindow);
 			pThis->OutputMsg("%s Window Width = %d\tHeight = %d.\n", __FUNCTION__, (rtWindow.right - rtWindow.left), (rtWindow.bottom - rtWindow.top));
 #ifdef _DEBUG
 			pThis->OutputMsg("%s \tObject:%d Line %d Time = %d.\n", __FUNCTION__, pThis->m_nObjIndex, __LINE__, timeGetTime() - pThis->m_nLifeTime);
 #endif
 		}
+		*/
 		
 		if (pThis->m_pStreamProbe)
 			pThis->m_pStreamProbe = nullptr;
@@ -4416,11 +4859,10 @@ public:
 		{
 			if (pThis->m_bPause)
 			{
-				
-				if (nGot_picture)
-				{
-					pThis->RenderFrame(pAvFrame);
-				}
+// 				if (nGot_picture)
+// 				{
+// 					pThis->RenderFrame(pAvFrame);
+// 				}
 				Sleep(40);
 				continue;
 			}
@@ -4474,6 +4916,7 @@ public:
 				pAvPacket->size = FramePtr->FrameHeader()->nLength;
 				pThis->m_tLastFrameTime = FramePtr->FrameHeader()->nTimestamp;
 				av_frame_unref(pAvFrame);
+				
 				nAvError = pDecodec->Decode(pAvFrame, nGot_picture, pAvPacket);
 				if (nAvError < 0)
 				{
@@ -4585,7 +5028,7 @@ public:
 			dfRenderStartTime = GetExactTime();
  			if (nGot_picture)
  			{
-				pThis->m_nDecodePirFmt = (AVPixelFormat)pAvFrame->format;
+				pThis->m_nDecodePixelFmt = (AVPixelFormat)pAvFrame->format;
 				SetEvent(pThis->m_hEvnetYUVReady);
 				SetEvent(pThis->m_hEventDecodeStart);
  				pThis->m_nCurVideoFrame = FramePtr->FrameHeader()->nFrameID;
@@ -4598,7 +5041,9 @@ public:
 					pThis->m_hAudioFrameEvent[0] &&
 					pThis->m_hAudioFrameEvent[1])
 					WaitForMultipleObjects(2, pThis->m_hAudioFrameEvent, TRUE, 40);
-				pThis->RenderFrame(pAvFrame);
+				//pThis->RenderFrame(pAvFrame);
+				//pThis->NotifyRender(pAvFrame);
+				pThis->PushFrame(pAvFrame);
 				if (!bDecodeSucceed)
 				{
 					bDecodeSucceed = true;
@@ -4606,7 +5051,6 @@ public:
 					pThis->OutputMsg("%s \tObject:%d  SetEvent Snapshot  m_nLifeTime = %d.\n", __FUNCTION__, pThis->m_nObjIndex, timeGetTime() - pThis->m_nLifeTime);
 #endif
 				}
-
 				pThis->ProcessSnapshotRequire(pAvFrame);
 				pThis->ProcessYUVCapture(pAvFrame, (LONGLONG)pThis->m_nCurVideoFrame);
  				if (pThis->m_pFilePlayCallBack)
@@ -5033,5 +5477,13 @@ public:
 			pThis->m_pAudioPlayEvent->SetNotify();
 		}
 		LeaveCriticalSection(&pThis->m_csAudioPlayEvent);
+	}
+	static void *_AllocAvFrame()
+	{
+		return av_frame_alloc();
+	}
+	static void _AvFree(void *p)
+	{
+		av_free(p);
 	}
 };

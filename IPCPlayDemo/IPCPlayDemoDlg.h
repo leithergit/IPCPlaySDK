@@ -509,6 +509,70 @@ struct WndPostionInfo
 	RECT rect;				// 原始大小
 };
 
+struct YUVFrame
+{
+	int nWidth;
+	int nHeight;
+	int nStrideY;
+	int nStrideUV;
+	byte *pY;	
+	byte *pU;	
+	byte *pV;
+	__int64	nDecodeTime;
+	int nPlayedCount;
+	CRITICAL_SECTION csCount;
+	
+	YUVFrame()
+	{
+		ZeroMemory(this, sizeof(YUVFrame));
+		InitializeCriticalSection(&csCount);
+	}
+	YUVFrame(const unsigned char* pY,
+		const unsigned char* pU,
+		const unsigned char* pV,
+		int nStrideY,
+		int nStrideUV,
+		int nWidth,
+		int nHeight,
+		INT64 nTime)
+	{
+		InitializeCriticalSection(&csCount);
+		int nYSize = nStrideY*nHeight;
+		int nUVSize = nStrideUV*(nHeight >> 1);
+		this->pY = new byte[nYSize];
+		this->pU = new byte[nUVSize];
+		this->pV = new byte[nUVSize];
+		memcpy(this->pY, pY, nYSize);
+		memcpy(this->pU, pU, nUVSize);
+		memcpy(this->pV, pV, nUVSize);
+		this->nHeight = nHeight;
+		this->nWidth = nWidth;
+		this->nStrideUV = nStrideUV;
+		this->nStrideY = nStrideY;
+	}
+	~YUVFrame()
+	{
+		if (pY)
+			delete[]pY;
+		if (pU)
+			delete[]pU;
+		if (pV)
+			delete[]pV;
+		DeleteCriticalSection(&csCount);
+		ZeroMemory(this, sizeof(YUVFrame));
+	}
+	int GetPlayedCount()
+	{
+		CAutoLock lock(&csCount);
+		return nPlayedCount;
+	}
+	void IncPlayedCount()
+	{
+		CAutoLock lock(&csCount);
+		nPlayedCount++;
+	}
+};
+typedef boost::shared_ptr<YUVFrame> YUVFramePtr;
 // CIPCPlayDemoDlg 对话框
 class CIPCPlayDemoDlg : public CDialogEx
 {
@@ -589,6 +653,99 @@ public:
 	//shared_ptr<ImageSpace> m_pYUVImage/* = NULL*/;
 	vector<WndPostionInfo> m_vWndPostionInfo;
 	void SaveWndPosition(UINT *nDlgItemIDArray, UINT nItemCount, DockType nDock, RECT rtDialogClientRect);
+
+	/// @brief		解码后YVU数据回调函数定义
+	/// @param [in]		hPlayHandle	由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+	/// @param [in]		pYUV		YUV数据指针
+	/// @param [in]		nSize		YUV数据的长度
+	/// @param [in]		nWidth		YUV图像的宽度
+	/// @param [in]		nHeight		YUV图像的高度
+	/// @param [in]		nTime		产生YUV数据的时间
+	/// @param [in]		pUserPtr	用户自定义指针
+	CFile *m_pYUVFile = nullptr;
+	
+	list<YUVFramePtr> m_listYUVFrame;
+	static void __stdcall CaptureYUVExProc(IPC_PLAYHANDLE hPlayHandle,
+		const unsigned char* pY,
+		const unsigned char* pU,
+		const unsigned char* pV,
+		int nStrideY,
+		int nStrideUV,
+		int nWidth,
+		int nHeight,
+		INT64 nTime,
+		void *pUserPtr)
+	{
+		CIPCPlayDemoDlg *pThis = (CIPCPlayDemoDlg *)pUserPtr;
+		YUVFramePtr yuvFrame = boost::make_shared<YUVFrame>(pY,pU,	pV,nStrideY,nStrideUV,nWidth,nHeight,nTime);
+		pThis->m_listYUVFrame.push_back(yuvFrame);
+	}
+	volatile bool bThreadRun = false;
+	HANDLE m_hRenderThread1 = nullptr;
+	HANDLE m_hRenderThread2 = nullptr;
+// 	static UINT __stdcall RenderThread1(void *p)
+// 	{
+// 		CTestDisplayDlg *pThis = (CTestDisplayDlg *)p;
+// 		DDSURFACEDESC2 ddsd = { 0 };
+// 		int nWidth = 1280;
+// 		int nHeight = 720;
+// 		CDirectDraw *m_pDDraw = new CDirectDraw();
+// 		FormatYV12::Build(ddsd, nWidth, nHeight);
+// 		HWND hRenderhWnd = pThis->GetDlgItem(IDC_STATIC_FRAME1)->m_hWnd;
+// 		m_pDDraw->Create<FormatYV12>(hRenderhWnd, ddsd);
+// 		shared_ptr<ImageSpace> m_pYUVImage = NULL;
+// 		m_pYUVImage = make_shared<ImageSpace>();
+// 		m_pYUVImage->dwLineSize[0] = nWidth;
+// 		m_pYUVImage->dwLineSize[1] = nWidth >> 1;
+// 		m_pYUVImage->dwLineSize[2] = nWidth >> 1;
+// 
+// 		int nSize = nHeight*nWidth * 3 / 2;
+// 		byte *pBuffer = new byte[nSize];
+// 		
+// 		YuvFile.Read(pBuffer, nSize);
+// 		m_pYUVImage->pBuffer[0] = (PBYTE)pBuffer;
+// 		m_pYUVImage->pBuffer[1] = (PBYTE)pBuffer + nWidth * nHeight;
+// 		m_pYUVImage->pBuffer[2] = (PBYTE)pBuffer + nWidth * 5 * nHeight / 4;
+// 		long nCount = 0;
+// 		while (pThis->bThreadRun)
+// 		{
+// 			m_pDDraw->Draw(*m_pYUVImage, nullptr, nullptr, true);
+// 			nCount++;
+// 		}
+// 		pThis->SetDlgItemInt(IDC_STATIC_RENDER1, nCount);
+// 		return 0;
+// 	}
+// 	
+// 	static UINT __stdcall RenderThread2(void *p)
+// 	{
+// 		CTestDisplayDlg *pThis = (CTestDisplayDlg *)p;
+// 		CDxSurfaceEx* m_pDxSurface = new CDxSurfaceEx();
+// 		AVFrame *PFrame = ;
+// 	
+// 
+// 		return 0;
+// 	}
+	static void __stdcall CaptureYUVProc(IPC_PLAYHANDLE hPlayHandle,
+		const unsigned char* pYUV,
+		int nYUVSize,
+		int nWidth,
+		int nHeight,
+		INT64 nTime,
+		void *pUserPtr)
+	{
+		CIPCPlayDemoDlg *pThis = (CIPCPlayDemoDlg *)pUserPtr;
+// 以下代码片段用于把一帧YUV保存数据保存到文件中
+// 		if (pThis->m_pYUVFile)
+// 		{
+// 			pThis->m_pYUVFile->Write(pYUV, nYUVSize);
+// 			pThis->m_pYUVFile->Close();
+// 			delete pThis->m_pYUVFile;
+// 			pThis->m_pYUVFile = nullptr;
+// 		}
+		
+
+
+	}
 	/// @brief		解码后YVU数据回调
 	static void __stdcall YUVFilterProc(IPC_PLAYHANDLE hPlayHandle,
 										const unsigned char* pY,

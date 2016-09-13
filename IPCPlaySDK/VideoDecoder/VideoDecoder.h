@@ -145,7 +145,7 @@ public:
 	{
 		av_register_all();
 		// 去除注释可设置FFMPEG的日志输出回调，便于观看日志
-		av_log_set_callback(ff_log_callback);	
+		// av_log_set_callback(ff_log_callback);	
 	}
 	static void ff_log_callback(void*avcl, int level, const char*fmt, va_list vl)
 	{

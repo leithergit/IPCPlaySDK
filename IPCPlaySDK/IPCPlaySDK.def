@@ -45,3 +45,5 @@ EXPORTS
 	ipcplay_SetPixFormat
 	ipcplay_IsPlaying
 	ipcplay_SetStreamHeader
+	AllocAvFrame
+	AvFree

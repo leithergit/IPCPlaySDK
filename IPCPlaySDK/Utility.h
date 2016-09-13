@@ -14,7 +14,9 @@
 #define assert	((void)0)
 #endif
 
+//#include <boost/smart_ptr.hpp>
 using namespace std;
+//using namespace boost;
 using namespace std::tr1;
 
 #define IN

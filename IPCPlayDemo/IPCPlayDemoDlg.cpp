@@ -217,7 +217,7 @@ BOOL CIPCPlayDemoDlg::OnInitDialog()
 
 	m_wndStreamInfo.InsertColumn(nCol++, _T("项目"), LVCFMT_LEFT, 60);
 	m_wndStreamInfo.InsertColumn(nCol++, _T("内容"), LVCFMT_LEFT, 130);
-	CheckRadioButton(IDC_RADIO_IPCNETSDK, IDC_RADIO_INSIDE_NETSDK, IDC_RADIO_IPCNETSDK);
+	
 	int nItem = 0;
 	ZeroMemory(m_szListText, sizeof(ListItem) * 16);
 	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("视频信息"));
@@ -679,42 +679,22 @@ void CIPCPlayDemoDlg::OnBnClickedButtonConnect()
 		AfxMessageBox(_T("请输入一个有效的相机IP"), MB_OK | MB_ICONSTOP);
 		return;
 	}
-	int nNetType =  GetCheckedRadioButton(IDC_RADIO_IPCNETSDK, IDC_RADIO_INSIDE_NETSDK);
 	m_pPlayContext = boost::make_shared<PlayerContext>(-1, -1, (IPC_PLAYHANDLE *)NULL, _Row*_Col);
 	
 	m_pPlayContext->pThis = this;
 	bool bSucceed = false;
-	switch (nNetType)
+	app_net_tcp_sys_logo_info_t LoginInfo;
+	USER_HANDLE hUser = DVO2_NET_Login(szIPAddress, 6001, szAccount, szPassowd, &LoginInfo, &nError, 5000);
+	if (hUser != -1)
 	{
-		default:
-		case IDC_RADIO_IPCNETSDK:
-		{
-			app_net_tcp_sys_logo_info_t LoginInfo;
-			USER_HANDLE hUser = DVO2_NET_Login(szIPAddress, 6001, szAccount, szPassowd, &LoginInfo, &nError, 5000);
-			if (hUser != -1)
-			{
-				if (ComboBox_FindString(::GetDlgItem(m_hWnd, IDC_IPADDRESS), 0, szIPAddress) == CB_ERR)
-					ComboBox_AddString(::GetDlgItem(m_hWnd, IDC_IPADDRESS), szIPAddress);
-				m_pPlayContext->hUser = hUser;
-				bSucceed = true;
-				
-			}
-		}
-			break;
-		case IDC_RADIO_INSIDE_NETSDK:
-		{
-			CSocketClient *pClient = new CSocketClient();
-			if (pClient->Connect(szIPAddress, 6001) == 0)
-			{
-				m_pPlayContext->pClient = pClient;
-				bSucceed = true;
-			}
-			else
-				delete pClient;
-		}
-		break;
+		if (ComboBox_FindString(::GetDlgItem(m_hWnd, IDC_IPADDRESS), 0, szIPAddress) == CB_ERR)
+			ComboBox_AddString(::GetDlgItem(m_hWnd, IDC_IPADDRESS), szIPAddress);
+		m_pPlayContext->hUser = hUser;
+		bSucceed = true;
 
 	}
+		
+
 	if (bSucceed)
 	{
 		_tcscpy_s(m_pPlayContext->szIpAddress, 32, szIPAddress);
@@ -830,44 +810,42 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlaystream()
 		bool bEnableWnd = false;
 		int nStream = 0;
 		CWaitCursor Wait;
-		int nNetType = GetCheckedRadioButton(IDC_RADIO_IPCNETSDK, IDC_RADIO_INSIDE_NETSDK);
-		switch (nNetType)
+		
+		
+		
+		
+		if (m_pPlayContext->hStream == -1)
 		{
-		case IDC_RADIO_IPCNETSDK:
-		default:
-		{
-			if (m_pPlayContext->hStream == -1)
+			nStream = SendDlgItemMessage(IDC_COMBO_STREAM, CB_GETCURSEL);
+			int nError = 0;
+			REAL_HANDLE hStreamHandle = DVO2_NET_StartRealPlay(m_pPlayContext->hUser,
+				0,
+				nStream,
+				IPC_TCP,
+				0,
+				NULL,
+				(fnDVOCallback_RealAVData_T)StreamCallBack,
+				(void *)m_pPlayContext.get(),
+				&nError);
+			if (hStreamHandle == -1)
 			{
-				nStream = SendDlgItemMessage(IDC_COMBO_STREAM, CB_GETCURSEL);
-				int nError = 0;
-				REAL_HANDLE hStreamHandle = DVO2_NET_StartRealPlay(m_pPlayContext->hUser,
-					0,
-					nStream,
-					IPC_TCP,
-					0,
-					NULL,
-					(fnDVOCallback_RealAVData_T)StreamCallBack,
-					(void *)m_pPlayContext.get(),
-					&nError);
-				if (hStreamHandle == -1)
-				{
-					m_wndStatus.SetWindowText(_T("连接码流失败"));
-					m_wndStatus.SetAlarmGllitery();
-					return;
-				}
-
-				m_pPlayContext->hStream = hStreamHandle;
-				m_pPlayContext->pThis = this;
-				EnableDlgItem(IDC_COMBO_STREAM, false);
+				m_wndStatus.SetWindowText(_T("连接码流失败"));
+				m_wndStatus.SetAlarmGllitery();
+				return;
 			}
-			if (IsDlgButtonChecked(IDC_CHECK_ONLYSTREAM) != BST_CHECKED)
-			if (!m_pPlayContext->hPlayer[0])
-			{
-				int nFreePanel = 0;
-				app_net_tcp_enc_info_t stResult = { 0 };
-				app_net_tcp_com_schn_t req = { 0 };
-				req.chn = 0;
-				req.schn = nStream;
+
+			m_pPlayContext->hStream = hStreamHandle;
+			m_pPlayContext->pThis = this;
+			EnableDlgItem(IDC_COMBO_STREAM, false);
+		}
+		if (IsDlgButtonChecked(IDC_CHECK_ONLYSTREAM) != BST_CHECKED)
+		if (!m_pPlayContext->hPlayer[0])
+		{
+			int nFreePanel = 0;
+			app_net_tcp_enc_info_t stResult = { 0 };
+			app_net_tcp_com_schn_t req = { 0 };
+			req.chn = 0;
+			req.schn = nStream;
 
 //				for (int k = 0; k < 3; k++)
 // 				{
@@ -945,218 +923,82 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlaystream()
 // 						break;
 // 					}
 // 				}
-				for (int i = 0; i < m_pPlayContext->nPlayerCount; i++)
-					//int i = 0;
+			for (int i = 0; i < m_pPlayContext->nPlayerCount; i++)
+				//int i = 0;
+			{
+				m_pPlayContext->hWndView = m_pVideoWndFrame->GetPanelWnd(i);
+				if (!bEnableProbeStream)
 				{
-					m_pPlayContext->hWndView = m_pVideoWndFrame->GetPanelWnd(i);
-					if (!bEnableProbeStream)
-					{
 // 						MediaHeader.nVideoCodec = CODEC_H265;
 // 						MediaHeader.nAudioCodec = CODEC_G711U;
-						m_pPlayContext->hPlayer[i] = ipcplay_OpenStream(m_pVideoWndFrame->GetPanelWnd(i), (byte *)&MediaHeader, sizeof(MediaHeader), 100, bEnableLog ? "dvoipcplaysdk" : NULL);
-					}
-					else
-						m_pPlayContext->hPlayer[i] = ipcplay_OpenStream(m_pVideoWndFrame->GetPanelWnd(i), NULL, 0, 100, bEnableLog ? "dvoipcplaysdk" : NULL);
-					if (IsDlgButtonChecked(IDC_CHECK_EXTERNDRAW) == BST_CHECKED)
-					{
-						ipcplay_SetPixFormat(m_pPlayContext->hPlayer[0], R8G8B8);
-						ipcplay_SetExternDrawCallBack(m_pPlayContext->hPlayer[0], ExternDCDraw, this);
-					}
-					m_pVideoWndFrame->SetPanelParam(i, m_pPlayContext.get());
-					if (!m_pPlayContext->hPlayer[i])
-					{
-						m_wndStatus.SetWindowText(_T("打开流播放句柄失败"));
-						m_wndStatus.SetAlarmGllitery();
-						return;
-					}
-					ipcplay_Refresh(m_pPlayContext->hPlayer[i]);
-					if (i == 0)
-						bEnableAudio = true;
-					else
-						bEnableAudio = false;
-					ipcplay_Start(m_pPlayContext->hPlayer[i], bEnableAudio, bFitWindow,bEnableHaccel);
-					ipcplay_SetVolume(m_pPlayContext->hPlayer[i], nVolume);
+					m_pPlayContext->hPlayer[i] = ipcplay_OpenStream(m_pVideoWndFrame->GetPanelWnd(i), (byte *)&MediaHeader, sizeof(MediaHeader), 100, bEnableLog ? "dvoipcplaysdk" : NULL);
 				}
-				m_dfLastUpdate = GetExactTime();
-				SetDlgItemText(IDC_BUTTON_PLAYSTREAM, _T("停止播放"));
-
-				EnableDlgItems(m_hWnd, true, 6,
-					IDC_SLIDER_SATURATION,
-					IDC_SLIDER_BRIGHTNESS,
-					IDC_SLIDER_CONTRAST,
-					IDC_SLIDER_CHROMA,
-					IDC_SLIDER_ZOOMSCALE,
-					IDC_SLIDER_VOLUME);
-				EnableDlgItem(IDC_SLIDER_PLAYER, false);
-				EnableDlgItem(IDC_EDIT_ROW, false);
-				EnableDlgItem(IDC_EDIT_COL, false);
-			}
-			else
-			{
-				if (!m_pPlayContext->pRecFile)		// 若正在录像，则不应断开码流
+				else
+					m_pPlayContext->hPlayer[i] = ipcplay_OpenStream(m_pVideoWndFrame->GetPanelWnd(i), NULL, 0, 100, bEnableLog ? "dvoipcplaysdk" : NULL);
+				if (IsDlgButtonChecked(IDC_CHECK_EXTERNDRAW) == BST_CHECKED)
 				{
-					DVO2_NET_StopRealPlay(m_pPlayContext->hStream);
-					m_pPlayContext->hStream = -1;
-					EnableDlgItem(IDC_COMBO_STREAM, true);
+					ipcplay_SetPixFormat(m_pPlayContext->hPlayer[0], R8G8B8);
+					ipcplay_SetExternDrawCallBack(m_pPlayContext->hPlayer[0], ExternDCDraw, this);
 				}
-				for (int i = 0; i < m_pPlayContext->nPlayerCount; i++)
-					if (m_pPlayContext->hPlayer[i])
-					{
-						ipcplay_Stop(m_pPlayContext->hPlayer[i]);
-						//ipcplay_Refresh(m_pPlayContext->hPlayer);
-						ipcplay_Close(m_pPlayContext->hPlayer[i]);
-						m_pPlayContext->hPlayer[i] = NULL;
-					}
-				SetDlgItemText(IDC_BUTTON_PLAYSTREAM, _T("播放码流"));
-				EnableDlgItems(m_hWnd, false, 6,
-					IDC_SLIDER_SATURATION,
-					IDC_SLIDER_BRIGHTNESS,
-					IDC_SLIDER_CONTRAST,
-					IDC_SLIDER_CHROMA,
-					IDC_SLIDER_ZOOMSCALE,
-					IDC_SLIDER_VOLUME);
-				EnableDlgItem(IDC_SLIDER_PLAYER, false);
-				EnableDlgItem(IDC_EDIT_ROW, true);
-				EnableDlgItem(IDC_EDIT_COL, true);
-				m_dfLastUpdate = 0.0f;
-			}
-		}
-		break;
-		case IDC_RADIO_TVTNETSDK:
-		{
-
-		}
-			break;
-		case IDC_RADIO_INSIDE_NETSDK:
-		{
-			if (m_pPlayContext->pClient)
-			{
-				MSG_HEAD MsgHead;
-				ZeroMemory(&MsgHead, sizeof(MSG_HEAD));
-				MsgHead.Magic1[0] = 0xF5;
-				MsgHead.Magic1[1] = 0x5A;
-				MsgHead.Magic1[2] = 0xA5;
-				MsgHead.Magic1[3] = 0x5F;
-				MsgHead.Version = htons(0x11);
-				MsgHead.DataType = htons(0x01);
-				MsgHead.CmdType = htons(0x02);
-				MsgHead.CmdSubType = htons(0x03);
-				MsgHead.Pktlen = htonl(sizeof(MsgHead) + sizeof(app_net_tcp_enc_ctl_t));
-				app_net_tcp_enc_ctl_t Req;
-				ZeroMemory(&Req, sizeof(Req));
-				Req.chn = 0;
-				Req.stream = htonl(nStream);
-				Req.enable = htonl(1);		// Enable
-				Req.nettype = 0;		//	TCP
-				Req.port = 0;
-				int nCommandLen = sizeof(MSG_HEAD) + sizeof(Req);
-				char *pReqCommand = new char[sizeof(MSG_HEAD) + sizeof(Req) + 1];
-				memcpy(pReqCommand, &MsgHead, sizeof(MSG_HEAD));
-				memcpy(&pReqCommand[sizeof(MSG_HEAD)], &Req, sizeof(Req));
-				DWORD nBytesSent = 0;
-				bool bSucceed = false;
-
-				if (m_pPlayContext->pClient->Send((char *)pReqCommand, nCommandLen, nBytesSent) == 0)
+				m_pVideoWndFrame->SetPanelParam(i, m_pPlayContext.get());
+				if (!m_pPlayContext->hPlayer[i])
 				{
-					ZeroMemory(&MsgHead, sizeof(MSG_HEAD));
-					DWORD nBytesRecv = 0;
-					if (m_pPlayContext->pClient->Recv((char *)&MsgHead, sizeof(MSG_HEAD), nBytesRecv) == 0 &&
-						nBytesRecv == sizeof(MSG_HEAD))
-					{
-						app_net_tcp_enc_ctl_ack_t Res;
-						if (m_pPlayContext->pClient->Recv((char *)&Res, sizeof(Res), nBytesRecv) == 0 &&
-							nBytesRecv == sizeof(Res))
-						{
-							if (Res.stream == nStream && Res.state == 0)
-							{
-								bSucceed = true;
-							}
-						}
-					}
-				}
-				if (!bSucceed)
-				{
-					m_wndStatus.SetWindowText(_T("连接码流失败"));
+					m_wndStatus.SetWindowText(_T("打开流播放句柄失败"));
 					m_wndStatus.SetAlarmGllitery();
 					return;
 				}
-				// 启动接收线程
-				m_pPlayContext->StartRecv(StreamCallBack);
-				if (IsDlgButtonChecked(IDC_CHECK_ONLYSTREAM) != BST_CHECKED)
-				{
-					m_pPlayContext->dfTimeRecv1 = GetExactTime();
-					m_pPlayContext->hStream = -1;
-					for (int i = 0; i < m_pPlayContext->nPlayerCount; i++)
-						//int i = 0;
-					{
-						m_pPlayContext->hWndView = m_pVideoWndFrame->GetPanelWnd(i);
-						bool bEnableRunlog = (bool)IsDlgButtonChecked(IDC_CHECK_ENABLELOG);
-						m_pPlayContext->hPlayer[i] = ipcplay_OpenStream(m_pVideoWndFrame->GetPanelWnd(i), (byte *)&MediaHeader, sizeof(MediaHeader), 128, bEnableRunlog ? "dvoipcplaysdk" : nullptr);
-						//m_pPlayContext->hPlayer[i] = ipcplay_OpenStream(m_pPlayContext->hWndView, nullptr, sizeof(MediaHeader), 0, bEnableRunlog ? "dvoipcplaysdk" : nullptr);
-
-						m_pVideoWndFrame->SetPanelParam(i, m_pPlayContext.get());
-						if (!m_pPlayContext->hPlayer[i])
-						{
-							m_wndStatus.SetWindowText(_T("打开流播放句柄失败"));
-							m_wndStatus.SetAlarmGllitery();
-							return;
-						}
-						ipcplay_Refresh(m_pPlayContext->hPlayer[i]);
-						if (i == 0)
-							bEnableAudio = true;
-						else
-							bEnableAudio = false;
-						ipcplay_Start(m_pPlayContext->hPlayer[i], bEnableAudio, bFitWindow);
-						ipcplay_SetVolume(m_pPlayContext->hPlayer[i], nVolume);
-					}
-				}
-
-				m_dfLastUpdate = GetExactTime();
-				SetDlgItemText(IDC_BUTTON_PLAYSTREAM, _T("停止播放"));
-
-				EnableDlgItems(m_hWnd, true, 6,
-					IDC_SLIDER_SATURATION,
-					IDC_SLIDER_BRIGHTNESS,
-					IDC_SLIDER_CONTRAST,
-					IDC_SLIDER_CHROMA,
-					IDC_SLIDER_ZOOMSCALE,
-					IDC_SLIDER_VOLUME);
-				EnableDlgItem(IDC_SLIDER_PLAYER, false);
-				EnableDlgItem(IDC_EDIT_ROW, false);
-				EnableDlgItem(IDC_EDIT_COL, false);
+				ipcplay_Refresh(m_pPlayContext->hPlayer[i]);
+				if (i == 0)
+					bEnableAudio = true;
+				else
+					bEnableAudio = false;
+				ipcplay_Start(m_pPlayContext->hPlayer[i], bEnableAudio, bFitWindow,bEnableHaccel);
+				ipcplay_SetVolume(m_pPlayContext->hPlayer[i], nVolume);
 			}
-			else
+			m_dfLastUpdate = GetExactTime();
+			SetDlgItemText(IDC_BUTTON_PLAYSTREAM, _T("停止播放"));
+
+			EnableDlgItems(m_hWnd, true, 6,
+				IDC_SLIDER_SATURATION,
+				IDC_SLIDER_BRIGHTNESS,
+				IDC_SLIDER_CONTRAST,
+				IDC_SLIDER_CHROMA,
+				IDC_SLIDER_ZOOMSCALE,
+				IDC_SLIDER_VOLUME);
+			EnableDlgItem(IDC_SLIDER_PLAYER, false);
+			EnableDlgItem(IDC_EDIT_ROW, false);
+			EnableDlgItem(IDC_EDIT_COL, false);
+		}
+		else
+		{
+			if (!m_pPlayContext->pRecFile)		// 若正在录像，则不应断开码流
 			{
-				if (!m_pPlayContext->pRecFile)		// 若正在录像，则不应断开码流
-				{
-					m_pPlayContext->StopRecv();
-					m_pPlayContext->hStream = -1;
-					EnableDlgItem(IDC_COMBO_STREAM, true);
-				}
-				for (int i = 0; i < m_pPlayContext->nPlayerCount; i++)
-					if (m_pPlayContext->hPlayer[i])
-					{
-						ipcplay_Stop(m_pPlayContext->hPlayer[i]);
-						//ipcplay_Refresh(m_pPlayContext->hPlayer);
-						ipcplay_Close(m_pPlayContext->hPlayer[i]);
-						m_pPlayContext->hPlayer[i] = nullptr;
-					}
-				SetDlgItemText(IDC_BUTTON_PLAYSTREAM, _T("播放码流"));
-				EnableDlgItems(m_hWnd, false, 6,
-					IDC_SLIDER_SATURATION,
-					IDC_SLIDER_BRIGHTNESS,
-					IDC_SLIDER_CONTRAST,
-					IDC_SLIDER_CHROMA,
-					IDC_SLIDER_ZOOMSCALE,
-					IDC_SLIDER_VOLUME);
-				EnableDlgItem(IDC_SLIDER_PLAYER, false);
-				EnableDlgItem(IDC_EDIT_ROW, true);
-				EnableDlgItem(IDC_EDIT_COL, true);
-				m_dfLastUpdate = 0.0f;
+				DVO2_NET_StopRealPlay(m_pPlayContext->hStream);
+				m_pPlayContext->hStream = -1;
+				EnableDlgItem(IDC_COMBO_STREAM, true);
 			}
+			for (int i = 0; i < m_pPlayContext->nPlayerCount; i++)
+				if (m_pPlayContext->hPlayer[i])
+				{
+					ipcplay_Stop(m_pPlayContext->hPlayer[i]);
+					//ipcplay_Refresh(m_pPlayContext->hPlayer);
+					ipcplay_Close(m_pPlayContext->hPlayer[i]);
+					m_pPlayContext->hPlayer[i] = NULL;
+				}
+			SetDlgItemText(IDC_BUTTON_PLAYSTREAM, _T("播放码流"));
+			EnableDlgItems(m_hWnd, false, 6,
+				IDC_SLIDER_SATURATION,
+				IDC_SLIDER_BRIGHTNESS,
+				IDC_SLIDER_CONTRAST,
+				IDC_SLIDER_CHROMA,
+				IDC_SLIDER_ZOOMSCALE,
+				IDC_SLIDER_VOLUME);
+			EnableDlgItem(IDC_SLIDER_PLAYER, false);
+			EnableDlgItem(IDC_EDIT_ROW, true);
+			EnableDlgItem(IDC_EDIT_COL, true);
+			m_dfLastUpdate = 0.0f;
 		}
-			break;
-		}
+		
 	}
 }
 
@@ -1317,7 +1159,8 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 						m_pPlayContext.reset();
 						return;
 					}
-				
+ 					m_pYUVFile = new CFile(_T("axis1080p.yuv"), CFile::modeCreate | CFile::modeWrite);
+ 					ipcplay_SetCallBack(m_pPlayContext->hPlayer[0], YUVCapture, CaptureYUVProc, this);
 					PlayerInfo pi;
 					if (ipcplay_GetPlayerInfo(m_pPlayContext->hPlayer[0], &pi) != IPC_Succeed)
 					{

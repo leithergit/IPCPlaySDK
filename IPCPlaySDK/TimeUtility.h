@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <time.h>
 #include <assert.h>
+#include <math.h>
 //#include <thread>
 //#include <chrono>
 #include <MMSystem.h>

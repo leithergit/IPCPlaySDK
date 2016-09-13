@@ -39,7 +39,7 @@ extern list<DxSurfaceWrap *>g_listDxCache;
 extern CRITICAL_SECTION  g_csListDxCache;
 
 //IPC IPC 返回流包头
-struct IPCIPC_StreamHeader
+struct IPC_StreamHeader
 {
 	UINT		    chn;	            //视频输入通道号，取值0~MAX-1.
 	UINT		    stream;             //码流编号：0:主码流，1：子码流，2：第三码流。
@@ -323,10 +323,10 @@ IPCPLAYSDK_API int ipcplay_Start(IN IPC_PLAYHANDLE hPlayHandle,
 IPCPLAYSDK_API bool ipcplay_IsPlaying(IN IPC_PLAYHANDLE hPlayHandle)
 {
 	if (!hPlayHandle)
-		return IPC_Error_InvalidParameters;
+		return false;
 	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
 	if (pPlayer->nSize != sizeof(CIPCPlayer))
-		return IPC_Error_InvalidParameters;
+		return false;
 	return pPlayer->IsPlaying();
 }
 /// @brief 复位播放器,在窗口大小变化较大或要切换播放窗口时，建议复位播放器，否则画面质量可能会严重下降
@@ -861,10 +861,10 @@ IPCPLAYSDK_API int ipcplay_BuildFrameHeader(OUT byte *pFrameHeader, INOUT int *H
 	else if (*HeaderSize < sizeof(IPCFrameHeaderEx))
 		return IPC_Error_BufferSizeNotEnough;
 
-	IPCIPC_StreamHeader *pStreamHeader = (IPCIPC_StreamHeader *)pIPCIpcStream;
-	int nSizeofHeader = sizeof(IPCIPC_StreamHeader);
+	IPC_StreamHeader *pStreamHeader = (IPC_StreamHeader *)pIPCIpcStream;
+	int nSizeofHeader = sizeof(IPC_StreamHeader);
 	byte *pFrameData = (byte *)(pStreamHeader)+nSizeofHeader;
-	int nFrameLength = nStreamLength - sizeof(IPCIPC_StreamHeader);
+	int nFrameLength = nStreamLength - sizeof(IPC_StreamHeader);
 	*HeaderSize = sizeof(IPCFrameHeaderEx);
 	
 	IPCFrameHeaderEx FrameHeader;	
@@ -935,3 +935,12 @@ IPCPLAYSDK_API void ipcplay_ClearD3DCache()
 	
 }
 
+IPCPLAYSDK_API void *AllocAvFrame()
+{
+	return CIPCPlayer::_AllocAvFrame();
+}
+
+IPCPLAYSDK_API void AvFree(void*p)
+{
+	CIPCPlayer::_AvFree(p);
+}

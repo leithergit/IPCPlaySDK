@@ -444,52 +444,48 @@ public:
 	HRESULT Create(HWND hWnd, DDSURFACEDESC2 &ddOffScreenSurfaceDesc)
 	{
 		Release();
-
-		HRESULT hr = DirectDrawCreateEx(NULL, (LPVOID *)&m_pDirectDraw, IID_IDirectDraw7, NULL);
-		if (hr != S_OK) {
-			goto Exit;
-		}
-
-		hr = m_pDirectDraw->SetCooperativeLevel(hWnd, DDSCL_NORMAL);
-		if (hr != S_OK) {
-			goto Exit;
-		}
-
+		HRESULT hr = nullptr;
+		DDSURFACEDESC2 ddPrimarySurfaceDesc = { 0 };
+		do 
 		{
-			DDSURFACEDESC2 ddPrimarySurfaceDesc = { 0 };
+			hr = DirectDrawCreateEx(NULL, (LPVOID *)&m_pDirectDraw, IID_IDirectDraw7, NULL);
+			if (hr != S_OK)
+				break;
+
+			hr = m_pDirectDraw->SetCooperativeLevel(hWnd, DDSCL_NORMAL);
+			if (hr != S_OK)
+				break;
+			
 			ZeroMemory(&ddPrimarySurfaceDesc, sizeof(ddPrimarySurfaceDesc));
 			ddPrimarySurfaceDesc.dwSize = sizeof(ddPrimarySurfaceDesc);
 			ddPrimarySurfaceDesc.dwFlags = DDSD_CAPS;
 			ddPrimarySurfaceDesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
 			hr = m_pDirectDraw->CreateSurface(&ddPrimarySurfaceDesc, &m_pSurfacePrimary, NULL);
-			if (hr != S_OK) {
-				goto Exit;
-			}
+			if (hr != S_OK)
+				break;
 			hr = m_pDirectDraw->CreateClipper(0, &m_pClipper, NULL);
-			if (hr != S_OK) {
-				goto Exit;
-			}
+			if (hr != S_OK)
+				break;
 			hr = m_pClipper->SetHWnd(0, hWnd);
-			if (hr != S_OK) {
-				goto Exit;
-			}
+			if (hr != S_OK)
+				break;
 			m_pSurfacePrimary->SetClipper(m_pClipper);
+
+			hr = m_pDirectDraw->CreateSurface(&ddOffScreenSurfaceDesc, &m_pSurfaceOffScreen, NULL);
+			if (hr != S_OK)
+				break;
+			bSucceed = true;
+		} while (false);
+		if (SUCCEEDED(hr))
+		{
+			m_hWnd = hWnd;
+			m_dwWidth = ddOffScreenSurfaceDesc.dwWidth;
+			m_dwHeight = ddOffScreenSurfaceDesc.dwHeight;
+			m_copyCallback = PixelFormatT::Copy;
 		}
-
-		hr = m_pDirectDraw->CreateSurface(&ddOffScreenSurfaceDesc, &m_pSurfaceOffScreen, NULL);
-		if (hr != S_OK) {
-			goto Exit;
-		}
-
-		m_hWnd = hWnd;
-		m_dwWidth = ddOffScreenSurfaceDesc.dwWidth;
-		m_dwHeight = ddOffScreenSurfaceDesc.dwHeight;
-		m_copyCallback = PixelFormatT::Copy;
-
-	Exit:
-		if (hr != S_OK) {
+		else
 			Release();
-		}
+	
 		return hr;
 	}
 

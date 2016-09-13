@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////////
 
 #include <DDraw.h>
+#include "DxSurface/DxSurface.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -73,6 +74,92 @@ struct FormatYV12
 	}
 };
 
+struct FormatNV12
+{
+	static VOID Build(DDSURFACEDESC2 &ddsd, DWORD dwWidth, DWORD dwHeight)
+	{
+		ZeroMemory(&ddsd, sizeof(ddsd));
+
+		ddsd.dwSize = sizeof(ddsd);
+		ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY;
+		ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
+		ddsd.dwWidth = dwWidth;
+		ddsd.dwHeight = dwHeight;
+		ddsd.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
+
+		ddsd.ddpfPixelFormat.dwFlags = DDPF_FOURCC | DDPF_YUV;
+		ddsd.ddpfPixelFormat.dwYUVBitCount = 8;
+		ddsd.ddpfPixelFormat.dwFourCC = MAKEFOURCC('N', 'V', '1', '2');
+	}
+	static VOID Copy(LPBYTE lpSurface, const ImageSpace &imageSpace, DWORD dwWidth, DWORD dwHeight, LONG lPitch)
+	{
+		LPBYTE lpSrcY = imageSpace.pBuffer[0];
+		LPBYTE lpSrcUV = imageSpace.pBuffer[1];
+
+		DWORD dwCopyLength = 0;
+
+		if (lpSrcY != NULL) {
+			dwCopyLength = dwWidth;
+			for (DWORD i = 0; i < dwHeight; ++i) {
+				CopyMemory(lpSurface, lpSrcY, dwCopyLength);
+				lpSrcY += imageSpace.dwLineSize[0];
+				lpSurface += lPitch;
+			}
+		}
+		if (lpSrcUV != NULL) {
+			dwCopyLength = dwWidth;
+			for (DWORD i = 0; i < (dwHeight >> 1); ++i) {
+				CopyMemory(lpSurface, lpSrcUV, dwCopyLength);
+				lpSrcUV += imageSpace.dwLineSize[0];
+				lpSurface += lPitch;
+			}
+		}
+	}
+};
+
+struct FormatNV21
+{
+	static VOID Build(DDSURFACEDESC2 &ddsd, DWORD dwWidth, DWORD dwHeight)
+	{
+		ZeroMemory(&ddsd, sizeof(ddsd));
+
+		ddsd.dwSize = sizeof(ddsd);
+		ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY;
+		ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
+		ddsd.dwWidth = dwWidth;
+		ddsd.dwHeight = dwHeight;
+		ddsd.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
+
+		ddsd.ddpfPixelFormat.dwFlags = DDPF_FOURCC | DDPF_YUV;
+		ddsd.ddpfPixelFormat.dwYUVBitCount = 8;
+		ddsd.ddpfPixelFormat.dwFourCC = MAKEFOURCC('N', 'V', '2', '1');
+	}
+	static VOID Copy(LPBYTE lpSurface, const ImageSpace &imageSpace, DWORD dwWidth, DWORD dwHeight, LONG lPitch)
+	{
+		LPBYTE lpSrcY = imageSpace.pBuffer[0];
+		LPBYTE lpSrcVU = imageSpace.pBuffer[1];
+
+		DWORD dwCopyLength = 0;
+
+		if (lpSrcY != NULL) {
+			dwCopyLength = dwWidth;
+			for (DWORD i = 0; i < dwHeight; ++i) {
+				CopyMemory(lpSurface, lpSrcY, dwCopyLength);
+				lpSrcY += imageSpace.dwLineSize[0];
+				lpSurface += lPitch;
+			}
+		}
+		if (lpSrcVU != NULL) {
+			dwCopyLength = dwWidth;
+			for (DWORD i = 0; i < (dwHeight >> 1); ++i) {
+				CopyMemory(lpSurface, lpSrcVU, dwCopyLength);
+				lpSrcVU += imageSpace.dwLineSize[0];
+				lpSurface += lPitch;
+			}
+		}
+	}
+};
+
 struct FormatYUY2
 {
 	static VOID Build(DDSURFACEDESC2 &ddsd, DWORD dwWidth, DWORD dwHeight)
@@ -126,8 +213,6 @@ struct FormatUYVY
 		FormatYUY2::Copy(lpSurface, imageSpace, dwWidth, dwHeight, lPitch);
 	}
 };
-
-//////////////////////////////////////////////////////////////////////////
 
 struct FormatPAL8
 {
@@ -396,6 +481,8 @@ public:
 
 	HRESULT Draw(const ImageSpace &imageSpace,RECT *pRectClip,RECT *pRectRender,bool bPresent = true)
  	{
+		DeclareRunTime(5);
+		SaveRunTime();
 		HRESULT hr = E_INVALIDARG;
 		RECT rectSrc = { 0 };
 		RECT rectDst = { 0 };
@@ -446,7 +533,7 @@ public:
 				break;
 			}
 		}
-
+		SaveRunTime();
 		hr = S_OK;
 	Exit:
 		return hr;
@@ -537,7 +624,7 @@ private:
 	LPDIRECTDRAWCLIPPER  m_pClipper;
 	LPDIRECTDRAWSURFACE7 m_pSurfacePrimary;
 	LPDIRECTDRAWSURFACE7 m_pSurfaceOffScreen;
-
+public:
 	HWND m_hWnd;
 	DWORD m_dwWidth;
 	DWORD m_dwHeight;

@@ -651,3 +651,7 @@ IPCPLAYSDK_API void ipcplay_ClearD3DCache();
 /// @see			参见其他内容
 /// @note			需要注意的问题
 /// @deprecated		该函数若有被取消或被替代的可能性,在此说明
+
+IPCPLAYSDK_API void *AllocAvFrame();
+
+IPCPLAYSDK_API void AvFree(void*);
