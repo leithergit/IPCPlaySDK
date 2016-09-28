@@ -140,6 +140,7 @@ typedef enum {
 #define		IPC_Error_UnsupportHaccel		(-35)	///< 当前系统不支持硬解码功能
 #define		IPC_Error_UnsupportedFormat		(-35)	///< 不支持的图像格式
 #define		IPC_Error_UnsupportedCodec		(-36)	///< 不支持的编码格式
+#define		IPC_Error_RenderOverflow		(-37)	///< 渲染窗口超限
 #define		IPC_Error_InsufficentMemory		(-255)	///< 内存不足
 
 #define		WM_IPCPLAYER_MESSAGE			WM_USER + 8192	///< 播放器出错时发出的消息 ,消息的LPARAM字段无意义,wparam字段定义如下：
@@ -149,6 +150,8 @@ typedef enum {
 #define		IPCPLAYER_UNKNOWNSTREAM			3		///< 无法识别的码流
 #define		IPCPLAYER_UNSURPPORTEDSTREAM	4		///< 不支持的视频编码格式
 #define		IPCPLAYER_INVALIDCODER			5		///< 无效的视频编码格式
+
+#define		_Max_RenderWnds					9
 
 
 /// @brief 播放器即时信息
@@ -272,6 +275,14 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenFileW(IN HWND hWnd, IN WCHAR *szFileNa
 ///	放函数都要使用些接口，若操作失败则返回NULL,错误原因可参考GetLastError的返回值
 IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenStream(IN HWND hWnd, byte *szStreamHeader, int nHeaderSize, IN int nMaxFramesCache = 100, char *szLogFile = nullptr);
 
+///	@brief			初始化流播放句柄,仅用于流播放
+///	@param [in]		hWnd			显示图像的窗口
+/// @param [in]		nBufferSize	流播放时允许最大视频帧数缓存数量,该值必须大于0，否则将返回null
+/// @param [in]		szLogFile		日志文件名,若为null，则不开启日志
+///	@return			若操作成功，返回一个IPC_PLAYHANDLE类型的播放句柄，所有后续播
+///	放函数都要使用些接口，若操作失败则返回NULL,错误原因可参考GetLastError的返回值
+IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenRTStream(IN HWND hWnd,  IN int nBufferSize = 1024*2048, char *szLogFile = nullptr);
+
 ///	@brief			设置流播放头信息
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		szStreamHeader	IPC私有格式的录像文件头,播放相机实时码流时，应设置为null
@@ -337,6 +348,16 @@ IPCPLAYSDK_API int ipcplay_RemoveBorderRect(IN IPC_PLAYHANDLE hPlayHandle);
 ///					的返回值来判断，是否继续播放，若说明队列已满，则应该暂停播放
 IPCPLAYSDK_API int ipcplay_InputStream(IN IPC_PLAYHANDLE hPlayHandle, unsigned char *szFrameData, int nFrameSize);
 
+/// @brief			输入实时流
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		szFrameData		从IPC私有录像文件中读取一帧数据，该数据包含完整的IPC私有帧头
+/// @param [in]		nFrameSize		szFrameData的长度
+/// @retval			0	操作成功
+/// @retval			1	流缓冲区已满
+/// @retval			-1	输入参数无效
+/// @remark			播放流数据时，相应的帧数据其实并未立即播放，而是被放了播放队列中，应该根据ipcplay_PlayStream
+///					的返回值来判断，是否继续播放，若说明队列已满，则应该暂停播放
+IPCPLAYSDK_API int ipcplay_InputRTStream(IN IPC_PLAYHANDLE hPlayHandle, unsigned char *szFrameData, int nFrameSize);
 /// @brief			输入流相机实时码流
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		pFrameData		相机码流数据
@@ -624,6 +645,10 @@ IPCPLAYSDK_API int ipcplay_BuildFrameHeader(OUT byte *pFrameHeader, INOUT int *p
 /// @remark			若要设置外部显示回调，必须把显示格式设置为R8G8B8格式
 IPCPLAYSDK_API int ipcplay_SetPixFormat(IN IPC_PLAYHANDLE hPlayHandle, IN PIXELFMORMAT nPixelFMT = YV12);
 
+// IPCPLAYSDK_API int ipcplay_SuspendDecode(IN IPC_PLAYHANDLE hPlayHandle);
+// 
+// IPCPLAYSDK_API int ipcplay_ResumeDecode(IN IPC_PLAYHANDLE hPlayHandle);
+
 
 IPCPLAYSDK_API void ipcplay_ClearD3DCache();
 
@@ -655,3 +680,11 @@ IPCPLAYSDK_API void ipcplay_ClearD3DCache();
 IPCPLAYSDK_API void *AllocAvFrame();
 
 IPCPLAYSDK_API void AvFree(void*);
+
+IPCPLAYSDK_API int ipcplay_AddWnd(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd/*, RECT rtRender*/);
+
+IPCPLAYSDK_API int ipcplay_RemoveWnd(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd);
+
+// IPCPLAYSDK_API int AddRenderWnd(IN IPC_PLAYHANDLE hPlayHandle,IN HWND hRenderWnd);
+
+// IPCPLAYSDK_API int RemoveRenderWnd(IN IPC_PLAYHANDLE hPlayHandle, IN HWND hRenderWnd);

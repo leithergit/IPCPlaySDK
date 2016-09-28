@@ -91,7 +91,7 @@ struct FormatNV12
 		ddsd.ddpfPixelFormat.dwYUVBitCount = 8;
 		ddsd.ddpfPixelFormat.dwFourCC = MAKEFOURCC('N', 'V', '1', '2');
 	}
-	static VOID Copy(LPBYTE lpSurface, const ImageSpace &imageSpace, DWORD dwWidth, DWORD dwHeight, LONG lPitch)
+	static VOID Copy(LPBYTE lpDDrawSurface, const ImageSpace &imageSpace, DWORD dwWidth, DWORD dwHeight, LONG lPitch)
 	{
 		LPBYTE lpSrcY = imageSpace.pBuffer[0];
 		LPBYTE lpSrcUV = imageSpace.pBuffer[1];
@@ -101,17 +101,17 @@ struct FormatNV12
 		if (lpSrcY != NULL) {
 			dwCopyLength = dwWidth;
 			for (DWORD i = 0; i < dwHeight; ++i) {
-				CopyMemory(lpSurface, lpSrcY, dwCopyLength);
+				CopyMemory(lpDDrawSurface, lpSrcY, dwCopyLength);
 				lpSrcY += imageSpace.dwLineSize[0];
-				lpSurface += lPitch;
+				lpDDrawSurface += lPitch;
 			}
 		}
 		if (lpSrcUV != NULL) {
 			dwCopyLength = dwWidth;
 			for (DWORD i = 0; i < (dwHeight >> 1); ++i) {
-				CopyMemory(lpSurface, lpSrcUV, dwCopyLength);
+				CopyMemory(lpDDrawSurface, lpSrcUV, dwCopyLength);
 				lpSrcUV += imageSpace.dwLineSize[0];
-				lpSurface += lPitch;
+				lpDDrawSurface += lPitch;
 			}
 		}
 	}
@@ -481,8 +481,8 @@ public:
 
 	HRESULT Draw(const ImageSpace &imageSpace,RECT *pRectClip,RECT *pRectRender,bool bPresent = true)
  	{
-		DeclareRunTime(5);
-		SaveRunTime();
+		//DeclareRunTime(5);
+		//SaveRunTime();
 		HRESULT hr = E_INVALIDARG;
 		RECT rectSrc = { 0 };
 		RECT rectDst = { 0 };
@@ -533,7 +533,7 @@ public:
 				break;
 			}
 		}
-		SaveRunTime();
+		//SaveRunTime();
 		hr = S_OK;
 	Exit:
 		return hr;
@@ -543,52 +543,55 @@ public:
 	HRESULT Create(HWND hWnd, DDSURFACEDESC2 &ddOffScreenSurfaceDesc)
 	{
 		Release();
+		bool bSucceed = false;
+		HRESULT hr = S_OK;
 
-		HRESULT hr = DirectDrawCreateEx(NULL, (LPVOID *)&m_pDirectDraw, IID_IDirectDraw7, NULL);
-		if (hr != S_OK) {
-			goto Exit;
-		}
-
-		hr = m_pDirectDraw->SetCooperativeLevel(hWnd, DDSCL_NORMAL);
-		if (hr != S_OK) {
-			goto Exit;
-		}
-
+		do 
 		{
+			HRESULT hr = DirectDrawCreateEx(NULL, (LPVOID *)&m_pDirectDraw, IID_IDirectDraw7, NULL);
+			if (hr != S_OK)
+				break;
+
+			hr = m_pDirectDraw->SetCooperativeLevel(hWnd, DDSCL_NORMAL);
+			if (hr != S_OK)
+				break;
+		
 			DDSURFACEDESC2 ddPrimarySurfaceDesc = { 0 };
 			ZeroMemory(&ddPrimarySurfaceDesc, sizeof(ddPrimarySurfaceDesc));
 			ddPrimarySurfaceDesc.dwSize = sizeof(ddPrimarySurfaceDesc);
 			ddPrimarySurfaceDesc.dwFlags = DDSD_CAPS;
 			ddPrimarySurfaceDesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
 			hr = m_pDirectDraw->CreateSurface(&ddPrimarySurfaceDesc, &m_pSurfacePrimary, NULL);
-			if (hr != S_OK) {
-				goto Exit;
-			}
+			if (hr != S_OK)
+				break;
+
 			hr = m_pDirectDraw->CreateClipper(0, &m_pClipper, NULL);
-			if (hr != S_OK) {
-				goto Exit;
-			}
+			if (hr != S_OK)
+				break;
+
 			hr = m_pClipper->SetHWnd(0, hWnd);
-			if (hr != S_OK) {
-				goto Exit;
-			}
+			if (hr != S_OK) 
+				break;
 			m_pSurfacePrimary->SetClipper(m_pClipper);
-		}
 
-		hr = m_pDirectDraw->CreateSurface(&ddOffScreenSurfaceDesc, &m_pSurfaceOffScreen, NULL);
-		if (hr != S_OK) {
-			goto Exit;
-		}
+			hr = m_pDirectDraw->CreateSurface(&ddOffScreenSurfaceDesc, &m_pSurfaceOffScreen, NULL);
+			if (hr != S_OK)
+				break;
+			bSucceed = true;
 
+		} while (false);
+	
+		if (hr != S_OK)
+		{
+			Release();
+			return hr;
+		}
+		
 		m_hWnd = hWnd;
 		m_dwWidth = ddOffScreenSurfaceDesc.dwWidth;
 		m_dwHeight = ddOffScreenSurfaceDesc.dwHeight;
 		m_copyCallback = PixelFormatT::Copy;
-
-	Exit:
-		if (hr != S_OK) {
-			Release();
-		}
+		
 		return hr;
 	}
 

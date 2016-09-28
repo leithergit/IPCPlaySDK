@@ -1101,8 +1101,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 		CFileDialog OpenDataBase(TRUE, _T("*.mp4"), _T(""), dwFlags, (LPCTSTR)szFilter);
 		OpenDataBase.m_ofn.lpstrTitle = _T("请选择播放的文件");
 		CString strFilePath;
-		
-		
+				
 		if (OpenDataBase.DoModal() == IDOK)
 		{
 			strFilePath = OpenDataBase.GetPathName();
@@ -1159,7 +1158,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 						m_pPlayContext.reset();
 						return;
 					}
- 					m_pYUVFile = new CFile(_T("axis1080p.yuv"), CFile::modeCreate | CFile::modeWrite);
+ 					//m_pYUVFile = new CFile(_T("axis1080p.yuv"), CFile::modeCreate | CFile::modeWrite);
  					ipcplay_SetCallBack(m_pPlayContext->hPlayer[0], YUVCapture, CaptureYUVProc, this);
 					PlayerInfo pi;
 					if (ipcplay_GetPlayerInfo(m_pPlayContext->hPlayer[0], &pi) != IPC_Succeed)

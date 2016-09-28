@@ -110,6 +110,41 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenFileW(IN HWND hWnd, IN WCHAR *szFileNa
 }
 
 ///	@brief			初始化流播放句柄,仅用于流播放
+///	@param [in]		hWnd			显示图像的窗口
+/// @param [in]		nBufferSize	流播放时允许最大视频帧数缓存数量,该值必须大于0，否则将返回null
+/// @param [in]		szLogFile		日志文件名,若为null，则不开启日志
+///	@return			若操作成功，返回一个IPC_PLAYHANDLE类型的播放句柄，所有后续播
+///	放函数都要使用些接口，若操作失败则返回NULL,错误原因可参考GetLastError的返回值
+IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenRTStream(IN HWND hWnd, IN int nBufferSize , char *szLogFile)
+{
+	if ((hWnd && !IsWindow(hWnd))/* || !szStreamHeader || !nHeaderSize*/)
+		return nullptr;
+	if (0 == nBufferSize)
+	{
+		SetLastError(IPC_Error_InvalidCacheSize);
+		return nullptr;
+	}
+	try
+	{
+		CIPCPlayer *pPlayer = _New CIPCPlayer(hWnd, nBufferSize, szLogFile);
+		if (!pPlayer)
+			return nullptr;
+		if (szLogFile)
+			TraceMsgA("%s %s.\n", __FUNCTION__, szLogFile);
+#if _DEBUG
+		EnterCriticalSection(&g_csPlayerHandles);
+		g_nPlayerHandles++;
+		LeaveCriticalSection(&g_csPlayerHandles);
+#endif
+		return pPlayer;
+	}
+	catch (...)
+	{
+		return nullptr;
+	}
+}
+
+///	@brief			初始化流播放句柄,仅用于流播放
 /// @param [in]		hUserHandle		网络连接句柄
 ///	@param [in]		hWnd			显示图像的窗口
 /// @param [in]		nMaxFramesCache	流播放时允许最大视频帧数缓存数量
@@ -252,6 +287,26 @@ IPCPLAYSDK_API int ipcplay_RemoveBorderRect(IN IPC_PLAYHANDLE hPlayHandle)
 	return IPC_Succeed;
 }
 
+IPCPLAYSDK_API int ipcplay_AddWnd(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd/*, RECT rtRender*/)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	return pPlayer->AddRenderWnd(hRenderWnd);
+}
+
+IPCPLAYSDK_API int ipcplay_RemoveWnd(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	return pPlayer->RemoveRenderWnd(hRenderWnd);
+}
+
 /// @brief			输入流数据
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @retval			0	操作成功
@@ -269,6 +324,15 @@ IPCPLAYSDK_API int ipcplay_InputStream(IN IPC_PLAYHANDLE hPlayHandle, unsigned c
 	return pPlayer->InputStream(szFrameData, nFrameSize);
 }
 
+IPCPLAYSDK_API int ipcplay_InputRTStream(IN IPC_PLAYHANDLE hPlayHandle, unsigned char *szFrameData, int nFrameSize)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	return pPlayer->InputRTStream(szFrameData, nFrameSize);
+}
 
 /// @brief			输入流相机实时码流
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
@@ -944,3 +1008,45 @@ IPCPLAYSDK_API void AvFree(void*p)
 {
 	CIPCPlayer::_AvFree(p);
 }
+
+// IPCPLAYSDK_API int ipcplay_SuspendDecode(IN IPC_PLAYHANDLE hPlayHandle)
+// {
+// 	if (!hPlayHandle)
+// 		return IPC_Error_InvalidParameters;
+// 	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+// 	if (pPlayer->nSize != sizeof(CIPCPlayer))
+// 		return IPC_Error_InvalidParameters;
+// 	pPlayer->SuspendDecode();
+// 	return IPC_Succeed;
+// }
+// 
+// IPCPLAYSDK_API int ipcplay_ResumeDecode(IN IPC_PLAYHANDLE hPlayHandle)
+// {
+// 	if (!hPlayHandle)
+// 		return IPC_Error_InvalidParameters;
+// 	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+// 	if (pPlayer->nSize != sizeof(CIPCPlayer))
+// 		return IPC_Error_InvalidParameters;
+// 	pPlayer->ResumeDecode();
+// 	return IPC_Succeed;
+// }
+
+// IPCPLAYSDK_API int AddRenderWnd(IN IPC_PLAYHANDLE hPlayHandle, IN HWND hRenderWnd)
+// {
+// 	if (!hPlayHandle)
+// 		return IPC_Error_InvalidParameters;
+// 	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+// 	if (pPlayer->nSize != sizeof(CIPCPlayer))
+// 		return IPC_Error_InvalidParameters;
+// 	return pPlayer->AddRenderWnd(hRenderWnd,nullptr);
+// }
+
+// IPCPLAYSDK_API int RemoveRenderWnd(IN IPC_PLAYHANDLE hPlayHandle, IN HWND hRenderWnd)
+// {
+// 	if (!hPlayHandle)
+// 		return IPC_Error_InvalidParameters;
+// 	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+// 	if (pPlayer->nSize != sizeof(CIPCPlayer))
+// 		return IPC_Error_InvalidParameters;
+// 	return pPlayer->RemoveRenderWnd(hRenderWnd);
+// }

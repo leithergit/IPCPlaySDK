@@ -494,6 +494,7 @@ public:
 		//m_pAVCtx = m_pFormatCtx->streams[m_nVideoIndex]->codecpar;
 		return 0;
 	}
+
 	void CancelProbe()
 	{
 		if (m_pAvQueue)
@@ -518,7 +519,7 @@ public:
 		m_nDecodeThreadCount = nThreads;
 	}
 	/// @brief 初始化解码器
-	/// @brief 不可与LoadFile函数同时调用，二者只能选一
+	/// @brief 不可与LoadDecodingFile函数同时调用，二者只能选一
 	/// 当nCodec不为AV_CODEC_ID_NONE时，nWidth和nHeight不可为0
 	bool InitDecoder(AVCodecID nCodec = AV_CODEC_ID_NONE, int nWidth = 0,int nHeight = 0,bool bEnableHaccel = false)
 	{
@@ -653,6 +654,7 @@ public:
 		return true;
 	}
 
+
 private:
 	/// @brief 初始化FFMPEG解码器
 	int InitFFmpegDecoder(bool bEnableHaccel = false)
@@ -721,6 +723,23 @@ private:
 			if (m_pAVCtx->extradata)
 				av_freep(&m_pAVCtx->extradata);
 			av_freep(&m_pAVCtx);
+		}
+		if (m_pFormatCtx)
+		{
+			avformat_close_input(&m_pFormatCtx);
+			avformat_free_context(m_pFormatCtx);
+			m_pFormatCtx = nullptr;
+		}
+		if (m_pIoContext)
+		{
+			av_free(m_pIoContext);
+			m_pIoContext = nullptr;
+		}
+		if (m_pAvBuffer)
+		{
+			av_free(m_pAvBuffer);
+			m_pAvBuffer = nullptr;
+			m_nAvBufferSize = 0;
 		}
 		av_frame_free(&m_pFrame);
 		m_pFrame = nullptr;
@@ -822,13 +841,7 @@ public:
 				break;
 			}
 
-		m_pAVCodec = avcodec_find_decoder(m_pAVCtx->codec_id);
-		if (!m_pAVCodec)
-		{
-			DxTraceMsg("%s avcodec_find_decoder failed.\n", __FUNCTION__);
-			return false;
-		}
-
+		
 		m_pAVCtx = avcodec_alloc_context3(m_pAVCodec);
 		if (!m_pAVCtx)
 			avcodec_parameters_to_context(m_pAVCtx, m_pFormatCtx->streams[m_nVideoIndex]->codecpar);
@@ -837,7 +850,12 @@ public:
 			DxTraceMsg("%s avcodec_alloc_context3 Failed.\n", __FUNCTION__);
 			return false;
 		}
-		
+		m_pAVCodec = avcodec_find_decoder(m_pAVCtx->codec_id);
+		if (!m_pAVCodec)
+		{
+			DxTraceMsg("%s avcodec_find_decoder failed.\n", __FUNCTION__);
+			return false;
+		}
 		if (bEnableHaccel)
 		{
 			HRESULT hr = InitD3D(nAdapter);
@@ -1067,6 +1085,11 @@ public:
 	LPDIRECT3DSURFACE9	m_pDirect3DSurfaceRender;
 	D3DPRESENT_PARAMETERS m_d3dpp;
 	static	CAvRegister AvRegister;
+	// 实时流播放相关变量
+	uint8_t				*m_pAvBuffer = nullptr;
+	int					m_nAvBufferSize = 512*1024;
+	
+	AVInputFormat *m_pInputFormatCtx = nullptr;
 private:
 	Decoder_Manufacturer m_nManufacturer = FFMPEG;
 	// 海思265解码器相关变量

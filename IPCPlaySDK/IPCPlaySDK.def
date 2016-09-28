@@ -3,10 +3,12 @@ EXPORTS
 	ipcplay_OpenFileA
 	ipcplay_OpenFileW
 	ipcplay_OpenStream
+	ipcplay_OpenRTStream
 	ipcplay_Close
 	EnableLog
 	ipcplay_InputStream
 	ipcplay_InputIPCStream
+	ipcplay_InputRTStream
 	ipcplay_Start
 	ipcplay_Reset
 	ipcplay_Stop
@@ -47,3 +49,7 @@ EXPORTS
 	ipcplay_SetStreamHeader
 	AllocAvFrame
 	AvFree
+	;ipcplay_ResumeDecode
+	;ipcplay_ResumeDecode
+	ipcplay_AddWnd
+	ipcplay_RemoveWnd

@@ -86,7 +86,6 @@ public:
 			}
 #endif
 			m_pCS = pCS;
-			m_bAutoDelete = bAutoDelete;
 			::EnterCriticalSection(m_pCS);
 			m_bLocked = true;
 			if (timeGetTime() - m_dwLockTime >= _LockOverTime)
@@ -94,13 +93,37 @@ public:
 				CHAR szOuput[1024] = { 0 };
 				if (szFile)
 				{
-					sprintf(szOuput, "Wait Lock @File:%s:%d(%s),Waittime = %d.\n", szFile, nLine, szFunction,timeGetTime() - m_dwLockTime);
+					sprintf(szOuput, "Wait Lock @File:%s:%d(%s),Waittime = %d.\n", m_pszFile, m_nLockLine, m_pszFunction , timeGetTime() - m_dwLockTime);
 				}
 				else
 					sprintf(szOuput, "Wait Lock Waittime = %d.\n", timeGetTime() - m_dwLockTime);
 				OutputDebugStringA(szOuput);
 			}
 		}
+	}
+
+	void Lock()
+	{
+		if (m_bLocked)
+			return;
+#if _LockOverTime
+		m_dwLockTime = timeGetTime();
+#endif
+		::EnterCriticalSection(m_pCS);
+		m_bLocked = true;
+		if (timeGetTime() - m_dwLockTime >= _LockOverTime)
+		{
+			CHAR szOuput[1024] = { 0 };
+			if (m_pszFile)
+			{
+				sprintf(szOuput, "Wait Lock @File:%s:%d(%s),Waittime = %d.\n", m_pszFile, m_nLockLine, m_pszFunction, timeGetTime() - m_dwLockTime);
+			}
+			else
+				sprintf(szOuput, "Wait Lock Waittime = %d.\n", timeGetTime() - m_dwLockTime);
+			OutputDebugStringA(szOuput);
+		}
+		
+		
 	}
 	void Unlock()
 	{
