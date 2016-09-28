@@ -37,51 +37,6 @@
     <ClCompile Include="IPCPlaySDK.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\StreamParser\asfstream.cpp">
-      <Filter>StreamParser</Filter>
-    </ClCompile>
-    <ClCompile Include="..\StreamParser\avistream.cpp">
-      <Filter>StreamParser</Filter>
-    </ClCompile>
-    <ClCompile Include="..\StreamParser\decSPS.cpp">
-      <Filter>StreamParser</Filter>
-    </ClCompile>
-    <ClCompile Include="..\StreamParser\dhstdstream.cpp">
-      <Filter>StreamParser</Filter>
-    </ClCompile>
-    <ClCompile Include="..\StreamParser\DhStreamParser.cpp">
-      <Filter>StreamParser</Filter>
-    </ClCompile>
-    <ClCompile Include="..\StreamParser\newstream.cpp">
-      <Filter>StreamParser</Filter>
-    </ClCompile>
-    <ClCompile Include="..\StreamParser\oldstream.cpp">
-      <Filter>StreamParser</Filter>
-    </ClCompile>
-    <ClCompile Include="..\StreamParser\psstream.cpp">
-      <Filter>StreamParser</Filter>
-    </ClCompile>
-    <ClCompile Include="..\StreamParser\rwstream.cpp">
-      <Filter>StreamParser</Filter>
-    </ClCompile>
-    <ClCompile Include="..\StreamParser\shstream.cpp">
-      <Filter>StreamParser</Filter>
-    </ClCompile>
-    <ClCompile Include="..\StreamParser\StdMp4Parse.cpp">
-      <Filter>StreamParser</Filter>
-    </ClCompile>
-    <ClCompile Include="..\StreamParser\StreamParser.cpp">
-      <Filter>StreamParser</Filter>
-    </ClCompile>
-    <ClCompile Include="..\StreamParser\svacstream.cpp">
-      <Filter>StreamParser</Filter>
-    </ClCompile>
-    <ClCompile Include="..\StreamParser\tsstream.cpp">
-      <Filter>StreamParser</Filter>
-    </ClCompile>
-    <ClCompile Include="..\StreamParser\xmstream.cpp">
-      <Filter>StreamParser</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AudioCodec\g726.h">
@@ -156,53 +111,16 @@
     <ClInclude Include="IPCPlaySDK.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\StreamParser\asfstream.h">
-      <Filter>StreamParser</Filter>
+    <ClInclude Include="RenderUnit.h" />
+    <ClInclude Include="YUVFrame.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\StreamParser\avistream.h">
-      <Filter>StreamParser</Filter>
-    </ClInclude>
-    <ClInclude Include="..\StreamParser\decSPS.h">
-      <Filter>StreamParser</Filter>
-    </ClInclude>
-    <ClInclude Include="..\StreamParser\dhstdstream.h">
-      <Filter>StreamParser</Filter>
-    </ClInclude>
-    <ClInclude Include="..\StreamParser\DhStreamParser.h">
-      <Filter>StreamParser</Filter>
-    </ClInclude>
-    <ClInclude Include="..\StreamParser\FrameList.h">
-      <Filter>StreamParser</Filter>
-    </ClInclude>
-    <ClInclude Include="..\StreamParser\newstream.h">
-      <Filter>StreamParser</Filter>
-    </ClInclude>
-    <ClInclude Include="..\StreamParser\oldstream.h">
-      <Filter>StreamParser</Filter>
-    </ClInclude>
-    <ClInclude Include="..\StreamParser\psstream.h">
-      <Filter>StreamParser</Filter>
-    </ClInclude>
-    <ClInclude Include="..\StreamParser\rwstream.h">
-      <Filter>StreamParser</Filter>
-    </ClInclude>
-    <ClInclude Include="..\StreamParser\shstream.h">
-      <Filter>StreamParser</Filter>
-    </ClInclude>
-    <ClInclude Include="..\StreamParser\StdMp4Parse.h">
-      <Filter>StreamParser</Filter>
-    </ClInclude>
-    <ClInclude Include="..\StreamParser\StreamParser.h">
-      <Filter>StreamParser</Filter>
-    </ClInclude>
-    <ClInclude Include="..\StreamParser\svacstream.h">
-      <Filter>StreamParser</Filter>
-    </ClInclude>
-    <ClInclude Include="..\StreamParser\tsstream.h">
-      <Filter>StreamParser</Filter>
-    </ClInclude>
-    <ClInclude Include="..\StreamParser\xmstream.h">
-      <Filter>StreamParser</Filter>
+    <ClInclude Include="Snapshot.h" />
+    <ClInclude Include="StreamFrame.h" />
+    <ClInclude Include="Common.h" />
+    <ClInclude Include="TimeTrace.h" />
+    <ClInclude Include="SimpleWnd.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -223,9 +141,6 @@
     </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{c22a52e2-b72c-477b-af58-51e7266180ca}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="StreamParser">
-      <UniqueIdentifier>{cc84e9f1-2aa9-4e9f-a866-c6a68378e41f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

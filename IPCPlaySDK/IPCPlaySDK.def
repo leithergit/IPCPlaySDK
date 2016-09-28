@@ -8,7 +8,6 @@ EXPORTS
 	EnableLog
 	ipcplay_InputStream
 	ipcplay_InputIPCStream
-	ipcplay_InputRTStream
 	ipcplay_Start
 	ipcplay_Reset
 	ipcplay_Stop

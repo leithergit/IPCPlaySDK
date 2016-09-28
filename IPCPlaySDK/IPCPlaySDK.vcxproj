@@ -98,26 +98,11 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\StreamParser\asfstream.h" />
-    <ClInclude Include="..\StreamParser\avistream.h" />
-    <ClInclude Include="..\StreamParser\decSPS.h" />
-    <ClInclude Include="..\StreamParser\dhstdstream.h" />
-    <ClInclude Include="..\StreamParser\DhStreamParser.h" />
-    <ClInclude Include="..\StreamParser\FrameList.h" />
-    <ClInclude Include="..\StreamParser\newstream.h" />
-    <ClInclude Include="..\StreamParser\oldstream.h" />
-    <ClInclude Include="..\StreamParser\psstream.h" />
-    <ClInclude Include="..\StreamParser\rwstream.h" />
-    <ClInclude Include="..\StreamParser\shstream.h" />
-    <ClInclude Include="..\StreamParser\StdMp4Parse.h" />
-    <ClInclude Include="..\StreamParser\StreamParser.h" />
-    <ClInclude Include="..\StreamParser\svacstream.h" />
-    <ClInclude Include="..\StreamParser\tsstream.h" />
-    <ClInclude Include="..\StreamParser\xmstream.h" />
     <ClInclude Include="AudioCodec\g711.h" />
     <ClInclude Include="AudioCodec\g726.h" />
     <ClInclude Include="AudioDecoder.h" />
     <ClInclude Include="AutoLock.h" />
+    <ClInclude Include="Common.h" />
     <ClInclude Include="DirectDraw.h" />
     <ClInclude Include="DSoundPlayer.hpp" />
     <ClInclude Include="IPCPlaySDK.h" />
@@ -126,10 +111,15 @@
     <ClInclude Include="DxSurface\DxSurface.h" />
     <ClInclude Include="DxSurface\DxTrace.h" />
     <ClInclude Include="DxSurface\gpu_memcpy_sse4.h" />
+    <ClInclude Include="RenderUnit.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Runlog.h" />
+    <ClInclude Include="SimpleWnd.h" />
+    <ClInclude Include="Snapshot.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="StreamFrame.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="TimeTrace.h" />
     <ClInclude Include="TimeUtility.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="VideoDecoder\gpu_memcpy_sse4.h" />
@@ -138,23 +128,9 @@
     <ClInclude Include="VideoDecoder\IHWVideo_Typedef.h" />
     <ClInclude Include="VideoDecoder\moreuuids.h" />
     <ClInclude Include="VideoDecoder\VideoDecoder.h" />
+    <ClInclude Include="YUVFrame.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\StreamParser\asfstream.cpp" />
-    <ClCompile Include="..\StreamParser\avistream.cpp" />
-    <ClCompile Include="..\StreamParser\decSPS.cpp" />
-    <ClCompile Include="..\StreamParser\dhstdstream.cpp" />
-    <ClCompile Include="..\StreamParser\DhStreamParser.cpp" />
-    <ClCompile Include="..\StreamParser\newstream.cpp" />
-    <ClCompile Include="..\StreamParser\oldstream.cpp" />
-    <ClCompile Include="..\StreamParser\psstream.cpp" />
-    <ClCompile Include="..\StreamParser\rwstream.cpp" />
-    <ClCompile Include="..\StreamParser\shstream.cpp" />
-    <ClCompile Include="..\StreamParser\StdMp4Parse.cpp" />
-    <ClCompile Include="..\StreamParser\StreamParser.cpp" />
-    <ClCompile Include="..\StreamParser\svacstream.cpp" />
-    <ClCompile Include="..\StreamParser\tsstream.cpp" />
-    <ClCompile Include="..\StreamParser\xmstream.cpp" />
     <ClCompile Include="AudioCodec\g711.cpp" />
     <ClCompile Include="AudioCodec\g726.cpp" />
     <ClCompile Include="Autolock.cpp" />

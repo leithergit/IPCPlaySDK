@@ -348,16 +348,6 @@ IPCPLAYSDK_API int ipcplay_RemoveBorderRect(IN IPC_PLAYHANDLE hPlayHandle);
 ///					的返回值来判断，是否继续播放，若说明队列已满，则应该暂停播放
 IPCPLAYSDK_API int ipcplay_InputStream(IN IPC_PLAYHANDLE hPlayHandle, unsigned char *szFrameData, int nFrameSize);
 
-/// @brief			输入实时流
-/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
-/// @param [in]		szFrameData		从IPC私有录像文件中读取一帧数据，该数据包含完整的IPC私有帧头
-/// @param [in]		nFrameSize		szFrameData的长度
-/// @retval			0	操作成功
-/// @retval			1	流缓冲区已满
-/// @retval			-1	输入参数无效
-/// @remark			播放流数据时，相应的帧数据其实并未立即播放，而是被放了播放队列中，应该根据ipcplay_PlayStream
-///					的返回值来判断，是否继续播放，若说明队列已满，则应该暂停播放
-IPCPLAYSDK_API int ipcplay_InputRTStream(IN IPC_PLAYHANDLE hPlayHandle, unsigned char *szFrameData, int nFrameSize);
 /// @brief			输入流相机实时码流
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		pFrameData		相机码流数据

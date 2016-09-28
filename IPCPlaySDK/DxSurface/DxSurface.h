@@ -15,9 +15,7 @@
 #include "../AutoLock.h"
 #include "../Runlog.h"
 #include "../Utility.h"
-#ifdef _DEBUG
 #include "../TimeUtility.h"
-#endif
 
 #define Min(x,y)	(x<y?x:y)
 #pragma warning(push)
@@ -1354,43 +1352,7 @@ _Failed:
 // 			return true;
 // 		}
 // 	}
-	// 判断是否需要在目标窗口上显示图像
-	// 在被隐藏或最小化的窗口上显示图像速度非常慢,会严重影响整个渲染进程，因此
-	// 当窗口或其根窗口处于隐藏或最小化状态时，则不应在该窗口上绘制图像
-	bool IsNeedRender(HWND hRenderWnd)
-	{
-		if (IsWindow(hRenderWnd) && m_bSnapFlag)
-			return true;
-		// 若窗口被隐藏或最小化则不再显示图像
-		if (IsIconic(hRenderWnd))		// 窗口最小化	
-		{
-			//DxTraceMsg("%s hRenderWnd is Iconic.\n", __FUNCTION__);
-			return false;
-		}
-		if (!IsWindowVisible(hRenderWnd))// 窗口隐藏
-		{
-			//DxTraceMsg("%s hRenderWnd is Unvisible Window.\n", __FUNCTION__);
-			return false;
-		}
-		// 若当前窗口的根窗口被隐藏或最小化亦不显示图像
-		HWND hRoot = GetAncestor(hRenderWnd,GA_ROOT);
-		if (hRoot)
-		{
-			if (IsIconic(hRoot))			// 窗口最小化
-			{
-				//DxTraceMsg("%s hRoot is Iconic.\n", __FUNCTION__);
-				return false;
-			}
-			if (!IsWindowVisible(hRoot))	// 窗口隐藏
-			{
-				//DxTraceMsg("%s hRoot is WindowUnvisible.\n", __FUNCTION__);
-				ShowWindow(hRoot, SW_SHOW);
-				return false;
-			}
-		}
-		return true;
-	}
-
+	
 	virtual inline IDirect3DDevice9 *GetD3DDevice()
 	{
 		return m_pDirect3DDevice;
@@ -1723,7 +1685,7 @@ _Failed:
 		HWND hRenderWnd = m_d3dpp.hDeviceWindow;
 		if (hWnd)
 			hRenderWnd = hWnd;
-		if (m_d3dpp.Windowed && !IsNeedRender(hRenderWnd))
+		if (!IsNeedRender(hRenderWnd) && !m_bSnapFlag)
 			return true;
 		// 处理外部分绘制接口
 		ExternDrawCall(hWnd, pRenderRt);
@@ -2702,7 +2664,7 @@ _Failed:
 		if (hWnd)
 			hRenderWnd = hWnd;
 		//IsNeedRender(hRenderWnd);
-		if (!IsNeedRender(hRenderWnd))
+		if (!IsNeedRender(hRenderWnd) && !m_bSnapFlag)
 			return true;
 		HRESULT hr = S_OK;
 		SaveRunTime();
@@ -2750,3 +2712,44 @@ _Failed:
 		}
 	}
 };
+
+/// @brief CDxSurface 的封装类，用于把CDxSurface类对象指针在系统缓存中的存取
+struct DxSurfaceWrap
+{
+	DxSurfaceWrap(CDxSurface *pSurface)
+	{
+		dfInput = GetExactTime();
+		pDxSurface = pSurface;
+	}
+	~DxSurfaceWrap()
+	{
+		if (pDxSurface)
+			delete pDxSurface;
+	}
+	CDxSurface* Strip()		// 剥离CDxSurface对象指针
+	{
+		if (pDxSurface)
+		{
+			CDxSurface *pTemp = pDxSurface;
+			pDxSurface = nullptr;
+			return pTemp;
+		}
+		else
+		{
+			assert(false);
+			return nullptr;
+		}
+	}
+	bool CompareSizeAndFormat(int nWidth, int nHeight, D3DFORMAT nPixFormat)
+	{
+		if (pDxSurface)
+			return (MAKEUINT64(MAKELONG(nWidth, nHeight), nPixFormat) == pDxSurface->GetVideoSizeAndFormat());
+		else
+			return false;
+	}
+	double dfInput;
+	CDxSurface	*pDxSurface;
+};
+
+
+//typedef shared_ptr<DxSurfaceWrap> DxSurfaceWrapPtr;

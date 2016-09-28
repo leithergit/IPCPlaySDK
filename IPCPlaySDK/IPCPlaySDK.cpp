@@ -324,16 +324,6 @@ IPCPLAYSDK_API int ipcplay_InputStream(IN IPC_PLAYHANDLE hPlayHandle, unsigned c
 	return pPlayer->InputStream(szFrameData, nFrameSize);
 }
 
-IPCPLAYSDK_API int ipcplay_InputRTStream(IN IPC_PLAYHANDLE hPlayHandle, unsigned char *szFrameData, int nFrameSize)
-{
-	if (!hPlayHandle)
-		return IPC_Error_InvalidParameters;
-	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
-	if (pPlayer->nSize != sizeof(CIPCPlayer))
-		return IPC_Error_InvalidParameters;
-	return pPlayer->InputRTStream(szFrameData, nFrameSize);
-}
-
 /// @brief			输入流相机实时码流
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @retval			0	操作成功

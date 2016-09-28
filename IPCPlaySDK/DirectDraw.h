@@ -483,6 +483,8 @@ public:
  	{
 		//DeclareRunTime(5);
 		//SaveRunTime();
+		if (!IsNeedRender(m_hWnd))
+			return S_OK;
 		HRESULT hr = E_INVALIDARG;
 		RECT rectSrc = { 0 };
 		RECT rectDst = { 0 };
@@ -634,3 +636,5 @@ public:
 
 	CopyCallback m_copyCallback;
 };
+
+typedef shared_ptr<CDirectDraw> CDirectDrawPtr;

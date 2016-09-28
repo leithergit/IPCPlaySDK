@@ -472,3 +472,8 @@ stdshared_ptr<WCHAR> A2WString(IN LPCSTR pText,int& OUT nReturnLength);
 TCHAR *GetOsVersion();
 DWORD GetOsMajorVersion();
 bool  GetFilePosition(HANDLE hFile, LONGLONG &nFileOffset);
+
+// 判断是否需要在目标窗口上显示图像
+// 在被隐藏或最小化的窗口上显示图像速度非常慢,会严重影响整个渲染进程，因此
+// 当窗口或其根窗口处于隐藏或最小化状态时，则不应在该窗口上绘制图像
+bool IsNeedRender(HWND hRenderWnd);

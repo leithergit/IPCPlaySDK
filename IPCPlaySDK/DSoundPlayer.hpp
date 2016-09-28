@@ -602,3 +602,69 @@ public:
 };
 
 
+
+/// @brief 用于保存音频设备属性的类
+struct AudioPlayDevice
+{
+	GUID  *pGuid = nullptr;
+	TCHAR *pszDevDesc = nullptr;
+	TCHAR *pszDrvName = nullptr;
+	AudioPlayDevice(LPGUID lpGUID, LPCTSTR lpszDesc, LPCTSTR lpszDrvName)
+	{
+		if (lpGUID)
+		{
+			pGuid = new GUID;
+			if (pGuid)
+				memcpy(pGuid, lpGUID, sizeof(GUID));
+		}
+		pszDevDesc = new TCHAR[_tcslen(lpszDesc) + 1];
+		if (!pszDevDesc)
+			_tcscpy(pszDevDesc, lpszDesc);
+		pszDrvName = new TCHAR[_tcslen(lpszDrvName) + 1];
+		if (!pszDrvName)
+			_tcscpy(pszDrvName, lpszDrvName);
+	}
+	~AudioPlayDevice()
+	{
+		if (pGuid)
+			delete pGuid;
+		if (pszDevDesc)
+			delete[]pszDevDesc;
+		if (pszDrvName)
+			delete[]pszDrvName;
+	}
+};
+
+/// @brief 音频设备枚举类
+class CDSoundEnum
+{
+public:
+	CDSoundEnum()
+	{
+		DirectSoundEnumerate((LPDSENUMCALLBACK)DSEnumProc, (VOID*)this);
+	}
+	~CDSoundEnum()
+	{
+	}
+	static BOOL CALLBACK DSEnumProc(LPGUID lpGUID, LPCTSTR lpszDesc, LPCTSTR lpszDrvName, LPVOID lpContext)
+	{
+		CDSoundEnum *pThis = (CDSoundEnum *)lpContext;
+		if (lpGUID)
+			TraceMsg("%s Guid = {%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}\tDrvName = %s\tDesc = %s.\n",
+			__FUNCTION__,
+			lpGUID->Data1, lpGUID->Data2, lpGUID->Data3, lpGUID->Data4[1], lpGUID->Data4[0], lpGUID->Data4[7], lpGUID->Data4[6], lpGUID->Data4[5], lpGUID->Data4[4], lpGUID->Data4[3], lpGUID->Data4[2],
+			lpszDrvName, lpszDesc);
+		else
+			TraceMsg("%s Guid = nullptr\tDrvName = %s\tDesc = %s.\n", __FUNCTION__, lpszDrvName, lpszDesc);
+
+		shared_ptr<AudioPlayDevice> pPlayDevice = make_shared<AudioPlayDevice>(lpGUID, lpszDesc, lpszDrvName);
+		pThis->m_listPlayDev.push_back(pPlayDevice);
+		return(TRUE);
+	}
+	int GetAudioPlayDevices()
+	{
+		return m_listPlayDev.size();
+	}
+private:
+	list<shared_ptr<AudioPlayDevice>> m_listPlayDev;
+};

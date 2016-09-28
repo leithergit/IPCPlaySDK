@@ -2786,3 +2786,27 @@ bool  GetFilePosition(HANDLE hFile, LONGLONG &nFileOffset)
 	nFileOffset = liPos.QuadPart;
 	return true;
 }
+
+// 判断是否需要在目标窗口上显示图像
+// 在被隐藏或最小化的窗口上显示图像速度非常慢,会严重影响整个渲染进程，因此
+// 当窗口或其根窗口处于隐藏或最小化状态时，则不应在该窗口上绘制图像
+bool IsNeedRender(HWND hRenderWnd)
+{
+	if (!IsWindow(hRenderWnd))
+		return false;
+	// 若窗口被隐藏或最小化则不再显示图像
+	if (IsIconic(hRenderWnd))		// 窗口最小化	
+		return false;
+	if (!IsWindowVisible(hRenderWnd))// 窗口隐藏
+		return false;
+	// 若当前窗口的根窗口被隐藏或最小化亦不显示图像
+	HWND hRoot = GetAncestor(hRenderWnd, GA_ROOT);
+	if (hRoot)
+	{
+		if (IsIconic(hRoot))			// 窗口最小化
+			return false;
+		if (!IsWindowVisible(hRoot))	// 窗口隐藏
+			return false;
+	}
+	return true;
+}
