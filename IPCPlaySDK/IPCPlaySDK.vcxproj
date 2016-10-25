@@ -66,7 +66,9 @@
     </Link>
     <PostBuildEvent>
       <Command>@echo off
-</Command>
+copy $(TargetPath)  E:\MaiGao\RTSP_Live555\RTSP_Live555\Debug /y
+copy $(TargetDir)$(TargetName).lib E:\MaiGao\RTSP_Live555\RTSP_Live555\ipcplaysdk /y
+copy $(ProjectDir)ipcplaysdk.h E:\MaiGao\RTSP_Live555\RTSP_Live555\ipcplaysdk /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -93,8 +95,9 @@
       <OptimizeReferences>false</OptimizeReferences>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>@echo off
+copy $(TargetPath)  E:\MaiGao\RTSP_Live555\RTSP_Live555\Release /y
+copy $(TargetDir)$(TargetName).lib E:\MaiGao\RTSP_Live555\RTSP_Live555\ipcplaysdk /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

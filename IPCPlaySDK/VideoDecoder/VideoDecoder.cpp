@@ -222,7 +222,7 @@ STDMETHODIMP CVideoDecoder::DestroyDXVADecoder(bool bFull, bool bNoAVCodec)
 	//m_pCallback->ReleaseAllDXVAResources();	// 释放最后一帧
 	for (int i = 0; i < m_NumSurfaces; i++) 
 	{
-		SafeRelease(m_pSurfaces[i].d3d);
+		SafeRelease(m_pSurfaces[i].pSurface);
 	}
 	m_NumSurfaces = 0;
 
@@ -249,8 +249,12 @@ STDMETHODIMP CVideoDecoder::FreeD3DResources()
 		m_pD3DDevMngr->CloseDeviceHandle(m_hDevice);
 	m_hDevice = INVALID_HANDLE_VALUE;
 	SafeRelease(m_pD3DDevMngr);
-	SafeRelease(m_pD3DDev);
-	SafeRelease(m_pD3D);
+	if (!m_bD3DShared)
+	{
+		SafeRelease(m_pD3DDev);
+		SafeRelease(m_pD3D);
+	}
+
 
 	if (m_dxva.dxva2lib) 
 	{
@@ -446,10 +450,11 @@ done:
  * Its responsibility is to initialize D3D, create a device and a device manager
  * and call SetD3DDeviceManager with it.
  */
-HRESULT CVideoDecoder::InitD3D(UINT &nAdapter)
+HRESULT CVideoDecoder::InitD3D(UINT &nAdapter/*,HWND hPrensentWnd = nullptr*/)
 {
 	if (dwOvMajorVersion < 6)
 		return E_FAIL;
+
 	m_hD3D9 = LoadLibraryA("d3d9.dll");
 	if (!m_hD3D9)
 	{
@@ -466,11 +471,6 @@ HRESULT CVideoDecoder::InitD3D(UINT &nAdapter)
 		return E_FAIL;
 	}
 	HRESULT hr = S_OK;
-	if (FAILED(hr = LoadDXVA2Functions())) 
-	{
-		DxTraceMsg(( "%s Failed to load DXVA2 DLL functions.\n"),__FUNCTION__);
-		return E_FAIL;
-	}
 	
 	hr = m_pDirect3DCreate9Ex(D3D_SDK_VERSION, &m_pD3D);
 	if (FAILED(hr))
@@ -478,7 +478,7 @@ HRESULT CVideoDecoder::InitD3D(UINT &nAdapter)
 		DxTraceMsg("%s Failed to acquire IDirect3D9Ex.\n",__FUNCTION__);
 		return E_FAIL;
 	}
-
+	
 retry_default:
 	D3DADAPTER_IDENTIFIER9 d3dai = { 0 };
 	hr = m_pD3D->GetAdapterIdentifier(nAdapter, 0, &d3dai);
@@ -517,6 +517,7 @@ retry_default:
 	m_d3dpp.BackBufferFormat = D3DFMT_UNKNOWN/*d3ddm.Format*/;
 	m_d3dpp.SwapEffect		 = D3DSWAPEFFECT_DISCARD;
 	m_d3dpp.Flags			 = D3DPRESENTFLAG_VIDEO | D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
+	//m_d3dpp.hDeviceWindow	 = hPrensentWnd;
 	
 	hr = m_pD3D->CreateDeviceEx(nAdapter, 
 								D3DDEVTYPE_HAL, 
@@ -530,6 +531,21 @@ retry_default:
 		DxTraceMsg("%s Creation of device failed with hr: %X.\n",__FUNCTION__, hr);
 		return E_FAIL;
 	}
+	return InitDxva(m_pD3D, m_pD3DDev);
+}
+
+HRESULT CVideoDecoder::InitDxva(IDirect3D9Ex  *pD3D, IDirect3DDevice9Ex *pD3DDev)
+{
+	if (!pD3D || !pD3DDev)
+		return E_FAIL;
+	HRESULT hr = S_OK;
+	if (FAILED(hr = LoadDXVA2Functions())) 
+	{
+		DxTraceMsg(( "%s Failed to load DXVA2 DLL functions.\n"),__FUNCTION__);
+		return E_FAIL;
+	}
+	m_pD3D = pD3D;
+	m_pD3DDev = pD3DDev;
 	
 	hr = CreateD3DDeviceManager(m_pD3DDev, &m_pD3DResetToken, &m_pD3DDevMngr);
 	if (FAILED(hr)) 
@@ -545,7 +561,7 @@ retry_default:
 		return E_FAIL;
 	}
 
-	// 需要编写CopyFrameYUV420P_SSE4_MT等函数
+	// 需要编写CopyFrameYUV420P_SSE4_MT等函数m_nCodecId == AV_CODEC_ID_H264
 	if (CopyFrameNV12 == nullptr ||
 		CopyFrameYUV420P == nullptr) 
 	{
@@ -582,7 +598,6 @@ retry_default:
 
 	return S_OK;
 }
-
 HRESULT CVideoDecoder::RetrieveVendorId(IDirect3DDeviceManager9 *pDevManager)
 {
 	HANDLE hDevice = 0;
@@ -881,7 +896,7 @@ HRESULT CVideoDecoder::CreateDXVA2Decoder(int nSurfaces, IDirect3DSurface9 **ppS
 	for (int i = 0; i < m_NumSurfaces; i++) 
 	{
 		m_pSurfaces[i].index = i;
-		m_pSurfaces[i].d3d = ppSurfaces[i];
+		m_pSurfaces[i].pSurface = ppSurfaces[i];
 		m_pSurfaces[i].age = UINT64_MAX;
 		m_pSurfaces[i].used = false;
 
@@ -920,7 +935,7 @@ HRESULT CVideoDecoder::CreateDXVA2Decoder(int nSurfaces, IDirect3DSurface9 **ppS
 
 	memset(m_pRawSurface, 0, sizeof(m_pRawSurface));
 	for (int i = 0; i < m_NumSurfaces; i++) {
-		m_pRawSurface[i] = m_pSurfaces[i].d3d;
+		m_pRawSurface[i] = m_pSurfaces[i].pSurface;
 	}
 
 	return S_OK;
@@ -981,7 +996,7 @@ void CVideoDecoder::free_dxva2_buffer(void *opaque, uint8_t *data)
 	LPDIRECT3DSURFACE9 pSurface = sw->surface;
 	for (int i = 0; i < pDec->m_NumSurfaces; i++) 
 	{
-		if (pDec->m_pSurfaces[i].d3d == pSurface) 
+		if (pDec->m_pSurfaces[i].pSurface == pSurface) 
 		{
 			pDec->m_pSurfaces[i].used = false;
 			break;
@@ -1057,7 +1072,7 @@ int CVideoDecoder::get_dxva2_buffer(struct AVCodecContext *c, AVFrame *pic, int 
 		}
 	}
 
-	LPDIRECT3DSURFACE9 pSurface = pDec->m_pSurfaces[i].d3d;
+	LPDIRECT3DSURFACE9 pSurface = pDec->m_pSurfaces[i].pSurface;
 	if (!pSurface) 
 	{
 		DxTraceMsg(("There is a sample, but no D3D Surace? WTF?.\n"));
@@ -1071,12 +1086,12 @@ int CVideoDecoder::get_dxva2_buffer(struct AVCodecContext *c, AVFrame *pic, int 
 	memset(pic->linesize, 0, sizeof(pic->linesize));
 	memset(pic->buf, 0, sizeof(pic->buf));
 
-	pic->data[0] = pic->data[3] = (uint8_t *)pSurface;	
-	SurfaceWrapper *surfaceWrapper = new SurfaceWrapper();
+	pic->data[0] = pic->data[3]		 = (uint8_t *)pSurface;	
+	SurfaceWrapper *surfaceWrapper	 = new SurfaceWrapper();
 	surfaceWrapper->pDec			 = pDec;
-	surfaceWrapper->surface		 = pSurface;
+	surfaceWrapper->surface			 = pSurface;
 	surfaceWrapper->surface->AddRef();
-	surfaceWrapper->pDXDecoder	 = pDec->m_pDecoder;
+	surfaceWrapper->pDXDecoder		 = pDec->m_pDecoder;
 	surfaceWrapper->pDXDecoder->AddRef();
 	pic->buf[0]						 = av_buffer_create(nullptr, 0, free_dxva2_buffer, surfaceWrapper, 0);
 

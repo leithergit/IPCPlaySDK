@@ -234,6 +234,7 @@ BOOL CIPCPlayDemoDlg::OnInitDialog()
 	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("录像时长"));
 	m_wndStreamInfo.SetItemCount(nItem);
 	SendDlgItemMessage(IDC_COMBO_STREAM, CB_SETCURSEL, 0, 0);
+	SendDlgItemMessage(IDC_COMBO_ROCATE, CB_SETCURSEL, 0, 0);
 	SetDlgItemText(IDC_EDIT_ACCOUNT, _T("admin"));
 	SetDlgItemText(IDC_EDIT_PASSWORD, _T("admin"));
 	LoadSetting();
@@ -321,7 +322,8 @@ BOOL CIPCPlayDemoDlg::OnInitDialog()
 		IDC_CHECK_FITWINDOW,
 		IDC_BUTTON_SNAPSHOT,
 		IDC_COMBO_PICTYPE,
-		IDC_BUTTON_TRACECACHE
+		IDC_BUTTON_TRACECACHE,
+		IDC_COMBO_ROCATE
 	};
 	UINT nIDArrayBottom[] = {
 			IDC_STATIC_FILE,
@@ -1101,7 +1103,8 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 		CFileDialog OpenDataBase(TRUE, _T("*.mp4"), _T(""), dwFlags, (LPCTSTR)szFilter);
 		OpenDataBase.m_ofn.lpstrTitle = _T("请选择播放的文件");
 		CString strFilePath;
-				
+		RocateAngle nRocate = (RocateAngle)SendDlgItemMessage(IDC_COMBO_ROCATE, CB_GETCURSEL);
+						
 		if (OpenDataBase.DoModal() == IDOK)
 		{
 			strFilePath = OpenDataBase.GetPathName();
@@ -1175,6 +1178,9 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 					TCHAR szPlayText[64] = { 0 };
 					_stprintf_s(szPlayText, 64, _T("%02d:%02d:%02d"), nHour, nMinute, nSecond);
 					SetDlgItemText(IDC_STATIC_TOTALTIME, szPlayText);
+					//ipcplay_SetD3dShared(m_pPlayContext->hPlayer[0], bEnableHaccel);
+					//if (bEnableHaccel)
+						ipcplay_SetRocateAngle(m_pPlayContext->hPlayer[0], nRocate);
 
 					if (ipcplay_Start(m_pPlayContext->hPlayer[0], !bEnableAudio, bFitWindow, bEnableHaccel) != IPC_Succeed)
 					{
@@ -1183,6 +1189,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 						m_pPlayContext.reset();
 						return;
 					}
+					
 					SendDlgItemMessage(IDC_SLIDER_PLAYER, TBM_SETPOS, TRUE, 0);
 					
 					SetTimer(ID_PLAYEVENT,_PlayInterval, NULL);
@@ -1348,6 +1355,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 	EnableDlgItem(IDC_EDIT_PASSWORD, bEnableWnd);
 	EnableDlgItem(IDC_IPADDRESS, bEnableWnd);
 	EnableDlgItem(IDC_COMBO_STREAM, bEnableWnd);
+	EnableDlgItem(IDC_COMBO_ROCATE, bEnableWnd);
 	EnableDlgItems(m_hWnd, !bEnableWnd, 7,
 					IDC_SLIDER_SATURATION,
 					IDC_SLIDER_BRIGHTNESS,

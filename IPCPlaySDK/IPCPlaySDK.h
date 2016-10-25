@@ -54,6 +54,16 @@ enum	IPC_ConnectMode
 	IPC_UDP
 };
 
+// 图像旋转角度
+// 目前仅支持软解，并且只实现在了正负90旋转
+enum RocateAngle
+{
+	RocateNone = 0,		// 不作旋转
+	Rocate90 = 1,		// 顺时针旋转90度
+	Rocate180 = 2,		// 顺时针旋转180度
+	Rocate270 = 3,		// 顺时针旋转270度，效果相当于逆时针转90度
+	RocateN90 = 4,		// 逆时间旋转90度，效果相当顺时针旋转270度
+};
 /// @enum SNAPSHOT_FORMAT
 /// @brief 截图格式
 typedef enum SNAPSHOT_FORMAT
@@ -141,6 +151,7 @@ typedef enum {
 #define		IPC_Error_UnsupportedFormat		(-35)	///< 不支持的图像格式
 #define		IPC_Error_UnsupportedCodec		(-36)	///< 不支持的编码格式
 #define		IPC_Error_RenderOverflow		(-37)	///< 渲染窗口超限
+#define		IPC_Error_RocateNotWork			(-38)	///< 图像旋转不适用，可能是启用了硬解码
 #define		IPC_Error_InsufficentMemory		(-255)	///< 内存不足
 
 #define		WM_IPCPLAYER_MESSAGE			WM_USER + 8192	///< 播放器出错时发出的消息 ,消息的LPARAM字段无意义,wparam字段定义如下：
@@ -291,11 +302,11 @@ IPCPLAYSDK_API int	ipcplay_SetStreamHeader(IN IPC_PLAYHANDLE hPlayHandle, byte *
 
 /// @brief			关闭播放句柄
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
-/// @param [in]		bCacheD3d		是否启用D3D设备缓存，若播放时始终只在同一个窗口进行，则建议启用D3D缓存，否则应关闭D3D缓存
+/// @param [in]		bAsyncClose		是否启用异步关闭
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
 /// @remark			关闭播放句柄会导致播放进度完全终止，相关内存全部被释放,要再度播放必须重新打开文件或流数据
-IPCPLAYSDK_API int ipcplay_Close(IN IPC_PLAYHANDLE hPlayHandle,bool bCacheD3d = true);
+IPCPLAYSDK_API int ipcplay_Close(IN IPC_PLAYHANDLE hPlayHandle, bool bAsyncClose = true);
 
 /// @brief			开启运行日志
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
@@ -314,19 +325,19 @@ IPCPLAYSDK_API int EnableLog(IN IPC_PLAYHANDLE hPlayHandle, char *szLogFile);
 /// right	右边界距离
 /// bottom  下边界距离 
 /// ┌───────────────────────────────────┐
-/// │                  │                   │
-/// │                 top                  │
-/// │                  │                   │─────── the source rect
-/// │       ┌───────────────────┐        │
-/// │       │                     │        │
-/// │       │                     │        │
-/// │─left─ │  the clipped rect   │─right─ │
-/// │       │                     │        │
-/// │       │                     │        │
-/// │       └───────────────────┘        │
-/// │                  │                   │
-/// │                bottom                │
-/// │                  │                   │
+/// │                  │                │
+/// │                 top               │
+/// │                  │                │─────── the source rect
+/// │       ┌───────────────────┐       │
+/// │       │                   │       │
+/// │       │                   │       │
+/// │─left─ │  the clipped rect │─right─│
+/// │       │                   │       │
+/// │       │                   │       │
+/// │       └───────────────────┘       │
+/// │                  │                │
+/// │                bottom             │
+/// │                  │                │
 /// └───────────────────────────────────┘
 /// @remark 1.边界的上下左右位置不可错位,并且边界不能小于0,否则将返回IPC_Error_InvalidParameters			
 IPCPLAYSDK_API int ipcplay_SetBorderRect(IN IPC_PLAYHANDLE hPlayHandle, RECT rtBorder);
@@ -379,6 +390,15 @@ IPCPLAYSDK_API int ipcplay_InputIPCStream(IN IPC_PLAYHANDLE hPlayHandle, IN byte
 ///					ipcplay_GetHaccelStatus判断是否已经开启硬解码
 IPCPLAYSDK_API int ipcplay_Start(IN IPC_PLAYHANDLE hPlayHandle, IN bool bEnableAudio = false, bool bFitWindow = true, bool bEnableHaccel = false);
 
+/// @brief			启用异步渲染
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+///	@param [in]		bEnableAudio	启用异步渲染
+///	-# true			启用异步渲染
+///	-# false		启用同步渲染
+/// @remark			此函数必须在ipcplay_Start前调用，才以生效
+
+IPCPLAYSDK_API int ipcplay_EnableAsyncRender(IN IPC_PLAYHANDLE hPlayHandle, IN bool bAsyncRender = true);
+
 /// @brief			判断播放器是否正在播放中
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @retval			true	播放器正在播放中
@@ -403,7 +423,7 @@ IPCPLAYSDK_API int ipcplay_FitWindow(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWin
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int ipcplay_Stop(IN IPC_PLAYHANDLE hPlayHandle);
+IPCPLAYSDK_API int ipcplay_Stop(IN IPC_PLAYHANDLE hPlayHandle,bool bAsyncStop = false);
 
 /// @brief			暂停文件播放
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
@@ -639,6 +659,8 @@ IPCPLAYSDK_API int ipcplay_SetPixFormat(IN IPC_PLAYHANDLE hPlayHandle, IN PIXELF
 // 
 // IPCPLAYSDK_API int ipcplay_ResumeDecode(IN IPC_PLAYHANDLE hPlayHandle);
 
+/// @brief			设置硬解码解码器和显示组件共享D3D
+IPCPLAYSDK_API int ipcplay_SetD3dShared(IN IPC_PLAYHANDLE hPlayHandle, IN bool bD3dShared = true);
 
 IPCPLAYSDK_API void ipcplay_ClearD3DCache();
 
@@ -674,6 +696,12 @@ IPCPLAYSDK_API void AvFree(void*);
 IPCPLAYSDK_API int ipcplay_AddWnd(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd/*, RECT rtRender*/);
 
 IPCPLAYSDK_API int ipcplay_RemoveWnd(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd);
+
+/// @brief			设置图像旋转角度
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		nAngle			要旋转的角度值，详情请见@see RocateAngle
+/// @remark	注意    目前图像旋转功能仅支持软解
+IPCPLAYSDK_API int ipcplay_SetRocateAngle(IN IPC_PLAYHANDLE hPlayHandle, RocateAngle nAngle = RocateNone);
 
 // IPCPLAYSDK_API int AddRenderWnd(IN IPC_PLAYHANDLE hPlayHandle,IN HWND hRenderWnd);
 

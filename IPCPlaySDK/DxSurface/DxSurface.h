@@ -247,7 +247,7 @@ struct LineTime
 		nLine = nFileLine;
 	}
 };
-#ifdef _DEBUG
+#ifdef _LineTime
 #define SaveRunTime()		LineSave.SaveLineTime(__FILE__,__LINE__);
 #define DeclareRunTime(nTimeout)	CLineRunTime LineSave(nTimeout);
 #else
@@ -622,6 +622,7 @@ public:
 	pDirect3DCreate9*		m_pDirect3DCreate9;
 public:
 	
+	
 	explicit CDxSurface(IDirect3D9 *pD3D9)
 	{
 		ZeroMemory(&m_nVtableAddr, sizeof(CDxSurface) - offsetof(CDxSurface,m_nVtableAddr));
@@ -838,7 +839,11 @@ public:
 #endif
 	virtual void DxCleanup()
 	{
-		SafeRelease(m_pSurfaceRender);
+		if (!m_bD3DShared)
+		{
+			SafeRelease(m_pSurfaceRender);
+		}
+		
 		SafeRelease(m_pSnapshotSurface);
 		SafeRelease(m_pDirect3DDevice);
 	}
@@ -1497,25 +1502,27 @@ _Failed:
 	{
 		byte *pDest = (byte *)pD3DRect->pBits;
 		int nStride = pD3DRect->Pitch;
-		int nSize = nDescHeight * nStride;
+		int nVideoHeight = min(pFrame420P->height,nDescHeight);
+		int nSize = nVideoHeight * nStride;
 		int nHalfSize = (nSize) >> 1;	
 		byte *pDestY = pDest;										// Y分量起始地址
 		byte *pDestV = pDest + nSize;								// U分量起始地址
 		int nSizeofV = nHalfSize>>1;
 		byte *pDestU = pDestV + (size_t)(nHalfSize >> 1);			// V分量起始地址
 		int nSizoefU = nHalfSize>>1;
+		
 
 		// YUV420P的U和V分量对调，便成为YV12格式
 		// 复制Y分量
- 		for (int i = 0; i < pFrame420P->height; i++)
+ 		for (int i = 0; i < nVideoHeight; i++)
  			memcpy_s(pDestY + i * nStride, nSize*3/2 - i*nStride, pFrame420P->data[0] + i * pFrame420P->linesize[0], pFrame420P->width);
 
 		// 复制YUV420P的U分量到目村的YV12的U分量
- 		for (int i = 0; i < pFrame420P->height / 2; i++)
+ 		for (int i = 0; i < nVideoHeight / 2; i++)
  			memcpy_s(pDestU + i * nStride / 2,nSizoefU - i*nStride/2, pFrame420P->data[1] + i * pFrame420P->linesize[1], pFrame420P->width/2);
 
 		// 复制YUV420P的V分量到目村的YV12的V分量
- 		for (int i = 0; i < pFrame420P->height / 2; i++)
+ 		for (int i = 0; i < nVideoHeight / 2; i++)
  			memcpy_s(pDestV + i * nStride / 2,nSizeofV - i*nStride/2, pFrame420P->data[2] + i * pFrame420P->linesize[2], pFrame420P->width/2);
 	}
 
@@ -2132,10 +2139,13 @@ public:
 		DxTraceMsg("%s m_pDirect3D9Ex = %p\tm_pDirect3DDeviceEx = %p\tm_pDirect3DSurfaceRender = %p.\n", __FUNCTION__, m_pDirect3D9Ex, m_pDirect3DDeviceEx, m_pSurfaceRender);
 	}
 #endif
+
+	
 	virtual void DxCleanup()
 	{
 		SafeRelease(m_pSnapshotSurface);
-		SafeRelease(m_pSurfaceRender);
+		if (!m_bD3DShared)
+			SafeRelease(m_pSurfaceRender);
 		SafeRelease(m_pDirect3DDeviceEx);
 	}
 	~CDxSurfaceEx()
@@ -2170,22 +2180,38 @@ public:
 		assert(IsWindow(hWnd));
 		assert(nVideoWidth != 0 || nVideoHeight != 0);
 
-		RECT rt;
+		RECT rtOld,rtZoom;
 		bool bZoomWnd = false;			// 是否需要扩大窗口,DirectX不能在窗口像素面积为0的窗口上工作
-		GetWindowRect(hWnd, &rt);
-		if ((rt.right - rt.left) == 0)
+		GetWindowRect(hWnd, &rtOld);
+		rtZoom = rtOld;
+		if (RectWidth(rtZoom) == 0)
 		{
-			rt.right = rt.left + nVideoWidth;
+			rtZoom.right = rtZoom.left + nVideoWidth;
 			bZoomWnd = true;
 		}
-		if ((rt.bottom - rt.top) == 0)
+		if (RectHeight(rtZoom) == 0)
 		{
-			rt.bottom = rt.top + nVideoHeight;
+			rtZoom.bottom = rtZoom.top + nVideoHeight;
 			bZoomWnd = true;
 		}
-
+		struct _RestoreWnd
+		{
+			HWND hWnd;
+			RECT rtRestore;
+			_RestoreWnd(HWND hWnd,RECT rtRestore)
+			{
+				this->hWnd		 = hWnd;
+				this->rtRestore	 = rtRestore;
+			}
+			~_RestoreWnd()
+			{
+				::MoveWindow(hWnd, rtRestore.left, rtRestore.top, RectWidth(rtRestore), RectHeight(rtRestore), false);
+			}
+		};
+		// 创建成功后，恢复窗口原始尺寸
+		//_RestoreWnd RestoreWnd(hWnd, rtOld);
 		if (bZoomWnd)
-			::MoveWindow(hWnd, rt.left, rt.top, rt.right - rt.left, rt.bottom - rt.top,false);
+			::MoveWindow(hWnd, rtZoom.left, rtZoom.top, RectWidth(rtZoom), RectHeight(rtZoom), false);
 
 		bool bSucceed = false;
 #ifdef _DEBUG
@@ -2323,22 +2349,23 @@ public:
 				goto _Failed;
 			}
 		}
-		
-		if (m_pSurfaceRender)
-			SafeRelease(m_pSurfaceRender);
-		if (FAILED(hr = m_pDirect3DDeviceEx->CreateOffscreenPlainSurface(nVideoWidth,
-			nVideoHeight,
-			nD3DFormat,
-			D3DPOOL_DEFAULT,
-			&m_pSurfaceRender,
-			NULL)))
+
+		if (!m_bD3DShared)
 		{
-			DxTraceMsg("%s CreateOffscreenPlainSurface Failed.\thr=%x.\n", __FUNCTION__, hr);
-			goto _Failed;
+			if (m_pSurfaceRender)
+				SafeRelease(m_pSurfaceRender);
+			if (FAILED(hr = m_pDirect3DDeviceEx->CreateOffscreenPlainSurface(nVideoWidth,
+				nVideoHeight,
+				nD3DFormat,
+				D3DPOOL_DEFAULT,
+				&m_pSurfaceRender,
+				NULL)))
+			{
+				DxTraceMsg("%s CreateOffscreenPlainSurface Failed.\thr=%x.\n", __FUNCTION__, hr);
+				goto _Failed;
+			}
 		}
 
-		D3DSURFACE_DESC SrcSurfaceDesc;			
-		m_pSurfaceRender->GetDesc(&SrcSurfaceDesc);
 		// 保存参数
 		m_nVideoWidth	 = nVideoWidth;
 		m_nVideoHeight	 = nVideoHeight;
@@ -2351,6 +2378,98 @@ _Failed:
 			DxCleanup();
 		}
 		return bSucceed;
+	}
+
+	// 矩阵顺转旋转90度
+	void MatrixRocate90(byte *pSrc, byte *pDest, int nWidth, int nHeight, int nStride)
+	{
+		int nRowPos = 0;
+		for (int nRow = 0; nRow < nWidth; nRow++)
+		{
+			int nColPos = 0;
+			for (int nCol = nHeight-1; nCol >=0 ; nCol--)
+			{// 算法优化，把乘法运算转换为加法运算，运算速度可提高约5~10倍
+				//pDest[nRow*nStride + nCol] = pSrc[nCol*nWidth + nRow];
+				pDest[nRowPos + nCol] = pSrc[nColPos + nRow];
+				nColPos += nWidth;
+			}
+			nRowPos += nStride;
+		}
+	}
+
+	// 矩阵顺时针旋转270度，即逆时针旋转90度
+	void MatrixRocate270(byte *pSrc, byte *pDest, int nWidth, int nHeight,int nStride)
+	{
+		int nRowPos = 0;
+		for (int nRow = nWidth; nRow >0 ; nRow--)
+		{
+			int nColPos = 0;
+			for (int nCol = 0; nCol < nHeight; nCol++)
+			{// 算法优化，把乘法运算转换为加法运算，运算速度可提高约5~10倍
+				//pDest[nRow*nStride + nCol] = pSrc[nCol*nWidth + nRow];
+				pDest[nRowPos + nCol] = pSrc[nColPos + nRow];
+				nColPos += nWidth;
+			}
+			nRowPos += nStride;
+		}
+	}
+
+	// 矩阵顺时针旋转180度
+	void MatrixRocate180(byte *pSrc, byte *pDest, int nWidth, int nHeight, int nStride)
+	{
+		int nDstRowPos = 0;
+		int nSrcRowPos = nWidth*(nHeight-1);
+		for (int nRow = 0; nRow < nHeight; nRow++)
+		{
+			int nDstColPos = 0;
+			int nSrcColPos = nWidth;
+			for (int nCol = 0; nCol < nWidth; nCol++)
+			{// 算法优化，把乘法运算转换为加减法运算，运算速度可提高约5~10倍
+				//pDest[nRow*nStride + nCol] = pSrc[(nHeight - nRow)*nWidth + nWidth - nCol];
+				pDest[nDstRowPos + nCol] = pSrc[nSrcRowPos + nWidth - nCol];
+				//nDstColPos += nWidth;
+			}
+			nDstRowPos += nStride;
+			nSrcRowPos -= nWidth;
+		}
+	}
+
+	// YUV420图像顺时针旋转90度,并转为YV12图像
+	// pSrcYUV		YUV420图像YUV分量的地址
+	// pDestYUV		转换后YV12图像YUV分量的地址
+	// nLinesize	YUV420图像的每个分量的数据长度
+	// nWidth		YUV420图像的宽度
+	// nHeight		YUV420图像的高度
+	// nStride		YV12数据目标数据每一行数据的步长
+	
+	void YUV420Rocate90(byte *pSrcYUV[4], byte *pDestYUV[4], int nLinesize[4], int nWidth, int nHeight,int nStride)
+	{
+		MatrixRocate90(pSrcYUV[0], pDestYUV[0], nLinesize[0], nHeight,nStride);
+		MatrixRocate90(pSrcYUV[1], pDestYUV[2], nLinesize[1], nHeight / 2, nStride/2);
+		MatrixRocate90(pSrcYUV[2], pDestYUV[1], nLinesize[2], nHeight / 2,nStride/2);
+	}
+	// YUV420图像顺时针旋转270度，即逆时针旋转90，并转为YV12图像
+	void YUV420Rocate270(byte *pSrcYUV[4], byte *pDestYUV[4], int nLinesize[4], int nWidth, int nHeight,int nStride)
+	{
+		MatrixRocate270(pSrcYUV[0], pDestYUV[0], nLinesize[0], nHeight,nStride);
+		MatrixRocate270(pSrcYUV[1], pDestYUV[2], nLinesize[2], nHeight / 2,nStride/2);
+		MatrixRocate270(pSrcYUV[2], pDestYUV[1], nLinesize[1], nHeight / 2,nStride/2);
+	}
+	// YUV420图像旋转180度，并转为YV12图像
+	void YUV420Rocate180(byte *pSrcYUV[4], byte *pDestYUV[4], int nLinesize[4], int nWidth, int nHeight, int nStride)
+	{
+		MatrixRocate180(pSrcYUV[0], pDestYUV[0], nLinesize[0], nHeight, nStride);
+		MatrixRocate180(pSrcYUV[1], pDestYUV[2], nLinesize[2], nHeight / 2, nStride / 2);
+		MatrixRocate180(pSrcYUV[2], pDestYUV[1], nLinesize[1], nHeight / 2, nStride / 2);
+	}
+	virtual inline IDirect3DDevice9Ex *GetD3DDevice()
+	{
+		return m_pDirect3DDeviceEx;
+	}
+
+	virtual inline IDirect3D9Ex *GetD3D9()
+	{
+		return m_pDirect3D9Ex;
 	}
 
 	// D3dDirect9Ex下,取代ResetDevice()函数
@@ -2402,6 +2521,7 @@ _Failed:
 		case S_PRESENT_MODE_CHANGED:
 			{
 				DxTraceMsg("%s The display mode has changed.\n",__FUNCTION__);
+				assert(false);
 				if (!ResetDevice())
 				{
 					DxCleanup();
@@ -2453,7 +2573,7 @@ _Failed:
 	}
 
 #define RenderTimeout	100 //ms
-	bool Render(AVFrame *pAvFrame/*, HWND hWnd = NULL, RECT *pClippedRT = nullptr, RECT *pRenderRt = nullptr*/)
+	bool Render(AVFrame *pAvFrame,int nRocate = 0)
 	{
 		DeclareRunTime(5);
 		if (!pAvFrame)
@@ -2476,16 +2596,14 @@ _Failed:
 		{
 		case  AV_PIX_FMT_DXVA2_VLD:
 			{// 硬解码帧，可以直接显示
-				IDirect3DSurface9* pRenderSurface = m_pSurfaceRender;	
-				IDirect3DSurface9* pDXVASurface = (IDirect3DSurface9 *)pAvFrame->data[3];
 				if (m_bD3DShared)
 				{	
-					pRenderSurface = pDXVASurface;
-					if (!pDXVASurface)
-						return false;
+					m_pSurfaceRender = (IDirect3DSurface9 *)pAvFrame->data[3];
 				}
 				else
 				{
+					IDirect3DSurface9* pDXVASurface = (IDirect3DSurface9 *)pAvFrame->data[3];
+					IDirect3DSurface9* pRenderSurface = m_pSurfaceRender;
 					D3DSURFACE_DESC DXVASurfaceDesc, DstSurfaceDesc;
 					pDXVASurface->GetDesc(&DXVASurfaceDesc);
 					m_pSurfaceRender->GetDesc(&DstSurfaceDesc);
@@ -2570,14 +2688,48 @@ _Failed:
 					//DxTraceMsg("%s line(%d) IDirect3DSurface9::LockRect failed:hr = %08X.\n",__FUNCTION__,__LINE__,hr);
 					return false;
 				}
-				assert(Desc.Width == pAvFrame->width);
-				assert(Desc.Height == pAvFrame->height);
+				if (!nRocate)
+				{
+					assert(Desc.Width == pAvFrame->width);
+					assert(Desc.Height == pAvFrame->height);
+				}
+				
 				
 				SaveRunTime();
 				if ((pAvFrame->format == AV_PIX_FMT_YUV420P ||
 					pAvFrame->format == AV_PIX_FMT_YUVJ420P) &&
 					Desc.Format == (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'))
-					CopyFrameYUV420P(&d3d_rect,Desc.Height, pAvFrame);
+				{
+					if (nRocate == 0)
+						CopyFrameYUV420P(&d3d_rect, Desc.Height, pAvFrame);
+					else
+					{
+						byte *pData[4] = { 0 };
+						byte *pDest = (byte *)d3d_rect.pBits;						
+						int nStride = d3d_rect.Pitch;
+						int nSize = Desc.Height * nStride;
+						int nHalfSize = (nSize) >> 1;
+						
+						pData[0] = pDest;										// Y分量起始地址
+						pData[1] = pDest + nSize;								// U分量起始地址
+						pData[2] = pData[1] + (size_t)(nHalfSize >> 1);			// V分量起始地址
+						switch (nRocate)
+						{
+						case 1:
+						default:
+							YUV420Rocate90(pAvFrame->data, pData, pAvFrame->linesize, pAvFrame->width, pAvFrame->height,nStride);
+							break;
+						case 2:
+							YUV420Rocate180(pAvFrame->data, pData, pAvFrame->linesize, pAvFrame->width, pAvFrame->height, nStride);
+							break;
+						case 3:	
+						case 4:
+							YUV420Rocate270(pAvFrame->data, pData, pAvFrame->linesize, pAvFrame->width, pAvFrame->height, nStride);
+							break;
+						}
+					
+					}
+				}
 				else
 				{
 					if (!m_pPixelConvert)
@@ -2663,8 +2815,7 @@ _Failed:
 		DeclareRunTime(5);
 		if (hWnd)
 			hRenderWnd = hWnd;
-		//IsNeedRender(hRenderWnd);
-		if (!IsNeedRender(hRenderWnd) && !m_bSnapFlag)
+		if (!IsNeedRender(hRenderWnd))
 			return true;
 		HRESULT hr = S_OK;
 		SaveRunTime();
@@ -2683,9 +2834,10 @@ _Failed:
 			//DxTraceMsg("%s line(%d) IDirect3DDevice9Ex::GetBackBuffer failed:hr = %08X.\n",__FUNCTION__,__LINE__,hr);
 			return true;
 		}
-		D3DSURFACE_DESC Desc;
-		pBackSurface->GetDesc(&Desc);
-		RECT dstrt = { 0, 0, Desc.Width, Desc.Height };
+		D3DSURFACE_DESC Desc1,Desc2;
+		pBackSurface->GetDesc(&Desc1);
+		m_pSurfaceRender->GetDesc(&Desc2);
+		RECT dstrt = { 0, 0, Desc1.Width, Desc1.Height };
 		RECT srcrt = { 0, 0, m_nVideoWidth, m_nVideoHeight };
 		if (pClippedRT)
 		{

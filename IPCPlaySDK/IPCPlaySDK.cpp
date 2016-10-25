@@ -208,13 +208,13 @@ IPCPLAYSDK_API int	ipcplay_SetStreamHeader(IN IPC_PLAYHANDLE hPlayHandle, byte *
 
 /// @brief			关闭播放句柄
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
-/// @param [in]		bCacheD3d		是否启用D3D设备缓存，若播放时始终只在同一个窗口进行，则建议启用D3D缓存，否则应关闭D3D缓存
+/// @param [in]		bAsyncClose		是否启异步关闭
 ///	-# true			刷新画面以背景色填充
 ///	-# false			不刷新画面,保留最后一帧的图像
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
 /// @remark			关闭播放句柄会导致播放进度完全终止，相关内存全部被释放,要再度播放必须重新打开文件或流数据
-IPCPLAYSDK_API int ipcplay_Close(IN IPC_PLAYHANDLE hPlayHandle, bool bCacheD3d/* = true*/)
+IPCPLAYSDK_API int ipcplay_Close(IN IPC_PLAYHANDLE hPlayHandle, bool bAsyncClose/* = true*/)
 {
 	TraceFunction();
 	if (!hPlayHandle)
@@ -228,10 +228,10 @@ IPCPLAYSDK_API int ipcplay_Close(IN IPC_PLAYHANDLE hPlayHandle, bool bCacheD3d/*
 	DxTraceMsg("%s DvoPlayer Object:%d.\n", __FUNCTION__, pPlayer->m_nObjIndex);
 	
 #endif
-	if (!pPlayer->StopPlay(bCacheD3d))
+	if (!pPlayer->StopPlay(bAsyncClose,200))
 	{
 		EnterCriticalSection(&g_csListPlayertoFree);
-		g_listPlayertoFree.push_back(hPlayHandle);
+		g_listPlayerAsyncClose.push_back(hPlayHandle);
 		LeaveCriticalSection(&g_csListPlayertoFree);
 	}
 	else
@@ -370,6 +370,21 @@ IPCPLAYSDK_API int ipcplay_Start(IN IPC_PLAYHANDLE hPlayHandle,
 	return pPlayer->StartPlay(bEnableAudio, bEnableHaccel,bFitWindow);
 }
 
+/// @brief			启用异步渲染
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+///	@param [in]		bEnableAudio	启用异步渲染
+///	-# true			启用异步渲染
+///	-# false		启用同步渲染
+IPCPLAYSDK_API int ipcplay_EnableAsyncRender(IN IPC_PLAYHANDLE hPlayHandle, IN bool bAsyncRender)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	return pPlayer->EnableAsyncRender(bAsyncRender);
+}
+
 /// @brief			判断播放器是否正在播放中
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @retval			true	播放器正在播放中
@@ -418,16 +433,17 @@ IPCPLAYSDK_API int ipcplay_FitWindow(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWin
 
 /// @brief			停止播放
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		bStopAsync		是否异步关闭
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int ipcplay_Stop(IN IPC_PLAYHANDLE hPlayHandle)
+IPCPLAYSDK_API int ipcplay_Stop(IN IPC_PLAYHANDLE hPlayHandle,bool bStopAsync )
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
 	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
 	if (pPlayer->nSize != sizeof(CIPCPlayer))
 		return IPC_Error_InvalidParameters;
-	pPlayer->StopPlay();
+	pPlayer->StopPlay(bStopAsync);
 	return IPC_Succeed;
 }
 
@@ -984,6 +1000,16 @@ IPCPLAYSDK_API int ipcplay_SetPixFormat(IN IPC_PLAYHANDLE hPlayHandle, IN PIXELF
 	return pPlayer->SetPixelFormat(nPixelFMT);
 }
 
+IPCPLAYSDK_API int ipcplay_SetD3dShared(IN IPC_PLAYHANDLE hPlayHandle, IN bool bD3dShared )
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	pPlayer->SetD3dShared(bD3dShared);
+	return IPC_Succeed;
+}
 IPCPLAYSDK_API void ipcplay_ClearD3DCache()
 {
 	
@@ -1040,3 +1066,18 @@ IPCPLAYSDK_API void AvFree(void*p)
 // 		return IPC_Error_InvalidParameters;
 // 	return pPlayer->RemoveRenderWnd(hRenderWnd);
 // }
+
+
+/// @brief			设置图像旋转角度
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		nAngle			要旋转的角度值，详情请见@see RocateAngle
+/// @remark	注意    目前图像旋转功能仅支持软解
+IPCPLAYSDK_API int ipcplay_SetRocateAngle(IN IPC_PLAYHANDLE hPlayHandle, RocateAngle nAngle )
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	return pPlayer->SetRocate(nAngle);
+}

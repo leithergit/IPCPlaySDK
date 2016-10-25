@@ -2787,6 +2787,28 @@ bool  GetFilePosition(HANDLE hFile, LONGLONG &nFileOffset)
 	return true;
 }
 
+/// 判断窗体是否被遮挡
+/// </summary>
+/// <param name="hWnd">窗体句柄</param>
+/// <returns>返回窗体是否被完全遮挡</returns>
+ bool IsWindowPall(HWND hWnd)
+{
+	if (!IsWindowVisible(hWnd)) 
+	return false; // 窗体不可见
+	HDC hDC = GetWindowDC(hWnd);
+	__try
+	{
+		RECT Rect;
+		GetClipBox(hDC,&Rect);
+				
+		return Rect.right - Rect.left <= 0 && Rect.bottom - Rect.top <= 0;
+		// 特别说明：Rectangle.Width对应API中RECT.Right、Rectangle.Height为RECT.Bottom
+	}
+	__finally
+	{
+		ReleaseDC(hWnd, hDC);
+	}
+}
 // 判断是否需要在目标窗口上显示图像
 // 在被隐藏或最小化的窗口上显示图像速度非常慢,会严重影响整个渲染进程，因此
 // 当窗口或其根窗口处于隐藏或最小化状态时，则不应在该窗口上绘制图像

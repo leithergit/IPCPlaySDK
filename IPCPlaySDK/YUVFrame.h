@@ -60,7 +60,7 @@ struct FrameYV12
 
 		memcpy(pY, pFrame->data[0], nStrideY*nHeight);
 		memcpy(pU, pFrame->data[1], nStrideUV*nHeight >> 1);
-		memcpy(pY, pFrame->data[2], nStrideUV*nHeight >> 1);
+		memcpy(pV, pFrame->data[2], nStrideUV*nHeight >> 1);
 	}
 	~FrameYV12()
 	{

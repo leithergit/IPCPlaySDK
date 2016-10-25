@@ -111,7 +111,7 @@ typedef struct
 {
 	int index;
 	bool used;
-	LPDIRECT3DSURFACE9 d3d;
+	LPDIRECT3DSURFACE9 pSurface;
 	uint64_t age;
 } d3d_surface_t;
 
@@ -513,6 +513,17 @@ public:
 			m_pFormatCtx->pb = nullptr;
 	}
 
+	void SetD3DShared(IDirect3D9Ex  *pD3D, IDirect3DDevice9Ex *pD3DDev)
+	{
+		if (!pD3D || !pD3DDev)
+		{
+			assert(false);
+			return;
+		}
+		m_pD3D = pD3D;
+		m_pD3DDev = pD3DDev;
+		m_bD3DShared = true;
+	}
 	/// @brief 设置解码线程数量，一情况下建议使用单线程解码，只有在那些CPU性能较低的机器上使用多线程解码
 	void SetDecodeThreads(int nThreads = 1)
 	{
@@ -595,21 +606,17 @@ public:
 				}
 			}
 		}
-		
-		
-// 		HRESULT hr = InitD3D(nAdapter);
-// 		if (FAILED(hr))
-// 		{
-// 			DxTraceMsg("%s D3D Initialization failed with hr: %X\n", __FUNCTION__,hr);
-// 			return false;
-// 		}
-				
+
 		if (bEnableHaccel)
 		{
 			UINT nAdapter = D3DADAPTER_DEFAULT;
 			m_dwSurfaceWidth = nWidth;
 			m_dwSurfaceHeight = nHeight;
-			HRESULT hr = InitD3D(nAdapter);
+			HRESULT hr = S_OK;
+			if (m_pD3D && m_pD3DDev)
+				hr = InitDxva(m_pD3D, m_pD3DDev);
+			else
+				hr = InitD3D(nAdapter);
 			if (FAILED(hr))
 			{
 				DxTraceMsg("D3D Initialization failed with hr: %X\n", hr);
@@ -797,12 +804,12 @@ public:
 		if (m_nCodecId == AV_CODEC_ID_H264)
 			buffers = 8;
 		else if (m_nCodecId == AV_CODEC_ID_HEVC)
-			buffers = 16;
+			buffers = 8;
 		else
 			buffers = 2;
 
 		// 4 extra buffers for handling and safety
-		// buffers += 4;
+		//buffers += 4;
 		// buffers += m_DisplayDelay;
 
 		return buffers;
@@ -910,8 +917,13 @@ public:
 public:
 	/// @为硬解码初始化D3D对象
 	HRESULT InitD3D(UINT &nAdapter /*= D3DADAPTER_DEFAULT*/);
+
+	/// @为硬解码初始化D3D对象
+	HRESULT InitDxva(IDirect3D9Ex  *pD3D, IDirect3DDevice9Ex *pD3DDev);
+
 	/// @brief 把DXVA硬解码过程同FFMpeg解码库关联
 	HRESULT AdditionaDecoderInit();
+
 	/// @brief 测试指定的编码格式是支持硬解码（在本机）
 	bool CodecIsSupported(AVCodecID nCodec)
 	{
@@ -1046,6 +1058,7 @@ public:
 	HMODULE					m_hD3D9 = nullptr;
 	IDirect3D9Ex            *m_pD3D = nullptr;
 	IDirect3DDevice9Ex      *m_pD3DDev = nullptr;
+	bool					m_bD3DShared = false;
 	pD3DCreate9Ex			*m_pDirect3DCreate9Ex;
 	IDirect3DDeviceManager9 *m_pD3DDevMngr = nullptr;
 	UINT                    m_pD3DResetToken = 0;

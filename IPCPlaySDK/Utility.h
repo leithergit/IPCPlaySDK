@@ -40,6 +40,9 @@ typedef BOOL (*KernelIoControlProc)(DWORD , LPVOID , DWORD , LPVOID , DWORD , LP
 
 #define  _TraceMsg TraceMsg
 
+#define RectWidth(rt)	(rt.right - rt.left)
+#define RectHeight(rt)	(rt.bottom - rt.top)
+
 #ifdef _UNICODE
 #ifdef _DEBUG
 #define TraceMsg TraceMsgW
@@ -477,3 +480,5 @@ bool  GetFilePosition(HANDLE hFile, LONGLONG &nFileOffset);
 // 在被隐藏或最小化的窗口上显示图像速度非常慢,会严重影响整个渲染进程，因此
 // 当窗口或其根窗口处于隐藏或最小化状态时，则不应在该窗口上绘制图像
 bool IsNeedRender(HWND hRenderWnd);
+
+bool IsWindowPall(HWND hWnd);

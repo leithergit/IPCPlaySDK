@@ -51,6 +51,12 @@ void MyDeleteCriticalSection(MYCRITICAL_SECTION *);
 #define _MyLeaveCriticalSection			LeaveCriticalSection
 
 #define Autolock(cs)	CAutoLock lock(cs,false,__FILE__,__FUNCTION__,__LINE__);
+#define Autolock1(cs)	CAutoLock lock1(cs,false,__FILE__,__FUNCTION__,__LINE__);
+#define Autolock2(cs)	CAutoLock lock2(cs,false,__FILE__,__FUNCTION__,__LINE__);
+#define Autolock3(cs)	CAutoLock lock3(cs,false,__FILE__,__FUNCTION__,__LINE__);
+#define Autolock4(cs)	CAutoLock lock4(cs,false,__FILE__,__FUNCTION__,__LINE__);
+#define Autolock5(cs)	CAutoLock lock5(cs,false,__FILE__,__FUNCTION__,__LINE__);
+
 class CAutoLock
 {
 private:
@@ -145,19 +151,29 @@ public:
 					sprintf(szOuput, "Lock locktime = %d.\n", timeGetTime() - m_dwLockTime);
 				OutputDebugStringA(szOuput);
 			}
-			if (m_pszFile)
-				delete[]m_pszFile;
-			if (m_pszFunction)
-				delete[]m_pszFunction;
+		
 #endif
-			if (m_bAutoDelete)
-				::DeleteCriticalSection((CRITICAL_SECTION *)m_pCS);
+			
 		}
 	}
 	~CAutoLock()
 	{
 		if (m_bLocked)
 			Unlock();
+		
+		if (m_pszFile)
+		{
+			delete[]m_pszFile;
+			m_pszFile = nullptr;
+		}
+		if (m_pszFunction)
+		{
+			delete[]m_pszFunction;
+			m_pszFunction = nullptr;
+		}
+		
+		if (m_bAutoDelete)
+			::DeleteCriticalSection((CRITICAL_SECTION *)m_pCS);
 	}
 };
 

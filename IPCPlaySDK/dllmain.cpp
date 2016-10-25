@@ -9,7 +9,7 @@
 HANDLE g_hThread_ClosePlayer = nullptr;
 HANDLE g_hEventThreadExit = nullptr;
 volatile bool g_bThread_ClosePlayer/* = false*/;
-list<IPC_PLAYHANDLE > g_listPlayertoFree;
+list<IPC_PLAYHANDLE > g_listPlayerAsyncClose;
 list<IPC_PLAYHANDLE> g_listPlayer;
 CRITICAL_SECTION  g_csListPlayertoFree;
 list<DxSurfaceWrap *>g_listDxCache;
@@ -164,24 +164,25 @@ DWORD WINAPI Thread_Helper(void *)
 //#endif
 	while (g_bThread_ClosePlayer)
 	{
-		if ((timeGetTime() - dwLastPreventTime) > 30*1000)
+		if ((timeGetTime() - dwLastPreventTime) > 15*1000)
 		{
-			PreventScreenSave();
+			PreventScreenSave();				// 15一次，禁生发生屏保
 			dwLastPreventTime = timeGetTime();
 		}
 		//RemoveTimeoutDxSurface();
 		EnterCriticalSection(&g_csListPlayertoFree);
-		if (g_listPlayertoFree.size() > 0)
-			g_listPlayer.swap(g_listPlayertoFree);
+		if (g_listPlayerAsyncClose.size() > 0)
+			g_listPlayer.swap(g_listPlayerAsyncClose);
 		LeaveCriticalSection(&g_csListPlayertoFree);
 		if (g_listPlayer.size() > 0)
 		{
+			bool bAsync = false;
 			for (auto it = g_listPlayer.begin(); it != g_listPlayer.end();)
 			{
-				CIPCPlayer *pDvoPlayer = (CIPCPlayer *)(*it);
-				if (pDvoPlayer->StopPlay(pDvoPlayer->GetD3DCache()))
+				CIPCPlayer *pPlayer = (CIPCPlayer *)(*it);
+				if (pPlayer->StopPlay(bAsync))
 				{
-					delete pDvoPlayer;
+					delete pPlayer;
 					it = g_listPlayer.erase(it);
 				}
 				else
@@ -192,7 +193,7 @@ DWORD WINAPI Thread_Helper(void *)
 		if ((timeGetTime() - dwTime) >= 30000)
 		{
 			CIPCPlayer::m_pCSGlobalCount->Lock();			
-			TraceMsgA("%s Count of CDvoPlayer Object = %d.\n", __FUNCTION__, CIPCPlayer::m_nGloabalCount);
+			TraceMsgA("%s Count of CIPCPlayer Object = %d.\n", __FUNCTION__, CIPCPlayer::m_nGloabalCount);
 			CIPCPlayer::m_pCSGlobalCount->Unlock();
 			EnterCriticalSection(&g_csPlayerHandles);
 			TraceMsgA("%s Count of IPCPlayerHandle  = %d.\n", __FUNCTION__, g_nPlayerHandles);

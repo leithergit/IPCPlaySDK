@@ -52,6 +52,10 @@ struct RenderUnit
 	{
 		if (!hRenderWnd)
 			return E_FAIL;
+		if (!IsNeedRender(hRenderWnd))
+			return S_OK;
+		if (IsWindowPall(hRenderWnd))
+			return S_OK;
 		if (!nVideoWidth || !nVideoHeight)
 		{
 			assert(false);
