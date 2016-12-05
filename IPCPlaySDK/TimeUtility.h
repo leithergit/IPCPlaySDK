@@ -256,3 +256,61 @@ public:
 		}
 	}
 };
+
+/// 定时器队列，可替代多媒体定时器，但没有多媒体定时器的性能性瓶颈
+class CTimerQueue
+{
+private:
+	HANDLE m_hTimerQueue;
+public:
+	CTimerQueue()
+	{
+		m_hTimerQueue = CreateTimerQueue();
+	}
+	~CTimerQueue()
+	{
+		if (m_hTimerQueue)
+		{
+			DeleteTimerQueue(m_hTimerQueue);
+			m_hTimerQueue = nullptr;
+		}
+	}
+
+	inline HANDLE TimerQueue()
+	{
+		return m_hTimerQueue;
+	}
+
+	/// 创建定时器
+	/// pTimerRoutine	定时器回调函数，定义为:
+	///					VOID CALLBACK WaitOrTimerCallback(IN PVOID   pContext,IN bool TimerOrWaitFired);
+	/// pContext		传递给定时器回调函数的参数
+	/// dwDueTime		定时器成功创建后，定时器第一次响应所需的时间(单位毫秒)，若该时间为0，则定时器立即响应
+	/// dwPeriod		定时器响应周期，若该值为0，则定时器只响应一次，否则每隔相应时间便响应一次，直到取消定时器
+	HANDLE CreateTimer(WAITORTIMERCALLBACK pTimerRoutine, void *pContext, DWORD dwDueTime, DWORD dwPeriod)
+	{
+		HANDLE hTimer = nullptr;
+		if (!CreateTimerQueueTimer(&hTimer, m_hTimerQueue, pTimerRoutine, pContext, dwDueTime, dwPeriod, 0))
+		{
+			return nullptr;
+		}
+		else
+			return hTimer;
+	}
+
+	/// 删除定时器
+	/// hTimer			定时器句柄
+	/// hCompleteEvent	定时器删除成功通知事件，系统已经取消定时器时并且定时器回调函数完成时激活该事件；该参数可为NULL,
+	///					取值为INVALID_HANDLE_VALUE时，DeleteTimer等待所有已运行的定时器回调函数完成后才返回；
+	///					取值为NULL时，DeleteTimer将为定时器打上删除标记并立即返回，若定时器已失效，定时器回调函数将运
+	///					行结束，然后不会有任何通知发出，多数调用者不会使用该选项，并且应等待定时器回调函数运行结束，然后
+	///					执行其它必须的清理工作
+	void DeleteTimer(HANDLE &hTimer, HANDLE hCompleteEvent = nullptr)
+	{
+		if (hTimer)
+		{
+			DeleteTimerQueueTimer(m_hTimerQueue, hTimer, hCompleteEvent);
+			hTimer = nullptr;
+		}
+	}
+};

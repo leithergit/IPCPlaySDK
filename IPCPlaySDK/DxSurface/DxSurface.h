@@ -2248,15 +2248,15 @@ public:
 		D3DDEVCAPS_TLVERTEXVIDEOMEMORY		Device can use buffers from video memory for transformed and lit vertices.
 		*/
 		HRESULT hr = S_OK;		
-		D3DDISPLAYMODE d3ddm;
-		if (FAILED(hr = m_pDirect3D9Ex->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &d3ddm)))
-		{
-			DxTraceMsg("%s GetAdapterDisplayMode Failed.\nhr=%x", __FUNCTION__, hr);
-			goto _Failed;
-		}
+// 		D3DDISPLAYMODE d3ddm;
+// 		if (FAILED(hr = m_pDirect3D9Ex->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &d3ddm)))
+// 		{
+// 			DxTraceMsg("%s GetAdapterDisplayMode Failed.\nhr=%x", __FUNCTION__, hr);
+// 			goto _Failed;
+// 		}
 		
 		ZeroMemory(&m_d3dpp, sizeof(D3DPRESENT_PARAMETERS));
-		m_d3dpp.BackBufferFormat		= d3ddm.Format;
+		m_d3dpp.BackBufferFormat		= D3DFMT_UNKNOWN/*d3ddm.Format*/;
 		m_d3dpp.BackBufferCount			= 1;
 		m_d3dpp.Flags					= 0;
 		m_d3dpp.Windowed				= bIsWindowed;
@@ -2293,7 +2293,7 @@ public:
 		{
 			//全屏模式
 			m_d3dpp.PresentationInterval		= D3DPRESENT_INTERVAL_IMMEDIATE;
-			m_d3dpp.FullScreen_RefreshRateInHz	= d3ddm.RefreshRate;	
+			//m_d3dpp.FullScreen_RefreshRateInHz	= d3ddm.RefreshRate;	
 			m_d3dpp.SwapEffect					= D3DSWAPEFFECT_DISCARD; 
 			m_d3dpp.EnableAutoDepthStencil		= FALSE;			
 			m_d3dpp.BackBufferWidth				= GetSystemMetrics(SM_CXSCREEN);		// 获得屏幕宽
@@ -2326,7 +2326,7 @@ public:
 			SafeRelease(m_pDirect3DDeviceEx);
 
 		// 检查是否能够启用多重采样
-		hr = m_pDirect3D9Ex->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, d3ddm.Format, FALSE, D3DMULTISAMPLE_4_SAMPLES, NULL);
+		//hr = m_pDirect3D9Ex->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, d3ddm.Format, FALSE, D3DMULTISAMPLE_4_SAMPLES, NULL);
 
 		if (FAILED(hr = m_pDirect3D9Ex->CreateDeviceEx(D3DADAPTER_DEFAULT,
 			D3DDEVTYPE_HAL,
@@ -2521,7 +2521,7 @@ _Failed:
 		case S_PRESENT_MODE_CHANGED:
 			{
 				DxTraceMsg("%s The display mode has changed.\n",__FUNCTION__);
-				assert(false);
+				//assert(false);
 				if (!ResetDevice())
 				{
 					DxCleanup();

@@ -1162,7 +1162,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 						return;
 					}
  					//m_pYUVFile = new CFile(_T("axis1080p.yuv"), CFile::modeCreate | CFile::modeWrite);
- 					ipcplay_SetCallBack(m_pPlayContext->hPlayer[0], YUVCapture, CaptureYUVProc, this);
+ 					//ipcplay_SetCallBack(m_pPlayContext->hPlayer[0], YUVCapture, CaptureYUVProc, this);
 					PlayerInfo pi;
 					if (ipcplay_GetPlayerInfo(m_pPlayContext->hPlayer[0], &pi) != IPC_Succeed)
 					{

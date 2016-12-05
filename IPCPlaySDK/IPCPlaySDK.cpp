@@ -18,6 +18,7 @@
 #include "IPCPlayer.hpp"
 
 CAvRegister CIPCPlayer::avRegister;
+CTimerQueue CIPCPlayer::m_TimeQueue;
 CriticalSectionPtr CIPCPlayer::m_csDsoundEnum = make_shared<CriticalSectionWrap>();
 shared_ptr<CDSoundEnum> CIPCPlayer::m_pDsoundEnum = nullptr;/*= make_shared<CDSoundEnum>()*/;	///< 音频设备枚举器
 #ifdef _DEBUG
@@ -30,7 +31,7 @@ extern CRITICAL_SECTION g_csPlayerHandles;
 extern UINT	g_nPlayerHandles;
 #endif
 //shared_ptr<CDSound> CDvoPlayer::m_pDsPlayer = make_shared<CDSound>(nullptr);
-//shared_ptr<CSimpleWnd> CDvoPlayer::m_pWndDxInit = make_shared<CSimpleWnd>();	///< 视频显示时，用以初始化DirectX的隐藏窗口对象
+shared_ptr<CSimpleWnd> CIPCPlayer::m_pWndDxInit = make_shared<CSimpleWnd>();	///< 视频显示时，用以初始化DirectX的隐藏窗口对象
 
 using namespace std;
 using namespace std::tr1;
@@ -228,7 +229,7 @@ IPCPLAYSDK_API int ipcplay_Close(IN IPC_PLAYHANDLE hPlayHandle, bool bAsyncClose
 	DxTraceMsg("%s DvoPlayer Object:%d.\n", __FUNCTION__, pPlayer->m_nObjIndex);
 	
 #endif
-	if (!pPlayer->StopPlay(bAsyncClose,200))
+	if (!pPlayer->StopPlay(bAsyncClose,100))
 	{
 		EnterCriticalSection(&g_csListPlayertoFree);
 		g_listPlayerAsyncClose.push_back(hPlayHandle);
@@ -312,7 +313,7 @@ IPCPLAYSDK_API int ipcplay_RemoveWnd(IN IPC_PLAYHANDLE hPlayHandle, HWND hRender
 /// @retval			0	操作成功
 /// @retval			1	流缓冲区已满
 /// @retval			-1	输入参数无效
-/// @remark			播放流数据时，相应的帧数据其实并未立即播放，而是被放了播放队列中，应该根据ipcplay_PlayStream
+/// @remark			播放流数据时，相应的帧数据其实并未立即播放，而是被放了播放队列中，应该根据ipcplay_     
 ///					的返回值来判断，是否继续播放，若说明队列已满，则应该暂停播放
 IPCPLAYSDK_API int ipcplay_InputStream(IN IPC_PLAYHANDLE hPlayHandle, unsigned char *szFrameData, int nFrameSize)
 {

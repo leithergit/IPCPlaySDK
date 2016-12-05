@@ -150,8 +150,9 @@ typedef enum {
 #define		IPC_Error_UnsupportHaccel		(-35)	///< 当前系统不支持硬解码功能
 #define		IPC_Error_UnsupportedFormat		(-35)	///< 不支持的图像格式
 #define		IPC_Error_UnsupportedCodec		(-36)	///< 不支持的编码格式
-#define		IPC_Error_RenderOverflow		(-37)	///< 渲染窗口超限
+#define		IPC_Error_RenderWndOverflow		(-37)	///< 渲染窗口超限
 #define		IPC_Error_RocateNotWork			(-38)	///< 图像旋转不适用，可能是启用了硬解码
+
 #define		IPC_Error_InsufficentMemory		(-255)	///< 内存不足
 
 #define		WM_IPCPLAYER_MESSAGE			WM_USER + 8192	///< 播放器出错时发出的消息 ,消息的LPARAM字段无意义,wparam字段定义如下：
@@ -702,7 +703,3 @@ IPCPLAYSDK_API int ipcplay_RemoveWnd(IN IPC_PLAYHANDLE hPlayHandle, HWND hRender
 /// @param [in]		nAngle			要旋转的角度值，详情请见@see RocateAngle
 /// @remark	注意    目前图像旋转功能仅支持软解
 IPCPLAYSDK_API int ipcplay_SetRocateAngle(IN IPC_PLAYHANDLE hPlayHandle, RocateAngle nAngle = RocateNone);
-
-// IPCPLAYSDK_API int AddRenderWnd(IN IPC_PLAYHANDLE hPlayHandle,IN HWND hRenderWnd);
-
-// IPCPLAYSDK_API int RemoveRenderWnd(IN IPC_PLAYHANDLE hPlayHandle, IN HWND hRenderWnd);
