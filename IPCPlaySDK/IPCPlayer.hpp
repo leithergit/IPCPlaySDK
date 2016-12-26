@@ -127,6 +127,23 @@ extern CDxSurfaceEx* g_dx;
 extern HWND g_hSnapShotWnd;
 
 /// IPCIPCPlay SDK主要功能实现类
+struct RenderWnd
+{
+	RenderWnd(HWND hWnd,RECT rtBorder)
+	{
+		hRenderWnd = hWnd;
+		pRtBorder = new RECT;
+		CopyRect(pRtBorder, &rtBorder);
+	}
+	~RenderWnd()
+	{
+		if (pRtBorder)
+			delete pRtBorder;
+	}
+	HWND	hRenderWnd;
+	RECT	*pRtBorder;
+};
+typedef shared_ptr<RenderWnd> RenderWndPtr;
 class CIPCPlayer
 {
 public:
@@ -138,7 +155,7 @@ private:
 	list<StreamFramePtr>m_listVideoCache;///< 视频流播放帧缓冲
 	//map<HWND, CDirectDrawPtr> m_MapDDraw;
 	list<RenderUnitPtr> m_listRenderUnit;
-	list <HWND>			m_listRenderWnd;	///< 多窗口显示同一视频图像
+	list <HWND>	m_listRenderWnd;	///< 多窗口显示同一视频图像
 	CRITICAL_SECTION	m_csVideoCache;		
 	CRITICAL_SECTION	m_csListRenderUnit;
 	/************************************************************************/
@@ -170,7 +187,6 @@ private:
 	HWND		m_hRenderWnd;			///< 播放视频的窗口句柄
 	
 	CRITICAL_SECTION m_cslistRenderWnd;
-	volatile bool m_bEnableAsyncRender;	///< 启用异步渲染	
 	volatile bool m_bIpcStream;			///< 输入流为IPC流
 	volatile DWORD m_nProbeStreamTimeout;///< 探测码流超时间，单位毫秒
 	D3DFORMAT	m_nPixelFormat;
@@ -183,8 +199,8 @@ private:
 	CDSoundBuffer* m_pDsBuffer;
 	DxSurfaceInitInfo	m_DxInitInfo;
 	CDxSurfaceEx* m_pDxSurface;			///< Direct3d Surface封装类,用于显示视频
-	CDirectDraw *m_pDDraw;				///< DirectDraw封装类对象，用于在xp下显示视频	
-	shared_ptr<ImageSpace> m_pYUVImage = NULL;
+// 	CDirectDraw *m_pDDraw;				///< DirectDraw封装类对象，用于在xp下显示视频	
+// 	shared_ptr<ImageSpace> m_pYUVImage = NULL;
 // 	bool		m_bDxReset;				///< 是否重置DxSurface
 // 	HWND		m_hDxReset;
 // 	CRITICAL_SECTION m_csDxSurface;
@@ -634,47 +650,47 @@ private:
 	
 	bool InitizlizeDisplay()
 	{
-		if (!m_hRenderWnd)
-			return false;
+// 		if (!m_hRenderWnd)
+// 			return false;
 		// 初始显示组件
-		if (GetOsMajorVersion() < Win7MajorVersion)
-		{
-			m_pDDraw = _New CDirectDraw();
-			if (m_pDDraw)
-			{
-				if (m_bEnableHaccel)
-				{
-					DDSURFACEDESC2 ddsd = { 0 };
-					FormatNV12::Build(ddsd, m_nVideoWidth, m_nVideoHeight);
-					EnterCriticalSection(&m_cslistRenderWnd);
-					m_pDDraw->Create<FormatNV12>(m_hRenderWnd, ddsd);
-					LeaveCriticalSection(&m_cslistRenderWnd);
-					m_pYUVImage = make_shared<ImageSpace>();
-					m_pYUVImage->dwLineSize[0] = m_nVideoWidth;
-					m_pYUVImage->dwLineSize[1] = m_nVideoWidth >> 1;
-					
-				}
-				else
-				{
-					//构造DirectDraw表面  
-					DDSURFACEDESC2 ddsd = { 0 };
-					FormatYV12::Build(ddsd, m_nVideoWidth, m_nVideoHeight);
-					EnterCriticalSection(&m_cslistRenderWnd);
-					m_pDDraw->Create<FormatYV12>(m_hRenderWnd, ddsd);
-					LeaveCriticalSection(&m_cslistRenderWnd);
-					m_pYUVImage = make_shared<ImageSpace>();
-					m_pYUVImage->dwLineSize[0] = m_nVideoWidth;
-					m_pYUVImage->dwLineSize[1] = m_nVideoWidth >> 1;
-					m_pYUVImage->dwLineSize[2] = m_nVideoWidth >> 1;
-				}
-				Autolock(&m_csListRenderUnit);
-				for (auto it = m_listRenderUnit.begin(); it != m_listRenderUnit.end(); it++)
-					(*it)->SetVideoSize(m_nVideoWidth, m_nVideoHeight);
-				
-			}
-			return true;
-		}
-		else
+// 		if (GetOsMajorVersion() < Win7MajorVersion)
+// 		{
+// 			m_pDDraw = _New CDirectDraw();
+// 			if (m_pDDraw)
+// 			{
+// 				if (m_bEnableHaccel)
+// 				{
+// 					DDSURFACEDESC2 ddsd = { 0 };
+// 					FormatNV12::Build(ddsd, m_nVideoWidth, m_nVideoHeight);
+// 					EnterCriticalSection(&m_cslistRenderWnd);
+// 					m_pDDraw->Create<FormatNV12>(m_hRenderWnd, ddsd);
+// 					LeaveCriticalSection(&m_cslistRenderWnd);
+// 					m_pYUVImage = make_shared<ImageSpace>();
+// 					m_pYUVImage->dwLineSize[0] = m_nVideoWidth;
+// 					m_pYUVImage->dwLineSize[1] = m_nVideoWidth >> 1;
+// 					
+// 				}
+// 				else
+// 				{
+// 					//构造DirectDraw表面  
+// 					DDSURFACEDESC2 ddsd = { 0 };
+// 					FormatYV12::Build(ddsd, m_nVideoWidth, m_nVideoHeight);
+// 					EnterCriticalSection(&m_cslistRenderWnd);
+// 					m_pDDraw->Create<FormatYV12>(m_hRenderWnd, ddsd);
+// 					LeaveCriticalSection(&m_cslistRenderWnd);
+// 					m_pYUVImage = make_shared<ImageSpace>();
+// 					m_pYUVImage->dwLineSize[0] = m_nVideoWidth;
+// 					m_pYUVImage->dwLineSize[1] = m_nVideoWidth >> 1;
+// 					m_pYUVImage->dwLineSize[2] = m_nVideoWidth >> 1;
+// 				}
+// 				Autolock(&m_csListRenderUnit);
+// 				for (auto it = m_listRenderUnit.begin(); it != m_listRenderUnit.end(); it++)
+// 					(*it)->SetVideoSize(m_nVideoWidth, m_nVideoHeight);
+// 				
+// 			}
+// 			return true;
+// 		}
+// 		else
 		{
 			if (!m_pDxSurface)
 				m_pDxSurface = _New CDxSurfaceEx;
@@ -706,10 +722,10 @@ private:
 				}
 				
 				InitInfo.bWindowed = TRUE;
-				if (!m_pWndDxInit->GetSafeHwnd())
-					InitInfo.hPresentWnd = m_hRenderWnd;
-				else
-					InitInfo.hPresentWnd = m_pWndDxInit->GetSafeHwnd();
+// 				if (!m_pWndDxInit->GetSafeHwnd())
+// 					InitInfo.hPresentWnd = m_hRenderWnd;
+// 				else
+				InitInfo.hPresentWnd = m_pWndDxInit->GetSafeHwnd();
 
 				if (m_nRocateAngle == Rocate90 ||
 					m_nRocateAngle == Rocate270 ||
@@ -744,12 +760,21 @@ private:
 	void RenderFrame(AVFrame *pAvFrame)
 	{
 		EnterCriticalSection(&m_cslistRenderWnd);
-		if (!m_hRenderWnd || m_bStopFlag)
+		if (m_listRenderWnd.size() <= 0 || m_bStopFlag)
 		{
 			LeaveCriticalSection(&m_cslistRenderWnd);
 			return;
 		}
 		LeaveCriticalSection(&m_cslistRenderWnd);
+		if (pAvFrame->width != m_nVideoWidth ||
+			pAvFrame->height != m_nVideoHeight)
+		{
+			delete m_pDxSurface;
+			m_nVideoWidth = pAvFrame->width;
+			m_nVideoHeight = pAvFrame->height;
+			m_pDxSurface = new CDxSurfaceEx();
+			InitizlizeDisplay();
+		}
 		
 // 		if (m_nRocateAngle)
 // 		{
@@ -813,19 +838,17 @@ private:
 					lock.Unlock();
 					m_pDxSurface->Render(pAvFrame);
 					Autolock(&m_cslistRenderWnd);
-					m_pDxSurface->Present(m_hRenderWnd, &rtBorder);
 					if (m_listRenderWnd.size() > 0)
 					{
 						for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
-							m_pDxSurface->Present(*it, &rtBorder);
+							m_pDxSurface->Present((*it), &rtBorder);
 					}
 				}
 				else
 				{
 					lock.Unlock();
 					m_pDxSurface->Render(pAvFrame, m_nRocateAngle);
-					Autolock(&m_cslistRenderWnd);
-					m_pDxSurface->Present(m_hRenderWnd);					
+					Autolock(&m_cslistRenderWnd);				
 					if (m_listRenderWnd.size() > 0)
 					{
 						for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end();it ++)
@@ -929,8 +952,7 @@ private:
 				ScreenToClient(m_hRenderWnd, ((LPPOINT)&rtRender) + 1);
 				LeaveCriticalSection(&m_cslistRenderWnd);
 				RECT rtBorder;
-				Autolock(&m_csBorderRect);
-				
+				Autolock(&m_csBorderRect);				
 				if (m_pBorderRect)
 				{
 					CopyRect(&rtBorder, m_pBorderRect.get());
@@ -1110,6 +1132,8 @@ public:
 // #else
  		m_nMaxFrameCache = 100;				// 默认最大视频缓冲数量为100
 		m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+		
+		AddRenderWnd(hWnd,nullptr);
 		m_hRenderWnd = hWnd;
 // #endif
 		if (szFileName)
@@ -1317,6 +1341,8 @@ public:
 		// #else
 		m_nMaxFrameCache = 100;				// 默认最大视频缓冲数量为100
 		m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+		
+		AddRenderWnd(hWnd,nullptr);
 		m_hRenderWnd = hWnd;
 		// #endif
 		
@@ -1379,10 +1405,10 @@ public:
 				m_pDxSurface = nullptr;
 			//}
 		}
-		if (m_pDDraw)
-		{
-			delete m_pDDraw;
-		}
+// 		if (m_pDDraw)
+// 		{
+// 			delete m_pDDraw;
+// 		}
 // 		if (m_hCacheFulled)
 // 		{
 // 			CloseHandle(m_hCacheFulled);
@@ -1450,7 +1476,7 @@ public:
 			return false;
 	}
 	// 
-	int AddRenderWnd(HWND hRenderWnd/*,RECT rtRender*/)
+	int AddRenderWnd(HWND hRenderWnd,LPRECT *pRtRender)
 	{
  		if (!hRenderWnd)
  			return IPC_Error_InvalidParameters;
@@ -1460,6 +1486,11 @@ public:
 		
 		if (m_listRenderWnd.size() >= 16)
 			return IPC_Error_RenderWndOverflow;
+		//RenderWndPtr = make_shared<RenderWnd>(hRenderWnd, pRtRender);
+		auto itFind = find(m_listRenderWnd.begin(), m_listRenderWnd.end(), hRenderWnd);
+		if (itFind != m_listRenderWnd.end())		
+			return IPC_Succeed;
+		
 		m_listRenderWnd.push_back(hRenderWnd);
 		return IPC_Succeed;
 	}
@@ -1468,23 +1499,26 @@ public:
 	{
 		if (!hRenderWnd)
 			return IPC_Error_InvalidParameters;
-		if (hRenderWnd == m_hRenderWnd)
-			return IPC_Succeed;
+// 		if (hRenderWnd == m_hRenderWnd)
+// 			return IPC_Succeed;
 		Autolock(&m_cslistRenderWnd);
 		if (m_listRenderWnd.size() < 1)
 			return IPC_Succeed;
-		for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end();)
+		auto itFind = find(m_listRenderWnd.begin(), m_listRenderWnd.end(), hRenderWnd);
+		if (itFind != m_listRenderWnd.end())
 		{
-			if ((*it) == hRenderWnd)
-			{
-				InvalidateRect(*it, nullptr, true);
-				it = m_listRenderWnd.erase(it);
-			}
-			else
-				it ++;
+			m_listRenderWnd.erase(itFind);
+			InvalidateRect(hRenderWnd, nullptr, true);
 		}
-
+		
 		return IPC_Succeed;
+	}
+
+	// 获取显示图像窗口的数量
+	int GetRenderWndCount()
+	{
+		Autolock(&m_cslistRenderWnd);
+			return m_listRenderWnd.size();
 	}
 	void SetRefresh(bool bRefresh = true)
 	{
@@ -1625,14 +1659,6 @@ public:
 		if (m_pBorderRect)
 			m_pBorderRect = nullptr;
 	}
-
-	int EnableAsyncRender(bool bAsyncRender = true)
-	{
-		if (m_hThreadDecode)
-			return IPC_Error_PlayerHasStart;
-		m_bEnableAsyncRender = bAsyncRender;
-		return IPC_Succeed;
-	}
 		
 	/// @brief			开始播放
 	/// @param [in]		bEnaleAudio		是否开启音频播放
@@ -1688,18 +1714,6 @@ public:
 		m_bStopFlag = false;
 		// 启动流播放线程
 		m_bThreadDecodeRun = true;
-		m_bThreadRenderRun = true;		
-		if (m_bEnableAsyncRender && m_hRenderWnd)
-		{
-			m_hThreadRender = (HANDLE)_beginthreadex(nullptr, 0, ThreadRender, this, CREATE_SUSPENDED, 0);
-			if (!m_hThreadRender)
-			{
-#ifdef _DEBUG
-				OutputMsg("%s \tObject:%d ThreadRender Start failed:%d.\n", __FUNCTION__, m_nObjIndex, GetLastError());
-#endif
-				return IPC_Error_VideoThreadStartFailed;
-			}
-		}
 		
 // 		m_pDecodeHelperPtr = make_shared<DecodeHelper>();
 //		m_hQueueTimer = m_TimeQueue.CreateTimer(TimerCallBack, this, 0, 20);
@@ -2081,16 +2095,6 @@ public:
 		return 0;
 	}
 
-// 	void SuspendDecode()
-// 	{
-// 		if (m_hThreadDecode)
-// 			SuspendThread(m_hThreadDecode);
-// 	}
-// 	void ResumeDecode()
-// 	{
-// 		if (m_hThreadDecode)
-// 			ResumeThread(m_hThreadDecode);
-// 	}
 	
 	bool StopPlay(bool bAsync = false,DWORD nTimeout = 200)
 	{
@@ -2104,7 +2108,6 @@ public:
 		m_bThreadParserRun = false;
 		m_bThreadDecodeRun = false;
 		m_bThreadPlayAudioRun = false;
-		m_bThreadRenderRun = false;
 		//m_bThreadSummaryRun = false;
 		HANDLE hArray[16] = { 0 };
 		int nHandles = 0;
@@ -2147,13 +2150,7 @@ public:
 			if (dwThreadExitCode == STILL_ACTIVE)		// 线程仍在运行
 				hArray[nHandles++] = m_hThreadDecode;
 		}
-		if (m_hThreadRender)
-		{
-			ResumeThread(m_hThreadRender);				// 异步渲染线程可能仍未唤醒
-			GetExitCodeThread(m_hThreadRender, &dwThreadExitCode);
-			if (dwThreadExitCode == STILL_ACTIVE)		// 线程仍在运行
-				hArray[nHandles++] = m_hThreadRender;
-		}
+		
 		if (m_hThreadPlayAudio)
 		{
 			ResumeThread(m_hThreadPlayAudio);
@@ -2177,13 +2174,14 @@ public:
 			double dfWaitTime = GetExactTime();
 			if (WaitForMultipleObjects(nHandles, hArray, true, nTimeout) == WAIT_TIMEOUT)
 			{
-				OutputMsg("%s Wait for thread exit timeout.\n", __FUNCTION__);
+				OutputMsg("%s Object %d Wait for thread exit timeout.\n", __FUNCTION__,m_nObjIndex);
 				return false;
 			}
 			double dfWaitTimeSpan = TimeSpanEx(dfWaitTime);
-			OutputMsg("%s Wait for thread TimeSpan = %.3f.\n", __FUNCTION__,dfWaitTimeSpan);
-
+			OutputMsg("%s Object %d Wait for thread TimeSpan = %.3f.\n", __FUNCTION__, m_nObjIndex,dfWaitTimeSpan);
 		}
+		else
+			OutputMsg("%s Object %d All Thread has exit normal!.\n", __FUNCTION__,m_nObjIndex);
 		if (m_hThreadParser)
 		{
 			CloseHandle(m_hThreadParser);
@@ -2198,11 +2196,7 @@ public:
 			OutputMsg("%s ThreadPlayVideo Object:%d has exit.\n", __FUNCTION__,m_nObjIndex);
 #endif
 		}
-		if (m_hThreadRender)
-		{
-			CloseHandle(m_hThreadRender);
-			m_hThreadRender = nullptr;
-		}
+		
 		if (m_hThreadPlayAudio)
 		{
 			CloseHandle(m_hThreadPlayAudio);
@@ -3006,7 +3000,16 @@ public:
 	inline void  Refresh()
 	{
 		if (m_hRenderWnd)
+		{
 			::InvalidateRect(m_hRenderWnd, nullptr, true);
+			Autolock(&m_cslistRenderWnd);
+			//m_pDxSurface->Present(m_hRenderWnd);					
+			if (m_listRenderWnd.size() > 0)
+			{
+				for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
+					::InvalidateRect(*it, nullptr, true);
+			}
+		}
 	}
 
 	int SetCallBack(IPC_CALLBACK nCallBackType, IN void *pUserCallBack, IN void *pUserPtr)
@@ -3943,156 +3946,14 @@ public:
 
 		}
 	};
-// 	HANDLE	m_hRenderFrameReady = nullptr;
-// 	HANDLE	m_hRenderFrameCopied = nullptr;
-	volatile bool m_bThreadRenderRun = false;
-	HANDLE m_hThreadRender = nullptr;
-	AVFrame *m_pRenderFrame = nullptr;
-	static UINT __stdcall ThreadRender(void *p)
-	{
-		CIPCPlayer* pThis = (CIPCPlayer *)p;
-		int nRetry = 0;
 
-		// 若有指定了窗口句柄，则需要初始显示对象
-		if (pThis->m_hRenderWnd)
-		{
-			bool bCacheDxSurface = false;		// 是否为缓存中取得的Surface对象
-			if (GetOsMajorVersion() < Win7MajorVersion)
-			{
-				if (!pThis->m_pDDraw)
-					pThis->m_pDDraw = _New CDirectDraw();
-				pThis->InitizlizeDisplay();
-			}
-// 			else
-// 			{
-// 				if (!pThis->m_pDxSurface)
-// 				{
-// 					D3DFORMAT nPixFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
-// 					if (pThis->m_bEnableHaccel)
-// 						nPixFormat = (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2');
-// // 					pThis->m_pDxSurface = GetDxInCache(pThis->m_nVideoWidth, pThis->m_nVideoHeight, nPixFormat);
-// // 					if (pThis->m_pDxSurface)
-// // 						bCacheDxSurface = true;
-// // 					else
-// 					pThis->m_pDxSurface = _New CDxSurfaceEx();
-// 				}
-// 				if (!bCacheDxSurface)
-// 				{
-// 					nRetry = 0;
-// 					while (pThis->m_bThreadDecodeRun)
-// 					{
-// 						if (!pThis->InitizlizeDisplay())
-// 						{
-// 							nRetry++;
-// 							Delay(2500, pThis->m_bThreadDecodeRun);
-// 							if (nRetry >= 3)
-// 							{
-// 								if (pThis->m_hRenderWnd)
-// 									::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_INITD3DFAILED, 0);
-// 								return 0;
-// 							}
-// 						}
-// 						else
-// 							break;
-// 					}
-// 				}
-// 			}
-
-			RECT rtWindow;
-			GetWindowRect(pThis->m_hRenderWnd, &rtWindow);
-			pThis->OutputMsg("%s Window Width = %d\tHeight = %d.\n", __FUNCTION__, (rtWindow.right - rtWindow.left), (rtWindow.bottom - rtWindow.top));
-#ifdef _DEBUG
-			pThis->OutputMsg("%s \tObject:%d Line %d Time = %d.\n", __FUNCTION__, pThis->m_nObjIndex, __LINE__, timeGetTime() - pThis->m_nLifeTime);
-#endif
-		}
-		while (pThis->m_bThreadRenderRun)
-		{
-			do 
-			{
-				Autolock(&pThis->m_csListYUV);
-				if (pThis->m_listNV12.size() > 0)
-				{
-					FrameNV12Ptr FramePtr = pThis->m_listNV12.front();
-					pThis->m_listNV12.pop_front();
-					lock.Unlock();
-					byte *pY = NULL, *pUV = NULL;
-					pThis->m_pYUVImage->dwLineSize[0] = FramePtr->nStrideY;
-					pThis->m_pYUVImage->dwLineSize[1] = FramePtr->nStrideUV;
-					pThis->m_pYUVImage->pBuffer[0] = (PBYTE)FramePtr->pNV12Surface;
-					pThis->m_pYUVImage->pBuffer[1] = (PBYTE)FramePtr->pNV12Surface + FramePtr->nStrideY*FramePtr->nSurfaceHeight;					
-					pThis->m_pDDraw->Draw(*pThis->m_pYUVImage, nullptr, nullptr, true);
-// 					Autolock1(&pThis->m_csListRenderUnit);
-// 					for (auto it = pThis->m_listRenderUnit.begin(); it != pThis->m_listRenderUnit.end() && !pThis->m_bStopFlag; it++)
-// 						(*it)->RenderImage(*(pThis->m_pYUVImage), nullptr, nullptr, true);
-					
-				}
-				else if (pThis->m_listYV12.size() > 0)
-				{
-					FrameYV12Ptr FramePtr = pThis->m_listYV12.front();
-					pThis->m_listYV12.pop_front();
-					lock.Unlock();
-					pThis->m_pYUVImage->pBuffer[0] = (PBYTE)FramePtr->pY;
-					pThis->m_pYUVImage->pBuffer[1] = (PBYTE)FramePtr->pU;
-					pThis->m_pYUVImage->pBuffer[2] = (PBYTE)FramePtr->pV;
-					pThis->m_pYUVImage->dwLineSize[0] = FramePtr->nStrideY;
-					pThis->m_pYUVImage->dwLineSize[1] = FramePtr->nStrideUV;
-					pThis->m_pYUVImage->dwLineSize[2] = FramePtr->nStrideUV;
-					pThis->m_pDDraw->Draw(*(pThis->m_pYUVImage), nullptr, nullptr, true);
-// 					Autolock1(&pThis->m_csListRenderUnit);
-// 					for (auto it = pThis->m_listRenderUnit.begin(); it != pThis->m_listRenderUnit.end() && !pThis->m_bStopFlag; it++)
-// 						(*it)->RenderImage(*(pThis->m_pYUVImage), nullptr, nullptr, true);
-				}
-
-			} while (false);
-
-			Sleep(10);
-		}
-		return 0;
-	}
 
 	bool m_bD3dShared = false;
 	void SetD3dShared(bool bD3dShared = true)
 	{
 		m_bD3dShared = bD3dShared;
 	}
-	// 把解码后的YUV帧放入YUV缓存
-	// 返回false时，表示缓存已经超过允许的最大数量,该帧被丢弃
-	// 返回true时，则操作成功
-	bool PushFrame(AVFrame *pFrame)
-	{
-		if (!pFrame)
-			return false;
-		if (pFrame->format == AV_PIX_FMT_DXVA2_VLD)
-		{
-			Autolock(&m_csListYUV);
-			if (m_listNV12.size() < m_nMaxYUVCache)
-			{
-				FrameNV12Ptr FramePtr = make_shared<FrameNV12>(pFrame, (INT64)(GetExactTime() * 1000));
-				m_listNV12.push_back(FramePtr);
-			}
-			else
-			{
-				OutputMsg("%s YUV list size = %d.\n", __FUNCTION__, m_listNV12.size());
-				return false;
-			}
-		}
-		else
-		{
-			Autolock(&m_csListYUV);
-			if (m_listYV12.size() < m_nMaxYUVCache)
-			{
-				FrameYV12Ptr FramePtr = make_shared<FrameYV12>(pFrame, (INT64)(GetExactTime() * 1000));
-				m_listYV12.push_back(FramePtr);
-			}
-			else
-			{
-				OutputMsg("%s YUV list size = %d.\n", __FUNCTION__, m_listNV12.size());
-				return false;
-			}
-		}
-		return true;
-	}
-	
+
 	static UINT __stdcall ThreadDecode(void *p)
 	{
 		CIPCPlayer* pThis = (CIPCPlayer *)p;
@@ -4120,9 +3981,10 @@ public:
 		while (pThis->m_bThreadDecodeRun)
 		{
 			Autolock(&pThis->m_csVideoCache);
-			if ((timeGetTime() - tFirst) > 15000)
+			if ((timeGetTime() - tFirst) > 5000)
 			{// 等待超时
 				assert(false);
+				pThis->OutputMsg("%s Warning!!!Wait for frame timeout.\n", __FUNCTION__);
 				return 0;
 			}
 			if (pThis->m_listVideoCache.size() < 1)
@@ -4296,8 +4158,6 @@ public:
 		if (!pThis->m_bThreadDecodeRun)
 			return 0;
 
-		if (pThis->m_hThreadRender)
-			ResumeThread(pThis->m_hThreadRender);
 // 		// 若有指定了窗口句柄，则需要初始显示对象
 // 		if (pThis->m_hRenderWnd &&
 // 			!pThis->m_hThreadRender)	// 若为异步渲染，则在渲染线中初始化显示组件
@@ -4618,10 +4478,8 @@ public:
 						pThis->m_hAudioFrameEvent[0] &&
 						pThis->m_hAudioFrameEvent[1])
 						WaitForMultipleObjects(2, pThis->m_hAudioFrameEvent, TRUE, 40);
-					if (!pThis->m_hThreadRender)
-						pThis->RenderFrame(pAvFrame);
-					else
-						pThis->PushFrame(pAvFrame);
+				
+					pThis->RenderFrame(pAvFrame);
 					if (!bDecodeSucceed)
 					{
 						bDecodeSucceed = true;
@@ -5175,10 +5033,8 @@ public:
 			SetEvent(m_hEventDecodeStart);
 			m_nCurVideoFrame = FramePtr->FrameHeader()->nFrameID;
 			m_tCurFrameTimeStamp = FramePtr->FrameHeader()->nTimestamp;
-			if (!m_hThreadRender)
-				RenderFrame(m_pDecodeHelperPtr->pAvFrame);
-			else
-				PushFrame(m_pDecodeHelperPtr->pAvFrame);
+			RenderFrame(m_pDecodeHelperPtr->pAvFrame);
+
 		}
 		else
 		{

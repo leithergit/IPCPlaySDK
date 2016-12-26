@@ -315,6 +315,9 @@ public:
 		}
 		if (pStreamInfo)
 			delete pStreamInfo;
+
+		if (m_pInputStreamTimeTrace)
+			delete m_pInputStreamTimeTrace;
 		
 		DeleteCriticalSection(&csRecFile);
 	}
@@ -972,4 +975,7 @@ public:
 	afx_msg void OnBnClickedCheckRefreshplayer();
 	afx_msg void OnBnClickedCheckSetborder();
 	afx_msg void OnBnClickedCheckExterndraw();
+	afx_msg void OnFileAddrenderwnd();
+	afx_msg void OnFileRemoveRenderWnd();
+	int  nCurPannelID = 0;
 };

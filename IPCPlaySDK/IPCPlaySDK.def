@@ -9,7 +9,6 @@ EXPORTS
 	ipcplay_InputStream
 	ipcplay_InputIPCStream
 	ipcplay_Start
-	ipcplay_EnableAsyncRender
 	ipcplay_Reset
 	ipcplay_Stop
 	ipcplay_Pause
@@ -53,4 +52,5 @@ EXPORTS
 	;ipcplay_ResumeDecode
 	ipcplay_AddWnd
 	ipcplay_RemoveWnd
+	ipcplay_GetRenderWndCount
 	ipcplay_SetD3dShared

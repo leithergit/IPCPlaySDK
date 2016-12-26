@@ -134,6 +134,8 @@ BEGIN_MESSAGE_MAP(CIPCPlayDemoDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_REFRESHPLAYER, &CIPCPlayDemoDlg::OnBnClickedCheckRefreshplayer)
 	ON_BN_CLICKED(IDC_CHECK_SETBORDER, &CIPCPlayDemoDlg::OnBnClickedCheckSetborder)
 	ON_BN_CLICKED(IDC_CHECK_EXTERNDRAW, &CIPCPlayDemoDlg::OnBnClickedCheckExterndraw)
+	ON_COMMAND(ID_FILE_ADDRENDERWND, &CIPCPlayDemoDlg::OnFileAddrenderwnd)
+	ON_COMMAND(ID_FILE_REMOVERENDERWND, &CIPCPlayDemoDlg::OnFileRemoveRenderWnd)
 END_MESSAGE_MAP()
 
 
@@ -812,10 +814,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlaystream()
 		bool bEnableWnd = false;
 		int nStream = 0;
 		CWaitCursor Wait;
-		
-		
-		
-		
+				
 		if (m_pPlayContext->hStream == -1)
 		{
 			nStream = SendDlgItemMessage(IDC_COMBO_STREAM, CB_GETCURSEL);
@@ -2320,5 +2319,46 @@ void CIPCPlayDemoDlg::OnBnClickedCheckExterndraw()
 			ipcplay_SetExternDrawCallBack(m_pPlayContext->hPlayer[0], ExternDCDraw, this);
 		else
 			ipcplay_SetExternDrawCallBack(m_pPlayContext->hPlayer[0], nullptr, nullptr);
+	}
+}
+
+
+void CIPCPlayDemoDlg::OnFileAddrenderwnd()
+{
+	if (m_pPlayContext && m_pPlayContext->hPlayer[0])
+	{
+		int nCount = 0;
+		ipcplay_GetRenderWndCount(m_pPlayContext->hPlayer[0], &nCount);
+		if (nCount < m_pVideoWndFrame->GetPanelCount())
+		{
+			for (int i = 0; i < m_pVideoWndFrame->GetPanelCount(); i++)
+			{
+				if (!m_pVideoWndFrame->GetPanelParam(i))
+				{
+					ipcplay_AddWnd(m_pPlayContext->hPlayer[0],m_pVideoWndFrame->GetPanelWnd(i));
+					m_pVideoWndFrame->SetPanelParam(i, m_pPlayContext.get());
+					break;
+				}
+			}
+		}
+	}
+	else
+	{
+		m_wndStatus.SetWindowText(_T("²¥·ÅÆ÷ÉÐÎ´Æô¶¯."));
+		m_wndStatus.SetAlarmGllitery();
+	}
+}
+
+
+void CIPCPlayDemoDlg::OnFileRemoveRenderWnd()
+{
+	for (int i = m_pVideoWndFrame->GetPanelCount() - 1; i>=0; i--)
+	{
+		if (m_pVideoWndFrame->GetPanelParam(i))
+		{
+			ipcplay_RemoveWnd(m_pPlayContext->hPlayer[0], m_pVideoWndFrame->GetPanelWnd(i));
+			m_pVideoWndFrame->SetPanelParam(i, nullptr);
+			break;
+		}
 	}
 }

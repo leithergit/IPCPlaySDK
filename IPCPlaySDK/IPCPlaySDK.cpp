@@ -79,6 +79,11 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenFileA(IN HWND hWnd, IN char *szFileNam
 		if (pPlayer)
 		{
 			pPlayer->SetCallBack(FilePlayer, pPlayCallBack, pUserPtr);
+#if _DEBUG
+			EnterCriticalSection(&g_csPlayerHandles);
+			g_nPlayerHandles++;
+			LeaveCriticalSection(&g_csPlayerHandles);
+#endif
 			return pPlayer;
 		}
 		else
@@ -295,7 +300,7 @@ IPCPLAYSDK_API int ipcplay_AddWnd(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd
 	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
 	if (pPlayer->nSize != sizeof(CIPCPlayer))
 		return IPC_Error_InvalidParameters;
-	return pPlayer->AddRenderWnd(hRenderWnd);
+	return pPlayer->AddRenderWnd(hRenderWnd,nullptr);
 }
 
 IPCPLAYSDK_API int ipcplay_RemoveWnd(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd)
@@ -306,6 +311,17 @@ IPCPLAYSDK_API int ipcplay_RemoveWnd(IN IPC_PLAYHANDLE hPlayHandle, HWND hRender
 	if (pPlayer->nSize != sizeof(CIPCPlayer))
 		return IPC_Error_InvalidParameters;
 	return pPlayer->RemoveRenderWnd(hRenderWnd);
+}
+
+IPCPLAYSDK_API int  ipcplay_GetRenderWndCount(IN IPC_PLAYHANDLE hPlayHandle, OUT int* pCount)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	*pCount  = pPlayer->GetRenderWndCount();
+	return IPC_Succeed;
 }
 
 /// @brief			输入流数据
@@ -369,21 +385,6 @@ IPCPLAYSDK_API int ipcplay_Start(IN IPC_PLAYHANDLE hPlayHandle,
 	if (pPlayer->nSize != sizeof(CIPCPlayer))
 		return IPC_Error_InvalidParameters;
 	return pPlayer->StartPlay(bEnableAudio, bEnableHaccel,bFitWindow);
-}
-
-/// @brief			启用异步渲染
-/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
-///	@param [in]		bEnableAudio	启用异步渲染
-///	-# true			启用异步渲染
-///	-# false		启用同步渲染
-IPCPLAYSDK_API int ipcplay_EnableAsyncRender(IN IPC_PLAYHANDLE hPlayHandle, IN bool bAsyncRender)
-{
-	if (!hPlayHandle)
-		return IPC_Error_InvalidParameters;
-	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
-	if (pPlayer->nSize != sizeof(CIPCPlayer))
-		return IPC_Error_InvalidParameters;
-	return pPlayer->EnableAsyncRender(bAsyncRender);
 }
 
 /// @brief			判断播放器是否正在播放中

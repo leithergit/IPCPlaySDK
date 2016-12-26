@@ -391,14 +391,6 @@ IPCPLAYSDK_API int ipcplay_InputIPCStream(IN IPC_PLAYHANDLE hPlayHandle, IN byte
 ///					ipcplay_GetHaccelStatus判断是否已经开启硬解码
 IPCPLAYSDK_API int ipcplay_Start(IN IPC_PLAYHANDLE hPlayHandle, IN bool bEnableAudio = false, bool bFitWindow = true, bool bEnableHaccel = false);
 
-/// @brief			启用异步渲染
-/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
-///	@param [in]		bEnableAudio	启用异步渲染
-///	-# true			启用异步渲染
-///	-# false		启用同步渲染
-/// @remark			此函数必须在ipcplay_Start前调用，才以生效
-
-IPCPLAYSDK_API int ipcplay_EnableAsyncRender(IN IPC_PLAYHANDLE hPlayHandle, IN bool bAsyncRender = true);
 
 /// @brief			判断播放器是否正在播放中
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
@@ -694,9 +686,14 @@ IPCPLAYSDK_API void *AllocAvFrame();
 
 IPCPLAYSDK_API void AvFree(void*);
 
+// 增加新的显示图像的窗口
 IPCPLAYSDK_API int ipcplay_AddWnd(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd/*, RECT rtRender*/);
 
+// 移除一个显示图像的窗口
 IPCPLAYSDK_API int ipcplay_RemoveWnd(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd);
+
+// 取得正在显示图像窗口的数量
+IPCPLAYSDK_API int ipcplay_GetRenderWndCount(IN IPC_PLAYHANDLE hPlayHandle, OUT int* pCount);
 
 /// @brief			设置图像旋转角度
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
