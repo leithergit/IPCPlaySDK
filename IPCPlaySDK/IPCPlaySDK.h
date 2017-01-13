@@ -111,49 +111,50 @@ typedef enum {
 	IPC_MAX,
 } APP_NET_TCP_STREAM_TYPE;
 
-#define		IPC_Succeed						(0)		///< 操作成功
-#define		IPC_Error_InvalidParameters		(-1)		///< 无效的参数
-#define		IPC_Error_NotVideoFile			(-2)		///< 非视频录像文件
-#define		IPC_Error_NotInputStreamHeader	(-3)		///< 未输入视频录像文件头
-#define		IPC_Error_InvalidSDKVersion		(-4)		///< 录像文件头中的的SDK版本无效
-#define		IPC_Error_PlayerNotStart		(-5)		///< 播放器尚未启动,无法取得播放过程的信息或属性
-#define		IPC_Error_PlayerHasStart		(-6)		///< 播放器已经启动，不能执行初始化或其它设置操作
-#define		IPC_Error_NotFilePlayer			(-7)		///< 这不是一个文件播放对象
-#define		IPC_Error_InvalidFrame			(-8)		///< 无效的帧
-#define		IPC_Error_InvalidFrameType		(-9)		///< 无效的帧类型
-#define		IPC_Error_SummaryNotReady		(-10)	///< 文件摘要信息尚未准备好
-#define		IPC_Error_FrameCacheIsFulled	(-11)	///< 视频帧缓冲区已经满
-#define		IPC_Error_FileNotOpened			(-12)	///< 尚未打开视频文件
-#define		IPC_Error_MaxFrameSizeNotEnough	(-13)	///< 最大帧尺寸不足，可能视频文件中存在超过256K的帧数据,应调用SetMaxFrameSize设置新的帧尺寸上限
-#define		IPC_Error_InvalidPlayRate		(-14)	///< 无效的播放倍率
-#define		IPC_Error_BufferSizeNotEnough	(-15)	///< 提供的缓冲区长度不足
-#define		IPC_Error_VideoThreadNotRun		(-16)	///< 视频解码线程尚未启动或已经退出
-#define		IPC_Error_AudioThreadNotRun		(-17)	///< 音频频解码线程尚未启动或已经退出
-#define		IPC_Error_ReadFileFailed		(-18)	///< 读文件失败
-#define		IPC_Error_FileNotExist			(-19)	///< 文件不存在
-#define		IPC_Error_InvalidTimeOffset		(-20)	///< 无效的时间偏移或时间超出文件长度范围
-#define		IPC_Error_DecodeFailed			(-21)	///< 解码失败
-#define		IPC_Error_InvalidWindow			(-21)	///< 无效的窗口句柄
-#define		IPC_Error_AudioFailed			(-22)	///< 音频播放初始化失败(播放设备未就绪)
-#define		IPC_Error_DxError				(-23)	///< DirectX 错误
-#define		IPC_Error_PlayerIsNotPaused		(-24)	///< 播放器尚未暂停
-#define		IPC_Error_VideoThreadStartFailed (-25)	///< 播放线程启动失败
-#define		IPC_Error_VideoThreadAbnormalExit (-26)	///< 播放线程异常退出
-#define		IPC_Error_MediaFileHeaderError	(-27)	///< 文件件头有错误
-#define		IPC_Error_WindowNotAssigned		(-28)	///< 未指定显示窗口,无法截图
-#define		IPC_Error_SnapShotProcessNotRun	(-29)	///< 截图进程未运行
-#define		IPC_Error_SnapShotProcessFileMissed	(-30)///< 截图程序文件丢失
-#define		IPC_Error_SnapShotProcessStartFailed	(-31)///< 截图进程启动失败
-#define		IPC_Error_SnapShotFailed	 	(-32)	///< 截图进程未运行
-#define		IPC_Error_PlayerHasStop			(-33)	///< 播放器已经启动，不能执行初始化或其它设置操作
-#define		IPC_Error_InvalidCacheSize		(-34)	///< 播放器已经启动，不能执行初始化或其它设置操作
-#define		IPC_Error_UnsupportHaccel		(-35)	///< 当前系统不支持硬解码功能
-#define		IPC_Error_UnsupportedFormat		(-35)	///< 不支持的图像格式
-#define		IPC_Error_UnsupportedCodec		(-36)	///< 不支持的编码格式
-#define		IPC_Error_RenderWndOverflow		(-37)	///< 渲染窗口超限
-#define		IPC_Error_RocateNotWork			(-38)	///< 图像旋转不适用，可能是启用了硬解码
+#define		IPC_Succeed							(0)		///< 操作成功
+#define		IPC_Error_InvalidParameters			(-1)	///< 无效的参数
+#define		IPC_Error_NotVideoFile				(-2)	///< 非视频录像文件
+#define		IPC_Error_NotInputStreamHeader		(-3)	///< 未输入视频录像文件头
+#define		IPC_Error_InvalidSDKVersion			(-4)	///< 录像文件头中的的SDK版本无效
+#define		IPC_Error_PlayerNotStart			(-5)	///< 播放器尚未启动,无法取得播放过程的信息或属性
+#define		IPC_Error_PlayerHasStart			(-6)	///< 播放器已经启动，不能执行初始化或其它设置操作
+#define		IPC_Error_NotFilePlayer				(-7)	///< 这不是一个文件播放对象
+#define		IPC_Error_InvalidFrame				(-8)	///< 无效的帧
+#define		IPC_Error_InvalidFrameType			(-9)	///< 无效的帧类型
+#define		IPC_Error_SummaryNotReady			(-10)	///< 文件摘要信息尚未准备好
+#define		IPC_Error_FrameCacheIsFulled		(-11)	///< 视频帧缓冲区已经满
+#define		IPC_Error_FileNotOpened				(-12)	///< 尚未打开视频文件
+#define		IPC_Error_MaxFrameSizeNotEnough		(-13)	///< 最大帧尺寸不足，可能视频文件中存在超过256K的帧数据,应调用SetMaxFrameSize设置新的帧尺寸上限
+#define		IPC_Error_InvalidPlayRate			(-14)	///< 无效的播放倍率
+#define		IPC_Error_BufferSizeNotEnough		(-15)	///< 提供的缓冲区长度不足
+#define		IPC_Error_VideoThreadNotRun			(-16)	///< 视频解码线程尚未启动或已经退出
+#define		IPC_Error_AudioThreadNotRun			(-17)	///< 音频频解码线程尚未启动或已经退出
+#define		IPC_Error_ReadFileFailed			(-18)	///< 读文件失败
+#define		IPC_Error_FileNotExist				(-19)	///< 文件不存在
+#define		IPC_Error_InvalidTimeOffset			(-20)	///< 无效的时间偏移或时间超出文件长度范围
+#define		IPC_Error_DecodeFailed				(-21)	///< 解码失败
+#define		IPC_Error_InvalidWindow				(-21)	///< 无效的窗口句柄
+#define		IPC_Error_AudioFailed				(-22)	///< 音频播放初始化失败(播放设备未就绪)
+#define		IPC_Error_DxError					(-23)	///< DirectX 错误
+#define		IPC_Error_PlayerIsNotPaused			(-24)	///< 播放器尚未暂停
+#define		IPC_Error_VideoThreadStartFailed	(-25)	///< 播放线程启动失败
+#define		IPC_Error_VideoThreadAbnormalExit	(-26)	///< 播放线程异常退出
+#define		IPC_Error_MediaFileHeaderError		(-27)	///< 文件件头有错误
+#define		IPC_Error_WindowNotAssigned			(-28)	///< 未指定显示窗口,无法截图
+#define		IPC_Error_SnapShotProcessNotRun		(-29)	///< 截图进程未运行
+#define		IPC_Error_SnapShotProcessFileMissed	(-30)	///< 截图程序文件丢失
+#define		IPC_Error_SnapShotProcessStartFailed (-31)	///< 截图进程启动失败
+#define		IPC_Error_SnapShotFailed	 		(-32)	///< 截图进程未运行
+#define		IPC_Error_PlayerHasStop				(-33)	///< 播放器已经启动，不能执行初始化或其它设置操作
+#define		IPC_Error_InvalidCacheSize			(-34)	///< 播放器已经启动，不能执行初始化或其它设置操作
+#define		IPC_Error_UnsupportHaccel			(-35)	///< 当前系统不支持硬解码功能
+#define		IPC_Error_UnsupportedFormat			(-35)	///< 不支持的图像格式
+#define		IPC_Error_UnsupportedCodec			(-36)	///< 不支持的编码格式
+#define		IPC_Error_RenderWndOverflow			(-37)	///< 渲染窗口超限
+#define		IPC_Error_RocateNotWork				(-38)	///< 图像旋转不适用，可能是启用了硬解码
+#define		IPC_Error_BufferOverflow			(-39)	///< 缓存溢出,可能提供的缓存空间不足以容纳所请求的数据
 
-#define		IPC_Error_InsufficentMemory		(-255)	///< 内存不足
+#define		IPC_Error_InsufficentMemory			(-255)	///< 内存不足
 
 #define		WM_IPCPLAYER_MESSAGE			WM_USER + 8192	///< 播放器出错时发出的消息 ,消息的LPARAM字段无意义,wparam字段定义如下：
 #define		IPCPLAYER_NOTRECVIFRAME			0		///< 未收到有效的I帧
@@ -686,14 +687,21 @@ IPCPLAYSDK_API void *AllocAvFrame();
 
 IPCPLAYSDK_API void AvFree(void*);
 
-// 增加新的显示图像的窗口
-IPCPLAYSDK_API int ipcplay_AddWnd(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd/*, RECT rtRender*/);
+/// @brief 增加新的显示图像的窗口
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+IPCPLAYSDK_API int ipcplay_AddWindow(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd/*, RECT rtRender*/);
 
-// 移除一个显示图像的窗口
-IPCPLAYSDK_API int ipcplay_RemoveWnd(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd);
+/// @brief 移除一个显示图像的窗口
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+IPCPLAYSDK_API int ipcplay_RemoveWindow(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd);
 
-// 取得正在显示图像窗口的数量
-IPCPLAYSDK_API int ipcplay_GetRenderWndCount(IN IPC_PLAYHANDLE hPlayHandle, OUT int* pCount);
+/// @brief 取得正在显示图像窗口及数量
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in,out] hWndArray		返回显示图像的窗口数组
+/// @param [in,out] nCount			输入时，指明hWndArray最多可以容纳的窗口句柄数量,若nCount小于显示图像的窗口数，则返回IPC_Error_BufferOverflow错误
+///					输出时，返回hWndArray实际返回的窗口句柄数量
+///	@return	操作成功时返回 IPC_Succeed,否则操作失败				
+IPCPLAYSDK_API int ipcplay_GetRenderWindows(IN IPC_PLAYHANDLE hPlayHandle, INOUT HWND* hWndArray,INOUT int& Count);
 
 /// @brief			设置图像旋转角度
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄

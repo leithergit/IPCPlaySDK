@@ -1133,7 +1133,7 @@ public:
  		m_nMaxFrameCache = 100;				// 默认最大视频缓冲数量为100
 		m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
 		
-		AddRenderWnd(hWnd,nullptr);
+		AddRenderWindow(hWnd,nullptr);
 		m_hRenderWnd = hWnd;
 // #endif
 		if (szFileName)
@@ -1342,7 +1342,7 @@ public:
 		m_nMaxFrameCache = 100;				// 默认最大视频缓冲数量为100
 		m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
 		
-		AddRenderWnd(hWnd,nullptr);
+		AddRenderWindow(hWnd,nullptr);
 		m_hRenderWnd = hWnd;
 		// #endif
 		
@@ -1476,12 +1476,12 @@ public:
 			return false;
 	}
 	// 
-	int AddRenderWnd(HWND hRenderWnd,LPRECT *pRtRender)
+	int AddRenderWindow(HWND hRenderWnd,LPRECT *pRtRender)
 	{
  		if (!hRenderWnd)
  			return IPC_Error_InvalidParameters;
-		if (hRenderWnd == m_hRenderWnd)
-			return IPC_Succeed;
+// 		if (hRenderWnd == m_hRenderWnd)
+// 			return IPC_Succeed;
 		Autolock(&m_cslistRenderWnd);
 		
 		if (m_listRenderWnd.size() >= 16)
@@ -1495,7 +1495,7 @@ public:
 		return IPC_Succeed;
 	}
 
-	int RemoveRenderWnd(HWND hRenderWnd)
+	int RemoveRenderWindow(HWND hRenderWnd)
 	{
 		if (!hRenderWnd)
 			return IPC_Error_InvalidParameters;
@@ -1515,10 +1515,21 @@ public:
 	}
 
 	// 获取显示图像窗口的数量
-	int GetRenderWndCount()
+	int GetRenderWindows(HWND* hWndArray,int &nSize)
 	{
+		if (!hWndArray || !nSize)
+			return IPC_Error_InvalidParameters;
 		Autolock(&m_cslistRenderWnd);
-			return m_listRenderWnd.size();
+		if (nSize < m_listRenderWnd.size())
+			return IPC_Error_BufferOverflow;
+		else
+		{
+			int nRetSize = 0;
+			for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
+				hWndArray[nRetSize++] = *it;
+			nSize = nRetSize;
+			return IPC_Succeed;
+		}
 	}
 	void SetRefresh(bool bRefresh = true)
 	{

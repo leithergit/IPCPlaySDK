@@ -50,7 +50,7 @@ EXPORTS
 	AvFree
 	;ipcplay_ResumeDecode
 	;ipcplay_ResumeDecode
-	ipcplay_AddWnd
-	ipcplay_RemoveWnd
-	ipcplay_GetRenderWndCount
+	ipcplay_AddWindow
+	ipcplay_RemoveWindow
+	ipcplay_GetRenderWindows
 	ipcplay_SetD3dShared
