@@ -234,7 +234,7 @@ IPCPLAYSDK_API int ipcplay_Close(IN IPC_PLAYHANDLE hPlayHandle, bool bAsyncClose
 	DxTraceMsg("%s DvoPlayer Object:%d.\n", __FUNCTION__, pPlayer->m_nObjIndex);
 	
 #endif
-	if (!pPlayer->StopPlay(bAsyncClose,100))
+	if (!pPlayer->StopPlay(bAsyncClose,25))
 	{
 		EnterCriticalSection(&g_csListPlayertoFree);
 		g_listPlayerAsyncClose.push_back(hPlayHandle);

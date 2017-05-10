@@ -54,3 +54,4 @@ EXPORTS
 	ipcplay_RemoveWindow
 	ipcplay_GetRenderWindows
 	ipcplay_SetD3dShared
+	ipcplay_SetRocateAngle

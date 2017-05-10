@@ -138,7 +138,7 @@ private:
 									m_hWnd, 							// ¸¸´°¿Ú¾ä±ú
 									NULL,								// ²Ëµ¥¾ä±ú
 									NULL,
-									NULL);
+									123);
 		if (hPannel)
 		{
 			m_csPannelMap->Lock();
