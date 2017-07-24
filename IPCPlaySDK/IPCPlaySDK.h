@@ -342,7 +342,7 @@ IPCPLAYSDK_API int EnableLog(IN IPC_PLAYHANDLE hPlayHandle, char *szLogFile);
 /// │                  │                │
 /// └───────────────────────────────────┘
 /// @remark 1.边界的上下左右位置不可错位,并且边界不能小于0,否则将返回IPC_Error_InvalidParameters			
-IPCPLAYSDK_API int ipcplay_SetBorderRect(IN IPC_PLAYHANDLE hPlayHandle, RECT rtBorder);
+IPCPLAYSDK_API int ipcplay_SetBorderRect(IN IPC_PLAYHANDLE hPlayHandle, RECT rtBorder,bool bPercent = false);
 
 /// @brief 移除显示边界，显示所有视频图像
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
@@ -689,7 +689,7 @@ IPCPLAYSDK_API void AvFree(void*);
 
 /// @brief 增加新的显示图像的窗口
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
-IPCPLAYSDK_API int ipcplay_AddWindow(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd/*, RECT rtRender*/);
+IPCPLAYSDK_API int ipcplay_AddWindow(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd, RECT rtRender);
 
 /// @brief 移除一个显示图像的窗口
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄

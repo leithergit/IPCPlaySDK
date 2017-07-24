@@ -2328,14 +2328,14 @@ void CIPCPlayDemoDlg::OnFileAddrenderwnd()
 	if (m_pPlayContext && m_pPlayContext->hPlayer[0])
 	{
 		int nCount = 0;
-		ipcplay_GetRenderWndCount(m_pPlayContext->hPlayer[0], &nCount);
+		//ipcplay_GetRenderWndCount(m_pPlayContext->hPlayer[0], &nCount);
 		if (nCount < m_pVideoWndFrame->GetPanelCount())
 		{
 			for (int i = 0; i < m_pVideoWndFrame->GetPanelCount(); i++)
 			{
 				if (!m_pVideoWndFrame->GetPanelParam(i))
 				{
-					ipcplay_AddWnd(m_pPlayContext->hPlayer[0],m_pVideoWndFrame->GetPanelWnd(i));
+					//ipcplay_AddWnd(m_pPlayContext->hPlayer[0],m_pVideoWndFrame->GetPanelWnd(i));
 					m_pVideoWndFrame->SetPanelParam(i, m_pPlayContext.get());
 					break;
 				}
@@ -2356,7 +2356,7 @@ void CIPCPlayDemoDlg::OnFileRemoveRenderWnd()
 	{
 		if (m_pVideoWndFrame->GetPanelParam(i))
 		{
-			ipcplay_RemoveWnd(m_pPlayContext->hPlayer[0], m_pVideoWndFrame->GetPanelWnd(i));
+			//ipcplay_RemoveWnd(m_pPlayContext->hPlayer[0], m_pVideoWndFrame->GetPanelWnd(i));
 			m_pVideoWndFrame->SetPanelParam(i, nullptr);
 			break;
 		}

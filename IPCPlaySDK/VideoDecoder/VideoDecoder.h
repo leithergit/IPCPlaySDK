@@ -1000,7 +1000,20 @@ public:
 	{
 		CAutoLock lock(&m_csDecoder);
 		if (m_nManufacturer == FFMPEG)
-			return avcodec_decode_video2(m_pAVCtx, pAvFrame, &got_picture, pPacket);
+		{
+			int nAvError = avcodec_send_packet(m_pAVCtx, pPacket);
+			if (0 == nAvError)
+			{
+				nAvError = avcodec_receive_frame(m_pAVCtx, pAvFrame);
+				if (0 == nAvError)
+					got_picture = 1;
+				else
+					got_picture = 0;
+				
+			}
+			return nAvError;
+			//return avcodec_decode_video2(m_pAVCtx, pAvFrame, &got_picture, pPacket);
+		}
 		else
 		{
 			IH265DEC_INARGS stInArgs;

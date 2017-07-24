@@ -199,8 +199,8 @@ private:
 	CDSoundBuffer* m_pDsBuffer;
 	DxSurfaceInitInfo	m_DxInitInfo;
 	CDxSurfaceEx* m_pDxSurface;			///< Direct3d Surface封装类,用于显示视频
-// 	CDirectDraw *m_pDDraw;				///< DirectDraw封装类对象，用于在xp下显示视频	
-// 	shared_ptr<ImageSpace> m_pYUVImage = NULL;
+//  	CDirectDraw *m_pDDraw;				///< DirectDraw封装类对象，用于在xp下显示视频	
+//  	shared_ptr<ImageSpace> m_pYUVImage = NULL;
 // 	bool		m_bDxReset;				///< 是否重置DxSurface
 // 	HWND		m_hDxReset;
 // 	CRITICAL_SECTION m_csDxSurface;
@@ -231,6 +231,7 @@ private:
 										///< 为false时，则只按图像原始比例在窗口中显示,超出比例部分,则以黑色背景显示
 	CRITICAL_SECTION m_csBorderRect;
 	shared_ptr<RECT>m_pBorderRect;		///< 视频显示的边界，边界外的图象不予显示
+	bool		m_bBorderInPencent;	///< m_pBorderRect中的各分量是否为百分比,即若left=20,则使用图像20%的宽度，若top=10,则使用图像10%的高度
 	bool		m_bPlayerInialized;		///< 播放器是否已经完成初始化
 public:		// 实时流播放参数
 	
@@ -650,8 +651,8 @@ private:
 	
 	bool InitizlizeDisplay()
 	{
-// 		if (!m_hRenderWnd)
-// 			return false;
+		if (!m_hRenderWnd)
+			return false;
 		// 初始显示组件
 // 		if (GetOsMajorVersion() < Win7MajorVersion)
 // 		{
@@ -668,7 +669,6 @@ private:
 // 					m_pYUVImage = make_shared<ImageSpace>();
 // 					m_pYUVImage->dwLineSize[0] = m_nVideoWidth;
 // 					m_pYUVImage->dwLineSize[1] = m_nVideoWidth >> 1;
-// 					
 // 				}
 // 				else
 // 				{
@@ -830,11 +830,24 @@ private:
 		{
 			if (m_pDxSurface)
 			{
-				RECT rtBorder;
+				RECT rtBorder = { 0 };
 				Autolock(&m_csBorderRect);
 				if (m_pBorderRect)
 				{
-					CopyRect(&rtBorder, m_pBorderRect.get());
+					if (!m_bBorderInPencent)
+					{
+						rtBorder.left	= m_pBorderRect->left;
+						rtBorder.right	= m_nVideoWidth - m_pBorderRect->right;
+						rtBorder.top	= m_pBorderRect->top;
+						rtBorder.bottom = m_nVideoHeight - m_pBorderRect->bottom;
+					}
+					else
+					{
+						rtBorder.left	= (m_nVideoWidth*m_pBorderRect->left) / 100;
+						rtBorder.right	= m_nVideoWidth - (m_nVideoWidth*m_pBorderRect->right / 100);
+						rtBorder.top	= m_nVideoHeight*m_pBorderRect->top / 100;
+						rtBorder.bottom = m_nVideoHeight - (m_nVideoHeight*m_pBorderRect->bottom / 100);
+					}
 					lock.Unlock();
 					m_pDxSurface->Render(pAvFrame);
 					Autolock(&m_cslistRenderWnd);
@@ -1476,12 +1489,12 @@ public:
 			return false;
 	}
 	// 
-	int AddRenderWindow(HWND hRenderWnd,LPRECT *pRtRender)
+	int AddRenderWindow(HWND hRenderWnd,LPRECT pRtRender)
 	{
  		if (!hRenderWnd)
  			return IPC_Error_InvalidParameters;
-// 		if (hRenderWnd == m_hRenderWnd)
-// 			return IPC_Succeed;
+		if (hRenderWnd == m_hRenderWnd)
+			return IPC_Succeed;
 		Autolock(&m_cslistRenderWnd);
 		
 		if (m_listRenderWnd.size() >= 16)
@@ -1627,9 +1640,10 @@ public:
 		m_listAudioCache.clear();
 		_MyLeaveCriticalSection(&m_csAudioCache);
 	}
-
+	
 	/// @brief 设置显示边界,边界外的图像将不予以显示
 	/// @param rtBorder	边界参数 详见以下图表
+	/// @param bPercent 是否使用百分比控制边界
 	/// left	左边界距离
 	/// top		上边界距离
 	/// right	右边界距离
@@ -1650,18 +1664,18 @@ public:
 	///│                  │                  │
 	///└─────────────────────────────────────┘
 	/// @remark 边界的上下左右位置不可颠倒
-	void SetBorderRect(RECT rtBorder)
+	void SetBorderRect(RECT rtBorder, bool bPercent = false)
 	{
 		RECT rtVideo = {0};
-		rtVideo.left = rtBorder.left;
-		rtVideo.right = m_nVideoWidth - rtBorder.right;
-		rtVideo.top += rtBorder.top;
-		rtVideo.bottom = m_nVideoHeight - rtBorder.bottom;
+// 		rtVideo.left = rtBorder.left;
+// 		rtVideo.right = m_nVideoWidth - rtBorder.right;
+// 		rtVideo.top += rtBorder.top;
+// 		rtVideo.bottom = m_nVideoHeight - rtBorder.bottom;
 		Autolock(&m_csBorderRect);
 		if (!m_pBorderRect)
 			m_pBorderRect = make_shared<RECT>();
-
-		CopyRect(m_pBorderRect.get(), &rtVideo);
+		m_bBorderInPencent = bPercent;
+		CopyRect(m_pBorderRect.get(), &rtBorder);
 	}
 
 	void RemoveBorderRect()
@@ -2016,12 +2030,12 @@ public:
 	int InputStream(IN byte *pFrameData, IN int nFrameType, IN int nFrameLength, int nFrameNum, time_t nFrameTime)
 	{
 //#ifdef _DEBUG
-		if (m_OuputTime.nInputStream == 0 ||
-			(timeGetTime() - m_OuputTime.nInputStream) >= 10000)
-		{
-			OutputMsg("%s \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
-			m_OuputTime.nInputStream = timeGetTime();
-		}
+// 		if (m_OuputTime.nInputStream == 0 ||
+// 			(timeGetTime() - m_OuputTime.nInputStream) >= 10000)
+// 		{
+// 			OutputMsg("%s \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
+// 			m_OuputTime.nInputStream = timeGetTime();
+// 		}
 //#endif
 		if (m_bStopFlag)
 			return IPC_Error_PlayerHasStop;
