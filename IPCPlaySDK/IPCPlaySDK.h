@@ -241,7 +241,7 @@ typedef void(__stdcall *FilePlayProc)(IPC_PLAYHANDLE hPlayHandle, void *pUserPtr
 /// @param [in]		nDataSize	数据的长度
 /// @param [in]		pUserPtr	用户自定义指针
 /// @remark 若要暂停数据解析，可调用ipcplay_pause函数
-typedef void(__stdcall *CaptureFrame)(IPC_PLAYHANDLE hPlayHandle,const unsigned char *Framedata,const int nDataSize,void *pUserPtr);
+typedef void(__stdcall *CaptureFrame)(IPC_PLAYHANDLE hPlayHandle, const unsigned char *Framedata, const int nDataSize, void *pUserPtr);
 
 /// @brief 外部DC绘制回调函数定义
 /// @param [in]		hWnd	DC绘制回调所对应的窗口
@@ -294,7 +294,7 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenStream(IN HWND hWnd, byte *szStreamHea
 /// @param [in]		szLogFile		日志文件名,若为null，则不开启日志
 ///	@return			若操作成功，返回一个IPC_PLAYHANDLE类型的播放句柄，所有后续播
 ///	放函数都要使用些接口，若操作失败则返回NULL,错误原因可参考GetLastError的返回值
-IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenRTStream(IN HWND hWnd,  IN int nBufferSize = 1024*2048, char *szLogFile = nullptr);
+IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenRTStream(IN HWND hWnd, IN int nBufferSize = 1024 * 2048, char *szLogFile = nullptr);
 
 ///	@brief			设置流播放头信息
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
@@ -320,6 +320,7 @@ IPCPLAYSDK_API int EnableLog(IN IPC_PLAYHANDLE hPlayHandle, char *szLogFile);
 
 /// @brief 设置图像显示边界,边界外的图像将不予以显示
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		hWnd			要更改显示边界的窗口
 /// @param rtBorder	边界参数,这是一个RECT结构的变量,详见以下图表
 /// @remark	边界的中离使用RECT结构表示,其中含义如下:
 /// left	左边界距离
@@ -342,14 +343,15 @@ IPCPLAYSDK_API int EnableLog(IN IPC_PLAYHANDLE hPlayHandle, char *szLogFile);
 /// │                  │                │
 /// └───────────────────────────────────┘
 /// @remark 1.边界的上下左右位置不可错位,并且边界不能小于0,否则将返回IPC_Error_InvalidParameters			
-IPCPLAYSDK_API int ipcplay_SetBorderRect(IN IPC_PLAYHANDLE hPlayHandle, RECT rtBorder,bool bPercent = false);
+IPCPLAYSDK_API int ipcplay_SetBorderRect(IN IPC_PLAYHANDLE hPlayHandle, HWND hWnd, LPRECT pRectBorder = nullptr, bool bPercent = false);
 
 /// @brief 移除显示边界，显示所有视频图像
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		hWnd			要移除显示边界的窗口
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
 
-IPCPLAYSDK_API int ipcplay_RemoveBorderRect(IN IPC_PLAYHANDLE hPlayHandle);
+IPCPLAYSDK_API int ipcplay_RemoveBorderRect(IN IPC_PLAYHANDLE hPlayHandle,HWND hWnd);
 /// @brief			输入流IPC私有帧格式码流
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		szFrameData		从IPC私有录像文件中读取一帧数据，该数据包含完整的IPC私有帧头
@@ -417,7 +419,7 @@ IPCPLAYSDK_API int ipcplay_FitWindow(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWin
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int ipcplay_Stop(IN IPC_PLAYHANDLE hPlayHandle,bool bAsyncStop = false);
+IPCPLAYSDK_API int ipcplay_Stop(IN IPC_PLAYHANDLE hPlayHandle, bool bAsyncStop = false);
 
 /// @brief			暂停文件播放
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
@@ -689,7 +691,9 @@ IPCPLAYSDK_API void AvFree(void*);
 
 /// @brief 增加新的显示图像的窗口
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
-IPCPLAYSDK_API int ipcplay_AddWindow(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd, RECT rtRender);
+/// @param [in]		rtRenderBorder	窗口边界，即要隐藏的图像边界，只显示边界内的图像，详见@see ipcplay_SetBorderRect
+/// @param [in]		bPercent		窗口边界矩形长度单位以象素计算还是以百分比计算
+IPCPLAYSDK_API int ipcplay_AddWindow(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd, LPRECT pRectRenderBorder = nullptr, bool bPercent = false);
 
 /// @brief 移除一个显示图像的窗口
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
@@ -701,7 +705,7 @@ IPCPLAYSDK_API int ipcplay_RemoveWindow(IN IPC_PLAYHANDLE hPlayHandle, HWND hRen
 /// @param [in,out] nCount			输入时，指明hWndArray最多可以容纳的窗口句柄数量,若nCount小于显示图像的窗口数，则返回IPC_Error_BufferOverflow错误
 ///					输出时，返回hWndArray实际返回的窗口句柄数量
 ///	@return	操作成功时返回 IPC_Succeed,否则操作失败				
-IPCPLAYSDK_API int ipcplay_GetRenderWindows(IN IPC_PLAYHANDLE hPlayHandle, INOUT HWND* hWndArray,INOUT int& Count);
+IPCPLAYSDK_API int ipcplay_GetRenderWindows(IN IPC_PLAYHANDLE hPlayHandle, INOUT HWND* hWndArray, INOUT int& Count);
 
 /// @brief			设置图像旋转角度
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄

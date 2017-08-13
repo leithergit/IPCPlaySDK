@@ -269,38 +269,38 @@ IPCPLAYSDK_API int	EnableLog(IN IPC_PLAYHANDLE hPlayHandle, char *szLogFile)
 	return 0;
 }
 
-IPCPLAYSDK_API int ipcplay_SetBorderRect(IN IPC_PLAYHANDLE hPlayHandle, RECT rtBorder,bool bPercent)
+IPCPLAYSDK_API int ipcplay_SetBorderRect(IN IPC_PLAYHANDLE hPlayHandle,HWND hWnd, LPRECT pRectBorder,bool bPercent)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
 	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
 	if (pPlayer->nSize != sizeof(CIPCPlayer))
 		return IPC_Error_InvalidParameters;
-	if (rtBorder.left < 0 || rtBorder.right < 0 || rtBorder.top < 0 || rtBorder.bottom < 0)
+	if (!pRectBorder && (pRectBorder->left < 0 || pRectBorder->right < 0 || pRectBorder->top < 0 || pRectBorder->bottom < 0))
 		return IPC_Error_InvalidParameters;
-	pPlayer->SetBorderRect(rtBorder,bPercent);
+	pPlayer->SetBorderRect(hWnd, pRectBorder, bPercent);
 	return IPC_Succeed;
 }
 
-IPCPLAYSDK_API int ipcplay_RemoveBorderRect(IN IPC_PLAYHANDLE hPlayHandle)
+IPCPLAYSDK_API int ipcplay_RemoveBorderRect(IN IPC_PLAYHANDLE hPlayHandle,HWND hWnd)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
 	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
 	if (pPlayer->nSize != sizeof(CIPCPlayer))
 		return IPC_Error_InvalidParameters;
-	pPlayer->RemoveBorderRect();
+	pPlayer->RemoveBorderRect(hWnd);
 	return IPC_Succeed;
 }
 
-IPCPLAYSDK_API int ipcplay_AddWindow(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd, RECT rtRender)
+IPCPLAYSDK_API int ipcplay_AddWindow(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd, LPRECT pRectRender,bool bPercent)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
 	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
 	if (pPlayer->nSize != sizeof(CIPCPlayer))
 		return IPC_Error_InvalidParameters;
-	return pPlayer->AddRenderWindow(hRenderWnd,&rtRender);
+	return pPlayer->AddRenderWindow(hRenderWnd, pRectRender, bPercent);
 }
 
 IPCPLAYSDK_API int ipcplay_RemoveWindow(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd)

@@ -243,8 +243,8 @@ public:
 	{
 		if ((timeGetTime() - dwTimeEnter) > 200)
 		{
-			char szText[1024] = { 0 };
-			_stprintf(szText, "Wait Timeout @File:%s %d(%s) WaitTime = %d(ms).\n", szFile, nLine, szFunction, (timeGetTime() - dwTimeEnter));
+			TCHAR szText[1024] = { 0 };
+			_stprintf(szText, _T("Wait Timeout @File:%s %d(%s) WaitTime = %d(ms).\n"), szFile, nLine, szFunction, (timeGetTime() - dwTimeEnter));
 			OutputDebugString(szText);
 		}
 	}

@@ -129,11 +129,26 @@ extern HWND g_hSnapShotWnd;
 /// IPCIPCPlay SDK主要功能实现类
 struct RenderWnd
 {
-	RenderWnd(HWND hWnd,RECT rtBorder)
+	RenderWnd(HWND hWnd,LPRECT prtBorder,bool bPercent)
 	{
+		ZeroMemory(this, sizeof(RenderWnd));
 		hRenderWnd = hWnd;
-		pRtBorder = new RECT;
-		CopyRect(pRtBorder, &rtBorder);
+		SetBorder(prtBorder, bPercent);
+	}
+	void inline SetBorder(LPRECT prtBorder, bool bPercent = false)
+	{
+		if (prtBorder)
+		{
+			this->pRtBorder = new RECT;
+			CopyRect(this->pRtBorder, prtBorder);
+			this->bPercent = bPercent;
+		}
+		else
+		{
+			if (this->pRtBorder)
+				delete this->pRtBorder;
+			this->pRtBorder = nullptr;
+		}
 	}
 	~RenderWnd()
 	{
@@ -142,6 +157,7 @@ struct RenderWnd
 	}
 	HWND	hRenderWnd;
 	RECT	*pRtBorder;
+	bool	bPercent;
 };
 typedef shared_ptr<RenderWnd> RenderWndPtr;
 class CIPCPlayer
@@ -154,8 +170,8 @@ private:
 	list<StreamFramePtr>m_listAudioCache;///< 音频流播放帧缓冲
 	list<StreamFramePtr>m_listVideoCache;///< 视频流播放帧缓冲
 	//map<HWND, CDirectDrawPtr> m_MapDDraw;
-	list<RenderUnitPtr> m_listRenderUnit;
-	list <HWND>	m_listRenderWnd;	///< 多窗口显示同一视频图像
+	list <RenderUnitPtr> m_listRenderUnit;
+	list <RenderWndPtr>	m_listRenderWnd;	///< 多窗口显示同一视频图像
 	CRITICAL_SECTION	m_csVideoCache;		
 	CRITICAL_SECTION	m_csListRenderUnit;
 	/************************************************************************/
@@ -229,9 +245,9 @@ private:
 	bool		m_bFitWindow;			///< 视频显示是否填满窗口
 										///< 为true时，则把视频填满窗口,这样会把图像拉伸,可能会造成图像变形
 										///< 为false时，则只按图像原始比例在窗口中显示,超出比例部分,则以黑色背景显示
-	CRITICAL_SECTION m_csBorderRect;
-	shared_ptr<RECT>m_pBorderRect;		///< 视频显示的边界，边界外的图象不予显示
-	bool		m_bBorderInPencent;	///< m_pBorderRect中的各分量是否为百分比,即若left=20,则使用图像20%的宽度，若top=10,则使用图像10%的高度
+	//CRITICAL_SECTION m_csBorderRect;
+	//shared_ptr<RECT>m_pBorderRect;		///< 视频显示的边界，边界外的图象不予显示
+	//bool		m_bBorderInPencent;	///< m_pBorderRect中的各分量是否为百分比,即若left=20,则使用图像20%的宽度，若top=10,则使用图像10%的高度
 	bool		m_bPlayerInialized;		///< 播放器是否已经完成初始化
 public:		// 实时流播放参数
 	
@@ -350,7 +366,7 @@ private:
 		InitializeCriticalSection(&m_csVideoCache);
 		InitializeCriticalSection(&m_csAudioCache);
 		InitializeCriticalSection(&m_csParser);
-		InitializeCriticalSection(&m_csBorderRect);
+		//InitializeCriticalSection(&m_csBorderRect);
 		InitializeCriticalSection(&m_csListYUV);
 		InitializeCriticalSection(&m_csListRenderUnit);
 		InitializeCriticalSection(&m_csTimer);
@@ -830,43 +846,38 @@ private:
 		{
 			if (m_pDxSurface)
 			{
-				RECT rtBorder = { 0 };
-				Autolock(&m_csBorderRect);
-				if (m_pBorderRect)
+				m_pDxSurface->Render(pAvFrame, m_nRocateAngle);
+				Autolock(&m_cslistRenderWnd);
+				if (m_listRenderWnd.size() <= 0)
+					return;
+				
+				for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
 				{
-					if (!m_bBorderInPencent)
+					if ((*it)->pRtBorder)
 					{
-						rtBorder.left	= m_pBorderRect->left;
-						rtBorder.right	= m_nVideoWidth - m_pBorderRect->right;
-						rtBorder.top	= m_pBorderRect->top;
-						rtBorder.bottom = m_nVideoHeight - m_pBorderRect->bottom;
+						RECT rtBorder = { 0 };
+						if (!(*it)->bPercent)
+						{
+							rtBorder.left = (*it)->pRtBorder->left;
+							rtBorder.right = m_nVideoWidth - (*it)->pRtBorder->right;
+							rtBorder.top = (*it)->pRtBorder->top;
+							rtBorder.bottom = m_nVideoHeight - (*it)->pRtBorder->bottom;
+						}
+						else
+						{
+							rtBorder.left = (m_nVideoWidth*(*it)->pRtBorder->left) / 100;
+							rtBorder.right = m_nVideoWidth - (m_nVideoWidth*(*it)->pRtBorder->right / 100);
+							rtBorder.top = m_nVideoHeight*(*it)->pRtBorder->top / 100;
+							rtBorder.bottom = m_nVideoHeight - (m_nVideoHeight*(*it)->pRtBorder->bottom / 100);
+						}
+						rtBorder.left = FFALIGN(rtBorder.left, 4);
+						rtBorder.right = FFALIGN(rtBorder.right, 4);
+						rtBorder.top = FFALIGN(rtBorder.top, 4);
+						rtBorder.bottom = FFALIGN(rtBorder.bottom, 4);
+						m_pDxSurface->Present((*it)->hRenderWnd, &rtBorder);
 					}
 					else
-					{
-						rtBorder.left	= (m_nVideoWidth*m_pBorderRect->left) / 100;
-						rtBorder.right	= m_nVideoWidth - (m_nVideoWidth*m_pBorderRect->right / 100);
-						rtBorder.top	= m_nVideoHeight*m_pBorderRect->top / 100;
-						rtBorder.bottom = m_nVideoHeight - (m_nVideoHeight*m_pBorderRect->bottom / 100);
-					}
-					lock.Unlock();
-					m_pDxSurface->Render(pAvFrame);
-					Autolock(&m_cslistRenderWnd);
-					if (m_listRenderWnd.size() > 0)
-					{
-						for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
-							m_pDxSurface->Present((*it), &rtBorder);
-					}
-				}
-				else
-				{
-					lock.Unlock();
-					m_pDxSurface->Render(pAvFrame, m_nRocateAngle);
-					Autolock(&m_cslistRenderWnd);				
-					if (m_listRenderWnd.size() > 0)
-					{
-						for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end();it ++)
-							m_pDxSurface->Present(*it);
-					}
+						m_pDxSurface->Present((*it)->hRenderWnd);
 				}
 			}
 // 			else if (m_pDDraw)
@@ -965,32 +976,30 @@ private:
 				ScreenToClient(m_hRenderWnd, ((LPPOINT)&rtRender) + 1);
 				LeaveCriticalSection(&m_cslistRenderWnd);
 				RECT rtBorder;
-				Autolock(&m_csBorderRect);				
-				if (m_pBorderRect)
-				{
-					CopyRect(&rtBorder, m_pBorderRect.get());
-					lock.Unlock();
-					m_pDxSurface->Render(pAvFrame,m_nRocateAngle);
-					Autolock(&m_cslistRenderWnd);
-					m_pDxSurface->Present(m_hRenderWnd, &rtBorder, &rtRender);
-					if (m_listRenderWnd.size() > 0)
-					{
-						for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
-							m_pDxSurface->Present(*it, &rtBorder, &rtRender);
-					}
-				}
-				else
-				{
-					lock.Unlock();
-					m_pDxSurface->Render(pAvFrame, m_nRocateAngle);
-					Autolock(&m_cslistRenderWnd);
-					m_pDxSurface->Present(m_hRenderWnd, nullptr, &rtRender);
-					if (m_listRenderWnd.size() > 0)
-					{
-						for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
-							m_pDxSurface->Present(*it, nullptr, &rtRender);
-					}
-				}
+
+// 				if (m_pBorderRect)
+// 				{
+// 					CopyRect(&rtBorder, m_pBorderRect.get());
+// 					m_pDxSurface->Render(pAvFrame,m_nRocateAngle);
+// 					Autolock(&m_cslistRenderWnd);
+// 					m_pDxSurface->Present(m_hRenderWnd, &rtBorder, &rtRender);
+// 					if (m_listRenderWnd.size() > 0)
+// 					{
+// 						for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
+// 							m_pDxSurface->Present((*it)->hRenderWnd, &rtBorder, &rtRender);
+// 					}
+// 				}
+// 				else
+// 				{
+// 					m_pDxSurface->Render(pAvFrame, m_nRocateAngle);
+// 					Autolock(&m_cslistRenderWnd);
+// 					m_pDxSurface->Present(m_hRenderWnd, nullptr, &rtRender);
+// 					if (m_listRenderWnd.size() > 0)
+// 					{
+// 						for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
+// 							m_pDxSurface->Present((*it)->hRenderWnd, nullptr, &rtRender);
+// 					}
+// 				}
 			}
 // 			else if (m_pDDraw)
 // 			{
@@ -1078,7 +1087,7 @@ public:
 		DeleteCriticalSection(&m_csAudioCache);
 		DeleteCriticalSection(&m_csSeekOffset);
 		DeleteCriticalSection(&m_csParser);
-		DeleteCriticalSection(&m_csBorderRect);
+		//DeleteCriticalSection(&m_csBorderRect);
 		DeleteCriticalSection(&m_csListYUV);
 		DeleteCriticalSection(&m_csListRenderUnit);
 		DeleteCriticalSection(&m_csTimer);
@@ -1115,7 +1124,7 @@ public:
 		InitializeCriticalSection(&m_csAudioCache);
 		InitializeCriticalSection(&m_csSeekOffset);
 		InitializeCriticalSection(&m_csParser);
-		InitializeCriticalSection(&m_csBorderRect);
+		//InitializeCriticalSection(&m_csBorderRect);
 		InitializeCriticalSection(&m_csListYUV);
 		InitializeCriticalSection(&m_csListRenderUnit);
 		InitializeCriticalSection(&m_csTimer);
@@ -1325,7 +1334,7 @@ public:
 		InitializeCriticalSection(&m_csAudioCache);
 		InitializeCriticalSection(&m_csSeekOffset);
 		InitializeCriticalSection(&m_csParser);
-		InitializeCriticalSection(&m_csBorderRect);
+		//InitializeCriticalSection(&m_csBorderRect);
 		InitializeCriticalSection(&m_csListYUV);
 		InitializeCriticalSection(&m_csListRenderUnit);
 		InitializeCriticalSection(&m_csTimer);
@@ -1466,7 +1475,7 @@ public:
 		DeleteCriticalSection(&m_csAudioCache);
 		DeleteCriticalSection(&m_csSeekOffset);
 		DeleteCriticalSection(&m_csParser);
-		DeleteCriticalSection(&m_csBorderRect);
+		//DeleteCriticalSection(&m_csBorderRect);
 		DeleteCriticalSection(&m_csListYUV);
 		DeleteCriticalSection(&m_csListRenderUnit);
 		DeleteCriticalSection(&m_csTimer);
@@ -1489,7 +1498,24 @@ public:
 			return false;
 	}
 	// 
-	int AddRenderWindow(HWND hRenderWnd,LPRECT pRtRender)
+	class WndFinder {
+	public:
+		WndFinder(const HWND hWnd)
+		{
+			this->hWnd = hWnd; 
+		}
+	
+		bool operator()(RenderWndPtr& Value)
+		{
+			if (Value->hRenderWnd == hWnd)
+				return true;
+			else
+				return false;
+		}
+	public:
+		HWND hWnd;
+	};
+	int AddRenderWindow(HWND hRenderWnd,LPRECT pRtRender,bool bPercent = false)
 	{
  		if (!hRenderWnd)
  			return IPC_Error_InvalidParameters;
@@ -1499,12 +1525,11 @@ public:
 		
 		if (m_listRenderWnd.size() >= 16)
 			return IPC_Error_RenderWndOverflow;
-		//RenderWndPtr = make_shared<RenderWnd>(hRenderWnd, pRtRender);
-		auto itFind = find(m_listRenderWnd.begin(), m_listRenderWnd.end(), hRenderWnd);
+		auto itFind = find_if(m_listRenderWnd.begin(), m_listRenderWnd.end(), WndFinder(hRenderWnd));
 		if (itFind != m_listRenderWnd.end())		
 			return IPC_Succeed;
 		
-		m_listRenderWnd.push_back(hRenderWnd);
+		m_listRenderWnd.push_back(make_shared<RenderWnd>(hRenderWnd,pRtRender,bPercent));
 		return IPC_Succeed;
 	}
 
@@ -1517,7 +1542,7 @@ public:
 		Autolock(&m_cslistRenderWnd);
 		if (m_listRenderWnd.size() < 1)
 			return IPC_Succeed;
-		auto itFind = find(m_listRenderWnd.begin(), m_listRenderWnd.end(), hRenderWnd);
+		auto itFind = find_if(m_listRenderWnd.begin(), m_listRenderWnd.end(), WndFinder(hRenderWnd));
 		if (itFind != m_listRenderWnd.end())
 		{
 			m_listRenderWnd.erase(itFind);
@@ -1526,6 +1551,7 @@ public:
 		
 		return IPC_Succeed;
 	}
+
 
 	// 获取显示图像窗口的数量
 	int GetRenderWindows(HWND* hWndArray,int &nSize)
@@ -1539,7 +1565,7 @@ public:
 		{
 			int nRetSize = 0;
 			for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
-				hWndArray[nRetSize++] = *it;
+				hWndArray[nRetSize++] = (*it)->hRenderWnd;
 			nSize = nRetSize;
 			return IPC_Succeed;
 		}
@@ -1664,25 +1690,25 @@ public:
 	///│                  │                  │
 	///└─────────────────────────────────────┘
 	/// @remark 边界的上下左右位置不可颠倒
-	void SetBorderRect(RECT rtBorder, bool bPercent = false)
+	void SetBorderRect(HWND hWnd,LPRECT pRectBorder, bool bPercent = false)
 	{
 		RECT rtVideo = {0};
 // 		rtVideo.left = rtBorder.left;
 // 		rtVideo.right = m_nVideoWidth - rtBorder.right;
 // 		rtVideo.top += rtBorder.top;
 // 		rtVideo.bottom = m_nVideoHeight - rtBorder.bottom;
-		Autolock(&m_csBorderRect);
-		if (!m_pBorderRect)
-			m_pBorderRect = make_shared<RECT>();
-		m_bBorderInPencent = bPercent;
-		CopyRect(m_pBorderRect.get(), &rtBorder);
+		Autolock(&m_cslistRenderWnd);
+		auto itFind = find_if(m_listRenderWnd.begin(), m_listRenderWnd.end(), WndFinder(hWnd));
+		if (itFind != m_listRenderWnd.end())
+			(*itFind)->SetBorder(pRectBorder, bPercent);
 	}
 
-	void RemoveBorderRect()
+	void RemoveBorderRect(HWND hWnd)
 	{
-		Autolock(&m_csBorderRect);
-		if (m_pBorderRect)
-			m_pBorderRect = nullptr;
+		Autolock(&m_cslistRenderWnd);
+		auto itFind = find_if(m_listRenderWnd.begin(), m_listRenderWnd.end(), WndFinder(hWnd));
+		if (itFind != m_listRenderWnd.end())
+			(*itFind)->SetBorder(nullptr);
 	}
 		
 	/// @brief			开始播放
@@ -2156,7 +2182,7 @@ public:
 		m_hRenderWnd = nullptr;
 		for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); )
 		{
-			InvalidateRect(*it, nullptr, true);
+			InvalidateRect((*it)->hRenderWnd, nullptr, true);
 			it = m_listRenderWnd.erase(it);
 		}
 		LeaveCriticalSection(&m_cslistRenderWnd);
@@ -3032,7 +3058,7 @@ public:
 			if (m_listRenderWnd.size() > 0)
 			{
 				for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
-					::InvalidateRect(*it, nullptr, true);
+					::InvalidateRect((*it)->hRenderWnd, nullptr, true);
 			}
 		}
 	}

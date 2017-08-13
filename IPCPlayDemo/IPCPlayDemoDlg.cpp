@@ -1789,16 +1789,18 @@ void CIPCPlayDemoDlg::OnBnClickedCheckFitwindow()
 {
 	if (m_pPlayContext )
 	{
-		for (int i = 0; i < m_pPlayContext->nPlayerCount; i++)
+		//for (int i = 0; i < m_pPlayContext->nPlayerCount; i++)
 		{
 			bool bFitWindow = (bool)IsDlgButtonChecked(IDC_CHECK_FITWINDOW);
-			if (ipcplay_FitWindow(m_pPlayContext->hPlayer[i], bFitWindow) != IPC_Succeed)
+// 			if (!m_pPlayContext->hPlayer[i])
+// 				continue;
+			if (ipcplay_FitWindow(m_pPlayContext->hPlayer[0], bFitWindow) != IPC_Succeed)
 			{
 				m_wndStatus.SetWindowText(_T("调整视频显示方式失败."));
 				m_wndStatus.SetAlarmGllitery();
 				return;
 			}
-			::InvalidateRect(m_pVideoWndFrame->GetPanelWnd(i), NULL, true);
+			::InvalidateRect(m_pVideoWndFrame->GetPanelWnd(0), NULL, true);
 		}
 	}
 }
@@ -2303,10 +2305,10 @@ void CIPCPlayDemoDlg::OnBnClickedCheckSetborder()
 	RECT rtBorder = { 80, 80, 80, 80 };
 	if (m_pPlayContext && m_pPlayContext->hPlayer[0])
 	{
-		if (IsDlgButtonChecked(IDC_CHECK_SETBORDER) == BST_CHECKED)
-			ipcplay_SetBorderRect(m_pPlayContext->hPlayer[0], rtBorder);
-		else
-			ipcplay_RemoveBorderRect(m_pPlayContext->hPlayer[0]);
+// 		if (IsDlgButtonChecked(IDC_CHECK_SETBORDER) == BST_CHECKED)
+// 			ipcplay_SetBorderRect(m_pPlayContext->hPlayer[0], m_pPlayContext->hWndView, rtBorder);
+// 		else
+// 			ipcplay_RemoveBorderRect(m_pPlayContext->hPlayer[0], m_pPlayContext->hWndView);
 	}
 }
 
