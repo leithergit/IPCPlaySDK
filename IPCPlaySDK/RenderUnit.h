@@ -1,13 +1,51 @@
 #pragma once
 #include "Common.h"
 
-struct RenderUnit
+struct RenderWnd
 {
-	HWND hRenderWnd;
+	RenderWnd(){};
+	RenderWnd(HWND hWnd, LPRECT prtBorder, bool bPercent)
+	{
+		ZeroMemory(this, sizeof(RenderWnd));
+		hRenderWnd = hWnd;
+		SetBorder(prtBorder, bPercent);
+	}
+	void inline SetBorder(LPRECT prtBorder, bool bPercent = false)
+	{
+		if (prtBorder)
+		{
+			this->pRtBorder = new RECT;
+			CopyRect(this->pRtBorder, prtBorder);
+			this->bPercent = bPercent;
+		}
+		else
+		{
+			if (this->pRtBorder)
+				delete this->pRtBorder;
+			this->pRtBorder = nullptr;
+		}
+	}
+	~RenderWnd()
+	{
+		if (pRtBorder)
+			delete pRtBorder;
+	}
+	HWND	hRenderWnd;
+	RECT	*pRtBorder;
+	bool	bPercent;
+};
+typedef shared_ptr<RenderWnd> RenderWndPtr;
+
+struct RenderUnit :public RenderWnd
+{
+// private:
+//  	RenderUnit(){}
+public:
 	CDirectDraw* pDDraw;
 	int nVideoWidth;
 	int nVideoHeight;
 	bool bEnableHaccel;
+
 	RenderUnit(HWND hRenderWnd, int nWidth, int nHeight, bool bEnableHaccel)
 	{
 		ZeroMemory(this, sizeof(RenderUnit));

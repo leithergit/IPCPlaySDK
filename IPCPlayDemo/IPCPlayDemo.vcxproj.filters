@@ -31,6 +31,7 @@
     <ClCompile Include="IPCPlayDemoDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DialogDisplayRGB24.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AutoLock.h">
@@ -81,6 +82,8 @@
     <ClInclude Include="IPCPlayDemoDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DialogDisplayRGB24.h" />
+    <ClInclude Include="YuvFrame.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\arrow-left-double.ico">

@@ -13,10 +13,13 @@
 #include "SocketClient.h"
 //#include "DirectDraw.h"
 #include "../ipcnetsdk/ipcMsgHead.h"
+#include "YUVFrame.h"
+#include "DialogDisplayRGB24.h"
 
 using namespace std;
 //using namespace std::tr1;
 using namespace boost;
+
 
 struct MSG_HEAD
 {
@@ -104,8 +107,9 @@ struct TimeTrace
 	}
 };
 
-#define WM_UPDATE_STREAMINFO	WM_USER + 1024
-#define WM_UPDATE_PLAYINFO		WM_USER + 1025
+#define WM_UPDATE_STREAMINFO	(WM_USER + 1024)
+#define WM_UPDATE_PLAYINFO		(WM_USER + 1025)
+#define WM_UPDATEYUV			(WM_USER + 1026)
 
 #define _Frame_PERIOD			30.0f		///< 一个帧率区间
 struct FrameInfo
@@ -575,6 +579,7 @@ struct YUVFrame
 		nPlayedCount++;
 	}
 };
+
 typedef boost::shared_ptr<YUVFrame> YUVFramePtr;
 // CIPCPlayDemoDlg 对话框
 class CIPCPlayDemoDlg : public CDialogEx
@@ -667,7 +672,10 @@ public:
 	/// @param [in]		pUserPtr	用户自定义指针
 	CFile *m_pYUVFile = nullptr;
 	
-	list<YUVFramePtr> m_listYUVFrame;
+	//list<YUVFramePtr> m_listYUVFrame;
+	CRITICAL_SECTION m_csYUVFrame;
+	boost::shared_ptr<CDisplayYUVFrame> m_pYUVFrame;
+	LONGLONG		m_nYUVCount = 0;
 	static void __stdcall CaptureYUVExProc(IPC_PLAYHANDLE hPlayHandle,
 		const unsigned char* pY,
 		const unsigned char* pU,
@@ -680,8 +688,35 @@ public:
 		void *pUserPtr)
 	{
 		CIPCPlayDemoDlg *pThis = (CIPCPlayDemoDlg *)pUserPtr;
-		YUVFramePtr yuvFrame = boost::make_shared<YUVFrame>(pY,pU,	pV,nStrideY,nStrideUV,nWidth,nHeight,nTime);
-		pThis->m_listYUVFrame.push_back(yuvFrame);
+		//YUVFramePtr yuvFrame = boost::make_shared<YUVFrame>(pY,pU,	pV,nStrideY,nStrideUV,nWidth,nHeight,nTime);
+		//pThis->m_listYUVFrame.push_back(yuvFrame);
+		if (!pThis->m_pYUVFrame)
+		{
+			pThis->m_nYUVCount = 0;
+			pThis->m_pYUVFrame = boost::make_shared<CDisplayYUVFrame>(pY, pU, pV, nStrideY, nStrideUV, nWidth, nHeight);
+			pThis->m_nYUVCount++;
+		}
+		else
+		{
+			if (pThis->m_nYUVCount % 25 == 0)
+			{
+				if (TryEnterCriticalSection(&pThis->m_csYUVFrame))
+				{
+					pThis->m_pYUVFrame->UpdateYUV(pY, pU, pV);
+					pThis->PostMessage(WM_UPDATEYUV, (WPARAM)hPlayHandle);
+					LeaveCriticalSection(&pThis->m_csYUVFrame);
+				}
+			}
+			pThis->m_nYUVCount++;
+		}
+	}
+	CDialogDisplayRGB24 *m_pDisplayRGB24 = nullptr;
+	afx_msg LRESULT OnUpdateYUV(WPARAM w, LPARAM l)
+	{
+		if (m_pDisplayRGB24 && m_pDisplayRGB24->GetSafeHwnd())
+			m_pYUVFrame->Render(m_pDisplayRGB24->GetSafeHwnd());
+
+		return 0;
 	}
 	volatile bool bThreadRun = false;
 	HANDLE m_hRenderThread1 = nullptr;
@@ -731,6 +766,8 @@ public:
 	static void __stdcall CaptureYUVProc(IPC_PLAYHANDLE hPlayHandle,
 		const unsigned char* pYUV,
 		int nYUVSize,
+		int nStrideY,
+		int nStrideUV,
 		int nWidth,
 		int nHeight,
 		INT64 nTime,
@@ -744,11 +781,31 @@ public:
 // 			pThis->m_pYUVFile->Close();
 // 			delete pThis->m_pYUVFile;
 // 			pThis->m_pYUVFile = nullptr;
-// 		}
-		
+// 		}	
 
-
+		if (!pThis->m_pYUVFrame)
+		{
+			pThis->m_nYUVCount = 0;
+			pThis->m_pYUVFrame = boost::make_shared<CDisplayYUVFrame>(pYUV, nStrideY, nStrideY>>1, nWidth, nHeight);
+			pThis->m_nYUVCount++;
+		}
+		else
+		{
+			if (pThis->m_nYUVCount % 25 == 0)
+			{
+				if (TryEnterCriticalSection(&pThis->m_csYUVFrame))
+				{
+					pThis->m_pYUVFrame->UpdateYUV(pYUV);
+					pThis->PostMessage(WM_UPDATEYUV, (WPARAM)hPlayHandle);
+					LeaveCriticalSection(&pThis->m_csYUVFrame);
+				}
+			}
+			pThis->m_nYUVCount++;
+		}
 	}
+	byte *m_pRGBBuffer;
+	long  m_nRGBSize;
+
 	/// @brief		解码后YVU数据回调
 	static void __stdcall YUVFilterProc(IPC_PLAYHANDLE hPlayHandle,
 										const unsigned char* pY,
@@ -766,6 +823,7 @@ public:
 		{
 			return;
 		}
+
 // 		if (!pThis->m_pDDraw)
 // 		{
 // 			PlayerInfo pi;
@@ -978,4 +1036,5 @@ public:
 	afx_msg void OnFileAddrenderwnd();
 	afx_msg void OnFileRemoveRenderWnd();
 	int  nCurPannelID = 0;
+	afx_msg void OnBnClickedCheckDisplayrgb();
 };

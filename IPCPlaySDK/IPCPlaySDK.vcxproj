@@ -51,7 +51,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;IPCPLAYSDK_EXPORTS;_ENABLE_FFMPEG_STAITC_LIB;_XKEYCHECK_H;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;IPCPLAYSDK_EXPORTS;_ENABLE_FFMPEG_STAITC_LIB;_XKEYCHECK_H;_CRT_SECURE_NO_WARNINGS;_LineTime;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\ffmpeg.static\include;..\dvoipcnetsdk;..\faad2-2.7\include;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -120,6 +120,7 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN\AVPlayer\ipcplaysdk" /y</Command>
     <ClInclude Include="AudioDecoder.h" />
     <ClInclude Include="AutoLock.h" />
     <ClInclude Include="Common.h" />
+    <ClInclude Include="decSPS.h" />
     <ClInclude Include="DirectDraw.h" />
     <ClInclude Include="DSoundPlayer.hpp" />
     <ClInclude Include="IPCPlaySDK.h" />
@@ -151,6 +152,7 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN\AVPlayer\ipcplaysdk" /y</Command>
     <ClCompile Include="AudioCodec\g711.cpp" />
     <ClCompile Include="AudioCodec\g726.cpp" />
     <ClCompile Include="Autolock.cpp" />
+    <ClCompile Include="decSPS.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

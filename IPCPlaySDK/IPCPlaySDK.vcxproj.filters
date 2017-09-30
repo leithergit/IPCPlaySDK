@@ -37,6 +37,9 @@
     <ClCompile Include="IPCPlaySDK.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="decSPS.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AudioCodec\g726.h">
@@ -111,15 +114,28 @@
     <ClInclude Include="IPCPlaySDK.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RenderUnit.h" />
     <ClInclude Include="YUVFrame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Snapshot.h" />
-    <ClInclude Include="StreamFrame.h" />
-    <ClInclude Include="Common.h" />
-    <ClInclude Include="TimeTrace.h" />
     <ClInclude Include="SimpleWnd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TimeTrace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderUnit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Snapshot.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StreamFrame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="decSPS.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

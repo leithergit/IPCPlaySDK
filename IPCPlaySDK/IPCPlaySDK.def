@@ -55,3 +55,5 @@ EXPORTS
 	ipcplay_GetRenderWindows
 	ipcplay_SetD3dShared
 	ipcplay_SetRocateAngle
+	ipcplay_SetDecodeDelay
+	;ipcplay_YUV2RGB24

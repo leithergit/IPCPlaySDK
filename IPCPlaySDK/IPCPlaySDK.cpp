@@ -386,6 +386,21 @@ IPCPLAYSDK_API int ipcplay_Start(IN IPC_PLAYHANDLE hPlayHandle,
 	return pPlayer->StartPlay(bEnableAudio, bEnableHaccel,bFitWindow);
 }
 
+/// @brief			设置解码延时
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+///	@param [in]		nDecodeDelay	解码延时，单位为ms
+///	-# -1			使用默认延时
+///	-# 0			无延时
+/// -# n			其它延时
+IPCPLAYSDK_API void ipcplay_SetDecodeDelay(IPC_PLAYHANDLE hPlayHandle, int nDecodeDelay)
+{
+	if (!hPlayHandle)
+		return ;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return ;
+	pPlayer->SetDecodeDelay(nDecodeDelay);
+}
 /// @brief			判断播放器是否正在播放中
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @retval			true	播放器正在播放中
@@ -1082,3 +1097,34 @@ IPCPLAYSDK_API int ipcplay_SetRocateAngle(IN IPC_PLAYHANDLE hPlayHandle, RocateA
 		return IPC_Error_InvalidParameters;
 	return pPlayer->SetRocate(nAngle);
 }
+
+/// @brief		把YUV图像转换为RGB24图像
+/// @param [in]		hPlayHandle	由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		pY			YUV数据Y分量指针
+/// @param [in]		pU			YUV数据U分量指针
+/// @param [in]		pV			YUV数据V分量指针
+/// @param [in]		nStrideY	YUV数据Y分量的副长，即一行数据的长度
+/// @param [in]		nStrideUV	YUV数据UV分量的副长，即一行数据的长度
+/// @param [in]		nWidth		YUV图像的宽度
+/// @param [in]		nHeight		YUV图像的高度
+/// @param [out]    pRGBBuffer	RGB24图像的缓存
+/// @param [out]	nBufferSize	RGB24图像的缓存的长度
+// IPCPLAYSDK_API int ipcplay_YUV2RGB24(IN IPC_PLAYHANDLE hPlayHandle,
+// 	const unsigned char* pY,
+//	const unsigned char* pU,
+// 	const unsigned char* pV,
+/*	int nStrideY,
+	int nStrideUV,
+	int nWidth,
+	int nHeight,
+	byte **ppRGBBuffer,
+	long &nBufferSize)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	return pPlayer->YUV2RGB24(pY, pU, pV, nStrideY, nStrideUV, nWidth, nHeight, ppRGBBuffer, nBufferSize);
+}
+*/

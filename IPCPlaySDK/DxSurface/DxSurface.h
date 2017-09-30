@@ -249,7 +249,7 @@ struct LineTime
 };
 #ifdef _LineTime
 #define SaveRunTime()		LineSave.SaveLineTime(__FILE__,__LINE__);
-#define DeclareRunTime(nTimeout)	CLineRunTime LineSave(nTimeout);
+#define DeclareRunTime(nTimeout)	CLineRunTime LineSave(nTimeout,__FUNCTION__);LineSave.SaveLineTime(__FILE__,__LINE__);
 #else
 #define SaveRunTime()
 #define DeclareRunTime(nTimeout)			
@@ -261,29 +261,46 @@ using namespace  std;
 class CLineRunTime
 {
 	DWORD m_nTimeout;
+	char *m_pszName;
 public:
-	CLineRunTime(int nTimeout,CRunlogA *plog = nullptr)
+	CLineRunTime(int nTimeout,char *szName = nullptr,CRunlogA *plog = nullptr)
 	{
+		if (szName)
+		{
+			m_pszName = new char[256];
+			strcpy(m_pszName, szName);
+		}
+		else
+			m_pszName = nullptr;
 		m_nTimeout = nTimeout;
 		pRunlog = plog;
 	}
+	
 	~CLineRunTime()
 	{
 		DWORD dwTotalSpan = 0;
 		int nSize = pTimeArray.size();
 		if (nSize < 1)
 			return;
-		else if (nSize < 2 )
+		else 
 			dwTotalSpan = timeGetTime() - pTimeArray[0]->nTime;
 		if (dwTotalSpan >= m_nTimeout)
 		{
-			OutputMsg("%s @File:%s line %d Total Runtime span = %d.\n", __FUNCTION__, pTimeArray[0]->szFile, pTimeArray[0]->nLine, dwTotalSpan);
+			if (!m_pszName)
+				OutputMsg("%s @File:%s line %d Total Runtime span = %d.\n", __FUNCTION__, pTimeArray[0]->szFile, pTimeArray[0]->nLine, dwTotalSpan);
+			else
+				OutputMsg("%s LineTime:%s line %d Total Runtime span = %d.\n", m_pszName, pTimeArray[0]->szFile, pTimeArray[0]->nLine, dwTotalSpan);
 		}
 		for (int i = 1; i < nSize;i ++)
 		{
 			DWORD dwSpan = pTimeArray[i]->nTime - pTimeArray[i - 1]->nTime;
-			if (dwSpan >= m_nTimeout)
-				OutputMsg("%s @File:%s line %d Runtime span = %d.\n", __FUNCTION__, pTimeArray[i]->szFile, pTimeArray[i]->nLine, dwSpan);
+			//if (dwSpan >= m_nTimeout)
+			{
+				if (!m_pszName)
+					OutputMsg("%s @File:%s line %d Runtime span = %d.\n", __FUNCTION__, pTimeArray[i]->szFile, pTimeArray[i]->nLine, dwSpan);
+				else
+					OutputMsg("%s LineTime:%s line %d Runtime span = %d.\n", m_pszName, pTimeArray[i]->szFile, pTimeArray[i]->nLine, dwSpan);
+			}
 		}
 	}
 	void SaveLineTime(char *szFile, int nLine)
@@ -330,6 +347,7 @@ public:
 	int nImageSize;
 	byte *pImage ;
 	AVFrame *pFrameNew;
+	AVFrame *pSrcFrame;
 	//ConvertInfo(AVFrame *pSrcFrame,AVPixelFormat DestPixfmt = AV_PIX_FMT_YUV420P,GraphicQulityParameter nGQ = GQ_FAST_BILINEAR)
 	PixelConvert(AVFrame *pSrcFrame,D3DFORMAT nDestD3dFmt = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'),GraphicQulityParameter nGQ = GQ_BICUBIC)
 	{
@@ -368,7 +386,7 @@ public:
 			assert(false);
 		}
 		//pImage = new (std::nothrow) byte[nImageSize];
-		pImage = (byte *)_aligned_malloc(nImageSize, 32);
+		pImage = (byte *)_aligned_malloc(nImageSize, 16);
 		if (!pImage)
 		{
 			DxTraceMsg("%s Alloc memory failed @%s %d.\n", __FUNCTION__, __FUNCTION__, __LINE__);
@@ -381,6 +399,7 @@ public:
 		pFrameNew->width	 = pSrcFrame->width;
 		pFrameNew->height	 = pSrcFrame->height;
 		pFrameNew->format	 = nDstAvFormat;
+		this->pSrcFrame		 = pSrcFrame;
 		nGQP = nGQ;
 		switch(nGQP)
 		{
@@ -428,7 +447,7 @@ public:
 									(AVPixelFormat)pSrcFrame->format,	// src format
 									pSrcFrame->width,					// dst Width
 									pSrcFrame->height,					// dst Height
-									nDstAvFormat,					// dst format
+									nDstAvFormat,						// dst format
 									nScaleFlag, 
 									NULL, 
 									NULL, 
@@ -485,8 +504,10 @@ public:
 		DxTraceMsg("%s FreeImage size %d.\n",__FUNCTION__,nImageSize);
 	}
 	// 进行像素转换
-	int inline ConvertPixel(AVFrame *pSrcFrame,GraphicQulityParameter nGQ = GQ_BICUBIC)
+	int inline ConvertPixel(AVFrame *pInputFrame = NULL, GraphicQulityParameter nGQ = GQ_BICUBIC)
 	{
+		if (pInputFrame)
+			this->pSrcFrame = pInputFrame;
 		if (!pImage)
 			return -1;
 		//DxTrace("@File:%s %s pSrcFrame(%d,%d)->LineSize(%d,%d,%d).\n", __FILE__, __FUNCTION__, pSrcFrame->width, pSrcFrame->height, pSrcFrame->linesize[0], pSrcFrame->linesize[1], pSrcFrame->linesize[2]);
@@ -2575,18 +2596,18 @@ _Failed:
 #define RenderTimeout	100 //ms
 	bool Render(AVFrame *pAvFrame,int nRocate = 0)
 	{
-		DeclareRunTime(5);
+		//DeclareRunTime(5);
 		if (!pAvFrame)
 			return false;
 		
-		SaveRunTime();
+		//SaveRunTime();
 		HRESULT hr = -1;		
 		D3DLOCKED_RECT SrcRect;
 		DWORD dwTNow = timeGetTime();
 		if (!HandelDevLost())
 		{
 			return false;
-			SaveRunTime();
+			//SaveRunTime();
 		}
 		// HandelDevLost仍无法使用m_pDirect3DDevice，则直接返回false
 		if (!m_pDirect3DDeviceEx)
@@ -2602,14 +2623,14 @@ _Failed:
 				}
 				else
 				{
-					IDirect3DSurface9* pDXVASurface = (IDirect3DSurface9 *)pAvFrame->data[3];
-					IDirect3DSurface9* pRenderSurface = m_pSurfaceRender;
-					D3DSURFACE_DESC DXVASurfaceDesc, DstSurfaceDesc;
-					pDXVASurface->GetDesc(&DXVASurfaceDesc);
-					m_pSurfaceRender->GetDesc(&DstSurfaceDesc);
-					hr = pDXVASurface->LockRect(&SrcRect, nullptr, D3DLOCK_READONLY);
+					IDirect3DSurface9* pSrcSurface = (IDirect3DSurface9 *)pAvFrame->data[3];
+					IDirect3DSurface9* pDstSurface = m_pSurfaceRender;
+					D3DSURFACE_DESC SrcSurfaceDesc, DstSurfaceDesc;
+					pSrcSurface->GetDesc(&SrcSurfaceDesc);
+					pDstSurface->GetDesc(&DstSurfaceDesc);
+					hr = pSrcSurface->LockRect(&SrcRect, nullptr, D3DLOCK_READONLY);
 					D3DLOCKED_RECT DstRect;
-					hr |= m_pSurfaceRender->LockRect(&DstRect, NULL, D3DLOCK_DONOTWAIT);
+					hr |= pDstSurface->LockRect(&DstRect, NULL, D3DLOCK_DONOTWAIT);
 					if (FAILED(hr))
 					{
 						DxTraceMsg("%s line(%d) IDirect3DSurface9::LockRect failed:hr = %08X.\n",__FUNCTION__,__LINE__,hr);
@@ -2622,20 +2643,20 @@ _Failed:
 						// Y分量图像
 						uint8_t *pSrcY = (uint8_t*)SrcRect.pBits;
 						// UV分量图像
-						uint8_t *pSrcUV = (uint8_t*)SrcRect.pBits + SrcRect.Pitch * DstSurfaceDesc.Height;
+						uint8_t *pSrcUV = (uint8_t*)SrcRect.pBits + SrcRect.Pitch * SrcSurfaceDesc.Height;
 
 						uint8_t *pDstY = (uint8_t *)DstRect.pBits;
-						uint8_t *pDstUV = (uint8_t *)DstRect.pBits + DstRect.Pitch*DXVASurfaceDesc.Height;
+						uint8_t *pDstUV = (uint8_t *)DstRect.pBits + DstRect.Pitch*DstSurfaceDesc.Height;
 
 						// 复制Y分量
-						for (UINT i = 0; i < DXVASurfaceDesc.Height; i++)
-							gpu_memcpy(&pDstY[i*DstRect.Pitch], &pSrcY[i*SrcRect.Pitch], DXVASurfaceDesc.Width);
-						for (UINT i = 0; i < DXVASurfaceDesc.Height/2; i++)
-							gpu_memcpy(&pDstUV[i*DstRect.Pitch], &pSrcUV[i*SrcRect.Pitch], DXVASurfaceDesc.Width);
+						for (UINT i = 0; i < SrcSurfaceDesc.Height; i++)
+							gpu_memcpy(&pDstY[i*DstRect.Pitch], &pSrcY[i*SrcRect.Pitch], SrcSurfaceDesc.Width);
+						for (UINT i = 0; i < SrcSurfaceDesc.Height/2; i++)
+							gpu_memcpy(&pDstUV[i*DstRect.Pitch], &pSrcUV[i*SrcRect.Pitch], SrcSurfaceDesc.Width);
 					
 					}
 					hr |= m_pSurfaceRender->UnlockRect();
-					hr |= pDXVASurface->UnlockRect();
+					hr |= pSrcSurface->UnlockRect();
 					//DxTraceMsg("hr = %08X.\n", hr);
 					if (FAILED(hr))
 					{
@@ -2676,11 +2697,11 @@ _Failed:
 			}
 		default:		
 			{// 软解码帧，只支持YUV420P格式
-				SaveRunTime();
+				//SaveRunTime();
 				//TransferSnapShotSurface(pAvFrame);
 				D3DLOCKED_RECT d3d_rect;
 				D3DSURFACE_DESC Desc;
-				SaveRunTime();
+				//SaveRunTime();
 				hr = m_pSurfaceRender->GetDesc(&Desc);
 				hr |= m_pSurfaceRender->LockRect(&d3d_rect, NULL, D3DLOCK_DONOTWAIT);
 				if (FAILED(hr))
@@ -2695,7 +2716,7 @@ _Failed:
 				}
 				
 				
-				SaveRunTime();
+				//SaveRunTime();
 				if ((pAvFrame->format == AV_PIX_FMT_YUV420P ||
 					pAvFrame->format == AV_PIX_FMT_YUVJ420P) &&
 					Desc.Format == (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'))
@@ -2727,7 +2748,6 @@ _Failed:
 							YUV420Rocate270(pAvFrame->data, pData, pAvFrame->linesize, pAvFrame->width, pAvFrame->height, nStride);
 							break;
 						}
-					
 					}
 				}
 				else
@@ -2744,14 +2764,14 @@ _Failed:
 					else					
 						memcpy_s((byte *)d3d_rect.pBits, d3d_rect.Pitch*Desc.Height, m_pPixelConvert->pImage, m_pPixelConvert->nImageSize);
 				}
-				SaveRunTime();
+				//SaveRunTime();
 				hr = m_pSurfaceRender->UnlockRect();
 				if (FAILED(hr))
 				{
 					//DxTraceMsg("%s line(%d) IDirect3DSurface9::UnlockRect failed:hr = %08X.\n",__FUNCTION__,__LINE__,hr);
 					return false;
 				}
-				SaveRunTime();
+				//SaveRunTime();
 				// 处理外部分绘制接口
 // 				ExternDrawCall(hWnd,pRenderRt);
 // 				SaveRunTime();
@@ -2812,22 +2832,22 @@ _Failed:
 	bool Present(HWND hWnd = NULL, RECT *pClippedRT = nullptr, RECT *pRenderRt = nullptr)
 	{
 		HWND hRenderWnd = m_d3dpp.hDeviceWindow;
-		DeclareRunTime(5);
+		//DeclareRunTime(5);
 		if (hWnd)
 			hRenderWnd = hWnd;
 		if (!IsNeedRender(hRenderWnd))
 			return true;
 		HRESULT hr = S_OK;
-		SaveRunTime();
+		//SaveRunTime();
 		// 处理外部分绘制接口
 		ExternDrawCall(hWnd, pRenderRt);
-		SaveRunTime();
+		//SaveRunTime();
 		IDirect3DSurface9 * pBackSurface = NULL;
 		//m_pDirect3DDeviceEx->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
 		m_pDirect3DDeviceEx->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
 		m_pDirect3DDeviceEx->BeginScene();
 		hr = m_pDirect3DDeviceEx->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &pBackSurface);
-		SaveRunTime();
+		//SaveRunTime();
 		if (FAILED(hr))
 		{
 			m_pDirect3DDeviceEx->EndScene();
@@ -2844,7 +2864,7 @@ _Failed:
 			CopyRect(&srcrt, pClippedRT);
 		}
 		hr = m_pDirect3DDeviceEx->StretchRect(m_pSurfaceRender, &srcrt, pBackSurface, &dstrt, D3DTEXF_LINEAR);
-		SaveRunTime();
+		//SaveRunTime();
 		SafeRelease(pBackSurface);
 		m_pDirect3DDeviceEx->EndScene();
 		if (hWnd)
@@ -2852,14 +2872,14 @@ _Failed:
 		else
 			// (PresentEx)(RECT* pSourceRect,CONST RECT* pDestRect,HWND hDestWindowOverride,CONST RGNDATA* pDirtyRegion,DWORD dwFlags)
 			hr |= m_pDirect3DDeviceEx->PresentEx(NULL, NULL, m_d3dpp.hDeviceWindow, NULL, 0);
-		SaveRunTime();
+		//SaveRunTime();
 		if (SUCCEEDED(hr))
 			return true;
 		else
 		{
-			SaveRunTime();
+			//SaveRunTime();
 			bool bRet = HandelDevLost();
-			SaveRunTime();
+			//SaveRunTime();
 			return bRet;
 		}
 	}

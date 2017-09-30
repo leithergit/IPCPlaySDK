@@ -92,6 +92,7 @@ CIPCPlayDemoDlg::CIPCPlayDemoDlg(CWnd* pParent /*=NULL*/)
 
 	m_pVideoWndFrame = NULL;
 	m_bRefreshPlayer = true;
+	InitializeCriticalSection(&m_csYUVFrame);
 }
 
 void CIPCPlayDemoDlg::DoDataExchange(CDataExchange* pDX)
@@ -136,6 +137,8 @@ BEGIN_MESSAGE_MAP(CIPCPlayDemoDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_EXTERNDRAW, &CIPCPlayDemoDlg::OnBnClickedCheckExterndraw)
 	ON_COMMAND(ID_FILE_ADDRENDERWND, &CIPCPlayDemoDlg::OnFileAddrenderwnd)
 	ON_COMMAND(ID_FILE_REMOVERENDERWND, &CIPCPlayDemoDlg::OnFileRemoveRenderWnd)
+	ON_BN_CLICKED(IDC_CHECK_DISPLAYRGB, &CIPCPlayDemoDlg::OnBnClickedCheckDisplayrgb)
+	ON_MESSAGE(WM_UPDATEYUV, OnUpdateYUV)
 END_MESSAGE_MAP()
 
 
@@ -1148,6 +1151,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 				bool bFitWindow = (bool)IsDlgButtonChecked(IDC_CHECK_FITWINDOW);
 				bool bEnableLog = (bool)IsDlgButtonChecked(IDC_CHECK_ENABLELOG);
 				bool bEnableHaccel = (bool)IsDlgButtonChecked(IDC_CHECK_ENABLEHACCEL);
+				bool bNoDecodeDelay = (bool)IsDlgButtonChecked(IDC_CHECK_NODECODEDELAY);
 				if (bIsStreamPlay != BST_CHECKED)
 				{
 					//m_pPlayContext->hPlayer[0] = ipcplay_OpenFile(m_pPlayContext->hWndView, (CHAR *)(LPCTSTR)strFilePath,(FilePlayProc)PlayerCallBack,m_pPlayContext.get(),bEnableLog?"dvoipcplaysdk":nullptr);
@@ -1179,8 +1183,9 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 					SetDlgItemText(IDC_STATIC_TOTALTIME, szPlayText);
 					//ipcplay_SetD3dShared(m_pPlayContext->hPlayer[0], bEnableHaccel);
 					//if (bEnableHaccel)
-						ipcplay_SetRocateAngle(m_pPlayContext->hPlayer[0], nRocate);
-
+					ipcplay_SetRocateAngle(m_pPlayContext->hPlayer[0], nRocate);
+					if (bNoDecodeDelay)
+						ipcplay_SetDecodeDelay(m_pPlayContext->hPlayer[0], 0);
 					if (ipcplay_Start(m_pPlayContext->hPlayer[0], !bEnableAudio, bFitWindow, bEnableHaccel) != IPC_Succeed)
 					{
 						m_wndStatus.SetWindowText(_T("ÎÞ·¨Æô¶¯²¥·ÅÆ÷"));
@@ -2362,5 +2367,30 @@ void CIPCPlayDemoDlg::OnFileRemoveRenderWnd()
 			m_pVideoWndFrame->SetPanelParam(i, nullptr);
 			break;
 		}
+	}
+}
+
+
+void CIPCPlayDemoDlg::OnBnClickedCheckDisplayrgb()
+{
+	if (IsDlgButtonChecked(IDC_CHECK_DISPLAYRGB) == BST_CHECKED)
+	{
+		if (!m_pPlayContext->hPlayer[0])
+		{
+			AfxMessageBox(_T("ÉÐÎ´²¥·ÅÍ¼ÏñÏñ"));
+			return;
+		}
+		if (!m_pDisplayRGB24)
+		{
+			m_pDisplayRGB24 = new CDialogDisplayRGB24;
+			m_pDisplayRGB24->Create(IDD_DIALOG_DISPLAYRGB, this);
+		}
+		m_pDisplayRGB24->ShowWindow(SW_SHOW);
+		ipcplay_SetYUVCaptureEx(m_pPlayContext->hPlayer[0], (void *)CaptureYUVExProc, this);
+	}
+	else
+	{
+		if (m_pDisplayRGB24)
+			m_pDisplayRGB24->ShowWindow(SW_HIDE);
 	}
 }
