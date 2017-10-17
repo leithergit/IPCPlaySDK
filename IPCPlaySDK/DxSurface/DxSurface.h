@@ -127,7 +127,7 @@ class CCriticalSectionProxy1;
 typedef map<HWND,CDxSurface*> WndSurfaceMap;
 
 typedef void (CALLBACK *ExternDrawProc)(HWND hWnd, HDC hDc, RECT rt, void *pUserPtr);
-typedef void (CALLBACK *ExternDrawProc)(HWND hWnd, HDC hDc, RECT rt, void *pUserPtr);
+typedef void (CALLBACK *ExternDrawProcEx)(HWND hWnd, void *pD3DDevice, RECT rt, void *pUserPtr);
 
 
 enum GraphicQulityParameter
