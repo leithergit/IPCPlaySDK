@@ -468,6 +468,7 @@ INT_PTR MultiByteStrToUnicodeStr(UINT_PTR nCodePage, LPCSTR lpMultiByteStr, LPWS
 #define _UnicodeString(AnsiText,nLength)		(A2WString(AnsiText,nLength).get())
 
 #define stdshared_ptr		std::tr1::shared_ptr
+
 stdshared_ptr<char> UTF8String(IN LPCWSTR pText,int& OUT nReturnLength);
 stdshared_ptr<char> W2AString(IN LPCWSTR pText,int& OUT nReturnLength);
 stdshared_ptr<WCHAR> A2WString(IN LPCSTR pText,int& OUT nReturnLength);

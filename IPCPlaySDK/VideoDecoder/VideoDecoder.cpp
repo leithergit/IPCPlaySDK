@@ -1098,6 +1098,8 @@ int CVideoDecoder::get_dxva2_buffer(struct AVCodecContext *c, AVFrame *pic, int 
 	return 0;
 }
 
+//#define AV_CODEC_CAP_DR1	(1 << 1)
+#define CODEC_CAP_HWACCEL	0x0010
 HRESULT CVideoDecoder::AdditionaDecoderInit()
 {
 	/* Create ffmpeg dxva_context, but only fill it if we have a decoder already. */
@@ -1106,7 +1108,7 @@ HRESULT CVideoDecoder::AdditionaDecoderInit()
 	if (m_pDecoder) 
 		FillHWContext(ctx);
 	
-	m_pAVCtx->flags |= CODEC_CAP_DR1;
+	m_pAVCtx->flags |= AV_CODEC_CAP_DR1;
 	m_pAVCtx->flags |= CODEC_CAP_HWACCEL;
 	m_pAVCtx->thread_count = 1;
 	m_pAVCtx->hwaccel_context = ctx;

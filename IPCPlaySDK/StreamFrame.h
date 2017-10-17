@@ -1,6 +1,38 @@
 #pragma once
 #include "Common.h"
 
+struct  CTraceAlignMalloc
+{
+	int nCount;
+	CRITICAL_SECTION cs;
+	CTraceAlignMalloc()
+	{
+		ZeroMemory(this, sizeof(CTraceAlignMalloc));
+		InitializeCriticalSection(&cs);
+	}
+	~CTraceAlignMalloc()
+	{
+		EnterCriticalSection(&cs);
+		//TraceMsg("%s leak memory count = %d.\n",__FUNCTION__, nCount);
+		LeaveCriticalSection(&cs);
+		DeleteCriticalSection(&cs);
+	}
+
+	void * AlignMalloc(int nSize,int nAlignment)
+	{
+		Autolock(&cs);
+		nCount++;
+		return _aligned_malloc(nSize, nAlignment);
+	}
+
+	void AlignFree(void *p)
+	{
+		Autolock(&cs);
+		nCount--;
+		_aligned_free(p);
+	}
+};
+
 /// @struct StreamFrame
 /// StreamFrame仅用于流媒体播放的数据帧
 
@@ -19,8 +51,8 @@ struct StreamFrame
 		assert(pBuffer != nullptr);
 		assert(nLenth >= sizeof(IPCFrameHeader));
 		nSize = nLenth;
-		pInputData = (byte *)_aligned_malloc(nLenth, 16);
-		//pInputData = _New byte[nLenth];
+		pInputData = (byte *)_aligned_malloc(nSize, 16);
+		//pInputData = _New byte[nSize];
 		if (pInputData)
 			memcpy(pInputData, pBuffer, nLenth);
 		IPCFrameHeader* pHeader = (IPCFrameHeader *)pInputData;
@@ -99,7 +131,7 @@ struct StreamFrame
 		if (pInputData)
 		{
 			_aligned_free(pInputData);
-			//delete[]pInputData;
+			pInputData = nullptr;
 		}
 #ifdef _DEBUG
 		//OutputMsg("%s pInputData = %08X.\n", __FUNCTION__, (long)pInputData);

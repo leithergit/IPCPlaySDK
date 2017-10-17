@@ -96,7 +96,7 @@ enum Decoder_Manufacturer
 #endif
 
 // some common macros
-#define Safe_Delete(pPtr) { delete pPtr; pPtr = nullptr; }
+#define Safe_Delete(pPtr) { if (pPtr) delete pPtr; pPtr = nullptr; }
 #define SAFE_CO_FREE(pPtr) { CoTaskMemFree(pPtr); pPtr = nullptr; }
 #define CHECK_HR(hr) if (FAILED(hr)) { goto done; }
 #define QI(i) (riid == __uuidof(i)) ? GetInterface((i*)this, ppv) :

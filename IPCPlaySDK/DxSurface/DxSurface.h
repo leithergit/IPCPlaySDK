@@ -3,7 +3,17 @@
 //#include <d3dx9tex.h>
 //#include <ppl.h>
 #include <assert.h>
+using namespace std;
+
+#ifdef _STD_SMARTPTR
 #include <memory>
+using namespace std::tr1;
+#else
+#include <boost/shared_ptr.hpp>
+using namespace boost;
+#endif
+
+
 #include <map>
 #include <MMSystem.h>
 #include <windows.h>
@@ -16,6 +26,7 @@
 #include "../Runlog.h"
 #include "../Utility.h"
 #include "../TimeUtility.h"
+#include "../CriticalSectionProxy.h"
 
 #define Min(x,y)	(x<y?x:y)
 #pragma warning(push)
@@ -112,41 +123,12 @@ struct DxSurfaceRenderInfo
 	AVFrame		*pAvFrame;
 };
 class CDxSurface;
-class CriticalSectionWrap;
+class CCriticalSectionProxy1;
 typedef map<HWND,CDxSurface*> WndSurfaceMap;
-typedef shared_ptr<CriticalSectionWrap>CriticalSectionPtr;
+
 typedef void (CALLBACK *ExternDrawProc)(HWND hWnd, HDC hDc, RECT rt, void *pUserPtr);
-class CriticalSectionWrap
-{
-public:
-	CriticalSectionWrap()
-	{
-		InitializeCriticalSection(&m_cs);
-	}
-	~CriticalSectionWrap()
-	{
-		DeleteCriticalSection(&m_cs);
-	}
-	inline BOOL TryLock()
-	{
-		return TryEnterCriticalSection(&m_cs);
-	}
-	inline void Lock()
-	{
-		EnterCriticalSection(&m_cs);
-	}
-	void Unlock()
-	{
-		LeaveCriticalSection(&m_cs);
-	}
-	inline CRITICAL_SECTION *Get()
-	{
-		return &m_cs;
-	}
-	
-private:
-	CRITICAL_SECTION	m_cs;
-};
+typedef void (CALLBACK *ExternDrawProc)(HWND hWnd, HDC hDc, RECT rt, void *pUserPtr);
+
 
 enum GraphicQulityParameter
 {
@@ -163,10 +145,10 @@ enum GraphicQulityParameter
 	GQ_POINT			//427		细节比较锐利，图像效果比上图略差一点点。
 };
 
-#define _TraceMemory
-
-#if defined(_DEBUG) && defined(_TraceMemory)
+//#define _TraceMemory
 #define TraceTimeout		150
+#if defined(_DEBUG) && defined(_TraceMemory)
+
 #define TraceFunction()	CTraceFunction Tx(__FUNCTION__);
 #define TraceFunction1(szText)	CTraceFunction Tx(__FUNCTION__,true,szText);
 #else 
@@ -262,6 +244,7 @@ class CLineRunTime
 {
 	DWORD m_nTimeout;
 	char *m_pszName;
+	shared_ptr<char> m_pszNamePtr;
 public:
 	CLineRunTime(int nTimeout,char *szName = nullptr,CRunlogA *plog = nullptr)
 	{
@@ -272,6 +255,7 @@ public:
 		}
 		else
 			m_pszName = nullptr;
+		m_pszNamePtr = shared_ptr<char>(m_pszName);
 		m_nTimeout = nTimeout;
 		pRunlog = plog;
 	}
@@ -302,6 +286,7 @@ public:
 					OutputMsg("%s LineTime:%s line %d Runtime span = %d.\n", m_pszName, pTimeArray[i]->szFile, pTimeArray[i]->nLine, dwSpan);
 			}
 		}
+		
 	}
 	void SaveLineTime(char *szFile, int nLine)
 	{
@@ -636,9 +621,9 @@ public:
 	float					m_fWHScale;	
 	WNDPROC					m_pOldWndProc;
 	static WndSurfaceMap	m_WndSurfaceMap;
-	static CriticalSectionPtr m_WndSurfaceMapcs;
+	static CCriticalSectionProxyPtr m_WndSurfaceMapcs;
 	static	int				m_nObjectCount;
-	static CriticalSectionPtr m_csObjectCount;
+	static CCriticalSectionProxyPtr m_csObjectCount;
 	bool					m_bWndSubclass;		// 是否子类化显示窗口,为ture时，则将显示窗口子类化,此时窗口消息会先被CDxSurface::WndProc优先处理,再由窗口函数处理
 	pDirect3DCreate9*		m_pDirect3DCreate9;
 public:
@@ -1154,7 +1139,7 @@ public:
 		if (FAILED(hr = m_pDirect3D9->CreateDevice(D3DADAPTER_DEFAULT,
 			D3DDEVTYPE_HAL,
 			m_d3dpp.hDeviceWindow,
-			vp ,
+			vp | D3DCREATE_MULTITHREADED,
 			&m_d3dpp,
 			/* NULL,*/
 			&m_pDirect3DDevice)))
@@ -2352,7 +2337,7 @@ public:
 		if (FAILED(hr = m_pDirect3D9Ex->CreateDeviceEx(D3DADAPTER_DEFAULT,
 			D3DDEVTYPE_HAL,
 			m_d3dpp.hDeviceWindow,
-			vp ,
+			vp | D3DCREATE_MULTITHREADED,
 			&m_d3dpp,
 			NULL,
 			&m_pDirect3DDeviceEx)))
@@ -2885,43 +2870,3 @@ _Failed:
 	}
 };
 
-/// @brief CDxSurface 的封装类，用于把CDxSurface类对象指针在系统缓存中的存取
-struct DxSurfaceWrap
-{
-	DxSurfaceWrap(CDxSurface *pSurface)
-	{
-		dfInput = GetExactTime();
-		pDxSurface = pSurface;
-	}
-	~DxSurfaceWrap()
-	{
-		if (pDxSurface)
-			delete pDxSurface;
-	}
-	CDxSurface* Strip()		// 剥离CDxSurface对象指针
-	{
-		if (pDxSurface)
-		{
-			CDxSurface *pTemp = pDxSurface;
-			pDxSurface = nullptr;
-			return pTemp;
-		}
-		else
-		{
-			assert(false);
-			return nullptr;
-		}
-	}
-	bool CompareSizeAndFormat(int nWidth, int nHeight, D3DFORMAT nPixFormat)
-	{
-		if (pDxSurface)
-			return (MAKEUINT64(MAKELONG(nWidth, nHeight), nPixFormat) == pDxSurface->GetVideoSizeAndFormat());
-		else
-			return false;
-	}
-	double dfInput;
-	CDxSurface	*pDxSurface;
-};
-
-
-//typedef shared_ptr<DxSurfaceWrap> DxSurfaceWrapPtr;

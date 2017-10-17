@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <Windows.h>
 #include <stdio.h>
-
+#include "CriticalSectionProxy.h"
 #ifdef Release_D
 #undef assert
 #define assert	((void)0)
@@ -107,7 +107,39 @@ public:
 			}
 		}
 	}
-
+	CAutoLock(CCriticalSectionProxy *pCS, bool bAutoDelete = false, const CHAR *szFile = nullptr, char *szFunction = nullptr, int nLine = 0)
+	{
+		ZeroMemory(this, sizeof(CAutoLock));
+		assert(pCS != NULL);
+		if (pCS)
+		{
+#ifdef _LockOverTime
+			m_dwLockTime = timeGetTime();
+			if (szFile)
+			{
+				m_pszFile = new CHAR[strlen(szFile) + 1];
+				strcpy(m_pszFile, szFile);
+				m_pszFunction = new char[strlen(szFunction) + 1];
+				strcpy(m_pszFunction, szFunction);
+				m_nLockLine = nLine;
+			}
+#endif
+			m_pCS = pCS->Get();
+			::EnterCriticalSection(m_pCS);
+			m_bLocked = true;
+			if (timeGetTime() - m_dwLockTime >= _LockOverTime)
+			{
+				CHAR szOuput[1024] = { 0 };
+				if (szFile)
+				{
+					sprintf(szOuput, "Wait Lock @File:%s:%d(%s),Waittime = %d.\n", m_pszFile, m_nLockLine, m_pszFunction, timeGetTime() - m_dwLockTime);
+				}
+				else
+					sprintf(szOuput, "Wait Lock Waittime = %d.\n", timeGetTime() - m_dwLockTime);
+				OutputDebugStringA(szOuput);
+			}
+		}
+	}
 	void Lock()
 	{
 		if (m_bLocked)

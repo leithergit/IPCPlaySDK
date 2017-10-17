@@ -19,15 +19,15 @@
 
 CAvRegister CIPCPlayer::avRegister;
 CTimerQueue CIPCPlayer::m_TimeQueue;
-CriticalSectionPtr CIPCPlayer::m_csDsoundEnum = make_shared<CriticalSectionWrap>();
+CCriticalSectionProxyPtr CIPCPlayer::m_csDsoundEnum = make_shared<CCriticalSectionProxy>();
 shared_ptr<CDSoundEnum> CIPCPlayer::m_pDsoundEnum = nullptr;/*= make_shared<CDSoundEnum>()*/;	///< 音频设备枚举器
 #ifdef _DEBUG
 int	CIPCPlayer::m_nGloabalCount = 0;
-CriticalSectionPtr CIPCPlayer::m_pCSGlobalCount = make_shared<CriticalSectionWrap>();
+CCriticalSectionProxyPtr CIPCPlayer::m_pCSGlobalCount = make_shared<CCriticalSectionProxy>();
 #endif
 
 #ifdef _DEBUG
-extern CRITICAL_SECTION g_csPlayerHandles;
+extern CCriticalSectionProxy g_csPlayerHandles;
 extern UINT	g_nPlayerHandles;
 #endif
 //shared_ptr<CDSound> CDvoPlayer::m_pDsPlayer = make_shared<CDSound>(nullptr);
@@ -35,9 +35,6 @@ shared_ptr<CSimpleWnd> CIPCPlayer::m_pWndDxInit = make_shared<CSimpleWnd>();	///
 
 using namespace std;
 using namespace std::tr1;
-
-extern list<DxSurfaceWrap *>g_listDxCache;
-extern CRITICAL_SECTION  g_csListDxCache;
 
 //IPC IPC 返回流包头
 struct IPC_StreamHeader
@@ -80,9 +77,9 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenFileA(IN HWND hWnd, IN char *szFileNam
 		{
 			pPlayer->SetCallBack(FilePlayer, pPlayCallBack, pUserPtr);
 #if _DEBUG
-			EnterCriticalSection(&g_csPlayerHandles);
+			g_csPlayerHandles.Lock();
 			g_nPlayerHandles++;
-			LeaveCriticalSection(&g_csPlayerHandles);
+			g_csPlayerHandles.Unlock();
 #endif
 			return pPlayer;
 		}
@@ -138,9 +135,9 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenRTStream(IN HWND hWnd, IN int nBufferS
 		if (szLogFile)
 			TraceMsgA("%s %s.\n", __FUNCTION__, szLogFile);
 #if _DEBUG
-		EnterCriticalSection(&g_csPlayerHandles);
+		g_csPlayerHandles.Lock();
 		g_nPlayerHandles++;
-		LeaveCriticalSection(&g_csPlayerHandles);
+		g_csPlayerHandles.Unlock();
 #endif
 		return pPlayer;
 	}
@@ -178,9 +175,9 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenStream(IN HWND hWnd, byte *szStreamHea
 		if (nDvoError == IPC_Succeed)
 		{
 #if _DEBUG
-			EnterCriticalSection(&g_csPlayerHandles);
+			g_csPlayerHandles.Lock();
 			g_nPlayerHandles++;
-			LeaveCriticalSection(&g_csPlayerHandles);
+			g_csPlayerHandles.Unlock();
 #endif
 			return pPlayer;
 		}
@@ -194,9 +191,9 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenStream(IN HWND hWnd, byte *szStreamHea
 	else
 	{
 #if _DEBUG
-		EnterCriticalSection(&g_csPlayerHandles);
+		g_csPlayerHandles.Lock();
 		g_nPlayerHandles++;
-		LeaveCriticalSection(&g_csPlayerHandles);
+		g_csPlayerHandles.Unlock();
 #endif
 		return pPlayer;
 	}
@@ -234,18 +231,19 @@ IPCPLAYSDK_API int ipcplay_Close(IN IPC_PLAYHANDLE hPlayHandle, bool bAsyncClose
 	DxTraceMsg("%s DvoPlayer Object:%d.\n", __FUNCTION__, pPlayer->m_nObjIndex);
 	
 #endif
-	if (!pPlayer->StopPlay(bAsyncClose,25))
+	if (!pPlayer->StopPlay(25))
 	{
-		EnterCriticalSection(&g_csListPlayertoFree);
+		DxTraceMsg("%s Async close IPCPlay Object:%8X.\n",__FUNCTION__,pPlayer);
+		g_csListPlayertoFree.Lock();
 		g_listPlayerAsyncClose.push_back(hPlayHandle);
-		LeaveCriticalSection(&g_csListPlayertoFree);
+		g_csListPlayertoFree.Unlock();
 	}
 	else
 	{
 #ifdef _DEBUG
-		EnterCriticalSection(&g_csPlayerHandles);
+		g_csPlayerHandles.Lock();
 		g_nPlayerHandles--;
-		LeaveCriticalSection(&g_csPlayerHandles);
+		g_csPlayerHandles.Unlock();
 #endif
 		delete pPlayer;
 	}
