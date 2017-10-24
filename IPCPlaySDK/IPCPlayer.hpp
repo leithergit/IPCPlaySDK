@@ -150,7 +150,7 @@ private:
 	//须定义在此变量之前 
 	//***********************************************************************/								
 	CRITICAL_SECTION	m_csAudioCache;	
-	CRITICAL_SECTION	m_csListYUV;
+	//CRITICAL_SECTION	m_csListYUV;
 	int					m_nMaxYUVCache;	// 允许最大的YUV缓存数量
 	int					m_nMaxFrameCache;///< 最大视频缓冲数量,默认值100
 		///< 当m_FrameCache中的视频帧数量超过m_nMaxFrameCache时，便无法再继续输入流数
@@ -208,7 +208,7 @@ private:
 // 	CRITICAL_SECTION	m_csSkipFramesArray;
 	HANDLE		m_hEventDecodeStart;	///< 视频解码已经开始事件
 	int			m_nSkipFrames;			///< 跳帧表中的元素数量
-	bool		m_bEnableD3DCache;		///< 是否启用D3D缓存
+	bool		m_bAsnycClose;		///< 是否启用D3D缓存
 	double		m_dfLastTimeVideoPlay;	///< 前一次视频播放的时间
 	double		m_dfLastTimer;
 	double		m_dfTimesStart;			///< 开始播放的时间
@@ -343,7 +343,7 @@ private:
 		InitializeCriticalSection(&m_csAudioCache);
 		InitializeCriticalSection(&m_csParser);
 		//InitializeCriticalSection(&m_csBorderRect);
-		InitializeCriticalSection(&m_csListYUV);
+		//InitializeCriticalSection(&m_csListYUV);
 		InitializeCriticalSection(&m_csListRenderUnit);
 		InitializeCriticalSection(&m_cslistRenderWnd);
 
@@ -748,6 +748,11 @@ private:
 				return false;
 		}
 	}
+	void UnInitlizeDx()
+	{
+		Safe_Delete(m_pDxSurface);
+		Safe_Delete(m_pDDraw);
+	}
 #ifdef _DEBUG
 	int m_nRenderFPS = 0;
 	int m_nRenderFrames = 0;
@@ -1031,7 +1036,7 @@ public:
 		DeleteCriticalSection(&m_csSeekOffset);
 		DeleteCriticalSection(&m_csParser);
 		DeleteCriticalSection(&m_csBorderRect);
-		DeleteCriticalSection(&m_csListYUV);
+		//DeleteCriticalSection(&m_csListYUV);
 		DeleteCriticalSection(&m_csListRenderUnit);
 		DeleteCriticalSection(&m_cslistRenderWnd);
 		DeleteCriticalSection(&m_csCaptureYUV);
@@ -1071,7 +1076,7 @@ public:
 		InitializeCriticalSection(&m_csSeekOffset);
 		InitializeCriticalSection(&m_csParser);
 		InitializeCriticalSection(&m_csBorderRect);
-		InitializeCriticalSection(&m_csListYUV);
+		//InitializeCriticalSection(&m_csListYUV);
 		InitializeCriticalSection(&m_csListRenderUnit);
 		InitializeCriticalSection(&m_cslistRenderWnd);
 		InitializeCriticalSection(&m_csCaptureYUV);		
@@ -1284,7 +1289,7 @@ public:
 		InitializeCriticalSection(&m_csSeekOffset);
 		InitializeCriticalSection(&m_csParser);
 		//InitializeCriticalSection(&m_csBorderRect);
-		InitializeCriticalSection(&m_csListYUV);
+		//InitializeCriticalSection(&m_csListYUV);
 		InitializeCriticalSection(&m_csListRenderUnit);
 
 		DeleteCriticalSection(&m_csCaptureYUV);
@@ -1328,7 +1333,7 @@ public:
 #ifdef _DEBUG
 		OutputMsg("%s \tReady to Free a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
 #endif
-		StopPlay(m_bEnableD3DCache);
+		//StopPlay(0);
 		/*
 		if (m_hWnd)
 		{
@@ -1368,30 +1373,6 @@ public:
 		}
 		if (m_pDecoder)
 			m_pDecoder.reset();
-		if (m_pDxSurface)
-		{
-// 			if (m_pDxSurface->IsInited() && m_bEnableD3DCache)
-// 			{
-// 				PutDxCache(m_pDxSurface);
-// 				OutputMsg("%s nVideoWidth = %d\tnVideoHeight = %d\n",__FUNCTION__, m_nVideoWidth, m_nVideoHeight);
-// 			}
-// 			else
-// 			{
-				delete m_pDxSurface;
-				m_pDxSurface = nullptr;
-			//}
-		}
-// 		if (m_pDDraw)
-// 		{
-// 			delete m_pDDraw;
-// 		}
-// 		if (m_hCacheFulled)
-// 		{
-// 			CloseHandle(m_hCacheFulled);
-// #ifdef _DEBUG
-// 			m_hCacheFulled = nullptr;
-// #endif		
-// 		}
 		
 		if (m_pRocateImage)
 		{
@@ -1430,7 +1411,7 @@ public:
 		DeleteCriticalSection(&m_csSeekOffset);
 		DeleteCriticalSection(&m_csParser);
 		//DeleteCriticalSection(&m_csBorderRect);
-		DeleteCriticalSection(&m_csListYUV);
+		//DeleteCriticalSection(&m_csListYUV);
 		DeleteCriticalSection(&m_csListRenderUnit);
 		DeleteCriticalSection(&m_cslistRenderWnd);
 		DeleteCriticalSection(&m_csCaptureYUV);
@@ -1591,10 +1572,7 @@ public:
 		else
 			return IPC_Error_InsufficentMemory;
 	}
-	inline bool GetD3DCache()
-	{
-		return m_bEnableD3DCache;
-	}
+
 	int SetMaxFrameSize(int nMaxFrameSize = 256*1024)
 	{
 		if (m_hThreadParser || m_hThreadDecode)
@@ -2102,22 +2080,20 @@ public:
 	}
 
 	
-	bool StopPlay(bool bAsync = false,DWORD nTimeout = 200)
+	bool StopPlay(DWORD nTimeout = 50)
 	{
 #ifdef _DEBUG
 		TraceFunction();
 		OutputMsg("%s \tObject:%d Time = %d.\n", __FUNCTION__, m_nObjIndex, timeGetTime() - m_nLifeTime);
 #endif
-// 		if (!m_bIpcStream)			// 对于文件码流，不使用异步关闭的方式
-// 			nTimeout = INFINITE;
+
 		m_bStopFlag = true;
 		m_bThreadParserRun = false;
 		m_bThreadDecodeRun = false;
 		m_bThreadPlayAudioRun = false;
-		//m_bThreadSummaryRun = false;
 		HANDLE hArray[16] = { 0 };
 		int nHandles = 0;
-		m_bEnableD3DCache = bAsync;
+		
 		EnterCriticalSection(&m_cslistRenderWnd);
 		m_hRenderWnd = nullptr;
 		for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); )
@@ -2148,7 +2124,6 @@ public:
 			GetExitCodeThread(m_hThreadPlayAudio, &dwThreadExitCode);
 			if (dwThreadExitCode == STILL_ACTIVE)		// 线程仍在运行
 				hArray[nHandles++] = m_hThreadPlayAudio;
-			
 		}
 // 		if (m_hThreadGetFileSummary)
 // 			hArray[nHandles++] = m_hThreadGetFileSummary;
@@ -2166,6 +2141,7 @@ public:
 			if (WaitForMultipleObjects(nHandles, hArray, true, nTimeout) == WAIT_TIMEOUT)
 			{
 				OutputMsg("%s Object %d Wait for thread exit timeout.\n", __FUNCTION__,m_nObjIndex);
+				m_bAsnycClose = true;
 				return false;
 			}
 			double dfWaitTimeSpan = TimeSpanEx(dfWaitTime);
@@ -2201,13 +2177,10 @@ public:
 			m_pFrameOffsetTable = nullptr;
 		}
 
-#ifdef _DEBUG
 		m_hThreadDecode = nullptr;		
 		m_hThreadParser = nullptr;
-//		m_hThreadGetFileSummary = nullptr;
 		m_hThreadPlayAudio = nullptr;
 		m_pFrameOffsetTable = nullptr;
-#endif
 		return true;
 	}
 
@@ -4022,8 +3995,28 @@ public:
 		m_bD3dShared = bD3dShared;
 	}
 
+	// 指针逆分配器
+	// 用于配合智能指针回收内存
+	
 	static UINT __stdcall ThreadDecode(void *p)
 	{
+		struct DxDeallocator
+		{
+			CDxSurfaceEx *&m_pDxSurface;
+			CDirectDraw *&m_pDDraw;
+
+		public:
+			DxDeallocator(CDxSurfaceEx *&pDxSurface, CDirectDraw *&pDDraw)
+				:m_pDxSurface(pDxSurface), m_pDDraw(pDDraw)
+			{
+			}
+			~DxDeallocator()
+			{
+				TraceMsgA("%s pSurface = %08X\tpDDraw = %08X.\n", __FUNCTION__,m_pDxSurface,m_pDDraw);
+				Safe_Delete(m_pDxSurface);
+				Safe_Delete(m_pDDraw);
+			}
+		};
 		DeclareRunTime(5);
 		CIPCPlayer* pThis = (CIPCPlayer *)p;
 #ifdef _DEBUG
@@ -4185,6 +4178,7 @@ public:
 			assert(false);
 			return 0;
 		}
+		shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface, pThis->m_pDDraw);
 		SaveRunTime();
 		if (pThis->m_bD3dShared)
 		{
@@ -4279,7 +4273,6 @@ public:
 // 		}
 		if (pThis->m_pStreamProbe)
 			pThis->m_pStreamProbe = nullptr;
-		pThis->m_pDecoder = pDecodec;
 	
 		AVPacket *pAvPacket = (AVPacket *)av_malloc(sizeof(AVPacket));
 		shared_ptr<AVPacket>AvPacketPtr(pAvPacket, av_free);	
@@ -4351,6 +4344,7 @@ public:
 		LONG nTotalDecodeFrames = 0;
 		dfDecodeStartTime = GetExactTime() - pThis->m_nPlayFrameInterval / 1000.0f;
 		SaveRunTime();
+		pThis->m_pDecoder = pDecodec;
 		while (pThis->m_bThreadDecodeRun)
 		{
 			if (pThis->m_bPause)
@@ -4575,6 +4569,7 @@ public:
 		}
 		av_frame_unref(pAvFrame);
 		SaveRunTime();
+		pThis->m_pDecoder = nullptr;
 		return 0;
 	}
 	static UINT __stdcall ThreadPlayAudioGSJ(void *p)

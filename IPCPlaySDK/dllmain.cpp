@@ -14,6 +14,7 @@ list<IPC_PLAYHANDLE> g_listPlayer;
 CRITICAL_SECTION  g_csListPlayertoFree;
 list<DxSurfaceWrap *>g_listDxCache;
 CRITICAL_SECTION  g_csListDxCache;
+CTraceAlignMalloc g_TraceAlignMalloc;
 
 UINT	g_nMaxCacheTime = 30;		//CDxSurface对象在g_listDxCache中留存的最大时间,默认为30秒,超过这个时间时,对应的CDxSurface对象将被删除
 #ifdef _DEBUG
@@ -180,7 +181,7 @@ DWORD WINAPI Thread_Helper(void *)
 			for (auto it = g_listPlayer.begin(); it != g_listPlayer.end();)
 			{
 				CIPCPlayer *pPlayer = (CIPCPlayer *)(*it);
-				if (pPlayer->StopPlay(bAsync))
+				if (pPlayer->StopPlay(INFINITE))
 				{
 					delete pPlayer;
 					it = g_listPlayer.erase(it);

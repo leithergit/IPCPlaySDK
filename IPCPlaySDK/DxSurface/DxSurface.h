@@ -262,6 +262,7 @@ class CLineRunTime
 {
 	DWORD m_nTimeout;
 	char *m_pszName;
+	shared_ptr<char> m_pszNamePtr;
 public:
 	CLineRunTime(int nTimeout,char *szName = nullptr,CRunlogA *plog = nullptr)
 	{
@@ -272,6 +273,7 @@ public:
 		}
 		else
 			m_pszName = nullptr;
+		m_pszNamePtr = shared_ptr<char>(m_pszName);
 		m_nTimeout = nTimeout;
 		pRunlog = plog;
 	}
@@ -302,6 +304,7 @@ public:
 					OutputMsg("%s LineTime:%s line %d Runtime span = %d.\n", m_pszName, pTimeArray[i]->szFile, pTimeArray[i]->nLine, dwSpan);
 			}
 		}
+		
 	}
 	void SaveLineTime(char *szFile, int nLine)
 	{
@@ -1154,7 +1157,7 @@ public:
 		if (FAILED(hr = m_pDirect3D9->CreateDevice(D3DADAPTER_DEFAULT,
 			D3DDEVTYPE_HAL,
 			m_d3dpp.hDeviceWindow,
-			vp ,
+			vp | D3DCREATE_MULTITHREADED,
 			&m_d3dpp,
 			/* NULL,*/
 			&m_pDirect3DDevice)))
@@ -2352,7 +2355,7 @@ public:
 		if (FAILED(hr = m_pDirect3D9Ex->CreateDeviceEx(D3DADAPTER_DEFAULT,
 			D3DDEVTYPE_HAL,
 			m_d3dpp.hDeviceWindow,
-			vp ,
+			vp | D3DCREATE_MULTITHREADED,
 			&m_d3dpp,
 			NULL,
 			&m_pDirect3DDeviceEx)))
