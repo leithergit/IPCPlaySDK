@@ -3617,7 +3617,8 @@ public:
 
 		pSurface->UnlockRect();
 	}
-	
+	/// @brief 把Dxva硬解码NV12帧转换成YV12图像
+	/// 2017 9.27 功能经过验证为有效
 	void CopyDxvaFrameYV12(byte **ppYV12,int &nStrideY,int &nWidth,int &nHeight, AVFrame *pAvFrameDXVA)
 	{
 		if (pAvFrameDXVA->format != AV_PIX_FMT_DXVA2_VLD)
@@ -3666,6 +3667,8 @@ public:
 		}
 		pSurface->UnlockRect();
 	}
+	/// @brief 把Dxva硬解码NV12帧转换成NV12图像
+	/// 2017 9.27 功能经过验证为有效
 	void CopyDxvaFrameNV12(byte **ppNV12, int &nStrideY, int &nWidth, int &nHeight, AVFrame *pAvFrameDXVA)
 	{
 		if (pAvFrameDXVA->format != AV_PIX_FMT_DXVA2_VLD)

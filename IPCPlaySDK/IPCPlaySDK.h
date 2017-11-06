@@ -705,7 +705,7 @@ IPCPLAYSDK_API void AvFree(void*);
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		rtRenderBorder	窗口边界，即要隐藏的图像边界，只显示边界内的图像，详见@see ipcplay_SetBorderRect
 /// @param [in]		bPercent		窗口边界矩形长度单位以象素计算还是以百分比计算
-IPCPLAYSDK_API int ipcplay_AddWindow(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd, LPRECT pRectRenderBorder = nullptr, bool bPercent = false);
+IPCPLAYSDK_API int ipcplay_AddWindow(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd, LPRECT pRectRenderBorder = NULL, bool bPercent = false);
 
 /// @brief 移除一个显示图像的窗口
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
