@@ -138,6 +138,9 @@
     <ClInclude Include="decSPS.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MMEvent.h" />
+    <ClInclude Include="Stat.h" />
+    <ClInclude Include="CriticalSectionProxy.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Audio">

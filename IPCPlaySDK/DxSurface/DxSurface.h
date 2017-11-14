@@ -127,8 +127,6 @@ class CCriticalSectionProxy1;
 typedef map<HWND,CDxSurface*> WndSurfaceMap;
 
 typedef void (CALLBACK *ExternDrawProc)(HWND hWnd, HDC hDc, RECT rt, void *pUserPtr);
-typedef void (CALLBACK *ExternDrawProcEx)(HWND hWnd, void *pD3DDevice, RECT rt, void *pUserPtr);
-
 
 enum GraphicQulityParameter
 {
@@ -2163,6 +2161,11 @@ public:
 			FreeLibrary(m_hD3D9);
 			m_hD3D9 = NULL;
 		}
+		if (m_pLineData)
+		{
+			delete[]m_pLineData;
+			m_pLineData = nullptr;
+		}
 	}
 
 	// 调用InitD3D之前必须先调用AttachWnd函数关联视频显示窗口
@@ -2814,6 +2817,139 @@ _Failed:
 // 		}
 	}
 
+	// Vertex buffer to hold the geometry.
+	LPDIRECT3DVERTEXBUFFER9 m_pLineVertex = NULL;
+
+	int nRow = 8;
+	int nCol = 8;
+	// 线条顶点结构
+	struct D3DGridVertex
+	{
+		float x, y, z, rhw;
+		unsigned long color;
+	};
+
+	//-----------------------------------------------------------------------------
+	//纹理顶点结构
+	//-----------------------------------------------------------------------------
+	struct D3DTextureVertex
+	{
+		FLOAT x, y, z;    //顶点位置  
+		FLOAT u, v;          //顶点纹理坐标
+	};
+#define D3DFVF_CUSTOMVERTEX   (D3DFVF_XYZ|D3DFVF_TEX1)
+
+	// 纹理顶点结构
+	struct TextureVertex
+	{
+		float x, y, z;    //顶点位置  
+		float u, v;       //顶点纹理坐标
+	};
+
+#define D3DFVF_CUSTOMVERTEX   (D3DFVF_XYZ|D3DFVF_TEX1)
+	// Our custom FVF, which describes our custom vertex structure.
+#define D3DFVF_VERTEX (D3DFVF_XYZRHW | D3DFVF_DIFFUSE)
+	D3DGridVertex *m_pLineData = NULL;
+	D3DGridVertex *m_pSrc = NULL;
+	bool ProcessExternDraw(HWND hWnd)
+	{
+		unsigned long nColor = D3DCOLOR_XRGB(255, 0, 0);
+
+		// Fill in our structure to draw an object.
+		// x, y, z, rhw, color.
+		RECT rtClient;
+
+		GetClientRect(hWnd, &rtClient);
+		POINT ptLeftTop = { rtClient.left, rtClient.top };
+		POINT ptRightBottom = { rtClient.right, rtClient.bottom };
+
+		int nWidth = rtClient.right - rtClient.left;
+		int nHeight = rtClient.bottom - rtClient.top;
+		int nColWidth = nWidth / nCol;
+		int nRowHeight = nHeight / nRow;
+		int nRemainedWidth = nWidth - nColWidth*nCol;		// 平均分配宽度有盈余
+		int nRemainedHeight = nHeight - nRowHeight*nRow;	// 平均分配高度有盈余
+
+		if (!m_pLineData)
+		{
+			m_pLineData = new D3DGridVertex[(nRow + nCol) * 2];
+			m_pSrc = m_pLineData;
+		}
+		else
+			m_pLineData = m_pSrc;
+		
+		int nLineCount = 0;
+		// 画竖线
+		int nStartX = rtClient.left;
+		for (int i = 0; i < nCol; i++)
+		{
+			if (i > 0 && nRemainedWidth > 0)
+			{
+				nStartX++;
+				nRemainedWidth--;
+			}
+			m_pLineData->x = nStartX;
+			m_pLineData->y = (float)rtClient.top;
+			m_pLineData->z = 0.0f;
+			m_pLineData->rhw = 1.0f;
+			m_pLineData->color = nColor;
+			TraceMsgA("[%02d] = (%.0f,%.0f)\t", i, m_pLineData->x, m_pLineData->y);
+			m_pLineData++;
+			m_pLineData->x = (float)nStartX;
+
+			m_pLineData->y = (float)rtClient.bottom;
+			m_pLineData->z = 0.0f;
+			m_pLineData->rhw = 1.0f;
+			m_pLineData->color = nColor;
+			TraceMsgA("(%.0f,%.0f).\n", m_pLineData->x, m_pLineData->y);
+			nStartX += nColWidth;
+			m_pLineData++;
+			nLineCount++;
+		}
+		// 画横线
+		int nStartY = rtClient.top;
+		for (int i = 0; i < nRow; i++)
+		{
+			if (i > 0 && nRemainedHeight > 0)
+			{
+				nStartY++;
+				nRemainedHeight--;
+			}
+			m_pLineData->x = (float)rtClient.left;
+			m_pLineData->y = (float)nStartY;
+
+			m_pLineData->z = 0.0f;
+			m_pLineData->rhw = 1.0f;
+			m_pLineData->color = nColor;
+			TraceMsgA("[%02d] = (%.0f,%.0f)\t", i, m_pLineData->x, m_pLineData->y);
+			m_pLineData++;
+			m_pLineData->x = (float)rtClient.right;
+			m_pLineData->y = (float)nStartY;
+			m_pLineData->z = 0.0f;
+			m_pLineData->rhw = 1.0f;
+			m_pLineData->color = nColor;
+			TraceMsgA("(%.0f,%.0f).\n", m_pLineData->x, m_pLineData->y);
+			nStartY += nRowHeight;
+			m_pLineData++;
+			nLineCount++;
+		}
+
+		// 创建线条顶点	
+		int nSize = sizeof(D3DGridVertex)*(nRow + nCol) * 2;
+		// Create the vertex buffer.
+		if (FAILED(m_pDirect3DDeviceEx->CreateVertexBuffer(nSize, 0,
+			D3DFVF_VERTEX, D3DPOOL_DEFAULT, &m_pLineVertex,
+			NULL)))
+			return false;
+
+		// Fill the vertex buffer.
+		void *ptr;
+		if (FAILED(m_pLineVertex->Lock(0, nSize,
+			(void**)&ptr, 0))) return false;
+		memcpy(ptr, m_pSrc, nSize);
+		m_pLineVertex->Unlock();
+	}
+
 	bool Present(HWND hWnd = NULL, RECT *pClippedRT = nullptr, RECT *pRenderRt = nullptr)
 	{
 		HWND hRenderWnd = m_d3dpp.hDeviceWindow;
@@ -2831,6 +2967,7 @@ _Failed:
 		//m_pDirect3DDeviceEx->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
 		m_pDirect3DDeviceEx->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
 		m_pDirect3DDeviceEx->BeginScene();
+
 		hr = m_pDirect3DDeviceEx->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &pBackSurface);
 		//SaveRunTime();
 		if (FAILED(hr))

@@ -113,7 +113,8 @@
     <ClInclude Include="..\MulMonitor\MultiMonitorAPI.h" />
     <ClInclude Include="AutoLock.h" />
     <ClInclude Include="DialogDisplayRGB24.h" />
-    <ClInclude Include="DirectDraw.h" />
+    <ClInclude Include="DisplayYUV\DirectDraw.h" />
+    <ClInclude Include="DisplayYUV\YuvFrame.h" />
     <ClInclude Include="IPCPlayDemo.h" />
     <ClInclude Include="IPCPlayDemoDlg.h" />
     <ClInclude Include="FullScreen.h" />
@@ -127,7 +128,6 @@
     <ClInclude Include="TimeUtility.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="VideoFrame.h" />
-    <ClInclude Include="YuvFrame.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DialogDisplayRGB24.cpp" />

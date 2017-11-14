@@ -13,7 +13,7 @@
 #include "SocketClient.h"
 //#include "DirectDraw.h"
 #include "../ipcnetsdk/ipcMsgHead.h"
-#include "YUVFrame.h"
+#include "./DisplayYUV/YuvFrame.h"
 #include "DialogDisplayRGB24.h"
 
 using namespace std;
@@ -785,20 +785,20 @@ public:
 
 		if (!pThis->m_pYUVFrame)
 		{
-			pThis->m_nYUVCount = 0;
-			pThis->m_pYUVFrame = boost::make_shared<CDisplayYUVFrame>(pYUV, nStrideY, nStrideY>>1, nWidth, nHeight);
-			pThis->m_nYUVCount++;
+// 			pThis->m_nYUVCount = 0;
+// 			pThis->m_pYUVFrame = boost::make_shared<CDisplayYUVFrame>(pYUV, nStrideY, nStrideY>>1, nWidth, nHeight);
+// 			pThis->m_nYUVCount++;
 		}
 		else
 		{
 			if (pThis->m_nYUVCount % 25 == 0)
 			{
-				if (TryEnterCriticalSection(&pThis->m_csYUVFrame))
-				{
-					pThis->m_pYUVFrame->UpdateYUV(pYUV);
-					pThis->PostMessage(WM_UPDATEYUV, (WPARAM)hPlayHandle);
-					LeaveCriticalSection(&pThis->m_csYUVFrame);
-				}
+// 				if (TryEnterCriticalSection(&pThis->m_csYUVFrame))
+// 				{
+// 					pThis->m_pYUVFrame->UpdateYUV(pYUV);
+// 					pThis->PostMessage(WM_UPDATEYUV, (WPARAM)hPlayHandle);
+// 					LeaveCriticalSection(&pThis->m_csYUVFrame);
+// 				}
 			}
 			pThis->m_nYUVCount++;
 		}

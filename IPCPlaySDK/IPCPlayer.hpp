@@ -4590,7 +4590,7 @@ public:
 				RenderInterval.Stat(dfRenderTimespan);
 				if (RenderInterval.IsFull())
 				{
-					RenderInterval.OutputStat();
+					//RenderInterval.OutputStat();
 					RenderInterval.Reset();
 				}
 				if (dfRenderTimeSpan > 60.0f)

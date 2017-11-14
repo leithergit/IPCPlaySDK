@@ -3,7 +3,7 @@
 #include "IPCPlaySDK.h"
 #include "VideoFrame.h"
 #include "Resource.h"
-#include "YuvFrame.h"
+//#include "YuvFrame.h"
 
 // CDialogDisplayRGB24 dialog
 
