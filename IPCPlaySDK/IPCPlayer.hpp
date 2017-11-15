@@ -1562,11 +1562,11 @@ public:
 	{
  		if (!hRenderWnd)
  			return IPC_Error_InvalidParameters;
-		if (hRenderWnd == m_hRenderWnd)
-			return IPC_Succeed;
+// 		if (hRenderWnd == m_hRenderWnd)
+// 			return IPC_Succeed;
 		Autolock(&m_cslistRenderWnd);
 		
-		if (m_listRenderWnd.size() >= 16)
+		if (m_listRenderWnd.size() >= 4)
 			return IPC_Error_RenderWndOverflow;
 		auto itFind = find_if(m_listRenderWnd.begin(), m_listRenderWnd.end(), WndFinder(hRenderWnd));
 		if (itFind != m_listRenderWnd.end())		
@@ -2209,6 +2209,10 @@ public:
 		int nHandles = 0;
 		SetEvent(m_hRenderEvent);
 		
+		if (m_bEnableAudio)
+		{
+			EnableAudio(false);
+		}
 		m_cslistRenderWnd.Lock();
 		m_hRenderWnd = nullptr;
 		for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); )
@@ -3011,7 +3015,6 @@ public:
 		{
 			if (m_hThreadPlayAudio)
 			{
-				m_bEnableAudio = false;			
 				if (m_bThreadPlayAudioRun)		// 尚未执行停止音频解码线程的操作
 				{
 					m_bThreadPlayAudioRun = false;
@@ -3035,8 +3038,7 @@ public:
 			}
 			if (m_pDsPlayer)
 				m_pDsPlayer = nullptr;
-
-			
+			m_bEnableAudio = false;
 		}
 		return IPC_Succeed;
 	}

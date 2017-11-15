@@ -139,6 +139,7 @@ BEGIN_MESSAGE_MAP(CIPCPlayDemoDlg, CDialogEx)
 	ON_COMMAND(ID_FILE_REMOVERENDERWND, &CIPCPlayDemoDlg::OnFileRemoveRenderWnd)
 	ON_BN_CLICKED(IDC_CHECK_DISPLAYRGB, &CIPCPlayDemoDlg::OnBnClickedCheckDisplayrgb)
 	ON_MESSAGE(WM_UPDATEYUV, OnUpdateYUV)
+	ON_COMMAND(ID_FILE_DISPLAYTRAN, &CIPCPlayDemoDlg::OnFileDisplaytran)
 END_MESSAGE_MAP()
 
 
@@ -2393,4 +2394,10 @@ void CIPCPlayDemoDlg::OnBnClickedCheckDisplayrgb()
 		if (m_pDisplayRGB24)
 			m_pDisplayRGB24->ShowWindow(SW_HIDE);
 	}
+}
+
+
+void CIPCPlayDemoDlg::OnFileDisplaytran()
+{
+	m_pVideoWndFrame->;
 }

@@ -1037,4 +1037,5 @@ public:
 	afx_msg void OnFileRemoveRenderWnd();
 	int  nCurPannelID = 0;
 	afx_msg void OnBnClickedCheckDisplayrgb();
+	afx_msg void OnFileDisplaytran();
 };
