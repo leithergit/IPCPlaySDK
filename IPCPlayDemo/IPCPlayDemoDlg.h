@@ -6,8 +6,16 @@
 
 #include "VideoFrame.h"
 #include "AutoLock.h"
-//#include <memory>
+
+#ifdef _STDSHARED_PTR
+#include <memory>
+using namespace std;
+using namespace std::tr1;
+#else
 #include <boost/smart_ptr.hpp>
+using namespace boost;
+#endif
+
 #include "GlliteryStatic.h"
 #include "fullscreen.h"
 #include "SocketClient.h"
@@ -17,9 +25,6 @@
 #include "DialogDisplayRGB24.h"
 
 using namespace std;
-//using namespace std::tr1;
-using namespace boost;
-
 
 struct MSG_HEAD
 {
@@ -235,7 +240,7 @@ public:
 	volatile bool bThreadRecvIPCStream/* = false*/;
 	HANDLE hThreadRecvStream/* = NULL*/;
 	fnDVOCallback_RealAVData_T pStreamCallBack/* = NULL*/;
-	boost::shared_ptr<byte>pYuvBuffer /*= NULL*/;
+	shared_ptr<byte>pYuvBuffer /*= NULL*/;
 	int nYuvBufferSize/* = 0*/;
 	DWORD		nVideoFrames/* = 0*/;
 	DWORD		nAudioFrames/* = 0*/;
@@ -580,7 +585,7 @@ struct YUVFrame
 	}
 };
 
-typedef boost::shared_ptr<YUVFrame> YUVFramePtr;
+typedef shared_ptr<YUVFrame> YUVFramePtr;
 // CIPCPlayDemoDlg 对话框
 class CIPCPlayDemoDlg : public CDialogEx
 {
@@ -628,7 +633,7 @@ public:
 	afx_msg void OnBnClickedButtonPlaystream();
 	afx_msg void OnBnClickedButtonRecord();
 	afx_msg void OnBnClickedButtonPlayfile();
-	list<boost::shared_ptr<PlayerContext>>m_listPlayer;
+	list<shared_ptr<PlayerContext>>m_listPlayer;
 	// 相机实时码流捕捉回调函数
 	static void  __stdcall StreamCallBack(IN USER_HANDLE  lUserID,
 										IN REAL_HANDLE lStreamHandle,
@@ -638,12 +643,12 @@ public:
 										IN void*       pUser);
 	static void __stdcall ExternDCDraw(HWND hWnd, HDC hDc, RECT rt, void *pUserPtr);
 	static void __stdcall PlayerCallBack(IPC_PLAYHANDLE hPlayHandle, void *pUserPtr);
-	boost::shared_ptr<PlayerInfo>	m_pPlayerInfo;
+	shared_ptr<PlayerInfo>	m_pPlayerInfo;
 	afx_msg void OnNMClickListConnection(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg LRESULT OnUpdateStreamInfo(WPARAM, LPARAM);
 	afx_msg LRESULT OnUpdatePlayInfo(WPARAM, LPARAM);
 	afx_msg void OnNMCustomdrawListStreaminfo(NMHDR *pNMHDR, LRESULT *pResult);
-	boost::shared_ptr<PlayerContext>m_pPlayContext;
+	shared_ptr<PlayerContext>m_pPlayContext;
 	afx_msg void OnBnClickedCheckEnableaudio();
 	afx_msg void OnBnClickedCheckFitwindow();
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
@@ -674,7 +679,7 @@ public:
 	
 	//list<YUVFramePtr> m_listYUVFrame;
 	CRITICAL_SECTION m_csYUVFrame;
-	boost::shared_ptr<CDisplayYUVFrame> m_pYUVFrame;
+	shared_ptr<CDisplayYUVFrame> m_pYUVFrame;
 	LONGLONG		m_nYUVCount = 0;
 	static void __stdcall CaptureYUVExProc(IPC_PLAYHANDLE hPlayHandle,
 		const unsigned char* pY,
@@ -688,12 +693,12 @@ public:
 		void *pUserPtr)
 	{
 		CIPCPlayDemoDlg *pThis = (CIPCPlayDemoDlg *)pUserPtr;
-		//YUVFramePtr yuvFrame = boost::make_shared<YUVFrame>(pY,pU,	pV,nStrideY,nStrideUV,nWidth,nHeight,nTime);
+		//YUVFramePtr yuvFrame =make_shared<YUVFrame>(pY,pU,	pV,nStrideY,nStrideUV,nWidth,nHeight,nTime);
 		//pThis->m_listYUVFrame.push_back(yuvFrame);
 		if (!pThis->m_pYUVFrame)
 		{
 			pThis->m_nYUVCount = 0;
-			pThis->m_pYUVFrame = boost::make_shared<CDisplayYUVFrame>(pY, pU, pV, nStrideY, nStrideUV, nWidth, nHeight);
+			pThis->m_pYUVFrame =make_shared<CDisplayYUVFrame>(pY, pU, pV, nStrideY, nStrideUV, nWidth, nHeight);
 			pThis->m_nYUVCount++;
 		}
 		else
@@ -786,7 +791,7 @@ public:
 		if (!pThis->m_pYUVFrame)
 		{
 // 			pThis->m_nYUVCount = 0;
-// 			pThis->m_pYUVFrame = boost::make_shared<CDisplayYUVFrame>(pYUV, nStrideY, nStrideY>>1, nWidth, nHeight);
+// 			pThis->m_pYUVFrame =make_shared<CDisplayYUVFrame>(pYUV, nStrideY, nStrideY>>1, nWidth, nHeight);
 // 			pThis->m_nYUVCount++;
 		}
 		else
@@ -905,7 +910,7 @@ public:
 		byte *pStream;
 		int  nStreamSize;
 	};
-	typedef boost::shared_ptr<DvoStream> DvoStreamPtr;
+	typedef shared_ptr<DvoStream> DvoStreamPtr;
 	CRITICAL_SECTION m_csListStream;
 	list<DvoStreamPtr> m_listStream;	// 流播放队列
 	// 发送数据流
@@ -913,7 +918,7 @@ public:
 	int SendStream(byte *pFrameBuffer, int nFrameSize)
 	{
 		CAutoLock lock(&m_csListStream);
-		DvoStreamPtr pStream = boost::make_shared<DvoStream>(pFrameBuffer, nFrameSize);
+		DvoStreamPtr pStream = make_shared<DvoStream>(pFrameBuffer, nFrameSize);
 		m_listStream.push_back(pStream);
 		return m_listStream.size();
 	}
@@ -941,7 +946,7 @@ public:
 		if (!pThis->m_pPlayContext || 
 			!pThis->m_pPlayContext->hPlayer )
 			return 0;
-		boost::shared_ptr<PlayerContext>pPlayCtx = pThis->m_pPlayContext;
+		shared_ptr<PlayerContext>pPlayCtx = pThis->m_pPlayContext;
 		IPCFrameHeader Header;
 		byte *pFrameBuffer = NULL;
 		UINT nFrameSize = 0;
@@ -981,7 +986,7 @@ public:
 		if (!pThis->m_pPlayContext ||
 			!pThis->m_pPlayContext->hPlayerStream)
 			return 0;
-		boost::shared_ptr<PlayerContext>pPlayCtx = pThis->m_pPlayContext;
+		shared_ptr<PlayerContext>pPlayCtx = pThis->m_pPlayContext;
 		int nDvoError = 0;
 		int nStreamListSize = 0;
 		DvoStreamPtr pStream;

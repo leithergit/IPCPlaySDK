@@ -2,8 +2,17 @@
 #include "stdafx.h"
 #include <winsock2.h>
 #include <MSWSock.h>
-//#include <memory>
+
+#ifdef _STDSHARED_PTR
+#include <memory>
+using namespace std;
+using namespace std::tr1;
+#else
 #include <boost/smart_ptr.hpp>
+using namespace boost;
+#endif
+
+
 #include <MSTcpIP.h>
 #include <time.h>
 #include <list>
@@ -17,8 +26,6 @@
 #endif
 
 using namespace std;
-//using namespace std::tr1;
-using namespace boost;
 
 #ifndef	_X64
 #define _X64

@@ -14,9 +14,16 @@
 
 //#include <memory>
 using namespace std;
-//using namespace std::tr1;
+
+#ifdef _STDSHARED_PTR
+#include <memory>
+using namespace std;
+using namespace std::tr1;
+#else
 #include <boost/smart_ptr.hpp>
 using namespace boost;
+#endif
+
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -146,7 +153,7 @@ CRunlogA::CRunlogA()
 			m_bCanlog = false;
 		else					
 			GetLocalTime(&m_systimeCreate);
-		m_pLogBuffer = boost::shared_ptr<CHAR>(new CHAR[_LogBuffLength]);
+		m_pLogBuffer = shared_ptr<CHAR>(new CHAR[_LogBuffLength]);
 		
 	}
 	catch (std::exception &e)
@@ -195,7 +202,7 @@ CRunlogA::CRunlogA(LPCSTR lpszFileName)
 			m_bCanlog = false;
 		else
 			GetLocalTime(&m_systimeCreate);
-		m_pLogBuffer = boost::shared_ptr<CHAR>(new CHAR[_LogBuffLength]);
+		m_pLogBuffer = shared_ptr<CHAR>(new CHAR[_LogBuffLength]);
 		
 	}
 	catch (std::exception &e)
@@ -237,7 +244,7 @@ CRunlogW::CRunlogW()
 			m_bCanlog = false;
 		else
 			GetLocalTime(&m_systimeCreate);
-		m_pLogBuffer = boost::shared_ptr<WCHAR>(new WCHAR[_LogBuffLength]);
+		m_pLogBuffer = shared_ptr<WCHAR>(new WCHAR[_LogBuffLength]);
 	}
 	catch (std::exception &e)
 	{
@@ -284,7 +291,7 @@ CRunlogW::CRunlogW(LPCWSTR lpszFileName)
 			m_bCanlog = false;
 		else
 			GetLocalTime(&m_systimeCreate);
-		m_pLogBuffer = boost::shared_ptr<WCHAR>(new WCHAR[_LogBuffLength]);
+		m_pLogBuffer = shared_ptr<WCHAR>(new WCHAR[_LogBuffLength]);
 
 	}
 	catch (std::exception &e)

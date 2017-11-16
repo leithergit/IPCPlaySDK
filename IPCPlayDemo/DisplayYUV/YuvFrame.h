@@ -11,8 +11,8 @@ private:
 	int nWidth;
 	int nHeight;
 	int	nPictureSize;
-	boost::shared_ptr<CDirectDraw>m_pDDraw;
-	boost::shared_ptr<ImageSpace> m_pYUVImage;
+	shared_ptr<CDirectDraw>m_pDDraw;
+	shared_ptr<ImageSpace> m_pYUVImage;
 public:
 	CDisplayYUVFrame(const unsigned char* pY,
 		const unsigned char* pU,
@@ -74,7 +74,7 @@ public:
 	bool InitizlizeDisplay(HWND hWnd,int nWidth, int nHeight)
 	{
 		if (!m_pDDraw)
-			m_pDDraw = boost::make_shared<CDirectDraw>();
+			m_pDDraw = make_shared<CDirectDraw>();
 		if (m_pDDraw)
 		{
 			//构造DirectDraw表面  
@@ -82,7 +82,7 @@ public:
 			FormatYV12::Build(ddsd, nWidth, nHeight);
 
 			m_pDDraw->Create<FormatYV12>(hWnd, ddsd);
-			m_pYUVImage = boost::make_shared<ImageSpace>();
+			m_pYUVImage = make_shared<ImageSpace>();
 			m_pYUVImage->dwLineSize[0] = nWidth;
 			m_pYUVImage->dwLineSize[1] = nWidth >> 1;
 			m_pYUVImage->dwLineSize[2] = nWidth >> 1;

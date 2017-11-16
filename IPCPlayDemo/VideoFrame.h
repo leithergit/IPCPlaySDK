@@ -3,13 +3,19 @@
 #include <assert.h>
 #include <vector>
 #include <map>
-//#include <memory>
+
+#ifdef _STDSHARED_PTR
+#include <memory>
+using namespace std;
+using namespace std::tr1;
+#else
 #include <boost/smart_ptr.hpp>
+using namespace boost;
+#endif
+
 #include "AutoLock.h"
 using namespace  std;
 //using namespace  std::tr1;
-using namespace boost;
-
 #pragma warning(disable:4244 4018)
 #define		_GRID_LINE_WIDTH	2
 // CVideoFrame
@@ -45,10 +51,10 @@ struct PanelInfo
 	int nCol;
 	void *pCustumData;
 };
-typedef boost::shared_ptr<PanelInfo> PanelInfoPtr;
+typedef shared_ptr<PanelInfo> PanelInfoPtr;
 
 class CriticalSectionWrap;
-typedef boost::shared_ptr<CriticalSectionWrap>CriticalSectionPtr;
+typedef shared_ptr<CriticalSectionWrap>CriticalSectionPtr;
 class CriticalSectionWrap
 {
 public:

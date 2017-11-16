@@ -2,7 +2,15 @@
 
 //////////////////////////////////////////////////////////////////////////
 
+#ifdef _STDSHARED_PTR
+#include <memory>
+using namespace std;
+using namespace std::tr1;
+#else
 #include <boost/smart_ptr.hpp>
+using namespace boost;
+#endif
+
 #include <DDraw.h>
 //#include "DxSurface/DxSurface.h"
 
@@ -637,4 +645,4 @@ public:
 	CopyCallback m_copyCallback;
 };
 
-typedef boost::shared_ptr<CDirectDraw> CDirectDrawPtr;
+typedef shared_ptr<CDirectDraw> CDirectDrawPtr;

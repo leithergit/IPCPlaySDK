@@ -211,7 +211,7 @@ BOOL CIPCPlayDemoDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
-	m_pPlayerInfo = boost::make_shared<PlayerInfo>();
+	m_pPlayerInfo =make_shared<PlayerInfo>();
 	m_wndStatus.SubclassDlgItem(IDC_STATIC_STATUS, this);
 
 	SendDlgItemMessage(IDC_COMBO_PICTYPE, CB_SETCURSEL, 1, 0);		// 默认使用JPG截图
@@ -687,7 +687,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonConnect()
 		AfxMessageBox(_T("请输入一个有效的相机IP"), MB_OK | MB_ICONSTOP);
 		return;
 	}
-	m_pPlayContext = boost::make_shared<PlayerContext>(-1, -1, (IPC_PLAYHANDLE *)NULL, _Row*_Col);
+	m_pPlayContext =make_shared<PlayerContext>(-1, -1, (IPC_PLAYHANDLE *)NULL, _Row*_Col);
 	
 	m_pPlayContext->pThis = this;
 	bool bSucceed = false;
@@ -1127,7 +1127,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 				fpMedia.Close();
 				
 				SetDlgItemText(IDC_EDIT_FILEPATH, strFilePath);
-				m_pPlayContext = boost::make_shared<PlayerContext>(-1);
+				m_pPlayContext =make_shared<PlayerContext>(-1);
 				m_pPlayContext->hWndView = m_pVideoWndFrame->GetPanelWnd(nFreePanel);
 				m_pVideoWndFrame->SetPanelParam(nFreePanel, m_pPlayContext.get());
 				

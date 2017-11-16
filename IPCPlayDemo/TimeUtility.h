@@ -4,13 +4,21 @@
 #include <time.h>
 #include <assert.h>
 #include <mmsystem.h>
+
+#ifdef _STDSHARED_PTR
+#include <memory>
+using namespace std;
+using namespace std::tr1;
+#else
 #include <boost/smart_ptr.hpp>
+using namespace boost;
+#endif
+
+
 //#include <thread>
 //#include <chrono>
 #include "Runlog.h"
-// using namespace std::this_thread;
-// using namespace std::chrono;
-using namespace boost;
+
 #ifdef _UNICODE
 #define GetDateTime			GetDateTimeW
 #define	_DateTime			DateTimeW
@@ -302,7 +310,7 @@ public:
 	}
 	void SaveLineTime(char *szFile, int nLine)
 	{
-		boost::shared_ptr<LineTime> pLineTime = boost::make_shared<LineTime>(szFile, nLine);
+		shared_ptr<LineTime> pLineTime = make_shared<LineTime>(szFile, nLine);
 		pTimeArray.push_back(pLineTime);
 	}
 #define __countof(array) (sizeof(array)/sizeof(array[0]))
@@ -324,6 +332,6 @@ public:
 		va_end(args);
 	}
 public:
-	vector<boost::shared_ptr<LineTime>> pTimeArray;
+	vector<shared_ptr<LineTime>> pTimeArray;
 	CRunlogA *pRunlog ;
 };

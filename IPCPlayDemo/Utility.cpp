@@ -8,11 +8,15 @@
 #include <assert.h>
 #include <Shlwapi.h>
 //#include <memory>
-//#include "AutoPtrArray.h"
-#include <boost/smart_ptr.hpp>
+
+#ifdef _STDSHARED_PTR
+#include <memory>
 using namespace std;
-//using namespace std::tr1;
+using namespace std::tr1;
+#else
+#include <boost/smart_ptr.hpp>
 using namespace boost;
+#endif
 
 #pragma comment(lib,"Ws2_32.lib")
 #pragma comment(lib,"shlwapi.lib")

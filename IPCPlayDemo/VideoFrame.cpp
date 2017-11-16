@@ -10,7 +10,7 @@
 IMPLEMENT_DYNAMIC(CVideoFrame, CWnd)
 
 map<HWND, HWND>CVideoFrame::m_PanelMap;
-CriticalSectionPtr CVideoFrame::m_csPannelMap = boost::make_shared<CriticalSectionWrap>();
+CriticalSectionPtr CVideoFrame::m_csPannelMap = make_shared<CriticalSectionWrap>();
 
 CVideoFrame::CVideoFrame()
 {

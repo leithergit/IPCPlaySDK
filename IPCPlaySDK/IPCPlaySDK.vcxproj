@@ -53,14 +53,14 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;IPCPLAYSDK_EXPORTS;_ENABLE_FFMPEG_STAITC_LIB;_XKEYCHECK_H;_CRT_SECURE_NO_WARNINGS;_LineTime_;D3D_DEBUG_INFO;_TraceMemory_;_STD_SMARTPTR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>E:\ffmpeg\static\include;..\faad2-2.7\include;D:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\ffmpeg\static\include;..\faad2-2.7\include;$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>E:\ffmpeg\static\lib;D:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;..\faad2-2.7\include;E:\MinGW\lib\gcc\mingw32\4.8.1;E:\MinGW\lib;.\TCmalloc;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\ffmpeg\static\lib;$(DXSDK_DIR)Lib\x86;..\faad2-2.7\include;..\MinGW\lib\gcc\mingw32\4.8.1;..\MinGW\lib;.\TCmalloc;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMTD.lib LIBCMT.lib</IgnoreSpecificDefaultLibraries>
       <AdditionalOptions>/NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:libcmtd.lib %(AdditionalOptions)</AdditionalOptions>
       <ModuleDefinitionFile>IPCPlaySDK.def</ModuleDefinitionFile>
@@ -70,17 +70,17 @@
     </Link>
     <PostBuildEvent>
       <Command>@echo off
-copy $(TargetPath)  "E:\SVN\RTSP.live555.Mago\RTSP\Debug" /y
-copy $(TargetDir)$(TargetName).lib "E:\SVN\RTSP.live555.Mago\ipcplaysdk" /y
-copy $(ProjectDir)ipcplaysdk.h "E:\SVN\RTSP.live555.Mago\ipcplaysdk" /y
+::copy $(TargetPath)  "E:\SVN\RTSP.live555.Mago\RTSP\Debug" /y
+::copy $(TargetDir)$(TargetName).lib "E:\SVN\RTSP.live555.Mago\ipcplaysdk" /y
+::copy $(ProjectDir)ipcplaysdk.h "E:\SVN\RTSP.live555.Mago\ipcplaysdk" /y
 
-copy $(TargetPath)  "E:\SVN.NET\PlayRTSP\Debug" /y
-copy $(TargetDir)$(TargetName).lib "E:\SVN.NET\PlayRTSP\ipcplaysdk" /y
-copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\PlayRTSP\ipcplaysdk" /y
+::copy $(TargetPath)  "E:\SVN.NET\PlayRTSP\Debug" /y
+::copy $(TargetDir)$(TargetName).lib "E:\SVN.NET\PlayRTSP\ipcplaysdk" /y
+::copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\PlayRTSP\ipcplaysdk" /y
 
-copy $(TargetPath)  "E:\SVN\AVPlayer\Debug" /y
-copy $(TargetDir)$(TargetName).lib "E:\SVN\AVPlayer\ipcplaysdk" /y
-copy $(ProjectDir)ipcplaysdk.h "E:\SVN\AVPlayer\ipcplaysdk" /y</Command>
+::copy $(TargetPath)  "E:\SVN\AVPlayer\Debug" /y
+::copy $(TargetDir)$(TargetName).lib "E:\SVN\AVPlayer\ipcplaysdk" /y
+::copy $(ProjectDir)ipcplaysdk.h "E:\SVN\AVPlayer\ipcplaysdk" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -92,7 +92,7 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN\AVPlayer\ipcplaysdk" /y</Command>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;IPCPLAYSDK_EXPORTS;_ENABLE_FFMPEG_STAITC_LIB;_XKEYCHECK_H;_CRT_SECURE_NO_WARNINGS;_STD_SMARTPTR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>E:\ffmpeg\static\include;..\faad2-2.7\include;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\ffmpeg\static\include;..\faad2-2.7\include;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
@@ -100,7 +100,7 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN\AVPlayer\ipcplaysdk" /y</Command>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <AdditionalLibraryDirectories>E:\ffmpeg\static\lib;D:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;..\faad2-2.7\include;E:\MinGW\lib\gcc\mingw32\4.8.1;E:\MinGW\lib;.\TCmalloc;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\ffmpeg\static\lib;D:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;..\faad2-2.7\include;..\MinGW\lib\gcc\mingw32\4.8.1;..\MinGW\lib;.\TCmalloc;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <ModuleDefinitionFile>IPCPlaySDK.def</ModuleDefinitionFile>

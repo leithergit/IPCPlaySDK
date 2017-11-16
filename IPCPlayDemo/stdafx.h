@@ -48,9 +48,16 @@
 //#include <memory>
 #include <WindowsX.h>
 using namespace std;
-//using namespace std::tr1;
+
+#ifdef _STDSHARED_PTR
+#include <memory>
+using namespace std;
+using namespace std::tr1;
+#else
 #include <boost/smart_ptr.hpp>
 using namespace boost;
+#endif
+
 
 extern HANDLE g_hStdout;
 extern HANDLE g_hStdin;
