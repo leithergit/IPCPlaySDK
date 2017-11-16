@@ -733,7 +733,7 @@ public:
 	}
 
 	// 调用外部绘制函数
-	virtual void ExternDrawCall(HWND hWnd, RECT *pRect)
+	virtual void ExternDrawCall(HWND hWnd, IDirect3DSurface9 * pBackSurface, RECT *pRect)
 	{
 		if (!m_pSurfaceRender)
 			return;
@@ -741,7 +741,7 @@ public:
 		if (m_pExternDraw)
 		{
 			D3DSURFACE_DESC Desc;
-			if (FAILED(m_pSurfaceRender->GetDesc(&Desc)))
+			if (FAILED(pBackSurface->GetDesc(&Desc)))
 				return;
 			switch (Desc.Format)
 			{//Direct3DSurface::GetDC() only supports D3DFMT_R5G6B5, D3DFMT_X1R5G5B5, D3DFMT_A1R5G5B5, D3DFMT_R8G8B8, D3DFMT_X8R8G8B8, and D3DFMT_A8R8G8B8.
@@ -761,7 +761,7 @@ public:
 			}
 			}
 			HDC hDc = NULL;
-			if (SUCCEEDED(m_pSurfaceRender->GetDC(&hDc)))
+			if (SUCCEEDED(pBackSurface->GetDC(&hDc)))
 			{
 				RECT MotionRect;
 				HWND hMotionWnd = m_d3dpp.hDeviceWindow;
@@ -777,7 +777,7 @@ public:
 					MotionRect.bottom = Desc.Height;
 				}
 				m_pExternDraw(hMotionWnd, hDc, MotionRect, m_pUserPtr);
-				m_pSurfaceRender->ReleaseDC(hDc);
+				pBackSurface->ReleaseDC(hDc);
 			}
 			else
 			{
@@ -1698,8 +1698,7 @@ _Failed:
 			hRenderWnd = hWnd;
 		if (!IsNeedRender(hRenderWnd) && !m_bSnapFlag)
 			return true;
-		// 处理外部分绘制接口
-		ExternDrawCall(hWnd, pRenderRt);
+		
 
 		IDirect3DSurface9 * pBackSurface = NULL;
 		m_pDirect3DDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
@@ -1722,6 +1721,8 @@ _Failed:
 		}
 		hr = m_pDirect3DDevice->StretchRect(m_pSurfaceRender, &srcrt, pBackSurface, &dstrt, D3DTEXF_LINEAR);
 
+		// 处理外部分绘制接口
+		ExternDrawCall(hWnd, pBackSurface, pRenderRt);
 		pBackSurface->Release();
 		m_pDirect3DDevice->EndScene();
 		// Present(RECT* pSourceRect,CONST RECT* pDestRect,HWND hDestWindowOverride,CONST RGNDATA* pDirtyRegion)
@@ -2847,7 +2848,7 @@ _Failed:
 	// Our custom FVF, which describes our custom vertex structure.
 #define D3DFVF_VERTEX (D3DFVF_XYZRHW | D3DFVF_DIFFUSE)
 	D3DGridVertex *m_pLineData = NULL;
-	LPD3DXSPRITE   g_pSprite = NULL;    //点精灵
+	//LPD3DXSPRITE   g_pSprite = NULL;    //点精灵
 	bool ProcessExternDraw(HWND hWnd, RECT rtClient)
 	{
 		unsigned long nColor = D3DCOLOR_XRGB(255, 0, 0);
@@ -2955,9 +2956,7 @@ _Failed:
 		if (!IsNeedRender(hRenderWnd))
 			return true;
 		HRESULT hr = S_OK;
-		//SaveRunTime();
-		// 处理外部分绘制接口
-		ExternDrawCall(hWnd, pRenderRt);
+		
 		//SaveRunTime();
 		IDirect3DSurface9 * pBackSurface = NULL;
 		//m_pDirect3DDeviceEx->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
@@ -2981,7 +2980,12 @@ _Failed:
 		{
 			CopyRect(&srcrt, pClippedRT);
 		}
+
+		//D3DXLoadSurfaceFromSurface(m_pSurfaceRender,nullptr,nullptr,pDCSurface,nullptr,nullptr,D3DX_FILTER_NONE，0)；
 		hr = m_pDirect3DDeviceEx->StretchRect(m_pSurfaceRender, &srcrt, pBackSurface, &dstrt, D3DTEXF_LINEAR);
+		//SaveRunTime();
+		// 处理外部分绘制接口
+		ExternDrawCall(hWnd, pBackSurface,pRenderRt);
 		//SaveRunTime();
 		SafeRelease(pBackSurface);
 // 		if (hRenderWnd)

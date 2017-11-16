@@ -67,8 +67,8 @@ END_MESSAGE_MAP()
 
 // CDvoIPCPlayDemoDlg ¶Ô»°¿ò
 
-#define _Row	2
-#define _Col	2
+#define _Row	1
+#define _Col	1
 
 
 CIPCPlayDemoDlg::CIPCPlayDemoDlg(CWnd* pParent /*=NULL*/)
@@ -2399,5 +2399,5 @@ void CIPCPlayDemoDlg::OnBnClickedCheckDisplayrgb()
 
 void CIPCPlayDemoDlg::OnFileDisplaytran()
 {
-	m_pVideoWndFrame->;
+	//m_pVideoWndFrame->;
 }

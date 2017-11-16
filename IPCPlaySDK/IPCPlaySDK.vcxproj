@@ -74,6 +74,10 @@ copy $(TargetPath)  "E:\SVN\RTSP.live555.Mago\RTSP\Debug" /y
 copy $(TargetDir)$(TargetName).lib "E:\SVN\RTSP.live555.Mago\ipcplaysdk" /y
 copy $(ProjectDir)ipcplaysdk.h "E:\SVN\RTSP.live555.Mago\ipcplaysdk" /y
 
+copy $(TargetPath)  "E:\SVN.NET\PlayRTSP\Debug" /y
+copy $(TargetDir)$(TargetName).lib "E:\SVN.NET\PlayRTSP\ipcplaysdk" /y
+copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\PlayRTSP\ipcplaysdk" /y
+
 copy $(TargetPath)  "E:\SVN\AVPlayer\Debug" /y
 copy $(TargetDir)$(TargetName).lib "E:\SVN\AVPlayer\ipcplaysdk" /y
 copy $(ProjectDir)ipcplaysdk.h "E:\SVN\AVPlayer\ipcplaysdk" /y</Command>
