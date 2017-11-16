@@ -1,0 +1,46 @@
+CRITICAL_SECTION m_csYUVFrame;
+	boost::shared_ptr<CDisplayYUVFrame> m_pYUVFrame;
+	LONGLONG		m_nYUVCount = 0;
+	static void __stdcall CaptureYUVExProc(IPC_PLAYHANDLE hPlayHandle,
+		const unsigned char* pY,
+		const unsigned char* pU,
+		const unsigned char* pV,
+		int nStrideY,
+		int nStrideUV,
+		int nWidth,
+		int nHeight,
+		INT64 nTime,
+		void *pUserPtr)
+	{
+		CIPCPlayDemoDlg *pThis = (CIPCPlayDemoDlg *)pUserPtr;
+		//YUVFramePtr yuvFrame = boost::make_shared<YUVFrame>(pY,pU,	pV,nStrideY,nStrideUV,nWidth,nHeight,nTime);
+		//pThis->m_listYUVFrame.push_back(yuvFrame);
+		if (!pThis->m_pYUVFrame)
+		{
+			pThis->m_nYUVCount = 0;
+			pThis->m_pYUVFrame = boost::make_shared<CDisplayYUVFrame>(pY, pU, pV, nStrideY, nStrideUV, nWidth, nHeight);
+			pThis->m_nYUVCount++;
+		}
+		else
+		{
+			if (pThis->m_nYUVCount % 25 == 0)
+			{
+				if (TryEnterCriticalSection(&pThis->m_csYUVFrame))
+				{
+					pThis->m_pYUVFrame->UpdateYUV(pY, pU, pV);
+					pThis->PostMessage(WM_UPDATEYUV, (WPARAM)hPlayHandle);
+					LeaveCriticalSection(&pThis->m_csYUVFrame);
+				}
+			}
+			pThis->m_nYUVCount++;
+		}
+	}
+	CDialogDisplayRGB24 *m_pDisplayRGB24 = nullptr;
+	afx_msg LRESULT OnUpdateYUV(WPARAM w, LPARAM l)
+	{
+		if (m_pDisplayRGB24 && m_pDisplayRGB24->GetSafeHwnd())
+			m_pYUVFrame->Render(m_pDisplayRGB24->GetSafeHwnd());
+
+		return 0;
+	}
+	
