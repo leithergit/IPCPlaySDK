@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 
-#ifdef _STDSHARED_PTR
+#ifdef _STD_SMARTPTR
 #include <memory>
 using namespace std;
 using namespace std::tr1;
@@ -14,8 +14,8 @@ using namespace boost;
 #endif
 
 #include "AutoLock.h"
+#include "CriticalSectionProxy.h"
 using namespace  std;
-//using namespace  std::tr1;
 #pragma warning(disable:4244 4018)
 #define		_GRID_LINE_WIDTH	2
 // CVideoFrame
@@ -53,40 +53,6 @@ struct PanelInfo
 };
 typedef shared_ptr<PanelInfo> PanelInfoPtr;
 
-class CriticalSectionWrap;
-typedef shared_ptr<CriticalSectionWrap>CriticalSectionPtr;
-class CriticalSectionWrap
-{
-public:
-	CriticalSectionWrap()
-	{
-		InitializeCriticalSection(&m_cs);
-	}
-	~CriticalSectionWrap()
-	{
-		DeleteCriticalSection(&m_cs);
-	}
-	inline BOOL TryLock()
-	{
-		return TryEnterCriticalSection(&m_cs);
-	}
-	inline void Lock()
-	{
-		EnterCriticalSection(&m_cs);
-	}
-	void Unlock()
-	{
-		LeaveCriticalSection(&m_cs);
-	}
-	inline CRITICAL_SECTION *Get()
-	{
-		return &m_cs;
-	}
-
-private:
-	CRITICAL_SECTION	m_cs;
-};
-
 class CVideoFrame : public CWnd
 {
 	DECLARE_DYNAMIC(CVideoFrame)
@@ -94,7 +60,7 @@ public:
 	CVideoFrame();
 	virtual ~CVideoFrame();
 	static map<HWND, HWND> m_PanelMap;
-	static CriticalSectionPtr m_csPannelMap;
+	static CCriticalSectionProxyPtr m_csPannelMap;
 protected:
 	DECLARE_MESSAGE_MAP()
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);

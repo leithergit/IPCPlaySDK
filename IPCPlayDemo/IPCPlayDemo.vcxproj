@@ -53,7 +53,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_CRT_SECURE_NO_WARNINGS;_STDSHARED_PTR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_CRT_SECURE_NO_WARNINGS;_STD_SMARTPTR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\IPCNETSDK;..\IPCPlaySDK;..\MulMonitor;E:\boost_1_62;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>

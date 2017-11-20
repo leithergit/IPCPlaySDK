@@ -9,7 +9,7 @@
 #include <comutil.h>
 
 
-#ifdef _STDSHARED_PTR
+#ifdef _STD_SMARTPTR
 #include <memory>
 using namespace std;
 using namespace std::tr1;
@@ -464,7 +464,7 @@ INT_PTR MultiByteStrToUnicodeStr(UINT_PTR nCodePage, LPCSTR lpMultiByteStr, LPWS
 #define _AnsiString(UnicodeText,nLength)	(W2AString(UnicodeText,nLength).get())
 #define _UnicodeString(AnsiText,nLength)		(A2WString(AnsiText,nLength).get())
 
-#ifdef _STDSHARED_PTR
+#ifdef _STD_SMARTPTR
 #define stdshared_ptr		std::tr1::shared_ptr
 #else
 #define stdshared_ptr		boost::shared_ptr

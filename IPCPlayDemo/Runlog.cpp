@@ -15,7 +15,7 @@
 //#include <memory>
 using namespace std;
 
-#ifdef _STDSHARED_PTR
+#ifdef _STD_SMARTPTR
 #include <memory>
 using namespace std;
 using namespace std::tr1;

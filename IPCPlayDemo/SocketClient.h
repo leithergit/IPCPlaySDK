@@ -3,7 +3,7 @@
 #include <winsock2.h>
 #include <MSWSock.h>
 
-#ifdef _STDSHARED_PTR
+#ifdef _STD_SMARTPTR
 #include <memory>
 using namespace std;
 using namespace std::tr1;
