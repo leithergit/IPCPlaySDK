@@ -725,6 +725,21 @@ IPCPLAYSDK_API int ipcplay_GetRenderWindows(IN IPC_PLAYHANDLE hPlayHandle, INOUT
 /// @remark	注意    目前图像旋转功能仅支持软解
 IPCPLAYSDK_API int ipcplay_SetRocateAngle(IN IPC_PLAYHANDLE hPlayHandle, RocateAngle nAngle = RocateNone);
 
+/// @brief			设置一组线条坐标
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		pPointArray		线条坐标数组
+/// @param [in]		nCount			pPointArray中包含线条的坐标数量
+/// @param [in]		fWidth			线条宽度
+/// @param [in]		nColor			线条的颜色
+/// @return 操作成功时，返回线条组的句柄，否则返回0
+/// @remark	注意    设置好线条坐标后,SDK内部会根据坐标信息绘制线条，一组坐标的线条的颜色是相同的，并且是相连的，若要绘制多条不相连的线条，必须多次调用ipcplay_AddLineArray
+IPCPLAYSDK_API long ipcplay_AddLineArray(IN IPC_PLAYHANDLE hPlayHandle, POINT *pPointArray, int nCount, float fWidth, DWORD nColor);
+
+/// @brief			移除一组线条
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		nLineIndex		由ipcplay_AddLineArray返回的线条句柄
+IPCPLAYSDK_API int ipcplay_RemoveLineArray(IN IPC_PLAYHANDLE hPlayHandle, long nLineIndex);
+
 
 /// @brief		把YUV图像转换为RGB24图像
 /// @param [in]		hPlayHandle	由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄

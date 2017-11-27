@@ -56,4 +56,6 @@ EXPORTS
 	ipcplay_SetD3dShared
 	ipcplay_SetRocateAngle
 	ipcplay_SetDecodeDelay
+	ipcplay_AddLineArray
+	ipcplay_RemoveLineArray
 	;ipcplay_YUV2RGB24

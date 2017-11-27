@@ -3062,6 +3062,32 @@ public:
 		}
 	}
 
+	// 添加线条失败时，返回0，否则返回线条组的句柄
+	long	AddLineArray(POINT *pPointArray, int nCount, float fWidth, D3DCOLOR nColor)
+	{
+		if (m_pDxSurface)
+		{
+			return m_pDxSurface->AddD3DLineArray(pPointArray, nCount, fWidth, nColor);
+		}
+		else
+		{
+			assert(false);
+			return 0;
+		}
+	}
+
+	int	RemoveLineArray(long nIndex)
+	{
+		if (m_pDxSurface)
+		{
+			return m_pDxSurface->RemoveD3DLineArray(nIndex);
+		}
+		else
+		{
+			assert(false);
+			return -1;
+		}
+	}
 	int SetCallBack(IPC_CALLBACK nCallBackType, IN void *pUserCallBack, IN void *pUserPtr)
 	{
 		switch (nCallBackType)
@@ -3078,6 +3104,13 @@ public:
 		}
 			break;
 		case ExternDcDrawEx:
+			if (m_pDxSurface)
+			{
+				assert(false);
+				return IPC_Succeed;
+			}
+			else
+				return IPC_Error_DxError;
 			break;
 		case YUVCapture:
 		{

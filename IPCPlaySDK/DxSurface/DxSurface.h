@@ -21,6 +21,8 @@ using namespace boost;
 #include <wtypes.h>
 #include <process.h>
 #include <d3dx9.h>
+#include <list>
+#include <algorithm>
 #include "gpu_memcpy_sse4.h"
 #include "DxTrace.h"
 #include "../AutoLock.h"
@@ -104,6 +106,36 @@ using namespace  std::tr1;
 typedef void(*CopyFrameProc)(const BYTE *pSourceData, BYTE *pY, BYTE *pUV, size_t surfaceHeight, size_t imageHeight, size_t pitch);
 extern CopyFrameProc CopyFrameNV12;
 //extern CopyFrameProc CopyFrameYUV420P;
+
+struct  D3DLineArray
+{
+	D3DXVECTOR2* pLineArray;
+	float		 fWidth;
+	D3DCOLOR	 nColor;
+	int			 nCount;
+	int			 nIndex;
+	D3DLineArray()
+	{
+		ZeroMemory(this, sizeof(D3DLineArray));
+	}
+	~D3DLineArray()
+	{
+		SafeDeleteArray(pLineArray);
+	}
+};
+typedef shared_ptr<D3DLineArray> D3DLineArrayPtr;
+
+struct LineArrayFinder
+{
+	long		nIndex;
+	LineArrayFinder(long nInputIndex)
+		:nIndex(nInputIndex)
+	{}
+	bool operator()(D3DLineArrayPtr pLine)
+	{
+		return ((long)pLine.get() == nIndex);
+	}
+};
 
 
 #define WM_RENDERFRAME		WM_USER + 1024		// 帧渲染消息	WPARAM为CDxSurface指针,LPARAM为一个指向DxSurfaceRenderInfo结构的指针,
@@ -572,10 +604,12 @@ class CDxSurface
 {
 //protected:	
 public:
+	list<D3DLineArrayPtr>		m_listLine;
 	long					m_nVtableAddr;		// 虚函数表地址，该变量地址位置虚函数表之后，仅用于类初始化，请匆移动该变量的位置
 	D3DPRESENT_PARAMETERS	m_d3dpp;
 	CRITICAL_SECTION		m_csRender;			// 渲染临界区
 	CRITICAL_SECTION		m_csSnapShot;		// 截图临界区
+	CCriticalSectionProxyPtr m_pCriListLine;
 	bool					m_bD3DShared;		// IDirect3D9接口是否为共享 	
 	/*HWND					m_hWnd;*/
 	DWORD					m_dwExStyle;
@@ -601,9 +635,10 @@ public:
 	// AVFrame*				m_pAVFrame;
 	//HANDLE					m_hEventFrameReady; // 解码数据已经就绪
 	//HANDLE					m_hEventFrameCopied;// 解码数据复制完毕
-	// 外部绘制接口，提供外部接口，允许调用方自行绘制图像
-	ExternDrawProc			m_pExternDraw;
+	
+	ExternDrawProc			m_pExternDraw;		// 外部绘制接口，提供外部接口，允许调用方自行绘制图像
 	void*					m_pUserPtr;			// 外部调用者自定义指针
+	void*					m_pUserPtrEx;			// 外部调用者自定义指针
 	
 	bool					m_bFullWnd;			// 是否填满窗口,为True时，则填充整个窗口客户区，否则只按视频比例显示	
 	HWND					m_hFullScreenWindow;// 伪全屏窗口
@@ -624,14 +659,16 @@ public:
 	static CCriticalSectionProxyPtr m_csObjectCount;
 	bool					m_bWndSubclass;		// 是否子类化显示窗口,为ture时，则将显示窗口子类化,此时窗口消息会先被CDxSurface::WndProc优先处理,再由窗口函数处理
 	pDirect3DCreate9*		m_pDirect3DCreate9;
+	LPD3DXLINE              m_pD3DXLine = NULL; //Direct3D线对象  
+	D3DXVECTOR2*            m_pLineArray = NULL; //线段顶点 
 public:
-	
-	
+		
 	explicit CDxSurface(IDirect3D9 *pD3D9)
 	{
 		ZeroMemory(&m_nVtableAddr, sizeof(CDxSurface) - offsetof(CDxSurface,m_nVtableAddr));
 		InitializeCriticalSection(&m_csRender);
 		InitializeCriticalSection(&m_csSnapShot);
+		m_pCriListLine = make_shared<CCriticalSectionProxy>();
 		if (pD3D9)
 		{
 			m_bD3DShared = true;
@@ -787,6 +824,67 @@ public:
 		}
 	}
 
+	// 添加一组线条坐标
+	// 返回值为索条索引值，删除该线条时需要用到这个索引值
+	// 添加失败时返回0
+	virtual long AddD3DLineArray(POINT *pPointArray,int nCount,float fWidth,D3DCOLOR nColor)
+	{
+		if (!m_pD3DXLine)
+		{
+			// 创建Direct3D线对象  
+			if (FAILED(D3DXCreateLine(m_pDirect3DDevice, &m_pD3DXLine)))
+			{
+				return 0;
+			}
+		}
+		D3DLineArrayPtr pLineArray = make_shared<D3DLineArray>();
+		pLineArray->fWidth = fWidth;
+		pLineArray->nColor = nColor;
+		pLineArray->nCount = nCount;
+		pLineArray->pLineArray = new D3DXVECTOR2[nCount];
+		for (int i = 0; i < nCount; i++)
+		{
+			pLineArray->pLineArray[i].x = (float)pPointArray[i].x;
+			pLineArray->pLineArray[i].y = (float)pPointArray[i].y;
+		}
+		m_pCriListLine->Lock();
+		m_listLine.push_back(pLineArray);
+		m_pCriListLine->Unlock();
+		return (long)pLineArray.get();
+	}
+	// 删除线程
+	// nArrayIndex为AddD3DLineArray返回的索引值
+	int  RemoveD3DLineArray(long nArrayIndex)
+	{
+		CAutoLock lock(m_pCriListLine->Get());
+		auto it = find_if(m_listLine.begin(), m_listLine.end(),LineArrayFinder(nArrayIndex));
+		if (it != m_listLine.end())
+		{
+			m_listLine.erase(it);
+		}
+		return m_listLine.size();
+	}
+
+	virtual bool ProcessExternDraw()
+	{
+		if (!m_pD3DXLine)
+		{
+			return false;
+		}
+
+		CAutoLock lock(m_pCriListLine->Get());
+		if (m_listLine.size())
+		{
+			for (auto it = m_listLine.begin(); it != m_listLine.end(); it++)
+			{
+				m_pD3DXLine->SetWidth((*it)->fWidth);
+				m_pD3DXLine->SetAntialias(TRUE);
+				m_pD3DXLine->Draw((*it)->pLineArray, (*it)->nCount, (*it)->nColor);
+			}
+		}
+		
+		return true;
+	}
 	virtual bool ResetDevice()
 	{
 		TraceFunction();
@@ -1723,6 +1821,7 @@ _Failed:
 
 		// 处理外部分绘制接口
 		ExternDrawCall(hWnd, pBackSurface, pRenderRt);
+	
 		pBackSurface->Release();
 		m_pDirect3DDevice->EndScene();
 		// Present(RECT* pSourceRect,CONST RECT* pDestRect,HWND hDestWindowOverride,CONST RGNDATA* pDirtyRegion)
@@ -2162,8 +2261,8 @@ public:
 			FreeLibrary(m_hD3D9);
 			m_hD3D9 = NULL;
 		}
-		SafeDeleteArray(m_pLineData);		
-		SafeRelease(m_pLineVertex);
+		SafeDeleteArray(m_pLineArray);		
+		SafeRelease(m_pD3DXLine);
 	}
 
 	// 调用InitD3D之前必须先调用AttachWnd函数关联视频显示窗口
@@ -2815,137 +2914,34 @@ _Failed:
 // 		}
 	}
 
-	// Vertex buffer to hold the geometry.
-	LPDIRECT3DVERTEXBUFFER9 m_pLineVertex = NULL;
-
-	int nRow = 8;
-	int nCol = 8;
-	// 线条顶点结构
-	struct D3DGridVertex
+	// 添加一组线条坐标
+	// 返回值为索条索引值，删除该线条时需要用到这个索引值
+	// 添加失败时返回0
+	virtual long AddD3DLineArray(POINT *pPointArray, int nCount, float fWidth, D3DCOLOR nColor)
 	{
-		float x, y, z, rhw;
-		unsigned long color;
-	};
-
-	//-----------------------------------------------------------------------------
-	//纹理顶点结构
-	//-----------------------------------------------------------------------------
-	struct D3DTextureVertex
-	{
-		FLOAT x, y, z;    //顶点位置  
-		FLOAT u, v;          //顶点纹理坐标
-	};
-#define D3DFVF_CUSTOMVERTEX   (D3DFVF_XYZ|D3DFVF_TEX1)
-
-	// 纹理顶点结构
-	struct TextureVertex
-	{
-		float x, y, z;    //顶点位置  
-		float u, v;       //顶点纹理坐标
-	};
-
-#define D3DFVF_CUSTOMVERTEX   (D3DFVF_XYZ|D3DFVF_TEX1)
-	// Our custom FVF, which describes our custom vertex structure.
-#define D3DFVF_VERTEX (D3DFVF_XYZRHW | D3DFVF_DIFFUSE)
-	D3DGridVertex *m_pLineData = NULL;
-	//LPD3DXSPRITE   g_pSprite = NULL;    //点精灵
-	bool ProcessExternDraw(HWND hWnd, RECT rtClient)
-	{
-		unsigned long nColor = D3DCOLOR_XRGB(255, 0, 0);
-
-
-		POINT ptLeftTop = { rtClient.left, rtClient.top };
-		POINT ptRightBottom = { rtClient.right, rtClient.bottom };
-
-		if (!m_pLineData)
+		if (!m_pD3DXLine)
 		{
-			int nWidth = rtClient.right - rtClient.left;
-			int nHeight = rtClient.bottom - rtClient.top;
-			int nColWidth = nWidth / nCol;
-			int nRowHeight = nHeight / nRow;
-			int nRemainedWidth = nWidth - nColWidth*nCol;		// 平均分配宽度有盈余
-			int nRemainedHeight = nHeight - nRowHeight*nRow;	// 平均分配高度有盈余
-
-			m_pLineData = new D3DGridVertex[(nRow + nCol) * 2];
-			D3DGridVertex *pSrc = m_pLineData;
-			int nLineCount = 0;
-			// 画竖线
-			int nStartX = rtClient.left;
-			for (int i = 0; i < nCol; i++)
+			// 创建Direct3D线对象  
+			if (FAILED(D3DXCreateLine(m_pDirect3DDeviceEx, &m_pD3DXLine)))
 			{
-				if (i > 0 && nRemainedWidth > 0)
-				{
-					nStartX++;
-					nRemainedWidth--;
-				}
-				m_pLineData->x = nStartX;
-				m_pLineData->y = (float)rtClient.top;
-				m_pLineData->z = 0.0f;
-				m_pLineData->rhw = 1.0f;
-				m_pLineData->color = nColor;
-				TraceMsgA("[%02d] = (%.0f,%.0f)\t", i, m_pLineData->x, m_pLineData->y);
-				m_pLineData++;
-				m_pLineData->x = (float)nStartX;
-
-				m_pLineData->y = (float)rtClient.bottom;
-				m_pLineData->z = 0.0f;
-				m_pLineData->rhw = 1.0f;
-				m_pLineData->color = nColor;
-				TraceMsgA("(%.0f,%.0f).\n", m_pLineData->x, m_pLineData->y);
-				nStartX += nColWidth;
-				m_pLineData++;
-				nLineCount++;
+				return 0;
 			}
-			// 画横线
-			int nStartY = rtClient.top;
-			for (int i = 0; i < nRow; i++)
-			{
-				if (i > 0 && nRemainedHeight > 0)
-				{
-					nStartY++;
-					nRemainedHeight--;
-				}
-				m_pLineData->x = (float)rtClient.left;
-				m_pLineData->y = (float)nStartY;
-
-				m_pLineData->z = 0.0f;
-				m_pLineData->rhw = 1.0f;
-				m_pLineData->color = nColor;
-				TraceMsgA("[%02d] = (%.0f,%.0f)\t", i, m_pLineData->x, m_pLineData->y);
-				m_pLineData++;
-				m_pLineData->x = (float)rtClient.right;
-				m_pLineData->y = (float)nStartY;
-				m_pLineData->z = 0.0f;
-				m_pLineData->rhw = 1.0f;
-				m_pLineData->color = nColor;
-				TraceMsgA("(%.0f,%.0f).\n", m_pLineData->x, m_pLineData->y);
-				nStartY += nRowHeight;
-				m_pLineData++;
-				nLineCount++;
-			}
-			
-			m_pLineData = pSrc;
-			// 创建线条顶点	
-			int nSize = sizeof(D3DGridVertex)*(nRow + nCol) * 2;
-			// Create the vertex buffer.
-			if (FAILED(m_pDirect3DDeviceEx->CreateVertexBuffer(nSize, 0,D3DFVF_VERTEX, D3DPOOL_DEFAULT, &m_pLineVertex,	NULL)))
-				return false;
-
-
-			// Fill the vertex buffer.
-			void *ptr;
-			if (FAILED(m_pLineVertex->Lock(0, nSize,(void**)&ptr, 0))) 
-				return false;
-			memcpy(ptr, m_pLineData, nSize);
-			m_pLineVertex->Unlock();
 		}
-
-		m_pDirect3DDeviceEx->SetStreamSource(0, m_pLineVertex, 0, sizeof(D3DGridVertex));
-		m_pDirect3DDeviceEx->SetFVF(D3DFVF_VERTEX);
-		m_pDirect3DDeviceEx->DrawPrimitive(D3DPT_LINELIST, 0, nRow + nCol);
-		return true;
+		D3DLineArrayPtr pLineArray = make_shared<D3DLineArray>();
+		pLineArray->fWidth = fWidth;
+		pLineArray->nColor = nColor;
+		pLineArray->nCount = nCount;
+		pLineArray->pLineArray = new D3DXVECTOR2[nCount];
+		for (int i = 0; i < nCount; i++)
+		{
+			pLineArray->pLineArray[i].x = (float)pPointArray[i].x;
+			pLineArray->pLineArray[i].y = (float)pPointArray[i].y;
+		}
+		m_pCriListLine->Lock();
+		m_listLine.push_back(pLineArray);
+		m_pCriListLine->Unlock();
+		return (long)pLineArray.get();
 	}
-
 
 	bool Present(HWND hWnd = NULL, RECT *pClippedRT = nullptr, RECT *pRenderRt = nullptr)
 	{
@@ -2986,10 +2982,10 @@ _Failed:
 		//SaveRunTime();
 		// 处理外部分绘制接口
 		ExternDrawCall(hWnd, pBackSurface,pRenderRt);
+		//ExternDrawExCall(hWnd, pRenderRt);
 		//SaveRunTime();
 		SafeRelease(pBackSurface);
-// 		if (hRenderWnd)
-// 			ProcessExternDraw(hRenderWnd,dstrt);
+		ProcessExternDraw();
 		m_pDirect3DDeviceEx->EndScene();
 		if (hRenderWnd)
 			hr |= m_pDirect3DDeviceEx->PresentEx(NULL, pRenderRt, hRenderWnd, NULL, 0);

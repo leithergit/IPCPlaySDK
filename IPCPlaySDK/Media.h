@@ -45,6 +45,9 @@ enum IPC_CODEC
 	CODEC_AAC		 = FRAME_AAC
 };
 
+#define IPC_XRGB(r,g,b)			IPC_ARGB(0xff,r,g,b)
+#define IPC_ARGB(a,r,g,b)		((DWORD)((((a)&0xff)<<24)|(((r)&0xff)<<16)|(((g)&0xff)<<8)|((b)&0xff)))
+
 #pragma pack(push)
 #pragma pack(1)
 ///@brief IPC私有录像文件头

@@ -1126,3 +1126,36 @@ IPCPLAYSDK_API int ipcplay_SetRocateAngle(IN IPC_PLAYHANDLE hPlayHandle, RocateA
 	return pPlayer->YUV2RGB24(pY, pU, pV, nStrideY, nStrideUV, nWidth, nHeight, ppRGBBuffer, nBufferSize);
 }
 */
+
+/// @brief			设置一组线条坐标
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		pPointArray		线条坐标数组
+/// @param [in]		nCount			pPointArray中包含线条的坐标数量
+/// @param [in]		fWidth			线条宽度
+/// @param [in]		nColor			线条的颜色
+/// @return 操作成功时，返回线条组的句柄，否则返回0
+/// @remark	注意    设置好线条坐标后,SDK内部会根据坐标信息绘制线条，一组坐标的线条的颜色是相同的，并且是相连的，若要绘制多条不相连的线条，必须多次调用ipcplay_AddLineArray
+IPCPLAYSDK_API long ipcplay_AddLineArray(IN IPC_PLAYHANDLE hPlayHandle, POINT *pPointArray, int nCount, float fWidth, DWORD nColor)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	return pPlayer->AddLineArray(pPointArray, nCount, fWidth, nColor);
+}
+
+/// @brief			移除一组线条
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		nLineIndex		由ipcplay_AddLineArray返回的线条句柄
+/// @return 操作成功时返回SDK内存仍在绘制线条组的数量，否则返回-1
+IPCPLAYSDK_API int  ipcplay_RemoveLineArray(IN IPC_PLAYHANDLE hPlayHandle, long nLineIndex)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	pPlayer->RemoveLineArray(nLineIndex);
+	return IPC_Succeed;
+}
