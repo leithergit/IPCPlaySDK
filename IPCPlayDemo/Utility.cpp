@@ -2703,3 +2703,36 @@ stdshared_ptr<WCHAR> A2WString(IN LPCSTR str,int& OUT nReturnLength)
 	nReturnLength = MultiByteToWideChar(CP_ACP, 0, str, nLenA, pUnicode, nNeedBuffSize + 1);
 	return stdshared_ptr<WCHAR>(pUnicode);
 }
+
+BOOL ModifyWndStyle(HWND hWnd, int nStyleOffset, DWORD dwRemove, DWORD dwAdd, UINT nFlags)
+{
+	assert(hWnd != NULL);
+	DWORD dwStyle = ::GetWindowLong(hWnd, nStyleOffset);
+	DWORD dwNewStyle = (dwStyle & ~dwRemove) | dwAdd;
+	if (dwStyle == dwNewStyle)
+		return FALSE;
+
+	::SetWindowLong(hWnd, nStyleOffset, dwNewStyle);
+	if (nFlags != 0)
+	{
+		::SetWindowPos(hWnd, NULL, 0, 0, 0, 0,
+			SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | nFlags);
+	}
+	return TRUE;
+}
+
+
+BOOL IsCancelDialogMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		if (pMsg->wParam == VK_ESCAPE ||
+			pMsg->wParam == VK_RETURN ||
+			pMsg->wParam == VK_CANCEL)
+			return TRUE;
+		else
+			return FALSE;
+	}
+	else
+		return FALSE;
+}

@@ -124,7 +124,7 @@ BEGIN_MESSAGE_MAP(CIPCPlayDemoDlg, CDialogEx)
 	ON_WM_HOTKEY()
 	ON_BN_CLICKED(IDC_BUTTON_TRACECACHE, &CIPCPlayDemoDlg::OnBnClickedButtonTracecache)
 	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST_STREAMINFO, &CIPCPlayDemoDlg::OnLvnGetdispinfoListStreaminfo)
-	ON_MESSAGE(WM_TROGGLEFULLSCREEN,OnTroggleFullScreen)
+	ON_MESSAGE(WM_FRAME_LBUTTONDBLCLK,OnTroggleFullScreen)
 	ON_BN_CLICKED(IDC_BUTTON_STOPBACKWORD, &CIPCPlayDemoDlg::OnBnClickedButtonStopbackword)
 	ON_BN_CLICKED(IDC_BUTTON_STOPFORWORD, &CIPCPlayDemoDlg::OnBnClickedButtonStopforword)
 	ON_BN_CLICKED(IDC_BUTTON_SEEKNEXTFRAME, &CIPCPlayDemoDlg::OnBnClickedButtonSeeknextframe)
@@ -134,12 +134,19 @@ BEGIN_MESSAGE_MAP(CIPCPlayDemoDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_ENABLEHACCEL, &CIPCPlayDemoDlg::OnBnClickedCheckEnablehaccel)
 	ON_BN_CLICKED(IDC_CHECK_REFRESHPLAYER, &CIPCPlayDemoDlg::OnBnClickedCheckRefreshplayer)
 	ON_BN_CLICKED(IDC_CHECK_SETBORDER, &CIPCPlayDemoDlg::OnBnClickedCheckSetborder)
-	ON_BN_CLICKED(IDC_CHECK_EXTERNDRAW, &CIPCPlayDemoDlg::OnBnClickedCheckExterndraw)
+	//ON_BN_CLICKED(IDC_CHECK_EXTERNDRAW, &CIPCPlayDemoDlg::OnBnClickedCheckExterndraw)
 	ON_COMMAND(ID_FILE_ADDRENDERWND, &CIPCPlayDemoDlg::OnFileAddrenderwnd)
 	ON_COMMAND(ID_FILE_REMOVERENDERWND, &CIPCPlayDemoDlg::OnFileRemoveRenderWnd)
 	ON_BN_CLICKED(IDC_CHECK_DISPLAYRGB, &CIPCPlayDemoDlg::OnBnClickedCheckDisplayrgb)
 	ON_MESSAGE(WM_UPDATEYUV, OnUpdateYUV)
 	ON_COMMAND(ID_FILE_DISPLAYTRAN, &CIPCPlayDemoDlg::OnFileDisplaytran)
+	ON_BN_CLICKED(IDC_BUTTON_DIVIDEFRAME, &CIPCPlayDemoDlg::OnBnClickedButtonDivideframe)
+	ON_MESSAGE(WM_FRAME_LBUTTONDOWN,OnFrameLButtonDown)
+	ON_MESSAGE(WM_FRAME_LBUTTONUP,OnFrameLButtonUp)
+	ON_MESSAGE(WM_FRAME_MOUSEMOVE,OnFrameMouseMove)
+
+	ON_BN_CLICKED(IDC_CHECK_ENABLETRANSPARENT, &CIPCPlayDemoDlg::OnBnClickedCheckEnabletransparent)
+	ON_COMMAND(ID_FILE_DRAWLINE, &CIPCPlayDemoDlg::OnFileDrawline)
 END_MESSAGE_MAP()
 
 
@@ -279,7 +286,7 @@ BOOL CIPCPlayDemoDlg::OnInitDialog()
 	//int nStatus = VLDSetReportHook(VLD_RPTHOOK_INSTALL, VLD_REPORT);
 	SetDlgItemInt(IDC_EDIT_ROW, _Row);
 	SetDlgItemInt(IDC_EDIT_COL, _Col);
-	
+	m_nPanelCapture = -1;
 	CheckDlgButton(IDC_CHECK_REFRESHPLAYER, BST_CHECKED);
 	UINT nIDArreayTop[] = {
 		IDC_STATIC_ACCOUNT,
@@ -329,7 +336,11 @@ BOOL CIPCPlayDemoDlg::OnInitDialog()
 		IDC_BUTTON_SNAPSHOT,
 		IDC_COMBO_PICTYPE,
 		IDC_BUTTON_TRACECACHE,
-		IDC_COMBO_ROCATE
+		IDC_COMBO_ROCATE,
+		IDC_CHECK_SETBORDER,
+		IDC_CHECK_DISPLAYRGB,
+		IDC_BUTTON_TRACECACHE,
+		IDC_STATIC_ROCATEIMAGE
 	};
 	UINT nIDArrayBottom[] = {
 			IDC_STATIC_FILE,
@@ -356,10 +367,13 @@ BOOL CIPCPlayDemoDlg::OnInitDialog()
 			IDC_SLIDER_VOLUME,
 			IDC_STATIC_STATUS,
 			IDC_BUTTON_STOPFORWORD,
-			IDC_COMBO_PLAYSPEED
+			IDC_COMBO_PLAYSPEED,
+			IDC_CHECK_NODECODEDELAY,
+			IDC_CHECK_GSJ,
+			IDC_CHECK_ENABLETRANSPARENT
 		};
 	UINT nIDArrayCenter[] = { IDC_STATIC_FRAME };
-
+	m_pTransparentDlg = nullptr;
 	RECT rtDialog;
 	GetClientRect(&rtDialog);
 	CWnd *pItemWnd =  GetDlgItem(IDC_STATIC_ACCOUNT);
@@ -1131,22 +1145,8 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 				m_pPlayContext->hWndView = m_pVideoWndFrame->GetPanelWnd(nFreePanel);
 				m_pVideoWndFrame->SetPanelParam(nFreePanel, m_pPlayContext.get());
 				
-				m_nRow = GetDlgItemInt(IDC_EDIT_ROW);
-				m_nCol = GetDlgItemInt(IDC_EDIT_COL);
-				if (m_pVideoWndFrame->GetRows() != m_nRow ||
-					m_pVideoWndFrame->GetCols() != m_nCol)
-				{
-					if (m_nRow*m_nCol <= 36)
-					{
-						m_pVideoWndFrame->AdjustPanels(m_nRow, m_nCol);
-						m_pPlayContext->nPlayerCount = m_nRow*m_nCol;
-					}
-					else
-					{
-						m_pVideoWndFrame->AdjustPanels(36);
-						m_pPlayContext->nPlayerCount = 36;
-					}
-				}
+				OnBnClickedButtonDivideframe();
+				
 				m_pPlayContext->nPlayerCount = m_nCol*m_nRow;
 				bool bEnableAudio = (bool)IsDlgButtonChecked(IDC_CHECK_DISABLEAUDIO);
 				bool bFitWindow = (bool)IsDlgButtonChecked(IDC_CHECK_FITWINDOW);
@@ -2319,16 +2319,16 @@ void CIPCPlayDemoDlg::OnBnClickedCheckSetborder()
 }
 
 
-void CIPCPlayDemoDlg::OnBnClickedCheckExterndraw()
-{
-	if (m_pPlayContext && m_pPlayContext->hPlayer[0])
-	{
-		if (IsDlgButtonChecked(IDC_CHECK_EXTERNDRAW) == BST_CHECKED)
-			ipcplay_SetExternDrawCallBack(m_pPlayContext->hPlayer[0], ExternDCDraw, this);
-		else
-			ipcplay_SetExternDrawCallBack(m_pPlayContext->hPlayer[0], nullptr, nullptr);
-	}
-}
+// void CIPCPlayDemoDlg::OnBnClickedCheckExterndraw()
+// {
+// 	if (m_pPlayContext && m_pPlayContext->hPlayer[0])
+// 	{
+// 		if (IsDlgButtonChecked(IDC_CHECK_EXTERNDRAW) == BST_CHECKED)
+// 			ipcplay_SetExternDrawCallBack(m_pPlayContext->hPlayer[0], ExternDCDraw, this);
+// 		else
+// 			ipcplay_SetExternDrawCallBack(m_pPlayContext->hPlayer[0], nullptr, nullptr);
+// 	}
+// }
 
 
 void CIPCPlayDemoDlg::OnFileAddrenderwnd()
@@ -2400,4 +2400,143 @@ void CIPCPlayDemoDlg::OnBnClickedCheckDisplayrgb()
 void CIPCPlayDemoDlg::OnFileDisplaytran()
 {
 	//m_pVideoWndFrame->;
+}
+
+
+void CIPCPlayDemoDlg::OnBnClickedButtonDivideframe()
+{
+	m_nRow = GetDlgItemInt(IDC_EDIT_ROW);
+	m_nCol = GetDlgItemInt(IDC_EDIT_COL);
+	if (m_pVideoWndFrame->GetRows() != m_nRow ||
+		m_pVideoWndFrame->GetCols() != m_nCol)
+	{
+		if (m_nRow*m_nCol <= 36)
+		{
+			m_pVideoWndFrame->AdjustPanels(m_nRow, m_nCol);
+			//m_pPlayContext->nPlayerCount = m_nRow*m_nCol;
+		}
+		else
+		{
+			m_pVideoWndFrame->AdjustPanels(36);
+			//m_pPlayContext->nPlayerCount = 36;
+		}
+	}
+}
+
+
+char* MessageArray[] =
+{
+	"WM_FRAME_MOUSEMOVE",
+	"WM_FRAME_LBUTTONDOWN",
+	"WM_FRAME_LBUTTONUP",
+	"WM_FRAME_LBUTTONDBLCLK",
+	"WM_FRAME_RBUTTONDOWN",
+	"WM_FRAME_RBUTTONUP",
+	"WM_FRAME_RBUTTONDBLCLK",
+	"WM_FRAME_MBUTTONDOWN",
+	"WM_FRAME_MBUTTONUP",
+	"WM_FRAME_MBUTTONDBLCLK",
+	"WM_FRAME_MOUSEWHEEL"
+};
+BOOL CIPCPlayDemoDlg::PreTranslateMessage(MSG* pMsg)
+{	
+	if (pMsg->message >= WM_FRAME_MOUSEMOVE &&
+		pMsg->message <= WM_FRAME_MOUSEWHEEL)
+	{
+		TraceMsgA("%s Messsage = %s.\n", __FUNCTION__, MessageArray[pMsg->message - WM_FRAME_MOUSEMOVE]);
+	}
+	TraceMsgA("%s Messsage = %d.\n", __FUNCTION__, pMsg->message);
+	switch (pMsg->message)
+	{
+		case WM_FRAME_MOUSEMOVE:
+		{
+			break;
+		}
+		case WM_FRAME_LBUTTONDOWN:
+		{
+			break;
+		}
+		case WM_FRAME_LBUTTONUP:
+		{
+			break;
+		}
+		case WM_FRAME_LBUTTONDBLCLK:
+		{
+			break;
+		}
+		case WM_FRAME_RBUTTONDOWN:
+		{
+			break;
+		}
+		case WM_FRAME_RBUTTONUP:
+		{
+			break;
+		}
+		case WM_FRAME_RBUTTONDBLCLK:
+		{
+			break;
+		}
+		case WM_FRAME_MBUTTONDOWN:
+		{
+			break;
+		}
+		case WM_FRAME_MBUTTONUP:
+		{
+			break;
+		}
+		case WM_FRAME_MBUTTONDBLCLK:
+		{
+			break;
+		}
+		
+		case WM_FRAME_MOUSEWHEEL:
+		{
+			break;
+		}
+	}
+
+	return CDialogEx::PreTranslateMessage(pMsg);
+}
+
+
+void CIPCPlayDemoDlg::OnBnClickedCheckEnabletransparent()
+{
+	if (IsDlgButtonChecked(IDC_CHECK_ENABLETRANSPARENT) == BST_CHECKED)
+	{
+		int nPanel = m_pVideoWndFrame->GetCurPanel();
+		if (nPanel == -1)
+		{
+			AfxMessageBox(_T("ÇëÑ¡ÔñÒ»¸ö´°¸ñ."));
+			return;
+		}
+		RECT rtPanel =*(m_pVideoWndFrame->GetPanelRect(nPanel));
+		m_pVideoWndFrame->ClientToScreen(&rtPanel);
+		m_pTransparentDlg = new CTransparentDlg;
+		m_pTransparentDlg->Create(IDD_DIALOG_TRANSPARENT, this);
+		m_pTransparentDlg->ShowWindow(SW_SHOW);
+
+		m_pTransparentDlg->MoveWindow(&rtPanel);
+	}
+	else
+	{
+		delete m_pTransparentDlg;
+		m_pTransparentDlg = nullptr;
+	}
+}
+
+
+void CIPCPlayDemoDlg::OnFileDrawline()
+{
+	if (!m_pPlayContext->hPlayer[0])
+	{
+		AfxMessageBox(_T("ÉÐÎ´²¥·ÅÍ¼ÏñÏñ"));
+		return;
+	}
+	POINT ptArray[2] = { 0 };
+	ptArray[0].x = 0;
+	ptArray[0].y = 0;
+	ptArray[1].x = 1280;
+	ptArray[1].y = 720;
+	ipcplay_AddLineArray(m_pPlayContext->hPlayer[0], &ptArray[0], 2, 1, IPC_XRGB(255, 0, 0));
+		
 }

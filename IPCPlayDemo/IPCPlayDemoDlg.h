@@ -23,6 +23,7 @@ using namespace boost;
 #include "../ipcnetsdk/ipcMsgHead.h"
 #include "./DisplayYUV/YuvFrame.h"
 #include "DialogDisplayRGB24.h"
+#include "TransparentDlg.h"
 
 using namespace std;
 
@@ -611,7 +612,7 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-	
+
 	CListCtrl	m_wndStreamInfo;
 	CMFCEditBrowseCtrl	m_wndBrowseCtrl;
 	int			m_nListWidth;			// List控件的宽度
@@ -636,11 +637,11 @@ public:
 	list<shared_ptr<PlayerContext>>m_listPlayer;
 	// 相机实时码流捕捉回调函数
 	static void  __stdcall StreamCallBack(IN USER_HANDLE  lUserID,
-										IN REAL_HANDLE lStreamHandle,
-										IN int         nErrorType,
-										IN const char* pBuffer,
-										IN int         nDataLen,
-										IN void*       pUser);
+		IN REAL_HANDLE lStreamHandle,
+		IN int         nErrorType,
+		IN const char* pBuffer,
+		IN int         nDataLen,
+		IN void*       pUser);
 	static void __stdcall ExternDCDraw(HWND hWnd, HDC hDc, RECT rt, void *pUserPtr);
 	static void __stdcall PlayerCallBack(IPC_PLAYHANDLE hPlayHandle, void *pUserPtr);
 	shared_ptr<PlayerInfo>	m_pPlayerInfo;
@@ -657,9 +658,9 @@ public:
 	afx_msg void OnBnClickedButtonPause();
 	afx_msg void OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2);
 	FullScreenWnd m_FullScreen;
-	
+
 	HWND m_hFullScreen/* = NULL*/;
-	UINT m_nOriMonitorIndex/* = 0*/;	
+	UINT m_nOriMonitorIndex/* = 0*/;
 	void *m_hIOCP/* = NULL*/;
 	bool m_bClickPlayerSlide/* = false*/;
 	//shared_ptr<CDirectDraw> m_pDDraw/* = NULL*/;
@@ -676,7 +677,7 @@ public:
 	/// @param [in]		nTime		产生YUV数据的时间
 	/// @param [in]		pUserPtr	用户自定义指针
 	CFile *m_pYUVFile = nullptr;
-	
+
 	//list<YUVFramePtr> m_listYUVFrame;
 	CRITICAL_SECTION m_csYUVFrame;
 	shared_ptr<CDisplayYUVFrame> m_pYUVFrame;
@@ -698,7 +699,7 @@ public:
 		if (!pThis->m_pYUVFrame)
 		{
 			pThis->m_nYUVCount = 0;
-			pThis->m_pYUVFrame =make_shared<CDisplayYUVFrame>(pY, pU, pV, nStrideY, nStrideUV, nWidth, nHeight);
+			pThis->m_pYUVFrame = make_shared<CDisplayYUVFrame>(pY, pU, pV, nStrideY, nStrideUV, nWidth, nHeight);
 			pThis->m_nYUVCount++;
 		}
 		else
@@ -723,51 +724,52 @@ public:
 
 		return 0;
 	}
+
 	volatile bool bThreadRun = false;
 	HANDLE m_hRenderThread1 = nullptr;
 	HANDLE m_hRenderThread2 = nullptr;
-// 	static UINT __stdcall RenderThread1(void *p)
-// 	{
-// 		CTestDisplayDlg *pThis = (CTestDisplayDlg *)p;
-// 		DDSURFACEDESC2 ddsd = { 0 };
-// 		int nWidth = 1280;
-// 		int nHeight = 720;
-// 		CDirectDraw *m_pDDraw = new CDirectDraw();
-// 		FormatYV12::Build(ddsd, nWidth, nHeight);
-// 		HWND hRenderhWnd = pThis->GetDlgItem(IDC_STATIC_FRAME1)->m_hWnd;
-// 		m_pDDraw->Create<FormatYV12>(hRenderhWnd, ddsd);
-// 		shared_ptr<ImageSpace> m_pYUVImage = NULL;
-// 		m_pYUVImage = make_shared<ImageSpace>();
-// 		m_pYUVImage->dwLineSize[0] = nWidth;
-// 		m_pYUVImage->dwLineSize[1] = nWidth >> 1;
-// 		m_pYUVImage->dwLineSize[2] = nWidth >> 1;
-// 
-// 		int nSize = nHeight*nWidth * 3 / 2;
-// 		byte *pBuffer = new byte[nSize];
-// 		
-// 		YuvFile.Read(pBuffer, nSize);
-// 		m_pYUVImage->pBuffer[0] = (PBYTE)pBuffer;
-// 		m_pYUVImage->pBuffer[1] = (PBYTE)pBuffer + nWidth * nHeight;
-// 		m_pYUVImage->pBuffer[2] = (PBYTE)pBuffer + nWidth * 5 * nHeight / 4;
-// 		long nCount = 0;
-// 		while (pThis->bThreadRun)
-// 		{
-// 			m_pDDraw->Draw(*m_pYUVImage, nullptr, nullptr, true);
-// 			nCount++;
-// 		}
-// 		pThis->SetDlgItemInt(IDC_STATIC_RENDER1, nCount);
-// 		return 0;
-// 	}
-// 	
-// 	static UINT __stdcall RenderThread2(void *p)
-// 	{
-// 		CTestDisplayDlg *pThis = (CTestDisplayDlg *)p;
-// 		CDxSurfaceEx* m_pDxSurface = new CDxSurfaceEx();
-// 		AVFrame *PFrame = ;
-// 	
-// 
-// 		return 0;
-// 	}
+	// 	static UINT __stdcall RenderThread1(void *p)
+	// 	{
+	// 		CTestDisplayDlg *pThis = (CTestDisplayDlg *)p;
+	// 		DDSURFACEDESC2 ddsd = { 0 };
+	// 		int nWidth = 1280;
+	// 		int nHeight = 720;
+	// 		CDirectDraw *m_pDDraw = new CDirectDraw();
+	// 		FormatYV12::Build(ddsd, nWidth, nHeight);
+	// 		HWND hRenderhWnd = pThis->GetDlgItem(IDC_STATIC_FRAME1)->m_hWnd;
+	// 		m_pDDraw->Create<FormatYV12>(hRenderhWnd, ddsd);
+	// 		shared_ptr<ImageSpace> m_pYUVImage = NULL;
+	// 		m_pYUVImage = make_shared<ImageSpace>();
+	// 		m_pYUVImage->dwLineSize[0] = nWidth;
+	// 		m_pYUVImage->dwLineSize[1] = nWidth >> 1;
+	// 		m_pYUVImage->dwLineSize[2] = nWidth >> 1;
+	// 
+	// 		int nSize = nHeight*nWidth * 3 / 2;
+	// 		byte *pBuffer = new byte[nSize];
+	// 		
+	// 		YuvFile.Read(pBuffer, nSize);
+	// 		m_pYUVImage->pBuffer[0] = (PBYTE)pBuffer;
+	// 		m_pYUVImage->pBuffer[1] = (PBYTE)pBuffer + nWidth * nHeight;
+	// 		m_pYUVImage->pBuffer[2] = (PBYTE)pBuffer + nWidth * 5 * nHeight / 4;
+	// 		long nCount = 0;
+	// 		while (pThis->bThreadRun)
+	// 		{
+	// 			m_pDDraw->Draw(*m_pYUVImage, nullptr, nullptr, true);
+	// 			nCount++;
+	// 		}
+	// 		pThis->SetDlgItemInt(IDC_STATIC_RENDER1, nCount);
+	// 		return 0;
+	// 	}
+	// 	
+	// 	static UINT __stdcall RenderThread2(void *p)
+	// 	{
+	// 		CTestDisplayDlg *pThis = (CTestDisplayDlg *)p;
+	// 		CDxSurfaceEx* m_pDxSurface = new CDxSurfaceEx();
+	// 		AVFrame *PFrame = ;
+	// 	
+	// 
+	// 		return 0;
+	// 	}
 	static void __stdcall CaptureYUVProc(IPC_PLAYHANDLE hPlayHandle,
 		const unsigned char* pYUV,
 		int nYUVSize,
@@ -779,31 +781,31 @@ public:
 		void *pUserPtr)
 	{
 		CIPCPlayDemoDlg *pThis = (CIPCPlayDemoDlg *)pUserPtr;
-// 以下代码片段用于把一帧YUV保存数据保存到文件中
-// 		if (pThis->m_pYUVFile)
-// 		{
-// 			pThis->m_pYUVFile->Write(pYUV, nYUVSize);
-// 			pThis->m_pYUVFile->Close();
-// 			delete pThis->m_pYUVFile;
-// 			pThis->m_pYUVFile = nullptr;
-// 		}	
+		// 以下代码片段用于把一帧YUV保存数据保存到文件中
+		// 		if (pThis->m_pYUVFile)
+		// 		{
+		// 			pThis->m_pYUVFile->Write(pYUV, nYUVSize);
+		// 			pThis->m_pYUVFile->Close();
+		// 			delete pThis->m_pYUVFile;
+		// 			pThis->m_pYUVFile = nullptr;
+		// 		}	
 
 		if (!pThis->m_pYUVFrame)
 		{
-// 			pThis->m_nYUVCount = 0;
-// 			pThis->m_pYUVFrame =make_shared<CDisplayYUVFrame>(pYUV, nStrideY, nStrideY>>1, nWidth, nHeight);
-// 			pThis->m_nYUVCount++;
+			// 			pThis->m_nYUVCount = 0;
+			// 			pThis->m_pYUVFrame =make_shared<CDisplayYUVFrame>(pYUV, nStrideY, nStrideY>>1, nWidth, nHeight);
+			// 			pThis->m_nYUVCount++;
 		}
 		else
 		{
 			if (pThis->m_nYUVCount % 25 == 0)
 			{
-// 				if (TryEnterCriticalSection(&pThis->m_csYUVFrame))
-// 				{
-// 					pThis->m_pYUVFrame->UpdateYUV(pYUV);
-// 					pThis->PostMessage(WM_UPDATEYUV, (WPARAM)hPlayHandle);
-// 					LeaveCriticalSection(&pThis->m_csYUVFrame);
-// 				}
+				// 				if (TryEnterCriticalSection(&pThis->m_csYUVFrame))
+				// 				{
+				// 					pThis->m_pYUVFrame->UpdateYUV(pYUV);
+				// 					pThis->PostMessage(WM_UPDATEYUV, (WPARAM)hPlayHandle);
+				// 					LeaveCriticalSection(&pThis->m_csYUVFrame);
+				// 				}
 			}
 			pThis->m_nYUVCount++;
 		}
@@ -813,15 +815,15 @@ public:
 
 	/// @brief		解码后YVU数据回调
 	static void __stdcall YUVFilterProc(IPC_PLAYHANDLE hPlayHandle,
-										const unsigned char* pY,
-										const unsigned char* pU,
-										const unsigned char* pV,
-										int nStrideY,
-										int nStrideUV,
-										int nWidth,
-										int nHeight,
-										INT64 nTime,
-										void *pUserPtr)
+		const unsigned char* pY,
+		const unsigned char* pU,
+		const unsigned char* pV,
+		int nStrideY,
+		int nStrideUV,
+		int nWidth,
+		int nHeight,
+		INT64 nTime,
+		void *pUserPtr)
 	{
 		CIPCPlayDemoDlg *pThis = (CIPCPlayDemoDlg *)pUserPtr;
 		if (!pThis->m_pPlayContext->hPlayer[0])
@@ -829,30 +831,30 @@ public:
 			return;
 		}
 
-// 		if (!pThis->m_pDDraw)
-// 		{
-// 			PlayerInfo pi;
-// 			if (ipcplay_GetPlayerInfo(pThis->m_pPlayContext->hPlayer[0], &pi) != IPC_Succeed)
-// 			{
-// 				assert(false);
-// 				return;
-// 			}
-// 			//构造表面  
-// 			DDSURFACEDESC2 ddsd = { 0 };
-// 			FormatYV12::Build(ddsd, pi.nVideoWidth, pi.nVideoHeight);
-// 			pThis->m_pDDraw = make_shared<CDirectDraw>();
-// 			pThis->m_pDDraw->Create<FormatYV12>(pThis->m_pVideoWndFrame->GetPanelWnd(1), ddsd);
-// 			pThis->m_pYUVImage = make_shared<ImageSpace>();
-// 			pThis->m_pYUVImage->dwLineSize[0] = nWidth;
-// 			pThis->m_pYUVImage->dwLineSize[1] = nWidth >> 1;
-// 			pThis->m_pYUVImage->dwLineSize[2] = nWidth >> 1;
-// 		}
-// 		pThis->m_pYUVImage->pBuffer[0] = (PBYTE)pY;
-// 		pThis->m_pYUVImage->pBuffer[1] = (PBYTE)pU;
-// 		pThis->m_pYUVImage->pBuffer[2] = (PBYTE)pV;
-// 		//g_pVca->ProcessYuv(pY, pU, pV, nStrideY, nStrideUV, nWidth, nHeight);
-// 
-// 		pThis->m_pDDraw->Draw(*pThis->m_pYUVImage,true);
+		// 		if (!pThis->m_pDDraw)
+		// 		{
+		// 			PlayerInfo pi;
+		// 			if (ipcplay_GetPlayerInfo(pThis->m_pPlayContext->hPlayer[0], &pi) != IPC_Succeed)
+		// 			{
+		// 				assert(false);
+		// 				return;
+		// 			}
+		// 			//构造表面  
+		// 			DDSURFACEDESC2 ddsd = { 0 };
+		// 			FormatYV12::Build(ddsd, pi.nVideoWidth, pi.nVideoHeight);
+		// 			pThis->m_pDDraw = make_shared<CDirectDraw>();
+		// 			pThis->m_pDDraw->Create<FormatYV12>(pThis->m_pVideoWndFrame->GetPanelWnd(1), ddsd);
+		// 			pThis->m_pYUVImage = make_shared<ImageSpace>();
+		// 			pThis->m_pYUVImage->dwLineSize[0] = nWidth;
+		// 			pThis->m_pYUVImage->dwLineSize[1] = nWidth >> 1;
+		// 			pThis->m_pYUVImage->dwLineSize[2] = nWidth >> 1;
+		// 		}
+		// 		pThis->m_pYUVImage->pBuffer[0] = (PBYTE)pY;
+		// 		pThis->m_pYUVImage->pBuffer[1] = (PBYTE)pU;
+		// 		pThis->m_pYUVImage->pBuffer[2] = (PBYTE)pV;
+		// 		//g_pVca->ProcessYuv(pY, pU, pV, nStrideY, nStrideUV, nWidth, nHeight);
+		// 
+		// 		pThis->m_pDDraw->Draw(*pThis->m_pYUVImage,true);
 		// todo:把YUV数据整合为YV12数据，并交给VCA引擎进行分析，把分析交给VCA Render渲染，再把渲染结果还到pY,pU,pV当中
 
 	}
@@ -864,21 +866,21 @@ public:
 		if (!m_hFullScreen)
 		{// 切到全屏
 			m_hFullScreen = (HWND)W;
-			HWND hDesktop = ::GetDesktopWindow();	
+			HWND hDesktop = ::GetDesktopWindow();
 			m_nOriMonitorIndex = GetMonitorIndexFromWnd(m_hWnd);
 			m_FullScreen.SetWnd(m_hFullScreen);
 			::SetParent(m_hFullScreen, ::GetDesktopWindow());
 			POINT pt;
 			pt.x = 0;
 			pt.y = 0;
-			MoveWnd2Monitor(m_hFullScreen, m_nOriMonitorIndex, pt);				
+			MoveWnd2Monitor(m_hFullScreen, m_nOriMonitorIndex, pt);
 			m_FullScreen.SwitchFullScreen();
 			ipcplay_Reset(m_pPlayContext->hPlayer[0], m_hFullScreen);
 			ShowWindow(SW_HIDE);
 		}
 		else
 		{// 切回窗口
-			m_FullScreen.Restore();			
+			m_FullScreen.Restore();
 			::SetParent(m_hFullScreen, m_pVideoWndFrame->GetSafeHwnd());
 			ipcplay_Reset(m_pPlayContext->hPlayer[0], m_hFullScreen);
 			m_hFullScreen = NULL;
@@ -895,7 +897,7 @@ public:
 	ATOM m_nHotkeyID/* = 0*/;
 	struct DvoStream
 	{
-		DvoStream(byte *pBuffer,int nBufferSize)
+		DvoStream(byte *pBuffer, int nBufferSize)
 		{
 			pStream = new byte[nBufferSize];
 			nStreamSize = nBufferSize;
@@ -924,7 +926,7 @@ public:
 	}
 	// 接收数据流
 	// 这里只是从流队列中取出数据来模拟接收操作
-	int RecvStream(DvoStreamPtr &pStream,bool &bRecved)
+	int RecvStream(DvoStreamPtr &pStream, bool &bRecved)
 	{
 		CAutoLock lock(&m_csListStream);
 		if (m_listStream.size() > 0)
@@ -937,20 +939,20 @@ public:
 			bRecved = false;
 		return m_listStream.size();
 	}
-		
+
 	// 解码录像文件线程,一般在服务端,把一帧数的解析出来后放到流队列中
 	// 在实际的流媒体服务器中，应该是把数据直接发送到播放客户端去
 	static  DWORD WINAPI ThreadSendStream(void *p)
 	{
 		CIPCPlayDemoDlg *pThis = (CIPCPlayDemoDlg *)p;
-		if (!pThis->m_pPlayContext || 
-			!pThis->m_pPlayContext->hPlayer )
+		if (!pThis->m_pPlayContext ||
+			!pThis->m_pPlayContext->hPlayer)
 			return 0;
 		shared_ptr<PlayerContext>pPlayCtx = pThis->m_pPlayContext;
 		IPCFrameHeader Header;
 		byte *pFrameBuffer = NULL;
 		UINT nFrameSize = 0;
-		
+
 		int nDvoError = 0;
 		int nStreamListSize = 0;
 		int nFrames = 0;
@@ -960,12 +962,12 @@ public:
 			if (nStreamListSize < 8)
 			{
 				int nFrameType = 0;
- 				if (nDvoError = ipcplay_GetFrame(pPlayCtx->hPlayer[0], &pFrameBuffer, nFrameSize) != IPC_Succeed)
- 				{
- 					TraceMsgA("%s ipcplay_GetFrame Failed:%d.\n", __FUNCTION__, nDvoError);
- 					Sleep(5);
- 					continue;
- 				}
+				if (nDvoError = ipcplay_GetFrame(pPlayCtx->hPlayer[0], &pFrameBuffer, nFrameSize) != IPC_Succeed)
+				{
+					TraceMsgA("%s ipcplay_GetFrame Failed:%d.\n", __FUNCTION__, nDvoError);
+					Sleep(5);
+					continue;
+				}
 				nFrames++;
 				nStreamListSize = pThis->SendStream(pFrameBuffer, nFrameSize);
 			}
@@ -1004,18 +1006,18 @@ public:
 					continue;
 				}
 			}
-			
+
 			nLoopCount++;
 			if (nDvoError = ipcplay_InputStream(pPlayCtx->hPlayerStream, pStream->pStream, pStream->nStreamSize) != IPC_Succeed)
 			{
-				
+
 				int nDvoError = ipcplay_GetPlayerInfo(pPlayCtx->hPlayerStream, pThis->m_pPlayerInfo.get());
 				TraceMsgA("%s ipcplay_InputStream Failed:%d\tVideocache size = %d.\n", __FUNCTION__, nDvoError, pThis->m_pPlayerInfo->nCacheSize);
 				bInputList = false;
 				Sleep(5);
 				continue;
 			}
-			
+
 			int nDvoError = ipcplay_GetPlayerInfo(pPlayCtx->hPlayerStream, pThis->m_pPlayerInfo.get());
 			if (nDvoError == IPC_Succeed ||
 				nDvoError == IPC_Error_FileNotExist)
@@ -1037,10 +1039,78 @@ public:
 	afx_msg void OnBnClickedCheckEnablehaccel();
 	afx_msg void OnBnClickedCheckRefreshplayer();
 	afx_msg void OnBnClickedCheckSetborder();
-	afx_msg void OnBnClickedCheckExterndraw();
+	//afx_msg void OnBnClickedCheckExterndraw();
 	afx_msg void OnFileAddrenderwnd();
 	afx_msg void OnFileRemoveRenderWnd();
 	int  nCurPannelID = 0;
 	afx_msg void OnBnClickedCheckDisplayrgb();
 	afx_msg void OnFileDisplaytran();
+	afx_msg void OnBnClickedButtonDivideframe();
+
+	int		m_nPanelCapture;
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	POINT m_ptMove;
+	int		m_nPanelID;
+
+	POINT m_ptStart;
+	POINT m_ptStop;
+	long  m_nLineID = -1;
+	bool  m_bLButtondown = false;
+
+	afx_msg LRESULT OnFrameLButtonDown(WPARAM W, LPARAM L)
+	{
+		//		int nPanel = W;	
+		// 		RECT rtPanel = *(m_pVideoWndFrame->GetPanelRect(nPanel));
+		// 		m_pVideoWndFrame->ClientToScreen(&rtPanel);
+		m_ptStart.x = LOWORD(L);
+		m_ptStart.y = HIWORD(L);
+		m_bLButtondown = true;
+
+		return 0;
+	}
+	afx_msg LRESULT OnFrameLButtonUp(WPARAM W, LPARAM L)
+	{
+		if (!m_pPlayContext || !m_pPlayContext->hPlayer[0])
+		{
+			AfxMessageBox(_T("尚未播放图像像"));
+			return 0;
+		}
+		m_ptStop.x = LOWORD(L);
+		m_ptStop.y = HIWORD(L);
+		POINT ptArray[2] = { 0 };
+		ptArray[0] = m_ptStart;
+		ptArray[1] = m_ptStop;
+
+		if (m_nLineID != -1)
+		{
+			ipcplay_RemoveLineArray(m_pPlayContext->hPlayer[0], m_nLineID);
+		}
+
+		m_nLineID = ipcplay_AddLineArray(m_pPlayContext->hPlayer[0], &ptArray[0], 2, 2, IPC_XRGB(255, 0, 0));
+		m_bLButtondown = false;
+		return 0;
+	}
+	afx_msg LRESULT OnFrameMouseMove(WPARAM W, LPARAM L)
+	{
+		if (!m_bLButtondown ||
+			!m_pPlayContext || 
+			!m_pPlayContext->hPlayer[0])
+			return 0;
+		m_ptStop.x = LOWORD(L);
+		m_ptStop.y = HIWORD(L);
+		POINT ptArray[2] = { 0 };
+		ptArray[0] = m_ptStart;
+		ptArray[1] = m_ptStop;
+		if (m_nLineID != -1)
+		{
+			ipcplay_RemoveLineArray(m_pPlayContext->hPlayer[0], m_nLineID);
+		}
+		
+		m_nLineID = ipcplay_AddLineArray(m_pPlayContext->hPlayer[0], &ptArray[0], 2, 2, IPC_XRGB(255, 0, 0));
+		
+		return 0;
+	}
+	afx_msg void OnBnClickedCheckEnabletransparent();
+	CTransparentDlg	*m_pTransparentDlg;
+	afx_msg void OnFileDrawline();
 };

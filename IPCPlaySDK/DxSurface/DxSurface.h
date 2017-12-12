@@ -624,6 +624,8 @@ public:
 	D3DFORMAT				m_nD3DFormat;
 	UINT					m_nVideoWidth;
 	UINT					m_nVideoHeight;
+	UINT					m_nWndWidth;
+	UINT					m_nWndHeight;
 	bool					m_bInitialized;	
 	HMODULE					m_hD3D9;
 	shared_ptr<PixelConvert>m_pPixelConvert;
@@ -709,6 +711,7 @@ public:
 		}
 		InitializeCriticalSection(&m_csRender);
 		InitializeCriticalSection(&m_csSnapShot);
+		m_pCriListLine = make_shared<CCriticalSectionProxy>();
 		//m_hEventFrameReady	= CreateEvent(NULL,FALSE,FALSE,NULL);
 		//m_hEventFrameCopied = CreateEvent(NULL,FALSE,FALSE, NULL);
 		m_hEventSnapShot	= CreateEvent(NULL,FALSE,FALSE,NULL);
@@ -865,23 +868,42 @@ public:
 		return m_listLine.size();
 	}
 
-	virtual bool ProcessExternDraw()
+	virtual bool ProcessExternDraw(HWND hWnd)
 	{
 		if (!m_pD3DXLine)
 		{
 			return false;
 		}
-
-		CAutoLock lock(m_pCriListLine->Get());
-		if (m_listLine.size())
+		if (hWnd)
 		{
-			for (auto it = m_listLine.begin(); it != m_listLine.end(); it++)
+			RECT rtWnd;
+			GetWindowRect(hWnd,&rtWnd);
+			UINT nWndWidth = RectWidth(rtWnd);
+			UINT nWndHeight = RectHeight(rtWnd);
+			if (nWndWidth == 0 ||
+				nWndHeight == 0)
+				return true;
+			
+			CAutoLock lock(m_pCriListLine->Get());
+			if (m_listLine.size())
 			{
-				m_pD3DXLine->SetWidth((*it)->fWidth);
-				m_pD3DXLine->SetAntialias(TRUE);
-				m_pD3DXLine->Draw((*it)->pLineArray, (*it)->nCount, (*it)->nColor);
+				for (auto it = m_listLine.begin(); it != m_listLine.end(); it++)
+				{
+					m_pD3DXLine->SetWidth((*it)->fWidth);
+					m_pD3DXLine->SetAntialias(TRUE);
+					D3DXVECTOR2* pLineArray = new D3DXVECTOR2[(*it)->nCount];
+					D3DXVECTOR2* pLineArraySrc = (*it)->pLineArray;
+					for (int nIndex = 0; nIndex < (*it)->nCount; nIndex++)
+					{
+						pLineArray[nIndex].x = pLineArraySrc[nIndex].x*m_nVideoWidth / nWndWidth;
+						pLineArray[nIndex].y = pLineArraySrc[nIndex].y*m_nVideoHeight / nWndHeight;
+					}
+					m_pD3DXLine->Draw(pLineArray, (*it)->nCount, (*it)->nColor);
+					delete[]pLineArray;
+				}
 			}
 		}
+
 		
 		return true;
 	}
@@ -2985,7 +3007,7 @@ _Failed:
 		//ExternDrawExCall(hWnd, pRenderRt);
 		//SaveRunTime();
 		SafeRelease(pBackSurface);
-		ProcessExternDraw();
+		ProcessExternDraw(hWnd);
 		m_pDirect3DDeviceEx->EndScene();
 		if (hRenderWnd)
 			hr |= m_pDirect3DDeviceEx->PresentEx(NULL, pRenderRt, hRenderWnd, NULL, 0);
