@@ -4279,7 +4279,7 @@ public:
 			//SaveRunTime();
 			if (!pDecodec->InitDecoder(nCodecID, pThis->m_nVideoWidth, pThis->m_nVideoHeight, pThis->m_bEnableHaccel))
 			{
-				pThis->OutputMsg("%s Failed in Initializing Decoder.\n", __FUNCTION__);
+				pThis->OutputMsg("%s Failed in Initializing Decoder£¬CodeCID =%d,Width = %d,Height = %d,HWAccel = %d.\n", __FUNCTION__, nCodecID,pThis->m_nVideoWidth, pThis->m_nVideoHeight, pThis->m_bEnableHaccel);
 #ifdef _DEBUG
 				pThis->OutputMsg("%s \tObject:%d Line %d Time = %d.\n", __FUNCTION__, pThis->m_nObjIndex, __LINE__, timeGetTime() - pThis->m_nLifeTime);
 #endif
