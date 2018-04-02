@@ -143,7 +143,7 @@ class CAvRegister
 public:
 	CAvRegister()
 	{
-		av_register_all();
+		// av_register_all();
 		// 去除注释可设置FFMPEG的日志输出回调，便于观看日志
 		// av_log_set_callback(ff_log_callback);	
 	}
@@ -1002,14 +1002,15 @@ public:
 		if (m_nManufacturer == FFMPEG)
 		{
 			int nAvError = avcodec_send_packet(m_pAVCtx, pPacket);
-			if (0 == nAvError)
+			if (nAvError >= 0)
 			{
 				nAvError = avcodec_receive_frame(m_pAVCtx, pAvFrame);
-				if (0 == nAvError)
-					got_picture = 1;
-				else
+				if (nAvError == AVERROR(EAGAIN) || nAvError == AVERROR_EOF)
+					return nAvError;
+				else if (nAvError < 0)
 					got_picture = 0;
-				
+				else
+					got_picture = 1;
 			}
 			return nAvError;
 			//return avcodec_decode_video2(m_pAVCtx, pAvFrame, &got_picture, pPacket);

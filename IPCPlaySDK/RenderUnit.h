@@ -14,6 +14,8 @@ struct RenderWnd
 	{
 		if (prtBorder)
 		{
+			if (this->pRtBorder)
+				delete this->pRtBorder;
 			this->pRtBorder = new RECT;
 			CopyRect(this->pRtBorder, prtBorder);
 			this->bPercent = bPercent;

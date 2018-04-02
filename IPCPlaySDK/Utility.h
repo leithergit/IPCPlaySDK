@@ -40,8 +40,8 @@ typedef BOOL (*KernelIoControlProc)(DWORD , LPVOID , DWORD , LPVOID , DWORD , LP
 
 #define  _TraceMsg TraceMsg
 
-#define RectWidth(rt)	(rt.right - rt.left)
-#define RectHeight(rt)	(rt.bottom - rt.top)
+#define RectWidth(rt)	((rt).right - (rt).left)
+#define RectHeight(rt)	((rt).bottom - (rt).top)
 
 #ifdef _UNICODE
 #ifdef _DEBUG

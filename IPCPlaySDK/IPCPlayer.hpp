@@ -1737,17 +1737,31 @@ public:
 	///│                  │                  │
 	///└─────────────────────────────────────┘
 	/// @remark 边界的上下左右位置不可颠倒
-	void SetBorderRect(HWND hWnd,LPRECT pRectBorder, bool bPercent = false)
+	int SetBorderRect(HWND hWnd,LPRECT pRectBorder, bool bPercent = false)
 	{
 		RECT rtVideo = {0};
 // 		rtVideo.left = rtBorder.left;
 // 		rtVideo.right = m_nVideoWidth - rtBorder.right;
 // 		rtVideo.top += rtBorder.top;
 // 		rtVideo.bottom = m_nVideoHeight - rtBorder.bottom;
+		if (bPercent)
+		{
+			if ((pRectBorder->left + pRectBorder->right) >= 100 ||
+				(pRectBorder->top + pRectBorder->bottom) >= 100)
+				return IPC_Error_InvalidParameters;
+		}
+		else
+		{
+			if ((pRectBorder->left + pRectBorder->right) >= m_nVideoWidth ||
+				(pRectBorder->top + pRectBorder->bottom) >= m_nVideoHeight)
+				return IPC_Error_InvalidParameters;
+		}
+		
 		Autolock(&m_cslistRenderWnd);
 		auto itFind = find_if(m_listRenderWnd.begin(), m_listRenderWnd.end(), WndFinder(hWnd));
 		if (itFind != m_listRenderWnd.end())
 			(*itFind)->SetBorder(pRectBorder, bPercent);
+		return IPC_Succeed;
 	}
 
 	void RemoveBorderRect(HWND hWnd)
@@ -3071,7 +3085,7 @@ public:
 		}
 		else
 		{
-			assert(false);
+			//assert(false);
 			return 0;
 		}
 	}
@@ -3084,7 +3098,7 @@ public:
 		}
 		else
 		{
-			assert(false);
+			//assert(false);
 			return -1;
 		}
 	}
@@ -4586,6 +4600,7 @@ public:
 				av_packet_unref(pAvPacket);
 				if (nAvError < 0)
 				{
+					av_frame_unref(pAvFrame);
 					av_strerror(nAvError, szAvError, 1024);
 					continue;
 				}

@@ -604,7 +604,7 @@ class CDxSurface
 {
 //protected:	
 public:
-	list<D3DLineArrayPtr>		m_listLine;
+	list<D3DLineArrayPtr>	m_listLine;
 	long					m_nVtableAddr;		// 虚函数表地址，该变量地址位置虚函数表之后，仅用于类初始化，请匆移动该变量的位置
 	D3DPRESENT_PARAMETERS	m_d3dpp;
 	CRITICAL_SECTION		m_csRender;			// 渲染临界区
@@ -2021,16 +2021,16 @@ public:
 
 	// 3.输出显卡信息,Description描述，厂商型号，Dircet3D的驱动Driver版本号，显卡的唯一标识号：DeviceIdentifier
 	// GetAdapterCount()，GetAdapterIdentifier的使用。
-	void PrintDisplayInfo()
+	void PrintDisplayInfo(IDirect3D9* pDirect3D9)
 	{
-		if(m_pDirect3D9 == NULL)
+		if (pDirect3D9 == NULL)
 			return;
 
 		D3DADAPTER_IDENTIFIER9 adapterID; // Used to store device info
-		DWORD dwDisplayCount = m_pDirect3D9->GetAdapterCount();
+		DWORD dwDisplayCount = pDirect3D9->GetAdapterCount();
 		for(DWORD i = 0; i < dwDisplayCount; i++)
 		{
-			if( m_pDirect3D9->GetAdapterIdentifier( i/*D3DADAPTER_DEFAULT*/, 0,&adapterID ) != D3D_OK )
+			if (pDirect3D9->GetAdapterIdentifier(i/*D3DADAPTER_DEFAULT*/, 0, &adapterID) != D3D_OK)
 				return;
 
 			DxTraceMsg("Driver: %s.\n",adapterID.Driver);
@@ -2152,7 +2152,7 @@ public:
 			return false;
 		}
 		// 3.显示显卡的信息
-		PrintDisplayInfo();
+		PrintDisplayInfo(m_pDirect3D9);
 
 		D3DDISPLAYMODE d3ddm;
 		if(FAILED(m_pDirect3D9->GetAdapterDisplayMode(D3DADAPTER_DEFAULT,&d3ddm)))
@@ -2258,6 +2258,9 @@ public:
 			DxTraceMsg("%s Direct3DCreate9Ex failed.\n",__FUNCTION__);
 			assert(false);
 		}
+#ifdef _DEBUG
+		PrintDisplayInfo(m_pDirect3D9Ex);
+#endif
 	}
 #ifdef _DEBUG
 	virtual void OutputDxPtr()

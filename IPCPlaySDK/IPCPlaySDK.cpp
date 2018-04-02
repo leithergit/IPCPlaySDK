@@ -18,7 +18,7 @@
 #include "IPCPlayer.hpp"
 
 CAvRegister CIPCPlayer::avRegister;
-CTimerQueue CIPCPlayer::m_TimeQueue;
+//CTimerQueue CIPCPlayer::m_TimeQueue;
 CCriticalSectionProxyPtr CIPCPlayer::m_csDsoundEnum = make_shared<CCriticalSectionProxy>();
 shared_ptr<CDSoundEnum> CIPCPlayer::m_pDsoundEnum = nullptr;/*= make_shared<CDSoundEnum>()*/;	///< ÒôÆµÉè±¸Ã¶¾ÙÆ÷
 #ifdef _DEBUG
@@ -274,10 +274,9 @@ IPCPLAYSDK_API int ipcplay_SetBorderRect(IN IPC_PLAYHANDLE hPlayHandle,HWND hWnd
 	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
 	if (pPlayer->nSize != sizeof(CIPCPlayer))
 		return IPC_Error_InvalidParameters;
-	if (!pRectBorder && (pRectBorder->left < 0 || pRectBorder->right < 0 || pRectBorder->top < 0 || pRectBorder->bottom < 0))
+	if (!pRectBorder || (pRectBorder->left < 0 || pRectBorder->right < 0 || pRectBorder->top < 0 || pRectBorder->bottom < 0))
 		return IPC_Error_InvalidParameters;
-	pPlayer->SetBorderRect(hWnd, pRectBorder, bPercent);
-	return IPC_Succeed;
+	return pPlayer->SetBorderRect(hWnd, pRectBorder, bPercent);
 }
 
 IPCPLAYSDK_API int ipcplay_RemoveBorderRect(IN IPC_PLAYHANDLE hPlayHandle,HWND hWnd)
