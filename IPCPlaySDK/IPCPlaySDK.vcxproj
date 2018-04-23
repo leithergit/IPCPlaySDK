@@ -105,8 +105,9 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\PlayRTSP\ipcplaysdk" /y
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <ModuleDefinitionFile>IPCPlaySDK.def</ModuleDefinitionFile>
       <OptimizeReferences>false</OptimizeReferences>
-      <AdditionalDependencies>libtcmalloc_minimal.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ForceSymbolReferences>__tcmalloc</ForceSymbolReferences>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <ForceSymbolReferences>
+      </ForceSymbolReferences>
     </Link>
     <PostBuildEvent>
       <Command>@echo off

@@ -2440,60 +2440,6 @@ char* MessageArray[] =
 };
 BOOL CIPCPlayDemoDlg::PreTranslateMessage(MSG* pMsg)
 {	
-	if (pMsg->message >= WM_FRAME_MOUSEMOVE &&
-		pMsg->message <= WM_FRAME_MOUSEWHEEL)
-	{
-		TraceMsgA("%s Messsage = %s.\n", __FUNCTION__, MessageArray[pMsg->message - WM_FRAME_MOUSEMOVE]);
-	}
-	TraceMsgA("%s Messsage = %d.\n", __FUNCTION__, pMsg->message);
-	switch (pMsg->message)
-	{
-		case WM_FRAME_MOUSEMOVE:
-		{
-			break;
-		}
-		case WM_FRAME_LBUTTONDOWN:
-		{
-			break;
-		}
-		case WM_FRAME_LBUTTONUP:
-		{
-			break;
-		}
-		case WM_FRAME_LBUTTONDBLCLK:
-		{
-			break;
-		}
-		case WM_FRAME_RBUTTONDOWN:
-		{
-			break;
-		}
-		case WM_FRAME_RBUTTONUP:
-		{
-			break;
-		}
-		case WM_FRAME_RBUTTONDBLCLK:
-		{
-			break;
-		}
-		case WM_FRAME_MBUTTONDOWN:
-		{
-			break;
-		}
-		case WM_FRAME_MBUTTONUP:
-		{
-			break;
-		}
-		case WM_FRAME_MBUTTONDBLCLK:
-		{
-			break;
-		}
-		
-		case WM_FRAME_MOUSEWHEEL:
-		{
-			break;
-		}
-	}
 
 	return CDialogEx::PreTranslateMessage(pMsg);
 }

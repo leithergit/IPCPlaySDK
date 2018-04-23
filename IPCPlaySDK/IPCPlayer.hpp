@@ -4176,7 +4176,7 @@ public:
 			}
 			if (!pThis->m_bThreadDecodeRun)
 				return 0;
-			auto itPos = pThis->m_listVideoCache.begin();
+			auto itStart = pThis->m_listVideoCache.begin();
 			while (!bProbeSucced && pThis->m_bThreadDecodeRun)
 			{
 #ifndef _DEBUG
@@ -4187,11 +4187,12 @@ public:
 				{
 					Sleep(5);
 					CAutoLock lock(&pThis->m_csVideoCache, false, __FILE__, __FUNCTION__, __LINE__);
-					auto it = find_if(itPos, pThis->m_listVideoCache.end(), StreamFrame::IsIFrame);
+					//auto it = find_if(itPos, pThis->m_listVideoCache.end(), StreamFrame::IsIFrame);
+					auto it = itStart;
 					if (it != pThis->m_listVideoCache.end() )
 					{// Ì½²âÂëÁ÷ÀàÐÍ
-						itPos = it;
-						itPos++;
+						itStart = it;
+						itStart++;
 						TraceMsgA("%s Probestream FrameType = %d\tFrameLength = %d.\n",__FUNCTION__, (*it)->FrameHeader()->nType,(*it)->FrameHeader()->nLength);
 						if ((*it)->FrameHeader()->nType == FRAME_GOV )
 						{

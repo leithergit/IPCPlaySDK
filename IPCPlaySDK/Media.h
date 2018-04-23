@@ -29,7 +29,8 @@ enum FrameType
 	FRAME_G711U		 = 7,
 	FRAME_G726		 = 8,
 	FRAME_AAC		 = 9,
-	Frame_DATA		 = 10
+	Frame_DATA		 = 10,
+	Frame_Unknown	 = 255
 };
 
 /// @brief ±‡¬Î¿‡–Õ
