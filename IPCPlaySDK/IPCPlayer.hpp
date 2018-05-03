@@ -4133,16 +4133,16 @@ public:
 		while (pThis->m_bThreadDecodeRun)
 		{
 			Autolock(&pThis->m_csVideoCache);
-			if ((timeGetTime() - tFirst) > 5000)
-			{// 等待超时
-				//assert(false);
-				pThis->OutputMsg("%s Warning!!!Wait for frame timeout(5s),times %d.\n", __FUNCTION__,++nTimeoutCount);
-				break;
-			}
+// 			if ((timeGetTime() - tFirst) > 5000)
+// 			{// 等待超时
+// 				//assert(false);
+// 				pThis->OutputMsg("%s Warning!!!Wait for frame timeout(5s),times %d.\n", __FUNCTION__,++nTimeoutCount);
+// 				break;
+// 			}
 			if (pThis->m_listVideoCache.size() < 1)
 			{
 				lock.Unlock();
-				Sleep(10);
+				Sleep(20);
 				continue;
 			}
 			else
