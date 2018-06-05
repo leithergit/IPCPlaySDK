@@ -4150,7 +4150,10 @@ public:
 		}
 		SaveRunTime();
 		if (!pThis->m_bThreadDecodeRun)
+		{
+			assert(false);
 			return 0;
+		}
 		
 		// 等待I帧
 		tFirst = timeGetTime();
@@ -4175,7 +4178,10 @@ public:
 				Sleep(25);
 			}
 			if (!pThis->m_bThreadDecodeRun)
+			{
+				assert(false);
 				return 0;
+			}
 			auto itStart = pThis->m_listVideoCache.begin();
 			while (!bProbeSucced && pThis->m_bThreadDecodeRun)
 			{
@@ -4215,11 +4221,15 @@ public:
 #endif
 					if (pThis->m_hRenderWnd)
 						::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_NOTRECVIFRAME, 0);
+					assert(false);
 					return 0;
 				}
 			}
 			if (!pThis->m_bThreadDecodeRun)
+			{
+				assert(false);
 				return 0;
+			}
 			
 			if (!bProbeSucced)		// 探测失败
 			{
@@ -4229,6 +4239,7 @@ public:
 #endif
 				if (pThis->m_hRenderWnd)
 					::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_UNKNOWNSTREAM, 0);
+				assert(false);
 				return 0;
 			}
 			// 把ffmpeg的码流ID转为IPC的码流ID,并且只支持H264和HEVC
@@ -4240,6 +4251,7 @@ public:
 				pThis->OutputMsg("%s Probed a unknown stream,Decode thread exit.\n", __FUNCTION__);
 				if (pThis->m_hRenderWnd)
 					::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_UNKNOWNSTREAM, 0);
+				assert(false);
 				return 0;
 			}
 		}
@@ -4257,6 +4269,7 @@ public:
 				pThis->OutputMsg("%s You Input a unknown stream,Decode thread exit.\n", __FUNCTION__);
 				if (pThis->m_hRenderWnd)	// 在线程中尽量避免使用SendMessage，因为可能会导致阻塞
 					::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_UNSURPPORTEDSTREAM, 0);
+				assert(false);
 				return 0;
 				break;
 			}
@@ -4268,7 +4281,7 @@ public:
 		if (!pDecodec)
 		{
 			pThis->OutputMsg("%s Failed in allocing memory for Decoder.\n", __FUNCTION__);
-			//assert(false);
+			assert(false);
 			return 0;
 		}
 		SaveRunTime();
@@ -4286,7 +4299,7 @@ public:
 		}
 
 		// 使用单线程解码,多线程解码在某此比较慢的CPU上可能会提高效果，但现在I5 2GHZ以上的CPU上的多线程解码效果并不明显反而会占用更多的内存
-		pDecodec->SetDecodeThreads(1);		
+		pDecodec->SetDecodeThreads(1);
 		// 初始化解码器
 		while (pThis->m_bThreadDecodeRun )
 		{// 某此时候可能会因为内存或资源不够导致初始化解码操作性,因此可以延迟一段时间后再次初始化，若多次初始化仍不成功，则需退出线程
@@ -4313,7 +4326,10 @@ public:
 		}
 		SaveRunTime();
 		if (!pThis->m_bThreadDecodeRun)
+		{
+			assert(false);
 			return 0;
+		}
 
 // 		// 若有指定了窗口句柄，则需要初始显示对象
 // 		if (pThis->m_hRenderWnd &&
