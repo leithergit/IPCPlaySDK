@@ -1,6 +1,6 @@
 #pragma once
 #include <d3d9.h>
-//#include <d3dx9tex.h>
+#include <d3dx9tex.h>
 //#include <ppl.h>
 #include <assert.h>
 #include <memory>
@@ -10,6 +10,7 @@
 #include <tchar.h>
 #include <wtypes.h>
 #include <process.h>
+#include <Shlwapi.h>
 #include "gpu_memcpy_sse4.h"
 #include "DxTrace.h"
 #include "../AutoLock.h"
@@ -614,6 +615,8 @@ public:
 	IDirect3D9				*m_pDirect3D9		/* = NULL*/;
 	IDirect3DDevice9		*m_pDirect3DDevice	/*= NULL*/;	
 	HANDLE					m_hEventSnapShot;	// 截图请求事件
+	char					*m_pszBackImageFileA;
+	WCHAR					*m_pszBackImageFileW;
 	bool					m_bSnapFlag;		// 截图事件标志,若该标志为TRUE，即使窗口被隐藏也会进行画面渲染
 	// AVFrame*				m_pAVFrame;
 	//HANDLE					m_hEventFrameReady; // 解码数据已经就绪
@@ -655,6 +658,7 @@ public:
 			m_pDirect3D9 = pD3D9;
 		}
 	}
+
 	CDxSurface()
 	{
 		TraceFunction();
@@ -749,6 +753,26 @@ public:
 		m_pUserPtr = pUserPtr;
 	}
 
+	bool SetBackgroundPictureFileA(LPCSTR szPhotoFile)
+	{
+		if (!szPhotoFile || !PathFileExistsA(szPhotoFile))
+			return false;
+		int nLength = strlen(szPhotoFile);
+		m_pszBackImageFileA = new char[nLength + 1];
+		strcpy_s(m_pszBackImageFileA, nLength , szPhotoFile);
+		return true;
+	}
+
+	bool SetBackgroundPictureFileW(LPCWSTR szPhotoFile)
+	{
+		if (!szPhotoFile || !PathFileExistsW(szPhotoFile))
+			return false;
+		int nLength = wcslen(szPhotoFile);
+		m_pszBackImageFileW = new WCHAR[nLength + 1];
+		wcscpy_s(m_pszBackImageFileW, nLength, szPhotoFile);
+		return true;
+	}
+	
 	// 调用外部绘制函数
 	virtual void ExternDrawCall(HWND hWnd, RECT *pRect)
 	{
@@ -867,6 +891,35 @@ public:
 		
 		SafeRelease(m_pSnapshotSurface);
 		SafeRelease(m_pDirect3DDevice);
+	}
+
+	virtual bool PresentBackImage(IDirect3DSurface9 * pSurfaceBackImage, D3DXIMAGE_INFO &ImageInfo, HWND hWnd)
+	{
+		if (!m_pDirect3DDevice)
+			return false;
+		IDirect3DSurface9 * pBackSurface = NULL;
+		m_pDirect3DDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
+		m_pDirect3DDevice->BeginScene();
+		HRESULT hr = m_pDirect3DDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &pBackSurface);
+		D3DSURFACE_DESC desc;
+
+		if (FAILED(hr))
+		{
+			pBackSurface->Release();
+			pSurfaceBackImage->Release();
+			m_pDirect3DDevice->EndScene();
+			DxTraceMsg("%s line(%d) IDirect3DDevice9::GetBackBuffer failed:hr = %08X.\n", __FUNCTION__, __LINE__, hr);
+			return true;
+		}
+		pBackSurface->GetDesc(&desc);
+		RECT dstrt = { 0, 0, desc.Width, desc.Height };
+		RECT srcrt = { 0, 0, ImageInfo.Width, ImageInfo.Height };
+
+		hr = m_pDirect3DDevice->StretchRect(pSurfaceBackImage, &srcrt, pBackSurface, &dstrt, D3DTEXF_LINEAR);
+
+		pBackSurface->Release();
+		m_pDirect3DDevice->EndScene();
+		hr = m_pDirect3DDevice->Present(NULL, nullptr, hWnd, NULL);
 	}
 // 以下代码失效，因为不再使用DirectX进行截图操作	
 	// 发送截图请求，即置信截图事件
@@ -1189,6 +1242,66 @@ public:
 		{
 			DxTraceMsg("%s CreateOffscreenPlainSurface Failed.\nhr=%x", __FUNCTION__, hr);
 			goto _Failed;
+		}
+		{
+			IDirect3DSurface9 *pSurfaceBackImage = nullptr;
+			D3DXIMAGE_INFO ImageInfo;
+			if (m_pszBackImageFileA)
+			{
+				HRESULT hr = D3DXGetImageInfoFromFileA(m_pszBackImageFileA, &ImageInfo);
+				if (D3D_OK != hr)
+					return false;
+				if (SUCCEEDED(hr = m_pDirect3DDevice->CreateOffscreenPlainSurface(ImageInfo.Width,
+					ImageInfo.Height,
+					ImageInfo.Format,
+					m_nCurD3DPool,
+					&pSurfaceBackImage,
+					NULL)))
+				{
+					if (SUCCEEDED(hr = D3DXLoadSurfaceFromFileA(
+						pSurfaceBackImage,					//目标表面
+						NULL,								//目标调色板
+						NULL,								//目标矩形,NULL为加载整个表面
+						m_pszBackImageFileA,				//文件
+						NULL,								//源矩形,NULL为复制整个图片
+						D3DX_FILTER_NONE,					//过滤
+						D3DCOLOR_XRGB(0, 0, 0),				//透明色
+						NULL								//源图像信息
+						)))
+					{
+						PresentBackImage(pSurfaceBackImage, ImageInfo, hWnd);
+					}
+				}
+				
+			}
+			else if (m_pszBackImageFileW)
+			{
+				HRESULT hr = D3DXGetImageInfoFromFileW(m_pszBackImageFileW, &ImageInfo);
+				if (D3D_OK != hr)
+					return false;
+				if (SUCCEEDED(hr = m_pDirect3DDevice->CreateOffscreenPlainSurface(ImageInfo.Width,
+					ImageInfo.Height,
+					ImageInfo.Format,
+					m_nCurD3DPool,
+					&pSurfaceBackImage,
+					NULL)))
+				{
+					if (SUCCEEDED(hr = D3DXLoadSurfaceFromFileW(
+						pSurfaceBackImage,//目标表面
+						NULL,//目标调色板
+						NULL,//目标矩形,NULL为加载整个表面
+						m_pszBackImageFileW,//文件
+						NULL,//源矩形,NULL为复制整个图片
+						D3DX_FILTER_NONE,//过滤
+						D3DCOLOR_XRGB(0, 0, 0),//透明色
+						NULL//源图像信息
+						)))
+					{
+						PresentBackImage(pSurfaceBackImage, ImageInfo, hWnd);
+					}
+				}
+			}	
+			SafeRelease(pSurfaceBackImage);
 		}
 		D3DSURFACE_DESC SrcSurfaceDesc;			
 		m_pSurfaceRender->GetDesc(&SrcSurfaceDesc);
@@ -2180,6 +2293,30 @@ public:
 		}
 	}
 
+	virtual bool PresetBackImage(IDirect3DSurface9 * pSurfaceBackImage, D3DXIMAGE_INFO &ImageInfo,HWND hWnd)
+	{
+		if (!m_pDirect3DDeviceEx)
+			return false;
+		IDirect3DSurface9 * pBackSurface = NULL;
+		m_pDirect3DDeviceEx->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
+		m_pDirect3DDeviceEx->BeginScene();
+		HRESULT hr = m_pDirect3DDeviceEx->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &pBackSurface);
+		if (FAILED(hr))
+		{
+			m_pDirect3DDeviceEx->EndScene();
+			return false;
+		}
+		D3DSURFACE_DESC Desc1;
+		pBackSurface->GetDesc(&Desc1);
+		RECT dstrt = { 0, 0, Desc1.Width, Desc1.Height };
+		RECT srcrt = { 0, 0, ImageInfo.Width, ImageInfo.Height };
+
+		hr = m_pDirect3DDeviceEx->StretchRect(pSurfaceBackImage, &srcrt, pBackSurface, &dstrt, D3DTEXF_LINEAR);
+		//SaveRunTime();
+		SafeRelease(pBackSurface);
+		m_pDirect3DDeviceEx->EndScene();
+		hr |= m_pDirect3DDeviceEx->PresentEx(NULL, nullptr, hWnd, NULL, 0);
+	}
 	// 调用InitD3D之前必须先调用AttachWnd函数关联视频显示窗口
 	// nD3DFormat 必须为以下格式之一
 	// MAKEFOURCC('Y', 'V', '1', '2')	默认格式,可以很方便地由YUV420P转换得到,而YUV420P是FFMPEG解码后得到的默认像素格式
@@ -2393,6 +2530,65 @@ public:
 		m_nD3DFormat	 = nD3DFormat;		
 		bSucceed		 = true;
 		m_bInitialized	 = true;
+		{
+			IDirect3DSurface9 *pSurfaceBackImage = nullptr;
+			D3DXIMAGE_INFO ImageInfo;
+			if (m_pszBackImageFileA)
+			{
+				HRESULT hr = D3DXGetImageInfoFromFileA(m_pszBackImageFileA, &ImageInfo);
+				if (D3D_OK != hr)
+					return false;
+				if (SUCCEEDED(hr = m_pDirect3DDevice->CreateOffscreenPlainSurface(ImageInfo.Width,
+					ImageInfo.Height,
+					ImageInfo.Format,
+					m_nCurD3DPool,
+					&pSurfaceBackImage,
+					NULL)))
+				{
+					if (SUCCEEDED(hr = D3DXLoadSurfaceFromFileA(
+						pSurfaceBackImage,//目标表面
+						NULL,//目标调色板
+						NULL,//目标矩形,NULL为加载整个表面
+						m_pszBackImageFileA,//文件
+						NULL,//源矩形,NULL为复制整个图片
+						D3DX_FILTER_NONE,//过滤
+						D3DCOLOR_XRGB(0, 0, 0),//透明色
+						NULL//源图像信息
+						)))
+					{
+						PresetBackImage(pSurfaceBackImage, ImageInfo, hWnd);
+					}
+				}
+			}
+			else if (m_pszBackImageFileW)
+			{
+				HRESULT hr = D3DXGetImageInfoFromFileW(m_pszBackImageFileW, &ImageInfo);
+				if (D3D_OK != hr)
+					return false;
+				if (SUCCEEDED(hr = m_pDirect3DDevice->CreateOffscreenPlainSurface(ImageInfo.Width,
+					ImageInfo.Height,
+					ImageInfo.Format,
+					m_nCurD3DPool,
+					&pSurfaceBackImage,
+					NULL)))
+				{
+					if (SUCCEEDED(hr = D3DXLoadSurfaceFromFileW(
+						pSurfaceBackImage,//目标表面
+						NULL,//目标调色板
+						NULL,//目标矩形,NULL为加载整个表面
+						m_pszBackImageFileW,//文件
+						NULL,//源矩形,NULL为复制整个图片
+						D3DX_FILTER_NONE,//过滤
+						D3DCOLOR_XRGB(0, 0, 0),//透明色
+						NULL//源图像信息
+						)))
+					{
+						PresetBackImage(pSurfaceBackImage, ImageInfo, hWnd);
+					}
+				}
+			}
+			SafeRelease(pSurfaceBackImage);
+		}
 _Failed:
 		if (!bSucceed)
 		{
@@ -2854,9 +3050,9 @@ _Failed:
 			//DxTraceMsg("%s line(%d) IDirect3DDevice9Ex::GetBackBuffer failed:hr = %08X.\n",__FUNCTION__,__LINE__,hr);
 			return true;
 		}
-		D3DSURFACE_DESC Desc1,Desc2;
+		D3DSURFACE_DESC Desc1;
 		pBackSurface->GetDesc(&Desc1);
-		m_pSurfaceRender->GetDesc(&Desc2);
+		//m_pSurfaceRender->GetDesc(&Desc2);
 		RECT dstrt = { 0, 0, Desc1.Width, Desc1.Height };
 		RECT srcrt = { 0, 0, m_nVideoWidth, m_nVideoHeight };
 		if (pClippedRT)

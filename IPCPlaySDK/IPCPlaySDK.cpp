@@ -1158,3 +1158,34 @@ IPCPLAYSDK_API int  ipcplay_RemoveLineArray(IN IPC_PLAYHANDLE hPlayHandle, long 
 	pPlayer->RemoveLineArray(nLineIndex);
 	return IPC_Succeed;
 }
+
+
+/// @brief			ÉèÖÃ±³¾°Í¼Æ¬Â·¾¶
+/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
+/// @param [in]		szImageFile		±³¾°Í¼Æ¬Â·¾¶£¬±³¾°Í¼Æ¬¿ÉÒÔjpg,png»òbmpÎÄ¼þ,ÎªnullÊ±£¬ÔòÉ¾³ý±³¾°Í¼Æ¬
+IPCPLAYSDK_API int ipcplay_SetBackgroundImageA(IN IPC_PLAYHANDLE hPlayHandle, LPCSTR szImageFile)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	WCHAR szImageFileW[1024] = { 0 };
+	A2WHelper(szImageFile, szImageFileW, 1024);
+	pPlayer->SetBackgroundImage(szImageFileW);
+	return IPC_Succeed;
+}
+
+/// @brief			ÉèÖÃ±³¾°Í¼Æ¬Â·¾¶
+/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
+/// @param [in]		szImageFile		±³¾°Í¼Æ¬Â·¾¶£¬±³¾°Í¼Æ¬¿ÉÒÔjpg,png»òbmpÎÄ¼þ£¬ÎªnullÊ±£¬ÔòÉ¾³ý±³¾°Í¼Æ¬
+IPCPLAYSDK_API int ipcplay_SetBackgroundImageW(IN IPC_PLAYHANDLE hPlayHandle, LPCWSTR szImageFile)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	pPlayer->SetBackgroundImage(szImageFile);
+	return IPC_Succeed;
+}

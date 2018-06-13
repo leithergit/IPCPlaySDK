@@ -58,4 +58,6 @@ EXPORTS
 	ipcplay_SetDecodeDelay
 	ipcplay_AddLineArray
 	ipcplay_RemoveLineArray
+	ipcplay_SetBackgroundImageA
+	ipcplay_SetBackgroundImageW
 	;ipcplay_YUV2RGB24

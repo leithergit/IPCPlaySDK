@@ -186,6 +186,7 @@ extern volatile bool g_bThread_ClosePlayer/* = false*/;
 extern list<IPC_PLAYHANDLE > g_listPlayerAsyncClose;
 extern CCriticalSectionProxy  g_csListPlayertoFree;
 extern double	g_dfProcessLoadTime ;
+extern HMODULE  g_hDllModule;
 //extern HWND g_hSnapShotWnd;
 
 /// IPCIPCPlay SDK主要功能实现类
@@ -259,7 +260,8 @@ private:
 	CDSoundBuffer* m_pDsBuffer;
 	DxSurfaceInitInfo	m_DxInitInfo;
 	CDxSurfaceEx* m_pDxSurface;			///< Direct3d Surface封装类,用于显示视频
-  	CDirectDraw *m_pDDraw;				///< DirectDraw封装类对象，用于在xp下显示视频	
+  	CDirectDraw *m_pDDraw;				///< DirectDraw封装类对象，用于在xp下显示视频
+	WCHAR		*m_pszBackImagePath;
   	shared_ptr<ImageSpace> m_pYUVImage = NULL;
 // 	bool		m_bDxReset;				///< 是否重置DxSurface
 // 	HWND		m_hDxReset;
@@ -801,12 +803,27 @@ private:
 // 					InitInfo.hPresentWnd = m_hRenderWnd;
 // 				else
 				InitInfo.hPresentWnd = m_pWndDxInit->GetSafeHwnd();
+				//InitInfo.hPresentWnd = m_hRenderWnd;
 
 				if (m_nRocateAngle == Rocate90 ||
 					m_nRocateAngle == Rocate270 ||
 					m_nRocateAngle == RocateN90)
 					swap(InitInfo.nFrameWidth, InitInfo.nFrameHeight);
-				
+				// 准备加载背景图片
+				if (!m_pszBackImagePath)
+				{
+					WCHAR szImagePath[1024] = { 0 };
+					WCHAR szTempPath[1024] = { 0 };
+					GetModuleFileNameW(g_hDllModule, szTempPath,1024);
+					int nPos = WcsReserverFind(szTempPath, L'\\');
+					wcsncpy_s(szImagePath, 1024, szTempPath, nPos);
+					wcscat_s(szImagePath, 1024, L"\\BackImage.jpg");
+					if (PathFileExistsW(szImagePath))
+						m_pDxSurface->SetBackgroundPictureFile(szImagePath, m_hRenderWnd);
+				}
+				else if (PathFileExistsW(m_pszBackImagePath))
+					m_pDxSurface->SetBackgroundPictureFile(m_pszBackImagePath, m_hRenderWnd);
+
 				m_pDxSurface->DisableVsync();		// 禁用垂直同步，播放帧才有可能超过显示器的刷新率，从而达到高速播放的目的
 				if (!m_pDxSurface->InitD3D(InitInfo.hPresentWnd,
 					InitInfo.nFrameWidth,
@@ -1525,6 +1542,10 @@ public:
 		DeleteCriticalSection(&m_csYUVFilter);
 		*/
 
+		if (m_pszBackImagePath)
+		{
+			delete []m_pszBackImagePath;
+		}
 #ifdef _DEBUG
 		OutputMsg("%s \tFinish Free a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
 		OutputMsg("%s \tObject:%d Exist Time = %u(ms).\n", __FUNCTION__, m_nObjIndex, timeGetTime() - m_nLifeTime);
@@ -3076,6 +3097,27 @@ public:
 		}
 	}
 
+	void SetBackgroundImage(LPCWSTR szImageFilePath)
+	{
+		if (szImageFilePath)
+		{
+			if (PathFileExistsW(szImageFilePath))
+			{
+				m_pszBackImagePath = new WCHAR[wcslen(szImageFilePath) + 1];
+				wcscpy_s(m_pszBackImagePath, wcslen(szImageFilePath) + 1, szImageFilePath);
+			}
+		}
+		else
+		{
+			if (m_pszBackImagePath)
+			{
+				delete[]m_pszBackImagePath;
+				m_pszBackImagePath = nullptr;
+			}
+		}
+
+	}
+
 	// 添加线条失败时，返回0，否则返回线条组的句柄
 	long	AddLineArray(POINT *pPointArray, int nCount, float fWidth, D3DCOLOR nColor)
 	{
@@ -4095,6 +4137,7 @@ public:
 	
 	static UINT __stdcall ThreadDecode(void *p)
 	{
+		
 		struct DxDeallocator
 		{
 			CDxSurfaceEx *&m_pDxSurface;
@@ -4290,6 +4333,7 @@ public:
 			assert(false);
 			return 0;
 		}
+		
 		shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface, pThis->m_pDDraw);
 		SaveRunTime();
 		if (pThis->m_bD3dShared)
@@ -4301,6 +4345,7 @@ public:
 		// 使用单线程解码,多线程解码在某此比较慢的CPU上可能会提高效果，但现在I5 2GHZ以上的CPU上的多线程解码效果并不明显反而会占用更多的内存
 		pDecodec->SetDecodeThreads(1);
 		// 初始化解码器
+
 		while (pThis->m_bThreadDecodeRun )
 		{// 某此时候可能会因为内存或资源不够导致初始化解码操作性,因此可以延迟一段时间后再次初始化，若多次初始化仍不成功，则需退出线程
 			//DeclareRunTime(5);

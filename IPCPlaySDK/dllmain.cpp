@@ -9,6 +9,7 @@
 
 HANDLE g_hThread_ClosePlayer = nullptr;
 HANDLE g_hEventThreadExit = nullptr;
+HMODULE g_hDllModule = nullptr;
 volatile bool g_bThread_ClosePlayer/* = false*/;
 list<IPC_PLAYHANDLE > g_listPlayerAsyncClose;
 list<IPC_PLAYHANDLE> g_listPlayer;
@@ -31,6 +32,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	{
 	case DLL_PROCESS_ATTACH:
 	{
+		g_hDllModule = hModule;
 		g_dfProcessLoadTime = GetExactTime();
 		//TraceMsgA("%s DvoIPCPlaySDK is loaded.\r\n", __FUNCTION__);
 #ifdef _DEBUG

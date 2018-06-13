@@ -9,7 +9,8 @@
 using namespace std;
 using namespace std::tr1;
 #pragma comment(lib,"winmm.lib")
-#define TestFile	"D:\\Git\\live555\\VCSample\\testRTSPClient\\test.mp4"
+//#define TestFile	"D:\\Git\\live555\\VCSample\\testRTSPClient\\test.mp4"
+#define TestFile	"D:/Git/IPCPlaySDK/Debug/Debug.jpg"
 bool bThreadRun = false;
 UINT __stdcall Thread(void *p)
 {

@@ -675,9 +675,11 @@ IPCPLAYSDK_API void ipcplay_ClearD3DCache();
 #ifdef _UNICODE
 #define ipcplay_OpenFile	ipcplay_OpenFileW
 #define ipcplay_SnapShot	ipcplay_SnapShotW
+#define ipcplay_SetBackgroundImage ipcplay_SetBackgroundImageA
 #else
 #define ipcplay_OpenFile	ipcplay_OpenFileA
 #define ipcplay_SnapShot	ipcplay_SnapShotA
+#define ipcplay_SetBackgroundImage	ipcplay_SetBackgroundImageW
 #endif
 
 /// @brief			用于播放IPC私有格式的录像文件
@@ -740,6 +742,15 @@ IPCPLAYSDK_API long ipcplay_AddLineArray(IN IPC_PLAYHANDLE hPlayHandle, POINT *p
 /// @param [in]		nLineIndex		由ipcplay_AddLineArray返回的线条句柄
 IPCPLAYSDK_API int ipcplay_RemoveLineArray(IN IPC_PLAYHANDLE hPlayHandle, long nLineIndex);
 
+/// @brief			设置背景图片路径
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		szImageFile		背景图片路径，背景图片可以jpg,png或bmp文件,为null时，则删除背景图片
+IPCPLAYSDK_API int ipcplay_SetBackgroundImageA(IN IPC_PLAYHANDLE hPlayHandle, LPCSTR szImageFile);
+
+/// @brief			设置背景图片路径
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		szImageFile		背景图片路径，背景图片可以jpg,png或bmp文件,为null时，则删除背景图片
+IPCPLAYSDK_API int ipcplay_SetBackgroundImageW(IN IPC_PLAYHANDLE hPlayHandle, LPCWSTR szImageFile);
 
 /// @brief		把YUV图像转换为RGB24图像
 /// @param [in]		hPlayHandle	由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄

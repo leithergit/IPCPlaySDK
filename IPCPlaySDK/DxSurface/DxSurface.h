@@ -1,6 +1,6 @@
 #pragma once
 #include <d3d9.h>
-//#include <d3dx9tex.h>
+#include <d3dx9tex.h>
 //#include <ppl.h>
 #include <assert.h>
 using namespace std;
@@ -15,14 +15,14 @@ using namespace boost;
 
 
 #include <map>
+#include <list>
+#include <algorithm>
 #include <MMSystem.h>
 #include <windows.h>
 #include <tchar.h>
 #include <wtypes.h>
 #include <process.h>
-#include <d3dx9.h>
-#include <list>
-#include <algorithm>
+#include <Shlwapi.h>
 #include "gpu_memcpy_sse4.h"
 #include "DxTrace.h"
 #include "../AutoLock.h"
@@ -633,6 +633,8 @@ public:
 	IDirect3D9				*m_pDirect3D9		/* = NULL*/;
 	IDirect3DDevice9		*m_pDirect3DDevice	/*= NULL*/;	
 	HANDLE					m_hEventSnapShot;	// 截图请求事件
+	WCHAR					*m_pszBackImageFileW;
+	HWND					m_hBackImageWnd;
 	bool					m_bSnapFlag;		// 截图事件标志,若该标志为TRUE，即使窗口被隐藏也会进行画面渲染
 	// AVFrame*				m_pAVFrame;
 	//HANDLE					m_hEventFrameReady; // 解码数据已经就绪
@@ -749,6 +751,11 @@ public:
 			CloseHandle(m_hEventSnapShot);
 			m_hEventSnapShot = NULL;
 		}
+		if (m_pszBackImageFileW)
+		{
+			delete[]m_pszBackImageFileW;
+			m_pszBackImageFileW = nullptr;
+		}
 	}
 
 	// 禁用垂直同步,只有在初始化之前调用,才会有效
@@ -772,6 +779,18 @@ public:
 		m_pUserPtr = pUserPtr;
 	}
 
+	
+	bool SetBackgroundPictureFile(LPCWSTR szPhotoFile, HWND hBackImageWnd)
+	{
+		if (!szPhotoFile || !PathFileExistsW(szPhotoFile))
+			return false;
+		int nLength = wcslen(szPhotoFile);
+		m_pszBackImageFileW = new WCHAR[nLength + 1];
+		wcscpy_s(m_pszBackImageFileW, nLength + 1, szPhotoFile);
+		m_hBackImageWnd = hBackImageWnd;
+		return true;
+	}
+	
 	// 调用外部绘制函数
 	virtual void ExternDrawCall(HWND hWnd, IDirect3DSurface9 * pBackSurface, RECT *pRect)
 	{
@@ -2286,10 +2305,34 @@ public:
 			FreeLibrary(m_hD3D9);
 			m_hD3D9 = NULL;
 		}
-		SafeDeleteArray(m_pLineArray);		
-		SafeRelease(m_pD3DXLine);
 	}
 
+	virtual bool PresetBackImage(IDirect3DSurface9 * pSurfaceBackImage, D3DXIMAGE_INFO &ImageInfo,HWND hWnd)
+	{
+		if (!m_pDirect3DDeviceEx)
+			return false;
+		IDirect3DSurface9 * pBackSurface = NULL;
+		m_pDirect3DDeviceEx->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
+		m_pDirect3DDeviceEx->BeginScene();
+		HRESULT hr = m_pDirect3DDeviceEx->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &pBackSurface);
+		if (FAILED(hr))
+		{
+			m_pDirect3DDeviceEx->EndScene();
+			return false;
+		}
+		D3DSURFACE_DESC Desc1, Desc2;
+		pBackSurface->GetDesc(&Desc1);
+		pSurfaceBackImage->GetDesc(&Desc2);
+		RECT dstrt = { 0, 0, Desc1.Width, Desc1.Height };
+		RECT srcrt = { 0, 0, ImageInfo.Width, ImageInfo.Height };
+
+		hr = m_pDirect3DDeviceEx->StretchRect(pSurfaceBackImage, &srcrt, pBackSurface, &dstrt, D3DTEXF_LINEAR);
+		//SaveRunTime();
+		SafeRelease(pBackSurface);
+		m_pDirect3DDeviceEx->EndScene();
+		hr = m_pDirect3DDeviceEx->PresentEx(NULL, nullptr, m_hBackImageWnd, NULL, 0);
+		return true;
+	}
 	// 调用InitD3D之前必须先调用AttachWnd函数关联视频显示窗口
 	// nD3DFormat 必须为以下格式之一
 	// MAKEFOURCC('Y', 'V', '1', '2')	默认格式,可以很方便地由YUV420P转换得到,而YUV420P是FFMPEG解码后得到的默认像素格式
@@ -2503,6 +2546,39 @@ public:
 		m_nD3DFormat	 = nD3DFormat;		
 		bSucceed		 = true;
 		m_bInitialized	 = true;
+		{
+			// 以下代码加载背景图片
+			IDirect3DSurface9 *pSurfaceBackImage = nullptr;
+			D3DXIMAGE_INFO ImageInfo;
+			if (m_pszBackImageFileW)
+			{
+				HRESULT hr = D3DXGetImageInfoFromFileW(m_pszBackImageFileW, &ImageInfo);
+				if (D3D_OK != hr)
+					return false;
+				if (SUCCEEDED(hr = m_pDirect3DDeviceEx->CreateOffscreenPlainSurface(ImageInfo.Width,
+					ImageInfo.Height,
+					ImageInfo.Format,
+					m_nCurD3DPool,
+					&pSurfaceBackImage,
+					NULL)))
+				{
+					if (SUCCEEDED(hr = D3DXLoadSurfaceFromFileW(
+						pSurfaceBackImage,					//目标表面
+						NULL,								//目标调色板
+						NULL,								//目标矩形,NULL为加载整个表面
+						m_pszBackImageFileW,				//文件
+						NULL,								//源矩形,NULL为复制整个图片
+						D3DX_DEFAULT,						//过滤
+						D3DCOLOR_XRGB(0, 0, 0),				//透明色
+						&ImageInfo							//源图像信息
+						)))
+					{
+						PresetBackImage(pSurfaceBackImage, ImageInfo, m_d3dpp.hDeviceWindow);
+					}
+				}
+			}
+			SafeRelease(pSurfaceBackImage);
+		}
 _Failed:
 		if (!bSucceed)
 		{
@@ -2997,6 +3073,11 @@ _Failed:
 		m_pSurfaceRender->GetDesc(&Desc2);
 		RECT dstrt = { 0, 0, Desc1.Width, Desc1.Height };
 		RECT srcrt = { 0, 0, m_nVideoWidth, m_nVideoHeight };
+// 		RECT dstrt1 = { 0, 0, Desc1.Width/2-1, Desc1.Height };
+// 		RECT dstrt2 = { Desc1.Width / 2, 0, Desc1.Width, Desc1.Height };
+//  		RECT srcrt1 = { 0, 0, m_nVideoWidth*3/8, m_nVideoHeight };
+// 		RECT srcrt2 = { m_nVideoWidth*5/8, 0, m_nVideoWidth, m_nVideoHeight };
+
 		if (pClippedRT)
 		{
 			CopyRect(&srcrt, pClippedRT);
@@ -3004,6 +3085,8 @@ _Failed:
 
 		//D3DXLoadSurfaceFromSurface(m_pSurfaceRender,nullptr,nullptr,pDCSurface,nullptr,nullptr,D3DX_FILTER_NONE，0)；
 		hr = m_pDirect3DDeviceEx->StretchRect(m_pSurfaceRender, &srcrt, pBackSurface, &dstrt, D3DTEXF_LINEAR);
+		//hr = m_pDirect3DDeviceEx->StretchRect(m_pSurfaceRender, &srcrt1, pBackSurface, &dstrt1, D3DTEXF_LINEAR);
+		//hr = m_pDirect3DDeviceEx->StretchRect(m_pSurfaceRender, &srcrt2, pBackSurface, &dstrt2, D3DTEXF_LINEAR);
 		//SaveRunTime();
 		// 处理外部分绘制接口
 		ExternDrawCall(hWnd, pBackSurface,pRenderRt);
