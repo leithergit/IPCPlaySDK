@@ -812,14 +812,28 @@ private:
 				// ×¼±¸¼ÓÔØ±³¾°Í¼Æ¬
 				if (!m_pszBackImagePath)
 				{
-					WCHAR szImagePath[1024] = { 0 };
+					
+					WCHAR szImagePath_jpeg[1024] = { 0 };
+					WCHAR szImagePath_png[1024] = { 0 };
+					WCHAR szImagePath_bmp[1024] = { 0 };
 					WCHAR szTempPath[1024] = { 0 };
 					GetModuleFileNameW(g_hDllModule, szTempPath,1024);
 					int nPos = WcsReserverFind(szTempPath, L'\\');
-					wcsncpy_s(szImagePath, 1024, szTempPath, nPos);
-					wcscat_s(szImagePath, 1024, L"\\BackImage.jpg");
-					if (PathFileExistsW(szImagePath))
-						m_pDxSurface->SetBackgroundPictureFile(szImagePath, m_hRenderWnd);
+
+					wcsncpy_s(szImagePath_jpeg, 1024, szTempPath, nPos);
+					wcsncpy_s(szImagePath_png, 1024, szTempPath, nPos);
+					wcsncpy_s(szImagePath_bmp, 1024, szTempPath, nPos);
+
+					wcscat_s(szImagePath_jpeg, 1024, L"\\BackImage.jpg");
+					wcscat_s(szImagePath_png, 1024, L"\\BackImage.png");
+					wcscat_s(szImagePath_bmp, 1024, L"\\BackImage.bmp");
+
+					if (PathFileExistsW(szImagePath_jpeg))
+						m_pDxSurface->SetBackgroundPictureFile(szImagePath_jpeg, m_hRenderWnd);
+					else if (PathFileExistsW(szImagePath_png))
+						m_pDxSurface->SetBackgroundPictureFile(szImagePath_png, m_hRenderWnd);
+					else if (PathFileExistsW(szImagePath_bmp))
+						m_pDxSurface->SetBackgroundPictureFile(szImagePath_bmp, m_hRenderWnd);
 				}
 				else if (PathFileExistsW(m_pszBackImagePath))
 					m_pDxSurface->SetBackgroundPictureFile(m_pszBackImagePath, m_hRenderWnd);

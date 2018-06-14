@@ -2553,29 +2553,34 @@ public:
 			if (m_pszBackImageFileW)
 			{
 				HRESULT hr = D3DXGetImageInfoFromFileW(m_pszBackImageFileW, &ImageInfo);
-				if (D3D_OK != hr)
-					return false;
-				if (SUCCEEDED(hr = m_pDirect3DDeviceEx->CreateOffscreenPlainSurface(ImageInfo.Width,
-					ImageInfo.Height,
-					ImageInfo.Format,
-					m_nCurD3DPool,
-					&pSurfaceBackImage,
-					NULL)))
+				if (SUCCEEDED(hr))
 				{
-					if (SUCCEEDED(hr = D3DXLoadSurfaceFromFileW(
-						pSurfaceBackImage,					//目标表面
-						NULL,								//目标调色板
-						NULL,								//目标矩形,NULL为加载整个表面
-						m_pszBackImageFileW,				//文件
-						NULL,								//源矩形,NULL为复制整个图片
-						D3DX_DEFAULT,						//过滤
-						D3DCOLOR_XRGB(0, 0, 0),				//透明色
-						&ImageInfo							//源图像信息
-						)))
+					hr = m_pDirect3DDeviceEx->CreateOffscreenPlainSurface(ImageInfo.Width,
+						ImageInfo.Height,
+						/*ImageInfo.Format*/
+						D3DFMT_X8R8G8B8,
+						m_nCurD3DPool,
+						&pSurfaceBackImage,
+						NULL);
+					if (SUCCEEDED(hr))
 					{
-						PresetBackImage(pSurfaceBackImage, ImageInfo, m_d3dpp.hDeviceWindow);
+						hr = D3DXLoadSurfaceFromFileW(
+							pSurfaceBackImage,					//目标表面
+							NULL,								//目标调色板
+							NULL,								//目标矩形,NULL为加载整个表面
+							m_pszBackImageFileW,				//文件
+							NULL,								//源矩形,NULL为复制整个图片
+							D3DX_DEFAULT,						//过滤
+							D3DCOLOR_XRGB(0, 0, 0),				//透明色
+							&ImageInfo							//源图像信息
+							);
+						if (SUCCEEDED(hr))
+						{
+							PresetBackImage(pSurfaceBackImage, ImageInfo, m_d3dpp.hDeviceWindow);
+						}
 					}
 				}
+				
 			}
 			SafeRelease(pSurfaceBackImage);
 		}
