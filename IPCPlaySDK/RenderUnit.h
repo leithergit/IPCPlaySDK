@@ -48,35 +48,56 @@ public:
 	int nVideoHeight;
 	bool bEnableHaccel;
 
-	RenderUnit(HWND hRenderWnd, int nWidth, int nHeight, bool bEnableHaccel)
+	RenderUnit(HWND hRenderWnd, LPRECT prtBorder, bool bEnableHaccel)
 	{
 		ZeroMemory(this, sizeof(RenderUnit));
 		this->hRenderWnd = hRenderWnd;
 		this->bEnableHaccel = bEnableHaccel;
-		nVideoHeight = nHeight;
-		nVideoWidth = nWidth;
+		if (nullptr == prtBorder)
+		{
+			return;
+		}
+		nVideoHeight = abs(prtBorder->top - prtBorder->bottom);
+		nVideoWidth = abs(prtBorder->left - prtBorder->right);
 
-		if (nHeight && nWidth)
+		if (nVideoHeight && nVideoWidth)
 			pDDraw = new CDirectDraw();
 		if (!pDDraw)
 			return;
 		DDSURFACEDESC2 ddsd = { 0 };
 		if (bEnableHaccel)
 		{
-			FormatNV12::Build(ddsd, nWidth, nHeight);
+			FormatNV12::Build(ddsd, nVideoWidth, nVideoHeight);
 			pDDraw->Create<FormatNV12>(hRenderWnd, ddsd);
 		}
 		else
 		{
-			FormatYV12::Build(ddsd, nWidth, nHeight);
+			FormatYV12::Build(ddsd, nVideoWidth, nVideoHeight);
 			pDDraw->Create<FormatYV12>(hRenderWnd, ddsd);
 		}
 	}
 
-	void SetVideoSize(int nWidth, int nHeight)
+	void ReInitialize(int nWidth, int nHeight)
 	{
 		nVideoHeight = nHeight;
 		nVideoWidth = nWidth;
+		if (!pDDraw)
+		{
+			pDDraw = new CDirectDraw();
+			if (!pDDraw)
+				return;
+			DDSURFACEDESC2 ddsd = { 0 };
+			if (bEnableHaccel)
+			{
+				FormatNV12::Build(ddsd, nVideoWidth, nVideoHeight);
+				pDDraw->Create<FormatNV12>(hRenderWnd, ddsd);
+			}
+			else
+			{
+				FormatYV12::Build(ddsd, nVideoWidth, nVideoHeight);
+				pDDraw->Create<FormatYV12>(hRenderWnd, ddsd);
+			}
+		}
 	}
 
 	~RenderUnit()

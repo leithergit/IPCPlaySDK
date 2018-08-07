@@ -1631,7 +1631,7 @@ double RangedRand( double range_min, double range_max)
 	return  ((double)rand() / (RAND_MAX + 1) * (range_max - range_min) + range_min);
 }
 
-bool MemMerge(INOUT char **pDestBuff,INOUT int &nDestBuffLength,INOUT int &nDestBuffSize,IN char *szTempBuff,IN int nTempLen)
+bool MemMerge(INOUT byte **pDestBuff,INOUT int &nDestBuffLength,INOUT int &nDestBuffSize,IN byte *szTempBuff,IN int nTempLen)
 {
 	if (!pDestBuff || !szTempBuff || !nDestBuffSize|| !nTempLen)
 		return false;
@@ -1647,7 +1647,7 @@ bool MemMerge(INOUT char **pDestBuff,INOUT int &nDestBuffLength,INOUT int &nDest
 		while(nNewBufferSize < nNewBufferLength)
 			nNewBufferSize*=2;
 
-		char *pTemp = new char[nNewBufferSize];
+		byte *pTemp = new byte[nNewBufferSize];
 		if (pTemp == NULL)
 			return false;
 		memcpy(pTemp,*pDestBuff,nDestBuffLength);

@@ -60,4 +60,7 @@ EXPORTS
 	ipcplay_RemoveLineArray
 	ipcplay_SetBackgroundImageA
 	ipcplay_SetBackgroundImageW
+	ipcplay_EnableDDraw
 	;ipcplay_YUV2RGB24
+	ipcplay_EnableStreamParser
+	ipcplay_InputStream2

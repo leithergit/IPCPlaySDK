@@ -167,12 +167,13 @@ struct AvQueue
 		pUserData = popaque;
 		pAvBuffer = (uint8_t *)av_malloc(nBufferSize);
 #ifdef _DEBUG
+		ZeroMemory(pAvBuffer, nBufferSize);
 		DxTraceMsg("%s pAvBuffer = %08X.\n", __FUNCTION__, (long)pAvBuffer);
 #endif
 	}
 	~AvQueue()
 	{
-		av_free(pAvBuffer);
+		//av_free(pAvBuffer);
 		pAvBuffer = nullptr;
 	}
 	void	*pUserData;
@@ -418,8 +419,11 @@ public:
 		
 		if (!m_pFormatCtx)
 			m_pFormatCtx = avformat_alloc_context();
+		
 		if (!m_pAvQueue)
+		{
 			m_pAvQueue = new AvQueue(Opaque, nFrameBufferSize);
+		}
 		
 		if (m_pIoContext)
 			av_free(m_pIoContext);
@@ -503,6 +507,7 @@ public:
 // 				delete []m_pAvQueue->pAvBuffer;
 			delete m_pAvQueue;
 			m_pAvQueue = nullptr;
+			m_pIoContext->opaque = nullptr;
 		}
 		if (m_pIoContext)
 		{
@@ -731,17 +736,17 @@ private:
 				av_freep(&m_pAVCtx->extradata);
 			av_freep(&m_pAVCtx);
 		}
-		if (m_pFormatCtx)
-		{
-			avformat_close_input(&m_pFormatCtx);
-			avformat_free_context(m_pFormatCtx);
-			m_pFormatCtx = nullptr;
-		}
-		if (m_pIoContext)
-		{
-			av_free(m_pIoContext);
-			m_pIoContext = nullptr;
-		}
+// 		if (m_pFormatCtx)
+// 		{
+// 			avformat_close_input(&m_pFormatCtx);
+// 			avformat_free_context(m_pFormatCtx);
+// 			m_pFormatCtx = nullptr;
+// 		}
+// 		if (m_pIoContext)
+// 		{
+// 			av_free(m_pIoContext);
+// 			m_pIoContext = nullptr;
+// 		}
 		if (m_pAvBuffer)
 		{
 			av_free(m_pAvBuffer);

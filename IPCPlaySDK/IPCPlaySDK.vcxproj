@@ -70,17 +70,17 @@
     </Link>
     <PostBuildEvent>
       <Command>@echo off
-::copy $(TargetPath)  "E:\SVN\RTSP.live555.Mago\RTSP\Debug" /y
-::copy $(TargetDir)$(TargetName).lib "E:\SVN\RTSP.live555.Mago\ipcplaysdk" /y
-::copy $(ProjectDir)ipcplaysdk.h "E:\SVN\RTSP.live555.Mago\ipcplaysdk" /y
+copy $(TargetPath)  "E:\MaiGao\AS300\AS300ClientSDK_2018.07.26_V2.0.0.0-alpha_r9839\bin" /y
+copy $(TargetDir)$(TargetName).lib "E:\MaiGao\AS300\AS300ClientSDK_2018.07.26_V2.0.0.0-alpha_r9839\lib" /y
+copy $(ProjectDir)ipcplaysdk.h "E:\MaiGao\AS300\AS300ClientSDK_2018.07.26_V2.0.0.0-alpha_r9839\include" /y
 
-copy $(TargetPath)  "E:\SVN.NET\PlayRTSP\Debug" /y
-copy $(TargetDir)$(TargetName).lib "E:\SVN.NET\PlayRTSP\ipcplaysdk" /y
-copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\PlayRTSP\ipcplaysdk" /y
+::copy $(TargetPath)  "E:\SVN.NET\PlayRTSP\Debug" /y
+::copy $(TargetDir)$(TargetName).lib "E:\SVN.NET\PlayRTSP\ipcplaysdk" /y
+::copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\PlayRTSP\ipcplaysdk" /y
 
-::copy $(TargetPath)  "E:\SVN\AVPlayer\Debug" /y
-::copy $(TargetDir)$(TargetName).lib "E:\SVN\AVPlayer\ipcplaysdk" /y
-::copy $(ProjectDir)ipcplaysdk.h "E:\SVN\AVPlayer\ipcplaysdk" /y</Command>
+copy $(TargetDir)$(TargetName).lib "E:\SVN.NET\AVPlayer\ipcplaysdk" /y
+copy $(TargetPath) "E:\SVN.NET\AVPlayer\Debug" /y
+copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -116,13 +116,10 @@ copy $(TargetPath)  E:\SVN.NET\PlayRTSP\Release /y
 @echo copy $(TargetDir)$(TargetName).lib E:\SVN.NET\PlayRTSP\Release
 copy $(TargetDir)$(TargetName).lib E:\SVN.NET\PlayRTSP\Release /y
 
-@ECHO copy $(TargetPath)  "E:\SVN\AVPlayer\release" 
-copy $(TargetPath)  "E:\SVN\AVPlayer\release" /y
-@ECHO copy $(TargetDir)$(TargetName).lib "E:\SVN\AVPlayer\ipcplaysdk"
-
-copy $(TargetDir)$(TargetName).lib "E:\SVN\AVPlayer\ipcplaysdk" /y
-@ECHO copy $(ProjectDir)ipcplaysdk.h "E:\SVN\AVPlayer\ipcplaysdk"
-copy $(ProjectDir)ipcplaysdk.h "E:\SVN\AVPlayer\ipcplaysdk" /y</Command>
+copy $(TargetDir)$(TargetName).lib "E:\SVN.NET\AVPlayer\ipcplaysdk" /y
+copy $(TargetPath) "E:\SVN.NET\AVPlayer\Release" /y
+@ECHO copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk"
+copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -150,6 +147,7 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN\AVPlayer\ipcplaysdk" /y</Command>
     <ClInclude Include="Stat.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StreamFrame.h" />
+    <ClInclude Include="StreamParser.hpp" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TimeTrace.h" />
     <ClInclude Include="TimeUtility.h" />

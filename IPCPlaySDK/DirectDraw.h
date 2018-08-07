@@ -479,6 +479,15 @@ public:
 		Release();
 	}
 
+	/// @设置外部DC回调函数
+	/// @remark IDirect3DSurface9可以产生一个DC指针，通过回调函数把此DC指针传给用户，用户通过此DC可以在IDirect3DSurface9上作图
+	/// 但这种方式效率极低，会明显拖慢视频显示的速度
+	void SetExternDraw(void *pExternDrawProc, void *pUserPtr)
+	{
+		m_pExternDraw = (ExternDrawProc)pExternDrawProc;
+		m_pUserPtr = pUserPtr;
+	}
+
 	HRESULT Draw(const ImageSpace &imageSpace,RECT *pRectClip,RECT *pRectRender,bool bPresent = true)
  	{
 		//DeclareRunTime(5);
@@ -501,6 +510,18 @@ public:
 
 		m_copyCallback((LPBYTE)ddOffScreenSurfaceDesc.lpSurface, imageSpace, ddOffScreenSurfaceDesc.dwWidth, ddOffScreenSurfaceDesc.dwHeight, ddOffScreenSurfaceDesc.lPitch);
 		m_pSurfaceOffScreen->Unlock(NULL);
+		
+		HDC hDC = nullptr;
+		hr = m_pSurfaceOffScreen->GetDC(&hDC);
+		RECT MotionRect;
+		MotionRect.left = 0;
+		MotionRect.top = 0;
+		MotionRect.right = ddOffScreenSurfaceDesc.dwWidth;
+		MotionRect.bottom = ddOffScreenSurfaceDesc.dwHeight;
+		m_pExternDraw(m_hWnd, hDC, MotionRect, m_pUserPtr);
+		
+		m_pSurfaceOffScreen->ReleaseDC(hDC);
+		
 		if (pRectClip)
 		{
 			CopyRect(&rectSrc, pRectClip);
@@ -634,6 +655,8 @@ public:
 	DWORD m_dwHeight;
 
 	CopyCallback m_copyCallback;
+	ExternDrawProc	m_pExternDraw;
+	void *m_pUserPtr;
 };
 
 typedef shared_ptr<CDirectDraw> CDirectDrawPtr;

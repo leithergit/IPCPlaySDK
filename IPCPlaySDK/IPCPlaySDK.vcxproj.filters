@@ -141,6 +141,7 @@
     <ClInclude Include="MMEvent.h" />
     <ClInclude Include="Stat.h" />
     <ClInclude Include="CriticalSectionProxy.h" />
+    <ClInclude Include="StreamParser.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Audio">

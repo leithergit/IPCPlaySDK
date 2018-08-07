@@ -639,7 +639,7 @@ public:
 	// AVFrame*				m_pAVFrame;
 	//HANDLE					m_hEventFrameReady; // 解码数据已经就绪
 	//HANDLE					m_hEventFrameCopied;// 解码数据复制完毕
-	
+	CRITICAL_SECTION		m_csExternDraw;
 	ExternDrawProc			m_pExternDraw;		// 外部绘制接口，提供外部接口，允许调用方自行绘制图像
 	void*					m_pUserPtr;			// 外部调用者自定义指针
 	void*					m_pUserPtrEx;			// 外部调用者自定义指针
@@ -672,6 +672,7 @@ public:
 		ZeroMemory(&m_nVtableAddr, sizeof(CDxSurface) - offsetof(CDxSurface,m_nVtableAddr));
 		InitializeCriticalSection(&m_csRender);
 		InitializeCriticalSection(&m_csSnapShot);
+		InitializeCriticalSection(&m_csExternDraw);
 		m_pCriListLine = make_shared<CCriticalSectionProxy>();
 		if (pD3D9)
 		{
@@ -713,6 +714,7 @@ public:
 		}
 		InitializeCriticalSection(&m_csRender);
 		InitializeCriticalSection(&m_csSnapShot);
+		InitializeCriticalSection(&m_csExternDraw);
 		m_pCriListLine = make_shared<CCriticalSectionProxy>();
 		//m_hEventFrameReady	= CreateEvent(NULL,FALSE,FALSE,NULL);
 		//m_hEventFrameCopied = CreateEvent(NULL,FALSE,FALSE, NULL);
@@ -736,6 +738,7 @@ public:
 		}
 		DeleteCriticalSection(&m_csRender);
 		DeleteCriticalSection(&m_csSnapShot);
+		DeleteCriticalSection(&m_csExternDraw);
 // 		if (m_hEventFrameReady)
 // 		{
 // 			CloseHandle(m_hEventFrameReady);
@@ -775,8 +778,10 @@ public:
 	/// 但这种方式效率极低，会明显拖慢视频显示的速度
 	void SetExternDraw(void *pExternDrawProc,void *pUserPtr)
 	{
+		EnterCriticalSection(&m_csExternDraw);
 		m_pExternDraw = (ExternDrawProc)pExternDrawProc;
 		m_pUserPtr = pUserPtr;
+		LeaveCriticalSection(&m_csExternDraw);
 	}
 
 	
@@ -796,7 +801,7 @@ public:
 	{
 		if (!m_pSurfaceRender)
 			return;
-
+		CAutoLock lock(&m_csExternDraw);
 		if (m_pExternDraw)
 		{
 			D3DSURFACE_DESC Desc;
@@ -820,7 +825,8 @@ public:
 			}
 			}
 			HDC hDc = NULL;
-			if (SUCCEEDED(pBackSurface->GetDC(&hDc)))
+			HRESULT hr = pBackSurface->GetDC(&hDc);
+			if (SUCCEEDED(hr))
 			{
 				RECT MotionRect;
 				HWND hMotionWnd = m_d3dpp.hDeviceWindow;
@@ -835,12 +841,14 @@ public:
 					MotionRect.top = 0;
 					MotionRect.bottom = Desc.Height;
 				}
-				m_pExternDraw(hMotionWnd, hDc, MotionRect, m_pUserPtr);
+				
+				if (m_pExternDraw)
+					m_pExternDraw(hMotionWnd, hDc, MotionRect, m_pUserPtr);
 				pBackSurface->ReleaseDC(hDc);
 			}
 			else
 			{
-				DxTraceMsg("%s Get DC(Device Context) from DxSurface failed.\r\n", __FUNCTION__);
+				DxTraceMsg("%s Get DC(Device Context) from DxSurface failed,Error=%08X.\r\n", __FUNCTION__,hr);
 				assert(false);
 			}
 		}
@@ -2432,7 +2440,7 @@ public:
 		ZeroMemory(&m_d3dpp, sizeof(D3DPRESENT_PARAMETERS));
 		m_d3dpp.BackBufferFormat		= D3DFMT_UNKNOWN/*d3ddm.Format*/;
 		m_d3dpp.BackBufferCount			= 1;
-		m_d3dpp.Flags					= 0;
+		m_d3dpp.Flags					= D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
 		m_d3dpp.Windowed				= bIsWindowed;
 		m_d3dpp.hDeviceWindow			= hWnd;
 		m_d3dpp.MultiSampleQuality		= 0;
@@ -2461,7 +2469,7 @@ public:
 			m_d3dpp.BackBufferHeight			= nVideoHeight;
 			m_d3dpp.BackBufferWidth				= nVideoWidth;
 			m_d3dpp.EnableAutoDepthStencil		= FALSE;							// 关闭自动深度缓存
-			m_d3dpp.MultiSampleType = D3DMULTISAMPLE_NONE;
+			m_d3dpp.MultiSampleType				= D3DMULTISAMPLE_NONE;
 		}
 		else
 		{
@@ -2500,8 +2508,31 @@ public:
 			SafeRelease(m_pDirect3DDeviceEx);
 
 		// 检查是否能够启用多重采样
-		//hr = m_pDirect3D9Ex->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, d3ddm.Format, FALSE, D3DMULTISAMPLE_4_SAMPLES, NULL);
-
+		// hr = m_pDirect3D9Ex->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, d3ddm.Format, FALSE, D3DMULTISAMPLE_4_SAMPLES, NULL);
+		DWORD dwQualityLevel = 0, dwQualityLevelDepth = 0;
+//		查询抗锯齿的级别
+// 		for (int i = D3DMULTISAMPLE_16_SAMPLES; i > D3DMULTISAMPLE_NONE; --i)
+// 		{
+// 			if (SUCCEEDED(m_pDirect3D9Ex->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT,
+// 				D3DDEVTYPE_HAL,
+// 				nD3DFormat,
+// 				1,
+// 				(D3DMULTISAMPLE_TYPE)i,
+// 				&dwQualityLevel)) &&
+// 				SUCCEEDED(m_pDirect3D9Ex->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT,
+// 				D3DDEVTYPE_HAL,
+// 				D3DFMT_D24S8,
+// 				1,
+// 				(D3DMULTISAMPLE_TYPE)i,
+// 				&dwQualityLevelDepth)))
+// 			{
+// 				DxTraceMsg(_T("Support multi sample level %d, quality level %u, %u"), i, dwQualityLevel, dwQualityLevelDepth);
+// 				//params.MultiSampleType = (D3DMULTISAMPLE_TYPE)i;
+// 				//params.MultiSampleQuality = min(dwQualityLevel, dwQualityLevelDepth) - 1;
+// 
+// 				break;
+// 			}
+// 		}
 		if (FAILED(hr = m_pDirect3D9Ex->CreateDeviceEx(D3DADAPTER_DEFAULT,
 			D3DDEVTYPE_HAL,
 			m_d3dpp.hDeviceWindow,
@@ -2539,7 +2570,9 @@ public:
 				goto _Failed;
 			}
 		}
+		hr = m_pDirect3DDeviceEx->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_ANISOTROPIC);
 
+		hr = m_pDirect3DDeviceEx->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_ANISOTROPIC);
 		// 保存参数
 		m_nVideoWidth	 = nVideoWidth;
 		m_nVideoHeight	 = nVideoHeight;
@@ -2591,6 +2624,25 @@ _Failed:
 		}
 		return bSucceed;
 	}
+
+
+// 	UINT GetMaxMultiSampleQualityLevel(D3DFORMAT nColorFmt, D3DFORMAT depth_format, bool is_window_mode)
+// 	{
+// 		if (m_pDirect3D9Ex == 0)
+// 			return 0;
+// 		DWORD	msqAAQuality = 0;
+// 		DWORD	msqAAQuality2 = 0;
+// 		if (SUCCEEDED(m_pDirect3D9Ex->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, nColorFmt, is_window_mode, D3DMULTISAMPLE_NONMASKABLE, &msqAAQuality)))
+// 		{
+// 			if (SUCCEEDED(m_pDirect3D9Ex->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, depth_format, is_window_mode, D3DMULTISAMPLE_NONMASKABLE, &msqAAQuality2)))
+// 			{
+// 				return __min(msqAAQuality, msqAAQuality2);
+// 			}
+// 			return 0;
+// 		}
+// 		return 0;
+// 	}
+
 
 	// 矩阵顺转旋转90度
 	void MatrixRocate90(byte *pSrc, byte *pDest, int nWidth, int nHeight, int nStride)
@@ -3095,11 +3147,13 @@ _Failed:
 		//SaveRunTime();
 		// 处理外部分绘制接口
 		ExternDrawCall(hWnd, pBackSurface,pRenderRt);
+		SafeRelease(pBackSurface);
 		//ExternDrawExCall(hWnd, pRenderRt);
 		//SaveRunTime();
-		SafeRelease(pBackSurface);
+		
 		ProcessExternDraw(hWnd);
 		m_pDirect3DDeviceEx->EndScene();
+		
 		if (hRenderWnd)
 			hr |= m_pDirect3DDeviceEx->PresentEx(NULL, pRenderRt, hRenderWnd, NULL, 0);
 		//else

@@ -207,11 +207,11 @@ CVideoDecoder::CVideoDecoder(void)
 CVideoDecoder::~CVideoDecoder(void)
 {
 	DestroyDXVADecoder(true);
-	if (m_pFormatCtx)
-	{
-		avformat_close_input(&m_pFormatCtx);
-		avformat_free_context(m_pFormatCtx);
-	}
+// 	if (m_pFormatCtx)
+// 	{
+// 		avformat_close_input(&m_pFormatCtx);
+// 		avformat_free_context(m_pFormatCtx);
+// 	}
 	if (m_pAvQueue)
 		delete m_pAvQueue;
 	DeleteCriticalSection(&m_csDecoder);

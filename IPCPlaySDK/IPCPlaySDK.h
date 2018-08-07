@@ -145,7 +145,7 @@ typedef enum {
 #define		IPC_Error_SnapShotProcessFileMissed	(-30)	///< 截图程序文件丢失
 #define		IPC_Error_SnapShotProcessStartFailed (-31)	///< 截图进程启动失败
 #define		IPC_Error_SnapShotFailed	 		(-32)	///< 截图进程未运行
-#define		IPC_Error_PlayerHasStop				(-33)	///< 播放器已经启动，不能执行初始化或其它设置操作
+#define		IPC_Error_PlayerHasStop				(-33)	///< 播放器已经停止，不能执行初始化或其它设置操作
 #define		IPC_Error_InvalidCacheSize			(-34)	///< 播放器已经启动，不能执行初始化或其它设置操作
 #define		IPC_Error_UnsupportHaccel			(-35)	///< 当前系统不支持硬解码功能
 #define		IPC_Error_UnsupportedFormat			(-35)	///< 不支持的图像格式
@@ -153,7 +153,12 @@ typedef enum {
 #define		IPC_Error_RenderWndOverflow			(-37)	///< 渲染窗口超限
 #define		IPC_Error_RocateNotWork				(-38)	///< 图像旋转不适用，可能是启用了硬解码
 #define		IPC_Error_BufferOverflow			(-39)	///< 缓存溢出,可能提供的缓存空间不足以容纳所请求的数据
-
+#define		IPC_Error_DXRenderInitialized		(-40)	///< DirectX渲染器已经初始化
+#define		IPC_Error_ParserNotFound			(-41)	///< 找不到匹配的解析器
+#define		IPC_Error_AllocateCodecContextFaled	(-42)	///< 分配编码上下文失败
+#define		IPC_Error_OpenCodecFailed			(-42)	///< 分配编码上下文失败
+#define		IPC_Error_StreamParserExisted		(-43)	///< 流解析器已经存在
+#define		IPC_Error_StreamParserNotStarted	(-44)	///< 流解析器尚未启动
 #define		IPC_Error_InsufficentMemory			(-255)	///< 内存不足
 
 #define		WM_IPCPLAYER_MESSAGE			WM_USER + 8192	///< 播放器出错时发出的消息 ,消息的LPARAM字段无意义,wparam字段定义如下：
@@ -742,15 +747,32 @@ IPCPLAYSDK_API long ipcplay_AddLineArray(IN IPC_PLAYHANDLE hPlayHandle, POINT *p
 /// @param [in]		nLineIndex		由ipcplay_AddLineArray返回的线条句柄
 IPCPLAYSDK_API int ipcplay_RemoveLineArray(IN IPC_PLAYHANDLE hPlayHandle, long nLineIndex);
 
-/// @brief			设置背景图片路径
+/// @brief			设置背景图片路径，即视频图像出现前，作为背景的图像，若未设置则默认为黑色背景
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		szImageFile		背景图片路径，背景图片可以jpg,png或bmp文件,为null时，则删除背景图片
 IPCPLAYSDK_API int ipcplay_SetBackgroundImageA(IN IPC_PLAYHANDLE hPlayHandle, LPCSTR szImageFile);
 
-/// @brief			设置背景图片路径
+/// @brief			设置背景图片路径,即视频图像出现前，作为背景的图像，若未设置则默认为黑色背景
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		szImageFile		背景图片路径，背景图片可以jpg,png或bmp文件,为null时，则删除背景图片
 IPCPLAYSDK_API int ipcplay_SetBackgroundImageW(IN IPC_PLAYHANDLE hPlayHandle, LPCWSTR szImageFile);
+
+/// @brief			启用DirectDraw作为渲染器,这将禁用D3D渲染,硬解码时无法启用D3D共享模式，这交大副降低硬解码的效率
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		szImageFile		背景图片路径，背景图片可以jpg,png或bmp文件,为null时，则删除背景图片
+/// @remark			该函数必须在ipcplay_Start前调用，否则可能无效
+IPCPLAYSDK_API int ipcplay_EnableDDraw(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable = true);
+
+/// @brief			启用流解析器
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		nCodec			编码格式
+IPCPLAYSDK_API int ipcplay_EnableStreamParser(IN IPC_PLAYHANDLE hPlayHandle, IPC_CODEC nCodec = CODEC_H264);
+
+/// @brief			输入未解析，未分帧码流
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		pData			输入的数据流
+/// @param [in]		nLength			数据流尺寸
+IPCPLAYSDK_API int ipcplay_InputStream2(IN IPC_PLAYHANDLE hPlayHandle, byte *pData,int nLength);
 
 /// @brief		把YUV图像转换为RGB24图像
 /// @param [in]		hPlayHandle	由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄

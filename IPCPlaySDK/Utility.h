@@ -279,7 +279,7 @@ UINT RangedRand( UINT range_min, UINT range_max);
 //生成[range_min ,range_max]区间的浮点数,调用前需至少调用一次srand()
 double RangedRand( double range_min, double range_max);
 
-bool MemMerge(INOUT char **pDestBuff,INOUT int &nDestBuffLength,INOUT int &nDestBuffSize,IN char *szTempBuff,IN int nTempLen);
+bool MemMerge(INOUT byte **pDestBuff,INOUT int &nDestBuffLength,INOUT int &nDestBuffSize,IN byte *szTempBuff,IN int nTempLen);
 
 bool SetAutoRunA(LPCSTR strAutoRunItem,LPCTSTR szAppPath);
 bool SetAutoRunW(LPCWSTR strAutoRunItem,LPCTSTR szAppPath);
