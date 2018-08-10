@@ -378,7 +378,6 @@ BOOL CIPCPlayDemoDlg::OnInitDialog()
 			IDC_CHECK_ENABLETRANSPARENT
 		};
 	UINT nIDArrayCenter[] = { IDC_STATIC_FRAME };
-	m_pTransparentDlg = nullptr;
 	RECT rtDialog;
 	GetClientRect(&rtDialog);
 	CWnd *pItemWnd =  GetDlgItem(IDC_STATIC_ACCOUNT);
@@ -2631,7 +2630,7 @@ LRESULT CIPCPlayDemoDlg::SubClassProc(HWND hWnd, UINT nMessage, WPARAM wParam, L
 }
 
 void CIPCPlayDemoDlg::OnBnClickedCheckEnabletransparent()
-{
+{/*
 	if (IsDlgButtonChecked(IDC_CHECK_ENABLETRANSPARENT) == BST_CHECKED)
 	{
 		int nPanel = m_pVideoWndFrame->GetCurPanel();
@@ -2647,7 +2646,7 @@ void CIPCPlayDemoDlg::OnBnClickedCheckEnabletransparent()
 		
 		CWnd *pTempWnd = CWnd::FromHandle(m_pVideoWndFrame->GetPanelWnd(nPanel));
 		//m_pTransparentDlg->Create(IDD_DIALOG_TRANSPARENT, pTempWnd);
-		m_pTransparentWnd = new CTransparentWnd;
+		
 		m_pTransparentWnd->Create(nullptr, _T("TransparentWnd"), WS_CHILD, rtPanel, pTempWnd, 1024, nullptr);
 		SubClassInfoPtr pSubClass = make_shared<SubClassInfo>(m_pVideoWndFrame->GetPanelWnd(nPanel), m_pTransparentWnd->GetSafeHwnd(), (WNDPROC)SubClassProc);
 	
@@ -2669,7 +2668,7 @@ void CIPCPlayDemoDlg::OnBnClickedCheckEnabletransparent()
 		delete m_pTransparentWnd;
 		m_pTransparentWnd = nullptr;
 		m_MapSubclassWnd.erase(m_pTransparentWnd->GetSafeHwnd());
-	}
+	}*/
 }
 
 

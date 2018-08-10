@@ -33,6 +33,7 @@
 #include "MMEvent.h"
 #include "Stat.h"
 #include "./DxSurface/gpu_memcpy_sse4.h"
+#include "DHStream.hpp"
 #define  Win7MajorVersion	6
 class CIPCPlayer;
 /// @brief 文件帧信息，用于标识每一帧在文件的位置
@@ -53,10 +54,11 @@ private:
 	{
 	}
 public:
+	time_t	tFrame;
 	AVFrame *pFrame;
 	int		nImageSize;
 	byte	*pImageBuffer;
-	CAvFrame(AVFrame *pSrcFrame)
+	CAvFrame(AVFrame *pSrcFrame,time_t tFrame)
 	{
 		ZeroMemory(this, sizeof(CAvFrame));
 		pFrame = av_frame_alloc();
@@ -87,6 +89,7 @@ public:
 			DxTraceMsg("%s av_image_get_buffer_size failed:%s.\n", __FUNCTION__, szAvError);
 			assert(false);
 		}
+		this->tFrame = tFrame;
 	}
 	~CAvFrame()
 	{
@@ -204,7 +207,7 @@ private:
 	//map<HWND, CDirectDrawPtr> m_MapDDraw;
 	list <RenderUnitPtr>	m_listRenderUnit;
 	list <RenderWndPtr>		m_listRenderWnd;	///< 多窗口显示同一视频图像
-	list<CAVFramePtr>		m_listAVFrame;		///<视频帧缓存，用于异步显示图像，弃用
+	list<CAVFramePtr>		m_listAVFrame;		///<视频帧缓存，用于异步显示图像
 	
 	CCriticalSectionProxy	m_cslistRenderWnd;
 	CCriticalSectionProxy	m_csAudioCache;		
@@ -217,7 +220,8 @@ private:
 	CCriticalSectionProxy	m_csCaptureYUVEx;
 	CCriticalSectionProxy	m_csYUVFilter;
 	CCriticalSectionProxy	m_csVideoCache;
-	CCriticalSectionProxy	m_cslistAVFrame;	// 异步渲染帧缓存锁，弃用			
+	CCriticalSectionProxy	m_csCaptureRGB;
+	CCriticalSectionProxy	m_cslistAVFrame;	// 异步渲染帧缓存锁		
 	int			m_nZeroOffset;
 	bool		m_bEnableDDraw = false;			// 是否启用DDRAW，启用DDRAW将禁用D3D，并且无法启用硬件黄享模式，导致解码效果下降
 
@@ -234,6 +238,7 @@ private:
 		///< 当m_FrameCache中的视频帧数量超过m_nMaxFrameCache时，便无法再继续输入流数
 public:
 	static CCriticalSectionProxyPtr m_pCSGlobalCount;
+	shared_ptr<CMMEvent> m_pRenderTimer;
 	CHAR		m_szLogFileName[512];
 //#ifdef _DEBUG
 	
@@ -306,6 +311,9 @@ public:		// 实时流播放参数
 	int			m_nProbeOffset ;
 	volatile bool m_bAsyncRender ;
 	HANDLE		m_hRenderAsyncEvent;	///< 异步渲染事件
+	time_t		m_tSyncTimeBase;			///< 同步时间轴
+	CIPCPlayer *m_pSyncPlayer;			///< 同步播放对象
+	int			m_nVideoFPS;			///< 视频帧的原始帧率
 	
 private:	// 音频播放相关变量
 
@@ -347,6 +355,7 @@ private:
 	volatile bool m_bStreamParserRun = false;
 	
 	shared_ptr<CStreamParser> m_pStreamParser = nullptr;
+	shared_ptr<CDHStreamParser> m_pDHStreamParser = nullptr;
 	byte*		m_pParserBuffer;		///< 数据解析缓冲区
 	UINT		m_nParserBufferSize;	///< 数据解析缓冲区尺寸
 	DWORD		m_nParserDataLength;	///< 数据解析缓冲区中的有效数据长度
@@ -380,7 +389,7 @@ private:	// 文件播放相关变量
 	
 	float		m_fPlayRate;			///< 当前的播放的倍率,大于1时为加速播放,小于1时为减速播放，不能为0或小于0
 	int			m_nMaxFrameSize;		///< 最大I帧的大小，以字节为单位,默认值256K
-	int			m_nVideoFPS;					///< 视频帧的原始帧率
+	
 	USHORT		m_nFileFrameInterval;	///< 文件中,视频帧的原始帧间隔
 	float		m_fPlayInterval;		///< 帧播放间隔,单位毫秒
 	bool		m_bFilePlayFinished;	///< 文件播放完成标志, 为true时，播放结束，为false时，则未结束
@@ -397,6 +406,8 @@ private:
 	void*			m_pUserFilePlayer;
 	CaptureYUVEx	m_pfnYUVFilter;
 	void*			m_pUserYUVFilter;
+	CaptureRGB		m_pCaptureRGB;
+	void*			m_pUserCaptureRGB;
 private:
 	shared_ptr<CRunlog> m_pRunlog;	///< 运行日志
 #define __countof(array) (sizeof(array)/sizeof(array[0]))
@@ -815,7 +826,6 @@ public:
 
 	int RemoveRenderWindow(HWND hRenderWnd);
 
-
 	// 获取显示图像窗口的数量
 	int GetRenderWindows(HWND* hWndArray, int &nSize);
 
@@ -899,7 +909,6 @@ public:
 		m_nDecodeDelay = nDecodeDelay;
 		if (m_nDecodeDelay <= 2)
 		{
-			m_nMaxFrameCache = 512;
 			m_fPlayInterval = nDecodeDelay;
 		}
 	}
@@ -919,6 +928,19 @@ public:
 	/// @remark			播放流数据时，相应的帧数据其实并未立即播放，而是被放了播放队列中，应该根据ipcplay_PlayStream
 	///					的返回值来判断，是否继续播放，若说明队列已满，则应该暂停播放
 	int StartPlay(bool bEnaleAudio = false, bool bEnableHaccel = false, bool bFitWindow = true);
+
+	/// @brief			开始同步播放
+	/// @param [in]		bFitWindow		视频是否适应窗口
+	/// @param [in]		pSyncSource		同步源，为另一IPCPlaySDK 句柄，若同步源为null,则创建同步时钟，自我同步
+	/// @param [in]		nVideoFPS		视频帧率
+	/// #- true			视频填满窗口,这样会把图像拉伸,可能会造成图像变形
+	/// #- false		只按图像原始比例在窗口中显示,超出比例部分,则以黑色背景显示
+	/// @retval			0	操作成功
+	/// @retval			1	流缓冲区已满
+	/// @retval			-1	输入参数无效
+	/// @remark			若pSyncSource为null,当前的播放器成为同步源，nVideoFPS不能为0，否则返回IPC_Error_InvalidParameters错误
+	///					若pSyncSource不为null，则当前播放器以pSyncSource为同步源，nVideoFPS值被忽略
+	int StartAsyncPlay(bool bFitWindow = true, CIPCPlayer *pSyncSource = nullptr, int nVideoFPS = 25);
 
 	/// @brief			判断播放器是否正在播放中	
 	/// @retval			true	播放器正在播放中
@@ -995,15 +1017,27 @@ public:
 	int InputStream(IN byte *pFrameData, IN int nFrameType, IN int nFrameLength, int nFrameNum, time_t nFrameTime);
 
 	// 输入未解析码流
-	int InputStream(IN byte *pData, IN int nLength)
+	int InputStream(IN byte *pData, IN int nLength);
+
+	bool IsH264KeyFrame(byte *pFrame)
 	{
-		if (m_pStreamParser || m_hThreadStreamParser)
+		int RTPHeaderBytes = 0;
+		if (pFrame[0] == 0 &&
+			pFrame[1] == 0 &&
+			pFrame[2] == 0 &&
+			pFrame[3] == 1)
 		{
-			return m_pStreamParser->InputStream(pData, nLength);
+			int nal_type = pFrame[4] & 0x1F;
+			if (nal_type == 5 || nal_type == 7 || nal_type == 8 || nal_type == 2)
+			{
+				return true;
+			}
 		}
-		else
-			return IPC_Error_StreamParserNotStarted;
+
+		return false;
 	}
+
+	int InputDHStream(byte *pBuffer, int nLength);
 	
 	bool StopPlay(DWORD nTimeout = 50);
 
@@ -1352,10 +1386,10 @@ public:
 	bool InitialziePlayer();
 	
 	
-	// 用于异步渲染的弹出帧操作，由于不再使用异步渲染，所以该代码被弃用
+	// 用于异步渲染的弹出帧操作
 	bool PopFrame(CAVFramePtr &pAvFrame,int &nSize)
 	{
-		Autolock(&m_cslistAVFrame);
+		CAutoLock lock(m_cslistAVFrame.Get(), false, __FILE__, __FUNCTION__, __LINE__);
 		if (m_listAVFrame.size())
 		{
 			pAvFrame = m_listAVFrame.front();
@@ -1368,11 +1402,11 @@ public:
 	}
 	
 	
-	// 用于异步渲染的压入帧操作，由于不再使用异步渲染，所以该代码被弃用
-	int PushFrame(AVFrame *pSrcFrame)
+	// 用于异步渲染的压入帧操作
+	int PushFrame(AVFrame *pSrcFrame,time_t tFrame)
 	{
-		CAVFramePtr pFrame = make_shared<CAvFrame>(pSrcFrame);
-		Autolock(&m_cslistAVFrame);
+		CAVFramePtr pFrame = make_shared<CAvFrame>(pSrcFrame,tFrame);
+		CAutoLock lock(m_cslistAVFrame.Get(),false,__FILE__,__FUNCTION__,__LINE__);
 		m_listAVFrame.push_back(pFrame);
 		return m_listAVFrame.size();
 	}
@@ -1394,4 +1428,5 @@ public:
 		return IPC_Succeed;
 	}
 	static UINT __stdcall ThreadAsyncRender(void *p);
+	static UINT __stdcall ThreadAsyncDecode(void *p);
 };

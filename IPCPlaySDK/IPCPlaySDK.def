@@ -64,6 +64,8 @@ EXPORTS
 	;ipcplay_YUV2RGB24
 	ipcplay_EnableStreamParser
 	ipcplay_InputStream2
+	ipcplay_InputDHStream
 	ipcplay_AddPolygon
 	ipcplay_RemovePolygon
 	ipcplay_SetCoordinateMode
+	ipcplay_StartAsyncPlay

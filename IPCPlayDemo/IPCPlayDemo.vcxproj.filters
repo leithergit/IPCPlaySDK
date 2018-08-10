@@ -32,10 +32,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DialogDisplayRGB24.cpp" />
-    <ClCompile Include="TransparentDlg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TransparentWnd.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AutoLock.h">
@@ -93,7 +89,6 @@
     <ClInclude Include="TransparentDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TransparentWnd.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\arrow-left-double.ico">

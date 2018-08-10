@@ -775,7 +775,7 @@ CIPCPlayer::~CIPCPlayer()
 	if (m_hEventFrameCopied)
 		CloseHandle(m_hEventFrameCopied);
 
-	if (m_hRenderAsyncEvent)
+	if (m_hRenderAsyncEvent && !m_pSyncPlayer)
 	{
 		CloseHandle(m_hRenderAsyncEvent);
 		m_hRenderAsyncEvent = nullptr;
@@ -1047,6 +1047,57 @@ int CIPCPlayer::StartPlay(bool bEnaleAudio , bool bEnableHaccel , bool bFitWindo
 	return IPC_Succeed;
 }
 
+int CIPCPlayer::StartAsyncPlay(bool bFitWindow,CIPCPlayer *pSyncSource,int nVideoFPS )
+{
+#ifdef _DEBUG
+	OutputMsg("%s \tObject:%d Time = %d.\n", __FUNCTION__, m_nObjIndex, timeGetTime() - m_nLifeTime);
+#endif
+	if (!pSyncSource)
+	{// 自身成为同步源
+		if (nVideoFPS <= 0)
+			return IPC_Error_InvalidParameters;
+
+		int nIPCPlayInterval = 1000 / nVideoFPS;
+		m_nVideoFPS = nVideoFPS;
+		m_hRenderAsyncEvent = CreateEvent(nullptr, false, false, nullptr);
+		m_pRenderTimer = make_shared<CMMEvent>(m_hRenderAsyncEvent, nIPCPlayInterval);
+	}
+	else
+	{// pSyncSource成为同步源
+		m_pSyncPlayer = pSyncSource;
+		m_nVideoFPS = pSyncSource->m_nVideoFPS;
+		m_hRenderAsyncEvent = pSyncSource->m_hRenderAsyncEvent;
+	}
+	m_bPause = false;
+	m_bFitWindow = bFitWindow;
+	
+	m_bEnableHaccel = false;
+	m_bPlayerInialized = false;
+
+	m_listVideoCache.clear();
+	m_listAudioCache.clear();
+
+	AddRenderWindow(m_hRenderWnd, nullptr);
+
+	m_bStopFlag = false;
+	// 启动流播放线程
+	m_bThreadDecodeRun = true;
+	
+	m_hThreadDecode = (HANDLE)_beginthreadex(nullptr, 256 * 1024, ThreadAsyncDecode, this, 0, 0);
+	//m_hThreadAsyncReander = (HANDLE)_beginthreadex(nullptr, 256 * 1024, ThreadAsyncRender, this, 0, 0);
+
+	if (!m_hThreadDecode)
+	{
+#ifdef _DEBUG
+		OutputMsg("%s \tObject:%d ThreadPlayVideo Start failed:%d.\n", __FUNCTION__, m_nObjIndex, GetLastError());
+#endif
+		return IPC_Error_VideoThreadStartFailed;
+	}
+	
+	EnableAudio(false);
+	m_dwStartTime = timeGetTime();
+	return IPC_Succeed;
+}
 int CIPCPlayer::GetFileHeader()
 {
 	if (!m_hDvoFile)
@@ -1146,7 +1197,6 @@ int CIPCPlayer::InputStream(unsigned char *szFrameData, int nFrameSize, UINT nCa
 		}
 	}
 
-	m_bIpcStream = false;		// 非IPC码流
 	IPCFrameHeader *pHeaderEx = (IPCFrameHeader *)szFrameData;
 	if (m_nSDKVersion >= IPC_IPC_SDK_VERSION_2015_12_16 && m_nSDKVersion != IPC_IPC_SDK_GSJ_HEADER)
 	{
@@ -1272,7 +1322,7 @@ int CIPCPlayer::InputStream(IN byte *pFrameData, IN int nFrameType, IN int nFram
 		return IPC_Error_VideoThreadAbnormalExit;
 	}
 
-	m_bIpcStream = true;
+	m_bIpcStream = false;
 	switch (nFrameType)
 	{
 	case 0:									// 海思I帧号为0，这是固件的一个BUG，有待修正
@@ -1332,6 +1382,60 @@ int CIPCPlayer::InputStream(IN byte *pFrameData, IN int nFrameType, IN int nFram
 	return 0;
 }
 
+// 输入未解析码流
+int CIPCPlayer::InputStream(IN byte *pData, IN int nLength)
+{
+	if (m_pStreamParser/* || m_hThreadStreamParser*/)
+	{
+		CAutoLock lock(&m_csVideoCache,false,__FILE__,__FUNCTION__,__LINE__);
+		if (m_listVideoCache.size() >= m_nMaxFrameCache)
+			return IPC_Error_FrameCacheIsFulled;
+		lock.Unlock();
+		list<FrameBufferPtr> listFrame;
+		if (m_pStreamParser->ParserFrame(pData, nLength, listFrame) > 0)
+		{
+			for (auto it = listFrame.begin(); it != listFrame.end();)
+			{
+				IPC_STREAM_TYPE nFrameType;
+				if (IsH264KeyFrame((*it)->pBuffer))
+					nFrameType = IPC_I_FRAME;
+				else
+					nFrameType = IPC_P_FRAME;
+				if (InputStream((*it)->pBuffer, nFrameType, (*it)->nLength, 0, 0) == IPC_Succeed)
+				{
+					it = listFrame.erase(it);
+				}
+				else
+				{
+					Sleep(10);
+					continue;
+				}
+			}
+
+		}
+		return IPC_Succeed;
+	}
+	else
+		return IPC_Error_StreamParserNotStarted;
+}
+int CIPCPlayer::InputDHStream(byte *pBuffer, int nLength)
+{
+	if (!pBuffer || !nLength)
+		return IPC_Error_InvalidParameters;
+	if (!m_pDHStreamParser)
+	{
+		m_pDHStreamParser = make_shared<CDHStreamParser>(pBuffer, nLength);
+	}
+	else
+	{
+		int nRet = m_pDHStreamParser->InputStream(pBuffer, nLength);
+		if (nRet != IPC_Succeed)
+			return nRet;
+	}
+
+
+	return IPC_Succeed;
+}
 bool CIPCPlayer::StopPlay(DWORD nTimeout )
 {
 #ifdef _DEBUG
@@ -1345,7 +1449,8 @@ bool CIPCPlayer::StopPlay(DWORD nTimeout )
 	m_bStreamParserRun = false;
 	HANDLE hArray[16] = { 0 };
 	int nHandles = 0;
-	SetEvent(m_hRenderAsyncEvent);
+	if (!m_pSyncPlayer)
+		SetEvent(m_hRenderAsyncEvent);
 
 	if (m_bEnableAudio)
 	{
@@ -1453,12 +1558,13 @@ bool CIPCPlayer::StopPlay(DWORD nTimeout )
 		m_pFrameOffsetTable = nullptr;
 	}
 
-	if (m_hRenderAsyncEvent)
+	if (m_hRenderAsyncEvent &&!m_pSyncPlayer)
 	{
 		CloseHandle(m_hRenderAsyncEvent);
 		m_hRenderAsyncEvent = nullptr;
 	}
-
+	m_pDHStreamParser = nullptr;
+	
 	m_pStreamParser = nullptr;
 	m_hThreadDecode = nullptr;
 	m_hThreadFileParser = nullptr;
@@ -2135,6 +2241,13 @@ int CIPCPlayer::SetCallBack(IPC_CALLBACK nCallBackType, IN void *pUserCallBack, 
 		m_pUserFilePlayer = pUserPtr;
 	}
 	break;
+	case RGBCapture:
+	{
+		Autolock(&m_csCaptureRGB);
+		m_pUserCaptureRGB = (CaptureRGB)pUserCallBack;
+		m_pUserCaptureRGB = pUserPtr;
+	}
+		break;
 	default:
 		return IPC_Error_InvalidParameters;
 		break;
@@ -2576,18 +2689,39 @@ int CIPCPlayer::EnableStreamParser(IPC_CODEC nCodec)
 UINT __stdcall CIPCPlayer::ThreadStreamParser(void *p)
 {
 	CIPCPlayer* pThis = (CIPCPlayer *)p;
-	AVPacket *pAvPkt = av_packet_alloc();
-	while (pThis->m_bStreamParserRun)
-	{
-		if (pThis->m_pStreamParser->ParserFrame(pAvPkt) && pAvPkt->size > 0)
-		{// 得到裸数据流
-			//pThis->OutputMsg("%s Get a AvPackge,size = %d.\n", __FUNCTION__, pAvPkt->size);
-			pThis->InputStream(pAvPkt->data, IPC_I_FRAME, pAvPkt->size, 0, 0);
-		}
-		Sleep(10);
-	}
-	av_packet_free(&pAvPkt);
 	return 0;
+// 	int nBufferLength = 0;
+// 	bool bGetFrame = false;
+// 	bool bSleeped = false;
+// 	list<AVPacketPtr> listFrame;
+// 	while (pThis->m_bStreamParserRun)
+// 	{
+// 		bSleeped = false;
+// 		if (pThis->m_pStreamParser->ParserFrame(listFrame) > 0)
+// 		{
+// 			for (auto it = listFrame.begin(); pThis->m_bStreamParserRun && it != listFrame.end();)
+// 			{
+// 				bSleeped = false;
+// 				
+// 				if (pThis->InputStream((*it)->data, IPC_I_FRAME, (*it)->size, 0, 0) == IPC_Succeed)
+// 				{
+// 					it = listFrame.erase(it);
+// 					pThis->m_pStreamParser->SetFrameCahceFulled(false);
+// 				}
+// 				else
+// 				{
+// 					pThis->m_pStreamParser->SetFrameCahceFulled(true);
+// 					bSleeped = true;
+// 					Sleep(10);
+// 					continue;
+// 				}
+// 			}
+// 		}
+// 		if (!bSleeped)
+// 			Sleep(10);
+// 	}
+// 	
+// 	return 0;
 }
 
 // 探测视频码流类型,要求必须输入I帧
@@ -2985,6 +3119,17 @@ void CIPCPlayer::ProcessYUVCapture(AVFrame *pAvFrame, LONGLONG nTimestamp)
 		}
 		m_csCaptureYUVEx.Unlock();
 	}
+	if (m_csCaptureRGB.TryLock())
+	{
+		if (m_pCaptureRGB)
+		{
+			PixelConvert convert(pAvFrame, D3DFMT_R8G8B8);
+			if (convert.ConvertPixel() > 0)
+				m_pCaptureRGB(this, convert.pImage, pAvFrame->width, pAvFrame->height, nTimestamp, m_pUserCaptureRGB);
+		}
+			
+		m_csCaptureRGB.Unlock();
+	}
 }
 
 /// @brief			码流探测读取数据包回调函数
@@ -3027,562 +3172,6 @@ int CIPCPlayer::ReadAvData(void *opaque, uint8_t *buf, int buf_size)
 		return 0;
 }
 
-UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
-{
-	struct DxDeallocator
-	{
-		CDxSurfaceEx *&m_pDxSurface;
-		CDirectDraw *&m_pDDraw;
-
-	public:
-		DxDeallocator(CDxSurfaceEx *&pDxSurface, CDirectDraw *&pDDraw)
-			:m_pDxSurface(pDxSurface), m_pDDraw(pDDraw)
-		{
-		}
-		~DxDeallocator()
-		{
-			TraceMsgA("%s pSurface = %08X\tpDDraw = %08X.\n", __FUNCTION__, m_pDxSurface, m_pDDraw);
-			Safe_Delete(m_pDxSurface);
-			Safe_Delete(m_pDDraw);
-		}
-	};
-	DeclareRunTime(5);
-	CIPCPlayer* pThis = (CIPCPlayer *)p;
-#ifdef _DEBUG
-	pThis->OutputMsg("%s \tObject:%d Enter ThreadPlayVideo m_nLifeTime = %d.\n", __FUNCTION__, pThis->m_nObjIndex, timeGetTime() - pThis->m_nLifeTime);
-#endif
-	int nAvError = 0;
-	char szAvError[1024] = { 0 };
-
-	if (!pThis->m_hRenderWnd)
-		pThis->OutputMsg("%s Warning!!!A Windows handle is Needed otherwith the video Will not showed..\n", __FUNCTION__);
-	// 创建多媒体事件
-	//TimerEvent PlayEvent(1000 / pThis->m_nVideoFPS);
-	int nIPCPlayInterval = 1000 / pThis->m_nVideoFPS;
-	shared_ptr<CMMEvent> pRenderTimer = make_shared<CMMEvent>(pThis->m_hRenderAsyncEvent, nIPCPlayInterval);
-
-	// 等待有效的视频帧数据
-	long tFirst = timeGetTime();
-	int nTimeoutCount = 0;
-	while (pThis->m_bThreadDecodeRun)
-	{
-		Autolock(&pThis->m_csVideoCache);
-		// 			if ((timeGetTime() - tFirst) > 5000)
-		// 			{// 等待超时
-		// 				//assert(false);
-		// 				pThis->OutputMsg("%s Warning!!!Wait for frame timeout(5s),times %d.\n", __FUNCTION__,++nTimeoutCount);
-		// 				break;
-		// 			}
-		if (pThis->m_listVideoCache.size() < 1)
-		{
-			lock.Unlock();
-			Sleep(20);
-			continue;
-		}
-		else
-			break;
-	}
-	SaveRunTime();
-	if (!pThis->m_bThreadDecodeRun)
-	{
-		//assert(false);
-		return 0;
-	}
-
-	// 等待I帧
-	tFirst = timeGetTime();
-	//		DWORD dfTimeout = 3000;
-	// 		if (!pThis->m_bIpcStream)	// 只有IPC码流才需要长时间等待
-	// 			dfTimeout = 1000;
-	AVCodecID nCodecID = AV_CODEC_ID_NONE;
-	int nDiscardFrames = 0;
-	bool bProbeSucced = false;
-	if (pThis->m_nVideoCodec == CODEC_UNKNOWN ||		/// 码流未知则尝试探测码
-		!pThis->m_nVideoWidth ||
-		!pThis->m_nVideoHeight)
-	{
-		bool bGovInput = false;
-		while (pThis->m_bThreadDecodeRun)
-		{
-			if ((timeGetTime() - tFirst) >= pThis->m_nProbeStreamTimeout)
-				break;
-			CAutoLock lock(&pThis->m_csVideoCache, false, __FILE__, __FUNCTION__, __LINE__);
-			if (pThis->m_listVideoCache.size() > 1)
-				break;
-			Sleep(25);
-		}
-		if (!pThis->m_bThreadDecodeRun)
-		{
-			assert(false);
-			return 0;
-		}
-		auto itStart = pThis->m_listVideoCache.begin();
-		while (!bProbeSucced && pThis->m_bThreadDecodeRun)
-		{
-#ifndef _DEBUG
-			if ((timeGetTime() - tFirst) < pThis->m_nProbeStreamTimeout)
-#else
-			if ((timeGetTime() - tFirst) < INFINITE)
-#endif
-			{
-				Sleep(5);
-				CAutoLock lock(&pThis->m_csVideoCache, false, __FILE__, __FUNCTION__, __LINE__);
-				//auto it = find_if(itPos, pThis->m_listVideoCache.end(), StreamFrame::IsIFrame);
-				auto it = itStart;
-				if (it != pThis->m_listVideoCache.end())
-				{// 探测码流类型
-					itStart = it;
-					itStart++;
-					TraceMsgA("%s Probestream FrameType = %d\tFrameLength = %d.\n", __FUNCTION__, (*it)->FrameHeader()->nType, (*it)->FrameHeader()->nLength);
-					if ((*it)->FrameHeader()->nType == FRAME_GOV)
-					{
-						if (bGovInput)
-							continue;
-						bGovInput = true;
-						if (bProbeSucced = pThis->ProbeStream((byte *)(*it)->Framedata(pThis->m_nSDKVersion), (*it)->FrameHeader()->nLength))
-							break;
-					}
-					else
-						if (bProbeSucced = pThis->ProbeStream((byte *)(*it)->Framedata(pThis->m_nSDKVersion), (*it)->FrameHeader()->nLength))
-							break;
-				}
-			}
-			else
-			{
-#ifdef _DEBUG
-				pThis->OutputMsg("%s Warning!!!\nThere is No an I frame in %d second.m_listVideoCache.size() = %d.\n", __FUNCTION__, (int)pThis->m_nProbeStreamTimeout / 1000, pThis->m_listVideoCache.size());
-				pThis->OutputMsg("%s \tObject:%d Line %d Time = %d.\n", __FUNCTION__, pThis->m_nObjIndex, __LINE__, timeGetTime() - pThis->m_nLifeTime);
-#endif
-				if (pThis->m_hRenderWnd)
-					::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_NOTRECVIFRAME, 0);
-				assert(false);
-				return 0;
-			}
-		}
-		if (!pThis->m_bThreadDecodeRun)
-		{
-			assert(false);
-			return 0;
-		}
-
-		if (!bProbeSucced)		// 探测失败
-		{
-			pThis->OutputMsg("%s Failed in ProbeStream,you may input a unknown stream.\n", __FUNCTION__);
-#ifdef _DEBUG
-			pThis->OutputMsg("%s \tObject:%d Line %d Time = %d.\n", __FUNCTION__, pThis->m_nObjIndex, __LINE__, timeGetTime() - pThis->m_nLifeTime);
-#endif
-			if (pThis->m_hRenderWnd)
-				::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_UNKNOWNSTREAM, 0);
-			assert(false);
-			return 0;
-		}
-		// 把ffmpeg的码流ID转为IPC的码流ID,并且只支持H264和HEVC
-		nCodecID = pThis->m_pStreamProbe->nProbeAvCodecID;
-		if (nCodecID != AV_CODEC_ID_H264 &&
-			nCodecID != AV_CODEC_ID_HEVC)
-		{
-			pThis->m_nVideoCodec = CODEC_UNKNOWN;
-			pThis->OutputMsg("%s Probed a unknown stream,Decode thread exit.\n", __FUNCTION__);
-			if (pThis->m_hRenderWnd)
-				::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_UNKNOWNSTREAM, 0);
-			assert(false);
-			return 0;
-		}
-	}
-	SaveRunTime();
-	switch (pThis->m_nVideoCodec)
-	{
-	case CODEC_H264:
-		nCodecID = AV_CODEC_ID_H264;
-		break;
-	case CODEC_H265:
-		nCodecID = AV_CODEC_ID_H265;
-		break;
-	default:
-	{
-		pThis->OutputMsg("%s You Input a unknown stream,Decode thread exit.\n", __FUNCTION__);
-		if (pThis->m_hRenderWnd)	// 在线程中尽量避免使用SendMessage，因为可能会导致阻塞
-			::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_UNSURPPORTEDSTREAM, 0);
-		assert(false);
-		return 0;
-		break;
-	}
-	}
-
-	int nRetry = 0;
-
-	shared_ptr<CVideoDecoder>pDecodec = make_shared<CVideoDecoder>();
-	if (!pDecodec)
-	{
-		pThis->OutputMsg("%s Failed in allocing memory for Decoder.\n", __FUNCTION__);
-		assert(false);
-		return 0;
-	}
-	SaveRunTime();
-	if (!pThis->InitizlizeDx())
-	{
-		assert(false);
-		return 0;
-	}
-
-	shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface, pThis->m_pDDraw);
-	SaveRunTime();
-	if (pThis->m_bD3dShared)
-	{
-		pDecodec->SetD3DShared(pThis->m_pDxSurface->GetD3D9(), pThis->m_pDxSurface->GetD3DDevice());
-		pThis->m_pDxSurface->SetD3DShared(true);
-	}
-
-	// 使用单线程解码,多线程解码在某此比较慢的CPU上可能会提高效果，但现在I5 2GHZ以上的CPU上的多线程解码效果并不明显反而会占用更多的内存
-	pDecodec->SetDecodeThreads(1);
-	// 初始化解码器
-
-	while (pThis->m_bThreadDecodeRun)
-	{// 某此时候可能会因为内存或资源不够导致初始化解码操作性,因此可以延迟一段时间后再次初始化，若多次初始化仍不成功，则需退出线程
-		//DeclareRunTime(5);
-		//SaveRunTime();
-		if (!pDecodec->InitDecoder(nCodecID, pThis->m_nVideoWidth, pThis->m_nVideoHeight, pThis->m_bEnableHaccel))
-		{
-			pThis->OutputMsg("%s Failed in Initializing Decoder，CodeCID =%d,Width = %d,Height = %d,HWAccel = %d.\n", __FUNCTION__, nCodecID, pThis->m_nVideoWidth, pThis->m_nVideoHeight, pThis->m_bEnableHaccel);
-#ifdef _DEBUG
-			pThis->OutputMsg("%s \tObject:%d Line %d Time = %d.\n", __FUNCTION__, pThis->m_nObjIndex, __LINE__, timeGetTime() - pThis->m_nLifeTime);
-#endif
-			nRetry++;
-			if (nRetry >= 3)
-			{
-				if (pThis->m_hRenderWnd)// 在线程中尽量避免使用SendMessage，因为可能会导致阻塞
-					::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_INITDECODERFAILED, 0);
-				return 0;
-			}
-			Delay(2500, pThis->m_bThreadDecodeRun);
-		}
-		else
-			break;
-		//SaveRunTime();
-	}
-	SaveRunTime();
-	if (!pThis->m_bThreadDecodeRun)
-	{
-		//assert(false);
-		return 0;
-	}
-
-	if (pThis->m_pStreamProbe)
-		pThis->m_pStreamProbe = nullptr;
-
-	AVPacket *pAvPacket = (AVPacket *)av_malloc(sizeof(AVPacket));
-	shared_ptr<AVPacket>AvPacketPtr(pAvPacket, av_free);
-	av_init_packet(pAvPacket);
-	AVFrame *pAvFrame = av_frame_alloc();
-	shared_ptr<AVFrame>AvFramePtr(pAvFrame, av_free);
-
-	StreamFramePtr FramePtr;
-	int nGot_picture = 0;
-	DWORD nResult = 0;
-	float fTimeSpan = 0;
-	int nFrameInterval = pThis->m_nFileFrameInterval;
-	pThis->m_dfTimesStart = GetExactTime();
-
-	//		 取得当前显示器的刷新率,在垂直同步模式下,显示器的刷新率决定了，显示图像的最高帧数
-	//		 通过统计每显示一帧图像(含解码和显示)耗费的时间
-	// 		DEVMODE   dm;
-	// 		dm.dmSize = sizeof(DEVMODE);
-	// 		::EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dm);		
-	// 		int nRefreshInvertal = 1000 / dm.dmDisplayFrequency;	// 显示器刷新间隔
-
-	double dfDecodeStartTime = GetExactTime();
-	double dfRenderTime = GetExactTime() - pThis->m_fPlayInterval;	// 图像被显示的时间
-	double dfRenderStartTime = 0.0f;
-	double dfRenderTimeSpan = 0.000f;
-	double dfTimeSpan = 0.0f;
-
-#ifdef _DEBUG
-	pThis->m_csVideoCache.Lock();
-	TraceMsgA("%s Video cache Size = %d .\n", __FUNCTION__, pThis->m_listVideoCache.size());
-	pThis->m_csVideoCache.Unlock();
-	pThis->OutputMsg("%s \tObject:%d Start Decoding.\n", __FUNCTION__, pThis->m_nObjIndex);
-#endif
-	//	    以下代码用以测试解码和显示占用时间，建议不要删除		
-	// 		TimeTrace DecodeTimeTrace("DecodeTime", __FUNCTION__);
-	// 		TimeTrace RenderTimeTrace("RenderTime", __FUNCTION__);
-
-	int nIFrameTime = 0;
-	CStat FrameStat(pThis->m_nObjIndex);		// 解码统计
-	//CStat IFrameStat;		// I帧解码统计
-
-	int nFramesAfterIFrame = 0;		// 相对I帧的编号,I帧后的第一帧为1，第二帧为2依此类推
-	int nSkipFrames = 0;
-	bool bDecodeSucceed = false;
-	double dfDecodeTimespan = 0.0f;	// 解码所耗费时间
-	double dfDecodeITimespan = 0.0f; // I帧解码和显示所耗费时间
-	double dfTimeDecodeStart = 0.0f;
-	pThis->m_nFirstFrameTime = 0;
-	float fLastPlayRate = pThis->m_fPlayRate;		// 记录上一次的播放速率，当播放速率发生变化时，需要重置帧统计数据
-
-	if (pThis->m_dwStartTime)
-	{
-		TraceMsgA("%s %d Render Timespan = %d.\n", __FUNCTION__, __LINE__, timeGetTime() - pThis->m_dwStartTime);
-		pThis->m_dwStartTime = 0;
-	}
-
-	int nFramesPlayed = 0;			// 播放总帆数
-	double dfTimeStartPlay = GetExactTime();// 播放起始时间
-	int nTimePlayFrame = 0;		// 播放一帧所耗费时间（MS）
-	int nPlayCount = 0;
-	int TPlayArray[100] = { 0 };
-	double dfT1 = GetExactTime();
-	int nVideoCacheSize = 0;
-	LONG nTotalDecodeFrames = 0;
-	dfDecodeStartTime = GetExactTime() - pThis->m_nPlayFrameInterval / 1000.0f;
-	SaveRunTime();
-	pThis->m_pDecoder = pDecodec;
-	int nRenderTimes = 0;
-	CStat  RenderInterval("RenderInterval", pThis->m_nObjIndex);
-	while (pThis->m_bThreadDecodeRun)
-	{
-		if (!pThis->m_bIpcStream &&
-			pThis->m_bPause)
-		{// 只有非IPC码流才可以暂停
-			Sleep(40);
-			continue;
-		}
-		pThis->m_csVideoCache.Lock();
-		nVideoCacheSize = pThis->m_listVideoCache.size();
-		pThis->m_csVideoCache.Unlock();
-		// 			do 
-		// 			{
-		// 此为最帧率测试代码,建议不要删除
-		// xionggao.lee @2016.01.15 
-#ifdef _DEBUG
-		// 				int nFPS = 25;
-		// 				int nTimespan2 = (int)(TimeSpanEx(pThis->m_dfTimesStart) * 1000);
-		// 				if (nTimespan2)
-		// 					nFPS = nFrames * 1000 / nTimespan2;
-		// 
-		// 				int nTimeSpan = (int)(TimeSpanEx(dfDecodeStartTime) * 1000);
-		// 				TPlayArray[nPlayCount++] = nTimeSpan;
-		// 				TPlayArray[0] = nFPS;
-		// 				if (nPlayCount >= 50)
-		// 				{
-		// 					pThis->OutputMsg("%sPlay Interval([0] is FPS):\n", __FUNCTION__);
-		// 					for (int i = 0; i < nPlayCount; i++)
-		// 					{
-		// 						pThis->OutputMsg("%02d\t", TPlayArray[i]);
-		// 						if ((i + 1) % 10 == 0)
-		// 							pThis->OutputMsg("\n");
-		// 					}
-		// 					pThis->OutputMsg(".\n");
-		// 					nPlayCount = 0;
-		// 					CAutoLock lock(&pThis->m_csVideoCache);
-		// 					TraceMsgA("%s Videocache size = %d.\n", __FUNCTION__, pThis->m_listVideoCache.size());
-		// 				}
-		// 				dfT1 = GetExactTime();		
-#endif
-		dfDecodeStartTime = GetExactTime();
-		if (!pThis->m_bIpcStream)
-		{// 文件或流媒体播放，可调节播放速度
-			int nTimeSpan1 = (int)(TimeSpanEx(dfDecodeStartTime) * 1000);
-			if (nVideoCacheSize < 2 &&
-				(pThis->m_nPlayFrameInterval - nTimeSpan1) > 5)
-			{
-				Sleep(5);
-				continue;
-			}
-			bool bPopFrame = false;
-			// 查找时间上最匹配的帧,并删除不匹配的非I帧
-			int nSkipFrames = 0;
-			CAutoLock lock(&pThis->m_csVideoCache, false, __FILE__, __FUNCTION__, __LINE__);
-			if (!pThis->m_nFirstFrameTime &&
-				pThis->m_listVideoCache.size() > 0)
-				pThis->m_nFirstFrameTime = pThis->m_listVideoCache.front()->FrameHeader()->nTimestamp;
-			for (auto it = pThis->m_listVideoCache.begin(); it != pThis->m_listVideoCache.end();)
-			{
-				time_t tFrameSpan = ((*it)->FrameHeader()->nTimestamp - pThis->m_tLastFrameTime) / 1000;
-				if (StreamFrame::IsIFrame(*it))
-				{
-					bPopFrame = true;
-					break;
-				}
-				if (pThis->m_fPlayRate < 16.0 && // 16倍速以下，才考虑按时跳帧
-					tFrameSpan / pThis->m_fPlayRate >= max(pThis->m_fPlayInterval, FrameStat.GetAvgValue() * 1000))
-				{
-					bPopFrame = true;
-					break;
-				}
-				else
-				{
-					it = pThis->m_listVideoCache.erase(it);
-					nSkipFrames++;
-				}
-			}
-			if (nSkipFrames)
-				pThis->OutputMsg("%s Skip Frames = %d bPopFrame = %s.\n", __FUNCTION__, nSkipFrames, bPopFrame ? "true" : "false");
-			if (bPopFrame)
-			{
-				FramePtr = pThis->m_listVideoCache.front();
-				pThis->m_listVideoCache.pop_front();
-				//TraceMsgA("%s Pop a Frame ,FrameID = %d\tFrameTimestamp = %d.\n", __FUNCTION__, FramePtr->FrameHeader()->nFrameID, FramePtr->FrameHeader()->nTimestamp);
-			}
-			pThis->m_nVideoCache = pThis->m_listVideoCache.size();
-			if (!bPopFrame)
-			{
-				lock.Unlock();	// 须提前解锁，不然Sleep后才会解锁，导致其它地方被锁住
-				Sleep(10);
-				continue;
-			}
-			lock.Unlock();
-			pAvPacket->data = (uint8_t *)FramePtr->Framedata(pThis->m_nSDKVersion);
-			pAvPacket->size = FramePtr->FrameHeader()->nLength;
-			pThis->m_tLastFrameTime = FramePtr->FrameHeader()->nTimestamp;
-			av_frame_unref(pAvFrame);
-
-			nAvError = pDecodec->Decode(pAvFrame, nGot_picture, pAvPacket);
-			nTotalDecodeFrames++;
-			av_packet_unref(pAvPacket);
-			if (nAvError < 0)
-			{
-				av_strerror(nAvError, szAvError, 1024);
-				//dfDecodeStartTime = GetExactTime();
-				continue;
-			}
-			//avcodec_flush_buffers()			
-			//					dfDecodeTimespan = TimeSpanEx(dfDecodeStartTime);
-			// 					if (StreamFrame::IsIFrame(FramePtr))			// 统计I帧解码时间
-			// 						IFrameStat.Stat(dfDecodeTimespan);
-			// 					FrameStat.Stat(dfDecodeTimespan);	// 统计所有帧解码时间
-			// 					if (fLastPlayRate != pThis->m_fPlayRate)
-			// 					{// 播放速率发生变化，重置统计数据
-			// 						IFrameStat.Reset();
-			// 						FrameStat.Reset();
-			// 					}
-			fLastPlayRate = pThis->m_fPlayRate;
-			fTimeSpan = (TimeSpanEx(dfRenderTime) + dfRenderTimeSpan) * 1000;
-			int nSleepTime = 0;
-			if (fTimeSpan < pThis->m_fPlayInterval)
-			{
-				nSleepTime = (int)(pThis->m_fPlayInterval - fTimeSpan);
-				if (pThis->m_nDecodeDelay == -1)
-					Sleep(nSleepTime);
-				else if (pThis->m_nDecodeDelay)
-					Sleep(pThis->m_nDecodeDelay);
-				else
-					continue;
-			}
-		}
-		else
-		{// IPC 码流，则直接播放
-			WaitForSingleObject(pThis->m_hRenderAsyncEvent, nIPCPlayInterval);
-			if (nVideoCacheSize >= 3)
-			{
-				if (pRenderTimer->nPeriod != (nIPCPlayInterval * 3 / 5))	// 播放间隔降低40%,可以迅速清空积累帧
-					pRenderTimer->UpdateInterval(25);
-			}
-			else if (pRenderTimer->nPeriod != nIPCPlayInterval)
-				pRenderTimer->UpdateInterval(nIPCPlayInterval);
-			bool bPopFrame = false;
-			Autolock(&pThis->m_csVideoCache);
-			if (pThis->m_listVideoCache.size() > 0)
-			{
-				FramePtr = pThis->m_listVideoCache.front();
-				pThis->m_listVideoCache.pop_front();
-				bPopFrame = true;
-				nVideoCacheSize = pThis->m_listVideoCache.size();
-			}
-			lock.Unlock();
-			if (!bPopFrame)
-			{
-				Sleep(10);
-				continue;
-			}
-
-			pAvPacket->data = (uint8_t *)FramePtr->Framedata(pThis->m_nSDKVersion);
-			pAvPacket->size = FramePtr->FrameHeader()->nLength;
-			pThis->m_tLastFrameTime = FramePtr->FrameHeader()->nTimestamp;
-			av_frame_unref(pAvFrame);
-			nAvError = pDecodec->Decode(pAvFrame, nGot_picture, pAvPacket);
-			nTotalDecodeFrames++;
-			av_packet_unref(pAvPacket);
-			if (nAvError < 0)
-			{
-				av_frame_unref(pAvFrame);
-				av_strerror(nAvError, szAvError, 1024);
-				continue;
-			}
-			dfDecodeTimespan = TimeSpanEx(dfDecodeStartTime);
-		}
-#ifdef _DEBUG
-		if (pThis->m_bSeekSetDetected)
-		{
-			int nFrameID = FramePtr->FrameHeader()->nFrameID;
-			int nTimeStamp = FramePtr->FrameHeader()->nTimestamp / 1000;
-			pThis->OutputMsg("%s First Frame after SeekSet:ID = %d\tTimeStamp = %d.\n", __FUNCTION__, nFrameID, nTimeStamp);
-			pThis->m_bSeekSetDetected = false;
-		}
-#endif	
-		if (nGot_picture)
-		{
-			pThis->m_nDecodePixelFmt = (AVPixelFormat)pAvFrame->format;
-			SetEvent(pThis->m_hEvnetYUVReady);
-			SetEvent(pThis->m_hEventDecodeStart);
-			pThis->m_nCurVideoFrame = FramePtr->FrameHeader()->nFrameID;
-			pThis->m_tCurFrameTimeStamp = FramePtr->FrameHeader()->nTimestamp;
-			pThis->ProcessYUVFilter(pAvFrame, (LONGLONG)pThis->m_nCurVideoFrame);
-			if (!pThis->m_bIpcStream &&
-				1.0f == pThis->m_fPlayRate  &&
-				pThis->m_bEnableAudio &&
-				pThis->m_hAudioFrameEvent[0] &&
-				pThis->m_hAudioFrameEvent[1])
-			{
-				if (pThis->m_nDecodeDelay == -1)
-					WaitForMultipleObjects(2, pThis->m_hAudioFrameEvent, TRUE, 40);
-				else if (!pThis->m_nDecodeDelay)
-					WaitForMultipleObjects(2, pThis->m_hAudioFrameEvent, TRUE, pThis->m_nDecodeDelay);
-			}
-			dfRenderStartTime = GetExactTime();
-			pThis->RenderFrame(pAvFrame);
-			float dfRenderTimespan = (float)(TimeSpanEx(dfRenderStartTime) * 1000);
-			RenderInterval.Stat(dfRenderTimespan);
-			if (RenderInterval.IsFull())
-			{
-				//RenderInterval.OutputStat();
-				RenderInterval.Reset();
-			}
-			if (dfRenderTimeSpan > 60.0f)
-			{// 渲染时间超过60ms
-
-			}
-			nRenderTimes++;
-			if (!bDecodeSucceed)
-			{
-				bDecodeSucceed = true;
-#ifdef _DEBUG
-				pThis->OutputMsg("%s \tObject:%d  SetEvent Snapshot  m_nLifeTime = %d.\n", __FUNCTION__, pThis->m_nObjIndex, timeGetTime() - pThis->m_nLifeTime);
-#endif
-			}
-			pThis->ProcessSnapshotRequire(pAvFrame);
-			pThis->ProcessYUVCapture(pAvFrame, (LONGLONG)pThis->m_nCurVideoFrame);
-			Autolock(&pThis->m_csFilePlayCallBack);
-			if (pThis->m_pFilePlayCallBack)
-				pThis->m_pFilePlayCallBack(pThis, pThis->m_pUserFilePlayer);
-		}
-		else
-		{
-			TraceMsgA("%s \tObject:%d Decode Succeed but Not get a picture ,FrameType = %d\tFrameLength %d.\n", __FUNCTION__, pThis->m_nObjIndex, FramePtr->FrameHeader()->nType, FramePtr->FrameHeader()->nLength);
-		}
-
-		dfRenderTimeSpan = TimeSpanEx(dfRenderStartTime);
-		nTimePlayFrame = (int)(TimeSpanEx(dfDecodeStartTime) * 1000);
-		dfRenderTime = GetExactTime();
-		// 			if ((nTotalDecodeFrames % 100) == 0)
-		// 			{
-		// 				TraceMsgA("%s nTotalDecodeFrames = %d\tnRenderTimes = %d.\n", __FUNCTION__,nTotalDecodeFrames, nRenderTimes);
-		// 			}
-	}
-	av_frame_unref(pAvFrame);
-	SaveRunTime();
-	pThis->m_pDecoder = nullptr;
-	return 0;
-}
 
 UINT __stdcall CIPCPlayer::ThreadPlayAudioGSJ(void *p)
 {
@@ -4002,8 +3591,929 @@ bool CIPCPlayer::InitialziePlayer()
 	return true;
 }
 
+UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
+{
+	struct DxDeallocator
+	{
+		CDxSurfaceEx *&m_pDxSurface;
+		CDirectDraw *&m_pDDraw;
+
+	public:
+		DxDeallocator(CDxSurfaceEx *&pDxSurface, CDirectDraw *&pDDraw)
+			:m_pDxSurface(pDxSurface), m_pDDraw(pDDraw)
+		{
+		}
+		~DxDeallocator()
+		{
+			TraceMsgA("%s pSurface = %08X\tpDDraw = %08X.\n", __FUNCTION__, m_pDxSurface, m_pDDraw);
+			Safe_Delete(m_pDxSurface);
+			Safe_Delete(m_pDDraw);
+		}
+	};
+	DeclareRunTime(5);
+	CIPCPlayer* pThis = (CIPCPlayer *)p;
+#ifdef _DEBUG
+	pThis->OutputMsg("%s \tObject:%d Enter ThreadPlayVideo m_nLifeTime = %d.\n", __FUNCTION__, pThis->m_nObjIndex, timeGetTime() - pThis->m_nLifeTime);
+#endif
+	int nAvError = 0;
+	char szAvError[1024] = { 0 };
+
+	if (!pThis->m_hRenderWnd)
+		pThis->OutputMsg("%s Warning!!!A Windows handle is Needed otherwith the video Will not showed..\n", __FUNCTION__);
+	// 创建多媒体事件
+	//TimerEvent PlayEvent(1000 / pThis->m_nVideoFPS);
+	int nIPCPlayInterval = 1000 / pThis->m_nVideoFPS;
+	shared_ptr<CMMEvent> pRenderTimer = make_shared<CMMEvent>(pThis->m_hRenderAsyncEvent, nIPCPlayInterval);
+
+	// 等待有效的视频帧数据
+	long tFirst = timeGetTime();
+	int nTimeoutCount = 0;
+	while (pThis->m_bThreadDecodeRun)
+	{
+		Autolock(&pThis->m_csVideoCache);
+		// 			if ((timeGetTime() - tFirst) > 5000)
+		// 			{// 等待超时
+		// 				//assert(false);
+		// 				pThis->OutputMsg("%s Warning!!!Wait for frame timeout(5s),times %d.\n", __FUNCTION__,++nTimeoutCount);
+		// 				break;
+		// 			}
+		if (pThis->m_listVideoCache.size() < 1)
+		{
+			lock.Unlock();
+			Sleep(20);
+			continue;
+		}
+		else
+			break;
+	}
+	SaveRunTime();
+	if (!pThis->m_bThreadDecodeRun)
+	{
+		//assert(false);
+		return 0;
+	}
+
+	// 等待I帧
+	tFirst = timeGetTime();
+	//		DWORD dfTimeout = 3000;
+	// 		if (!pThis->m_bIpcStream)	// 只有IPC码流才需要长时间等待
+	// 			dfTimeout = 1000;
+	AVCodecID nCodecID = AV_CODEC_ID_NONE;
+	int nDiscardFrames = 0;
+	bool bProbeSucced = false;
+	if (pThis->m_nVideoCodec == CODEC_UNKNOWN ||		/// 码流未知则尝试探测码
+		!pThis->m_nVideoWidth ||
+		!pThis->m_nVideoHeight)
+	{
+		bool bGovInput = false;
+		while (pThis->m_bThreadDecodeRun)
+		{
+			if ((timeGetTime() - tFirst) >= pThis->m_nProbeStreamTimeout)
+				break;
+			CAutoLock lock(&pThis->m_csVideoCache, false, __FILE__, __FUNCTION__, __LINE__);
+			if (pThis->m_listVideoCache.size() > 1)
+				break;
+			Sleep(25);
+		}
+		if (!pThis->m_bThreadDecodeRun)
+		{
+			assert(false);
+			return 0;
+		}
+		auto itStart = pThis->m_listVideoCache.begin();
+		while (!bProbeSucced && pThis->m_bThreadDecodeRun)
+		{
+#ifndef _DEBUG
+			if ((timeGetTime() - tFirst) < pThis->m_nProbeStreamTimeout)
+#else
+			if ((timeGetTime() - tFirst) < INFINITE)
+#endif
+			{
+				Sleep(5);
+				CAutoLock lock(&pThis->m_csVideoCache, false, __FILE__, __FUNCTION__, __LINE__);
+				//auto it = find_if(itPos, pThis->m_listVideoCache.end(), StreamFrame::IsIFrame);
+				auto it = itStart;
+				if (it != pThis->m_listVideoCache.end())
+				{// 探测码流类型
+					itStart = it;
+					itStart++;
+					TraceMsgA("%s Probestream FrameType = %d\tFrameLength = %d.\n", __FUNCTION__, (*it)->FrameHeader()->nType, (*it)->FrameHeader()->nLength);
+					if ((*it)->FrameHeader()->nType == FRAME_GOV)
+					{
+						if (bGovInput)
+							continue;
+						bGovInput = true;
+						if (bProbeSucced = pThis->ProbeStream((byte *)(*it)->Framedata(pThis->m_nSDKVersion), (*it)->FrameHeader()->nLength))
+							break;
+					}
+					else
+						if (bProbeSucced = pThis->ProbeStream((byte *)(*it)->Framedata(pThis->m_nSDKVersion), (*it)->FrameHeader()->nLength))
+							break;
+				}
+			}
+			else
+			{
+#ifdef _DEBUG
+				pThis->OutputMsg("%s Warning!!!\nThere is No an I frame in %d second.m_listVideoCache.size() = %d.\n", __FUNCTION__, (int)pThis->m_nProbeStreamTimeout / 1000, pThis->m_listVideoCache.size());
+				pThis->OutputMsg("%s \tObject:%d Line %d Time = %d.\n", __FUNCTION__, pThis->m_nObjIndex, __LINE__, timeGetTime() - pThis->m_nLifeTime);
+#endif
+				if (pThis->m_hRenderWnd)
+					::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_NOTRECVIFRAME, 0);
+				assert(false);
+				return 0;
+			}
+		}
+		if (!pThis->m_bThreadDecodeRun)
+		{
+			assert(false);
+			return 0;
+		}
+
+		if (!bProbeSucced)		// 探测失败
+		{
+			pThis->OutputMsg("%s Failed in ProbeStream,you may input a unknown stream.\n", __FUNCTION__);
+#ifdef _DEBUG
+			pThis->OutputMsg("%s \tObject:%d Line %d Time = %d.\n", __FUNCTION__, pThis->m_nObjIndex, __LINE__, timeGetTime() - pThis->m_nLifeTime);
+#endif
+			if (pThis->m_hRenderWnd)
+				::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_UNKNOWNSTREAM, 0);
+			assert(false);
+			return 0;
+		}
+		// 把ffmpeg的码流ID转为IPC的码流ID,并且只支持H264和HEVC
+		nCodecID = pThis->m_pStreamProbe->nProbeAvCodecID;
+		if (nCodecID != AV_CODEC_ID_H264 &&
+			nCodecID != AV_CODEC_ID_HEVC)
+		{
+			pThis->m_nVideoCodec = CODEC_UNKNOWN;
+			pThis->OutputMsg("%s Probed a unknown stream,Decode thread exit.\n", __FUNCTION__);
+			if (pThis->m_hRenderWnd)
+				::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_UNKNOWNSTREAM, 0);
+			assert(false);
+			return 0;
+		}
+	}
+	SaveRunTime();
+	switch (pThis->m_nVideoCodec)
+	{
+	case CODEC_H264:
+		nCodecID = AV_CODEC_ID_H264;
+		break;
+	case CODEC_H265:
+		nCodecID = AV_CODEC_ID_H265;
+		break;
+	default:
+	{
+		pThis->OutputMsg("%s You Input a unknown stream,Decode thread exit.\n", __FUNCTION__);
+		if (pThis->m_hRenderWnd)	// 在线程中尽量避免使用SendMessage，因为可能会导致阻塞
+			::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_UNSURPPORTEDSTREAM, 0);
+		assert(false);
+		return 0;
+		break;
+	}
+	}
+
+	int nRetry = 0;
+
+	shared_ptr<CVideoDecoder>pDecodec = make_shared<CVideoDecoder>();
+	if (!pDecodec)
+	{
+		pThis->OutputMsg("%s Failed in allocing memory for Decoder.\n", __FUNCTION__);
+		assert(false);
+		return 0;
+	}
+	SaveRunTime();
+	if (!pThis->InitizlizeDx())
+	{
+		assert(false);
+		return 0;
+	}
+
+	shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface, pThis->m_pDDraw);
+	SaveRunTime();
+	if (pThis->m_bD3dShared)
+	{
+		pDecodec->SetD3DShared(pThis->m_pDxSurface->GetD3D9(), pThis->m_pDxSurface->GetD3DDevice());
+		pThis->m_pDxSurface->SetD3DShared(true);
+	}
+
+	// 使用单线程解码,多线程解码在某此比较慢的CPU上可能会提高效果，但现在I5 2GHZ以上的CPU上的多线程解码效果并不明显反而会占用更多的内存
+	pDecodec->SetDecodeThreads(1);
+	// 初始化解码器
+
+	while (pThis->m_bThreadDecodeRun)
+	{// 某此时候可能会因为内存或资源不够导致初始化解码操作性,因此可以延迟一段时间后再次初始化，若多次初始化仍不成功，则需退出线程
+		//DeclareRunTime(5);
+		//SaveRunTime();
+		if (!pDecodec->InitDecoder(nCodecID, pThis->m_nVideoWidth, pThis->m_nVideoHeight, pThis->m_bEnableHaccel))
+		{
+			pThis->OutputMsg("%s Failed in Initializing Decoder，CodeCID =%d,Width = %d,Height = %d,HWAccel = %d.\n", __FUNCTION__, nCodecID, pThis->m_nVideoWidth, pThis->m_nVideoHeight, pThis->m_bEnableHaccel);
+#ifdef _DEBUG
+			pThis->OutputMsg("%s \tObject:%d Line %d Time = %d.\n", __FUNCTION__, pThis->m_nObjIndex, __LINE__, timeGetTime() - pThis->m_nLifeTime);
+#endif
+			nRetry++;
+			if (nRetry >= 3)
+			{
+				if (pThis->m_hRenderWnd)// 在线程中尽量避免使用SendMessage，因为可能会导致阻塞
+					::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_INITDECODERFAILED, 0);
+				return 0;
+			}
+			Delay(2500, pThis->m_bThreadDecodeRun);
+		}
+		else
+			break;
+		//SaveRunTime();
+	}
+	SaveRunTime();
+	if (!pThis->m_bThreadDecodeRun)
+	{
+		//assert(false);
+		return 0;
+	}
+
+	if (pThis->m_pStreamProbe)
+		pThis->m_pStreamProbe = nullptr;
+
+	AVPacket *pAvPacket = (AVPacket *)av_malloc(sizeof(AVPacket));
+	shared_ptr<AVPacket>AvPacketPtr(pAvPacket, av_free);
+	av_init_packet(pAvPacket);
+	AVFrame *pAvFrame = av_frame_alloc();
+	shared_ptr<AVFrame>AvFramePtr(pAvFrame, av_free);
+
+	StreamFramePtr FramePtr;
+	int nGot_picture = 0;
+	DWORD nResult = 0;
+	float fTimeSpan = 0;
+	int nFrameInterval = pThis->m_nFileFrameInterval;
+	pThis->m_dfTimesStart = GetExactTime();
+
+	//		 取得当前显示器的刷新率,在垂直同步模式下,显示器的刷新率决定了，显示图像的最高帧数
+	//		 通过统计每显示一帧图像(含解码和显示)耗费的时间
+	// 		DEVMODE   dm;
+	// 		dm.dmSize = sizeof(DEVMODE);
+	// 		::EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dm);		
+	// 		int nRefreshInvertal = 1000 / dm.dmDisplayFrequency;	// 显示器刷新间隔
+
+	double dfDecodeStartTime = GetExactTime();
+	double dfRenderTime = GetExactTime() - pThis->m_fPlayInterval;	// 图像被显示的时间
+	double dfRenderStartTime = 0.0f;
+	double dfRenderTimeSpan = 0.000f;
+	double dfTimeSpan = 0.0f;
+
+#ifdef _DEBUG
+	pThis->m_csVideoCache.Lock();
+	TraceMsgA("%s Video cache Size = %d .\n", __FUNCTION__, pThis->m_listVideoCache.size());
+	pThis->m_csVideoCache.Unlock();
+	pThis->OutputMsg("%s \tObject:%d Start Decoding.\n", __FUNCTION__, pThis->m_nObjIndex);
+#endif
+	//	    以下代码用以测试解码和显示占用时间，建议不要删除		
+	// 		TimeTrace DecodeTimeTrace("DecodeTime", __FUNCTION__);
+	// 		TimeTrace RenderTimeTrace("RenderTime", __FUNCTION__);
+
+	int nIFrameTime = 0;
+	CStat FrameStat(pThis->m_nObjIndex);		// 解码统计
+	//CStat IFrameStat;		// I帧解码统计
+
+	int nFramesAfterIFrame = 0;		// 相对I帧的编号,I帧后的第一帧为1，第二帧为2依此类推
+	int nSkipFrames = 0;
+	bool bDecodeSucceed = false;
+	double dfDecodeTimespan = 0.0f;	// 解码所耗费时间
+	double dfDecodeITimespan = 0.0f; // I帧解码和显示所耗费时间
+	double dfTimeDecodeStart = 0.0f;
+	pThis->m_nFirstFrameTime = 0;
+	float fLastPlayRate = pThis->m_fPlayRate;		// 记录上一次的播放速率，当播放速率发生变化时，需要重置帧统计数据
+
+	if (pThis->m_dwStartTime)
+	{
+		TraceMsgA("%s %d Render Timespan = %d.\n", __FUNCTION__, __LINE__, timeGetTime() - pThis->m_dwStartTime);
+		pThis->m_dwStartTime = 0;
+	}
+
+	int nFramesPlayed = 0;			// 播放总帆数
+	double dfTimeStartPlay = GetExactTime();// 播放起始时间
+	int nTimePlayFrame = 0;		// 播放一帧所耗费时间（MS）
+	int nPlayCount = 0;
+	int TPlayArray[100] = { 0 };
+	double dfT1 = GetExactTime();
+	int nVideoCacheSize = 0;
+	LONG nTotalDecodeFrames = 0;
+	dfDecodeStartTime = GetExactTime() - pThis->m_nPlayFrameInterval / 1000.0f;
+	SaveRunTime();
+	pThis->m_pDecoder = pDecodec;
+	int nRenderTimes = 0;
+	CStat  RenderInterval("RenderInterval", pThis->m_nObjIndex);
+	while (pThis->m_bThreadDecodeRun)
+	{
+		if (!pThis->m_bIpcStream &&
+			pThis->m_bPause)
+		{// 只有非IPC码流才可以暂停
+			Sleep(40);
+			continue;
+		}
+		pThis->m_csVideoCache.Lock();
+		nVideoCacheSize = pThis->m_listVideoCache.size();
+		pThis->m_csVideoCache.Unlock();
+// 		do 
+// 		{
+// // 		此为最帧率测试代码,建议不要删除
+// // 		xionggao.lee @2016.01.15 
+#ifdef _DEBUG
+// 		int nFPS = 25;
+// 		int nTimespan2 = (int)(TimeSpanEx(pThis->m_dfTimesStart) * 1000);
+// 		if (nTimespan2)
+// 			nFPS = nFrames * 1000 / nTimespan2;
+// 
+// 		int nTimeSpan = (int)(TimeSpanEx(dfDecodeStartTime) * 1000);
+// 		TPlayArray[nPlayCount++] = nTimeSpan;
+// 		TPlayArray[0] = nFPS;
+// 		if (nPlayCount >= 50)
+// 		{
+// 			pThis->OutputMsg("%sPlay Interval([0] is FPS):\n", __FUNCTION__);
+// 			for (int i = 0; i < nPlayCount; i++)
+// 			{
+// 				pThis->OutputMsg("%02d\t", TPlayArray[i]);
+// 				if ((i + 1) % 10 == 0)
+// 					pThis->OutputMsg("\n");
+// 			}
+// 			pThis->OutputMsg(".\n");
+// 			nPlayCount = 0;
+// 			CAutoLock lock(&pThis->m_csVideoCache);
+// 			TraceMsgA("%s Videocache size = %d.\n", __FUNCTION__, pThis->m_listVideoCache.size());
+// 		}
+// 		dfT1 = GetExactTime();		
+#endif
+		dfDecodeStartTime = GetExactTime();
+		if (!pThis->m_bIpcStream)
+		{// 文件或流媒体播放，可调节播放速度
+			int nTimeSpan1 = (int)(TimeSpanEx(dfDecodeStartTime) * 1000);
+			if (nVideoCacheSize < 2 &&
+				(pThis->m_nPlayFrameInterval - nTimeSpan1) > 5)
+			{
+				Sleep(5);
+				continue;
+			}
+			bool bPopFrame = false;
+			// 查找时间上最匹配的帧,并删除不匹配的非I帧
+			int nSkipFrames = 0;
+			CAutoLock lock(&pThis->m_csVideoCache, false, __FILE__, __FUNCTION__, __LINE__);
+			if (!pThis->m_nFirstFrameTime &&
+				pThis->m_listVideoCache.size() > 0)
+				pThis->m_nFirstFrameTime = pThis->m_listVideoCache.front()->FrameHeader()->nTimestamp;
+			for (auto it = pThis->m_listVideoCache.begin(); it != pThis->m_listVideoCache.end();)
+			{
+				time_t tFrameSpan = ((*it)->FrameHeader()->nTimestamp - pThis->m_tLastFrameTime) / 1000;
+				if (StreamFrame::IsIFrame(*it))
+				{
+					bPopFrame = true;
+					break;
+				}
+				if (pThis->m_fPlayRate < 16.0 && // 16倍速以下，才考虑按时跳帧
+					tFrameSpan / pThis->m_fPlayRate >= max(pThis->m_fPlayInterval, FrameStat.GetAvgValue() * 1000))
+				{
+					bPopFrame = true;
+					break;
+				}
+				else
+				{
+					it = pThis->m_listVideoCache.erase(it);
+					nSkipFrames++;
+				}
+			}
+			if (nSkipFrames)
+				pThis->OutputMsg("%s Skip Frames = %d bPopFrame = %s.\n", __FUNCTION__, nSkipFrames, bPopFrame ? "true" : "false");
+			if (bPopFrame)
+			{
+				FramePtr = pThis->m_listVideoCache.front();
+				pThis->m_listVideoCache.pop_front();
+				//TraceMsgA("%s Pop a Frame ,FrameID = %d\tFrameTimestamp = %d.\n", __FUNCTION__, FramePtr->FrameHeader()->nFrameID, FramePtr->FrameHeader()->nTimestamp);
+			}
+			pThis->m_nVideoCache = pThis->m_listVideoCache.size();
+			if (!bPopFrame)
+			{
+				lock.Unlock();	// 须提前解锁，不然Sleep后才会解锁，导致其它地方被锁住
+				Sleep(10);
+				continue;
+			}
+			lock.Unlock();
+			pAvPacket->data = (uint8_t *)FramePtr->Framedata(pThis->m_nSDKVersion);
+			pAvPacket->size = FramePtr->FrameHeader()->nLength;
+			pThis->m_tLastFrameTime = FramePtr->FrameHeader()->nTimestamp;
+			av_frame_unref(pAvFrame);
+
+			nAvError = pDecodec->Decode(pAvFrame, nGot_picture, pAvPacket);
+			nTotalDecodeFrames++;
+			av_packet_unref(pAvPacket);
+			if (nAvError < 0)
+			{
+				av_strerror(nAvError, szAvError, 1024);
+				//dfDecodeStartTime = GetExactTime();
+				continue;
+			}
+// 			avcodec_flush_buffers()			
+// 			dfDecodeTimespan = TimeSpanEx(dfDecodeStartTime);
+// 			if (StreamFrame::IsIFrame(FramePtr))			// 统计I帧解码时间
+// 				IFrameStat.Stat(dfDecodeTimespan);
+// 			FrameStat.Stat(dfDecodeTimespan);	// 统计所有帧解码时间
+// 			if (fLastPlayRate != pThis->m_fPlayRate)
+// 			{// 播放速率发生变化，重置统计数据
+// 				IFrameStat.Reset();
+// 				FrameStat.Reset();
+// 			}
+			fLastPlayRate = pThis->m_fPlayRate;
+			fTimeSpan = (TimeSpanEx(dfRenderTime) + dfRenderTimeSpan) * 1000;
+			int nSleepTime = 0;
+			if (fTimeSpan < pThis->m_fPlayInterval)
+			{
+				nSleepTime = (int)(pThis->m_fPlayInterval - fTimeSpan);
+				if (pThis->m_nDecodeDelay == -1)
+					Sleep(nSleepTime);
+				else if (pThis->m_nDecodeDelay)
+					Sleep(pThis->m_nDecodeDelay);
+				else
+					continue;
+			}
+		}
+		else
+		{// IPC 码流，则直接播放
+			WaitForSingleObject(pThis->m_hRenderAsyncEvent, nIPCPlayInterval);
+			if (nVideoCacheSize >= 3)
+			{
+				if (pRenderTimer->nPeriod != (nIPCPlayInterval * 3 / 5))	// 播放间隔降低40%,可以迅速清空积累帧
+					pRenderTimer->UpdateInterval(25);
+			}
+			else if (pRenderTimer->nPeriod != nIPCPlayInterval)
+				pRenderTimer->UpdateInterval(nIPCPlayInterval);
+			bool bPopFrame = false;
+			Autolock(&pThis->m_csVideoCache);
+			if (pThis->m_listVideoCache.size() > 0)
+			{
+				FramePtr = pThis->m_listVideoCache.front();
+				pThis->m_listVideoCache.pop_front();
+				bPopFrame = true;
+				nVideoCacheSize = pThis->m_listVideoCache.size();
+			}
+			lock.Unlock();
+			if (!bPopFrame)
+			{
+				Sleep(10);
+				continue;
+			}
+
+			pAvPacket->data = (uint8_t *)FramePtr->Framedata(pThis->m_nSDKVersion);
+			pAvPacket->size = FramePtr->FrameHeader()->nLength;
+			pThis->m_tLastFrameTime = FramePtr->FrameHeader()->nTimestamp;
+			av_frame_unref(pAvFrame);
+			nAvError = pDecodec->Decode(pAvFrame, nGot_picture, pAvPacket);
+			nTotalDecodeFrames++;
+			av_packet_unref(pAvPacket);
+			if (nAvError < 0)
+			{
+				av_frame_unref(pAvFrame);
+				av_strerror(nAvError, szAvError, 1024);
+				TraceMsgA("%s AvError = %s.\n", __FUNCTION__, szAvError);
+				continue;
+			}
+			dfDecodeTimespan = TimeSpanEx(dfDecodeStartTime);
+		}
+#ifdef _DEBUG
+		if (pThis->m_bSeekSetDetected)
+		{
+			int nFrameID = FramePtr->FrameHeader()->nFrameID;
+			int nTimeStamp = FramePtr->FrameHeader()->nTimestamp / 1000;
+			pThis->OutputMsg("%s First Frame after SeekSet:ID = %d\tTimeStamp = %d.\n", __FUNCTION__, nFrameID, nTimeStamp);
+			pThis->m_bSeekSetDetected = false;
+		}
+#endif	
+		if (nGot_picture)
+		{
+			pThis->m_nDecodePixelFmt = (AVPixelFormat)pAvFrame->format;
+			SetEvent(pThis->m_hEvnetYUVReady);
+			SetEvent(pThis->m_hEventDecodeStart);
+			pThis->m_nCurVideoFrame = FramePtr->FrameHeader()->nFrameID;
+			pThis->m_tCurFrameTimeStamp = FramePtr->FrameHeader()->nTimestamp;
+			pThis->ProcessYUVFilter(pAvFrame, (LONGLONG)pThis->m_nCurVideoFrame);
+			if (!pThis->m_bIpcStream &&
+				1.0f == pThis->m_fPlayRate  &&
+				pThis->m_bEnableAudio &&
+				pThis->m_hAudioFrameEvent[0] &&
+				pThis->m_hAudioFrameEvent[1])
+			{
+				if (pThis->m_nDecodeDelay == -1)
+					WaitForMultipleObjects(2, pThis->m_hAudioFrameEvent, TRUE, 40);
+				else if (!pThis->m_nDecodeDelay)
+					WaitForMultipleObjects(2, pThis->m_hAudioFrameEvent, TRUE, pThis->m_nDecodeDelay);
+			}
+			dfRenderStartTime = GetExactTime();
+			pThis->RenderFrame(pAvFrame);
+			float dfRenderTimespan = (float)(TimeSpanEx(dfRenderStartTime) * 1000);
+			RenderInterval.Stat(dfRenderTimespan);
+			if (RenderInterval.IsFull())
+			{
+				//RenderInterval.OutputStat();
+				RenderInterval.Reset();
+			}
+			if (dfRenderTimeSpan > 60.0f)
+			{// 渲染时间超过60ms
+
+			}
+			nRenderTimes++;
+			if (!bDecodeSucceed)
+			{
+				bDecodeSucceed = true;
+#ifdef _DEBUG
+				pThis->OutputMsg("%s \tObject:%d  SetEvent Snapshot  m_nLifeTime = %d.\n", __FUNCTION__, pThis->m_nObjIndex, timeGetTime() - pThis->m_nLifeTime);
+#endif
+			}
+			pThis->ProcessSnapshotRequire(pAvFrame);
+			pThis->ProcessYUVCapture(pAvFrame, (LONGLONG)pThis->m_nCurVideoFrame);
+			Autolock(&pThis->m_csFilePlayCallBack);
+			if (pThis->m_pFilePlayCallBack)
+				pThis->m_pFilePlayCallBack(pThis, pThis->m_pUserFilePlayer);
+		}
+		else
+		{
+			TraceMsgA("%s \tObject:%d Decode Succeed but Not get a picture ,FrameType = %d\tFrameLength %d.\n", __FUNCTION__, pThis->m_nObjIndex, FramePtr->FrameHeader()->nType, FramePtr->FrameHeader()->nLength);
+		}
+
+		dfRenderTimeSpan = TimeSpanEx(dfRenderStartTime);
+		nTimePlayFrame = (int)(TimeSpanEx(dfDecodeStartTime) * 1000);
+		dfRenderTime = GetExactTime();
+		// 			if ((nTotalDecodeFrames % 100) == 0)
+		// 			{
+		// 				TraceMsgA("%s nTotalDecodeFrames = %d\tnRenderTimes = %d.\n", __FUNCTION__,nTotalDecodeFrames, nRenderTimes);
+		// 			}
+	}
+	av_frame_unref(pAvFrame);
+	SaveRunTime();
+	pThis->m_pDecoder = nullptr;
+	return 0;
+}
+
 UINT __stdcall CIPCPlayer::ThreadAsyncRender(void *p)
 {
+	CIPCPlayer *pThis = (CIPCPlayer*)p;
+	struct DxDeallocator
+	{
+		CDxSurfaceEx *&m_pDxSurface;
+		CDirectDraw *&m_pDDraw;
+
+	public:
+		DxDeallocator(CDxSurfaceEx *&pDxSurface, CDirectDraw *&pDDraw)
+			:m_pDxSurface(pDxSurface), m_pDDraw(pDDraw)
+		{
+		}
+		~DxDeallocator()
+		{
+			TraceMsgA("%s pSurface = %08X\tpDDraw = %08X.\n", __FUNCTION__, m_pDxSurface, m_pDDraw);
+			Safe_Delete(m_pDxSurface);
+			Safe_Delete(m_pDDraw);
+		}
+	};
+	if (!pThis->m_hRenderWnd)
+		pThis->OutputMsg("%s Warning!!!A Windows handle is Needed otherwise the video Will not showed..\n", __FUNCTION__);
+
+	int nIPCPlayInterval = 1000 / pThis->m_nVideoFPS;
 	
+	if (!pThis->InitizlizeDx())
+	{
+		assert(false);
+		return 0;
+	}
+	shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface, pThis->m_pDDraw);
+	int nFameListSize = 0;
+	while (pThis->m_bThreadDecodeRun)
+	{
+		pThis->m_cslistAVFrame.Lock();
+		nFameListSize = pThis->m_listAVFrame.size();
+		pThis->m_cslistAVFrame.Unlock();
+		if (nFameListSize < 1)
+		{
+			Sleep(20);
+			continue;
+		}
+			
+		if (pThis->m_pSyncPlayer)///无同步播放器？
+		{
+			CAVFramePtr pFrame;
+			CAutoLock lock(pThis->m_cslistAVFrame.Get(),false, __FILE__, __FUNCTION__, __LINE__);
+			do 
+			{
+				pFrame = pThis->m_listAVFrame.front();
+				time_t nTimeSpan = pFrame->tFrame - pThis->m_pSyncPlayer->m_tSyncTimeBase;
+				if (nTimeSpan >= 60)	 // 已经越过时间轴基线
+				{
+					Sleep(20);
+					continue;
+				}
+				else if (nTimeSpan <= -60)	// 落后时间轴基线太远
+				{
+					pThis->m_listAVFrame.pop_front();
+					continue;
+				}
+				pThis->m_listAVFrame.pop_front();
+				break;
+			} while (true);
+			lock.Unlock();
+			if (WaitForSingleObject(pThis->m_pSyncPlayer->m_hRenderAsyncEvent, INFINITE) == WAIT_TIMEOUT)
+				continue;
+		}
+		else if (WaitForSingleObject(pThis->m_hRenderAsyncEvent, INFINITE) == WAIT_TIMEOUT)
+			continue;
+		
+		CAutoLock lock(pThis->m_cslistAVFrame.Get(), false, __FILE__, __FUNCTION__, __LINE__);
+		CAVFramePtr pFrame = pThis->m_listAVFrame.front();
+		pThis->m_listAVFrame.pop_front();
+		lock.Unlock();
+		if (!pThis->m_pSyncPlayer)
+			pThis->m_tSyncTimeBase = pFrame->tFrame;
+		pThis->RenderFrame(pFrame->pFrame);
+	}
+	return 0;
+}
+
+UINT __stdcall CIPCPlayer::ThreadAsyncDecode(void *p)
+{
+	CIPCPlayer *pThis = (CIPCPlayer*)p;
+
+#ifdef _DEBUG
+	pThis->OutputMsg("%s \tObject:%d  m_nLifeTime = %d.\n", __FUNCTION__, pThis->m_nObjIndex, timeGetTime() - pThis->m_nLifeTime);
+#endif
+	int nAvError = 0;
+	char szAvError[1024] = { 0 };
+	
+	// 等待有效的视频帧数据
+	long tFirst = timeGetTime();
+// 	int nTimeoutCount = 0;
+// 	while (pThis->m_bThreadDecodeRun)
+// 	{
+// 		Autolock(&pThis->m_csVideoCache);
+// 		if (pThis->m_listVideoCache.size() < 1)
+// 		{
+// 			lock.Unlock();
+// 			Sleep(20);
+// 			continue;
+// 		}
+// 		else
+// 			break;
+// 	}
+	SaveRunTime();
+	if (!pThis->m_bThreadDecodeRun)
+	{
+		return 0;
+	}
+
+	// 等待I帧
+	tFirst = timeGetTime();
+	//		DWORD dfTimeout = 3000;
+	// 		if (!pThis->m_bIpcStream)	// 只有IPC码流才需要长时间等待
+	// 			dfTimeout = 1000;
+	AVCodecID nCodecID = AV_CODEC_ID_NONE;
+	int nDiscardFrames = 0;
+
+	SaveRunTime();
+	switch (pThis->m_nVideoCodec)
+	{
+	case CODEC_H264:
+		nCodecID = AV_CODEC_ID_H264;
+		break;
+	case CODEC_H265:
+		nCodecID = AV_CODEC_ID_H265;
+		break;
+	default:
+	{
+		pThis->OutputMsg("%s You Input a unknown stream,Decode thread exit.\n", __FUNCTION__);
+		if (pThis->m_hRenderWnd)	// 在线程中尽量避免使用SendMessage，因为可能会导致阻塞
+			::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_UNSURPPORTEDSTREAM, 0);
+		assert(false);
+		return 0;
+		break;
+	}
+	}
+
+	int nRetry = 0;
+
+	shared_ptr<CVideoDecoder>pDecodec = make_shared<CVideoDecoder>();
+	if (!pDecodec)
+	{
+		pThis->OutputMsg("%s Failed in allocing memory for Decoder.\n", __FUNCTION__);
+		assert(false);
+		return 0;
+	}
+	SaveRunTime();
+	struct DxDeallocator
+	{
+		CDxSurfaceEx *&m_pDxSurface;
+		CDirectDraw *&m_pDDraw;
+
+	public:
+		DxDeallocator(CDxSurfaceEx *&pDxSurface, CDirectDraw *&pDDraw)
+			:m_pDxSurface(pDxSurface), m_pDDraw(pDDraw)
+		{
+		}
+		~DxDeallocator()
+		{
+			TraceMsgA("%s pSurface = %08X\tpDDraw = %08X.\n", __FUNCTION__, m_pDxSurface, m_pDDraw);
+			Safe_Delete(m_pDxSurface);
+			Safe_Delete(m_pDDraw);
+		}
+	};
+	if (!pThis->m_hRenderWnd)
+		pThis->OutputMsg("%s Warning!!!A Windows handle is Needed otherwise the video Will not showed..\n", __FUNCTION__);
+
+	int nIPCPlayInterval = 1000 / pThis->m_nVideoFPS;
+
+	if (!pThis->InitizlizeDx())
+	{
+		assert(false);
+		return 0;
+	}
+	shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface, pThis->m_pDDraw);
+
+	// 使用单线程解码,多线程解码在某此比较慢的CPU上可能会提高效果，但现在I5 2GHZ以上的CPU上的多线程解码效果并不明显反而会占用更多的内存
+	pDecodec->SetDecodeThreads(1);
+	// 初始化解码器
+
+	while (pThis->m_bThreadDecodeRun)
+	{// 某此时候可能会因为内存或资源不够导致初始化解码操作性,因此可以延迟一段时间后再次初始化，若多次初始化仍不成功，则需退出线程
+		//DeclareRunTime(5);
+		//SaveRunTime();
+		if (!pDecodec->InitDecoder(nCodecID, pThis->m_nVideoWidth, pThis->m_nVideoHeight, false))
+		{
+			pThis->OutputMsg("%s Failed in Initializing Decoder，CodeCID =%d,Width = %d,Height = %d,HWAccel = %d.\n", __FUNCTION__, nCodecID, pThis->m_nVideoWidth, pThis->m_nVideoHeight, pThis->m_bEnableHaccel);
+#ifdef _DEBUG
+			pThis->OutputMsg("%s \tObject:%d Line %d Time = %d.\n", __FUNCTION__, pThis->m_nObjIndex, __LINE__, timeGetTime() - pThis->m_nLifeTime);
+#endif
+			return 0;
+		}
+		else
+			break;
+		//SaveRunTime();
+	}
+	SaveRunTime();
+	if (!pThis->m_bThreadDecodeRun)
+	{
+		//assert(false);
+		return 0;
+	}
+
+	AVPacket *pAvPacket = (AVPacket *)av_malloc(sizeof(AVPacket));
+	shared_ptr<AVPacket>AvPacketPtr(pAvPacket, av_free);
+	av_init_packet(pAvPacket);
+	AVFrame *pAvFrame = av_frame_alloc();
+	shared_ptr<AVFrame>AvFramePtr(pAvFrame, av_free);
+
+	StreamFramePtr FramePtr;
+	int nGot_picture = 0;
+	DWORD nResult = 0;
+	float fTimeSpan = 0;
+	int nFrameInterval = pThis->m_nFileFrameInterval;
+	pThis->m_dfTimesStart = GetExactTime();
+
+	double dfDecodeStartTime = GetExactTime();
+	double dfRenderTime = GetExactTime() - pThis->m_fPlayInterval;	// 图像被显示的时间
+	double dfRenderStartTime = 0.0f;
+	double dfRenderTimeSpan = 0.000f;
+	double dfTimeSpan = 0.0f;
+
+// #ifdef _DEBUG
+// 	pThis->m_csVideoCache.Lock();
+// 	TraceMsgA("%s Video cache Size = %d .\n", __FUNCTION__, pThis->m_listVideoCache.size());
+// 	pThis->m_csVideoCache.Unlock();
+// 	pThis->OutputMsg("%s \tObject:%d Start Decoding.\n", __FUNCTION__, pThis->m_nObjIndex);
+// #endif
+
+	int nIFrameTime = 0;
+	bool bDecodeSucceed = false;
+	pThis->m_nFirstFrameTime = 0;
+	float fLastPlayRate = pThis->m_fPlayRate;		// 记录上一次的播放速率，当播放速率发生变化时，需要重置帧统计数据
+
+	if (pThis->m_dwStartTime)
+	{
+		TraceMsgA("%s %d Render Timespan = %d.\n", __FUNCTION__, __LINE__, timeGetTime() - pThis->m_dwStartTime);
+		pThis->m_dwStartTime = 0;
+	}
+
+	int nFramesPlayed = 0;			// 播放总帆数
+	double dfTimeStartPlay = GetExactTime();// 播放起始时间
+	int nTimePlayFrame = 0;		// 播放一帧所耗费时间（MS）
+	int nPlayCount = 0;
+	int TPlayArray[100] = { 0 };
+	double dfT1 = GetExactTime();
+	int nVideoCacheSize = 0;
+	LONG nTotalDecodeFrames = 0;
+	dfDecodeStartTime = GetExactTime() - pThis->m_nPlayFrameInterval / 1000.0f;
+	SaveRunTime();
+	pThis->m_pDecoder = pDecodec;
+	int nRenderTimes = 0;
+	CStat  RenderInterval("RenderInterval", pThis->m_nObjIndex);
+	DHFrame *pDHFrame = nullptr;
+	while (pThis->m_bThreadDecodeRun)
+	{
+		while (pThis->m_bThreadDecodeRun && pThis->m_pDHStreamParser)
+		{
+			if (!pDHFrame)
+				pDHFrame = pThis->m_pDHStreamParser->ParserFrame();
+			if (pDHFrame)
+			{
+				if (pThis->InputStream(pDHFrame->pContent, pDHFrame->bKeyFrame ? IPC_I_FRAME : IPC_P_FRAME, pDHFrame->nFrameSize, pDHFrame->nFrameSeq, pDHFrame->tTimeStamp) == IPC_Succeed)
+				{
+					delete pDHFrame;
+					pDHFrame = nullptr;
+					break;
+				}
+				else
+					break;
+			}
+			else
+				break;
+		} 
+
+		pThis->m_csVideoCache.Lock();
+		nVideoCacheSize = pThis->m_listVideoCache.size();
+		pThis->m_csVideoCache.Unlock();
+
+		if (nVideoCacheSize < 1)
+		{
+			Sleep(20);
+			continue;
+		}
+		//////////////////////////////////////////////////////////////////////////
+
+		if (pThis->m_pSyncPlayer)///有同步播放器？
+		{
+			while (pThis->m_bThreadDecodeRun)
+			{
+				CAutoLock lock(pThis->m_csVideoCache.Get());
+				FramePtr = pThis->m_listVideoCache.front();
+				time_t nTimeSpan = FramePtr->FrameHeader()->nTimestamp - pThis->m_pSyncPlayer->m_tSyncTimeBase;
+				if (nTimeSpan >= 60)	 // 已经越过时间轴基线
+				{
+					lock.Unlock();
+					Sleep(20);
+					continue;
+				}
+				else if (nTimeSpan <= -60)	// 落后时间轴基线太远
+				{
+					if (!StreamFrame::IsIFrame(FramePtr))
+					{
+						pThis->m_listVideoCache.pop_front();
+						if (pThis->m_listVideoCache.size() < 1)
+							break;
+						continue;
+					}
+					else
+						break;
+				}
+				pThis->m_listVideoCache.pop_front();
+				break;
+			}
+			if (!FramePtr)
+				continue;
+		}
+		else
+		{
+			if (WaitForSingleObject(pThis->m_hRenderAsyncEvent, INFINITE) == WAIT_TIMEOUT)
+				continue;
+			CAutoLock lock(pThis->m_csVideoCache.Get());
+			if (pThis->m_listVideoCache.size() < 1)
+				continue;
+			FramePtr = pThis->m_listVideoCache.front();
+			pThis->m_listVideoCache.pop_front();
+		}
+		//////////////////////////////////////////////////////////////////////////
+		
+		pThis->m_csVideoCache.Lock();
+		pThis->m_nVideoCache = pThis->m_listVideoCache.size();
+		pThis->m_csVideoCache.Unlock();
+
+		pAvPacket->data = (uint8_t *)FramePtr->Framedata(pThis->m_nSDKVersion);
+		pAvPacket->size = FramePtr->FrameHeader()->nLength;
+		pThis->m_tLastFrameTime = FramePtr->FrameHeader()->nTimestamp;
+		av_frame_unref(pAvFrame);
+
+		if (!pThis->m_pSyncPlayer)
+			pThis->m_tSyncTimeBase = FramePtr->FrameHeader()->nTimestamp;
+		nAvError = pDecodec->Decode(pAvFrame, nGot_picture, pAvPacket);
+		nTotalDecodeFrames++;
+		av_packet_unref(pAvPacket);
+		if (nAvError < 0)
+		{
+			av_strerror(nAvError, szAvError, 1024);
+			continue;
+		}
+
+		if (nGot_picture)
+		{
+			pThis->m_nDecodePixelFmt = (AVPixelFormat)pAvFrame->format;
+			pThis->RenderFrame(pAvFrame);
+		}
+		else
+		{
+			TraceMsgA("%s \tObject:%d Decode Succeed but Not get a picture ,FrameType = %d\tFrameLength %d.\n", __FUNCTION__, pThis->m_nObjIndex, FramePtr->FrameHeader()->nType, FramePtr->FrameHeader()->nLength);
+		}
+	}
+	av_frame_unref(pAvFrame);
+	SaveRunTime();
+	pThis->m_pDecoder = nullptr;
 	return 0;
 }

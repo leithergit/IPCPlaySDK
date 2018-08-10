@@ -127,7 +127,6 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TimeUtility.h" />
     <ClInclude Include="TransparentDlg.h" />
-    <ClInclude Include="TransparentWnd.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="VideoFrame.h" />
   </ItemGroup>
@@ -144,8 +143,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="TimeUtility.cpp" />
-    <ClCompile Include="TransparentDlg.cpp" />
-    <ClCompile Include="TransparentWnd.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="VideoFrame.cpp" />
   </ItemGroup>

@@ -23,7 +23,7 @@ using namespace boost;
 #include "../ipcnetsdk/ipcMsgHead.h"
 #include "./DisplayYUV/YuvFrame.h"
 #include "DialogDisplayRGB24.h"
-#include "TransparentDlg.h"
+//#include "TransparentDlg.h"
 
 using namespace std;
 
@@ -617,7 +617,7 @@ public:
 };
 typedef shared_ptr<SubClassInfo> SubClassInfoPtr;
 // CIPCPlayDemoDlg ¶Ô»°¿ò
-#include "TransparentWnd.h"
+//#include "TransparentWnd.h"
 
 class CIPCPlayDemoDlg : public CDialogEx
 {
@@ -1145,7 +1145,6 @@ public:
 		return 0;
 	}
 	afx_msg void OnBnClickedCheckEnabletransparent();
-	CTransparentDlg	*m_pTransparentDlg;
 	afx_msg void OnFileDrawline();
 	afx_msg void OnRender(UINT nID);
 	afx_msg void OnMoving(UINT fwSide, LPRECT pRect);
@@ -1154,7 +1153,7 @@ public:
 	static CRITICAL_SECTION m_csMapSubclassWnd;
 	static map<HWND, SubClassInfoPtr> m_MapSubclassWnd;
 	static LRESULT SubClassProc(HWND, UINT, WPARAM, LPARAM);
-	CTransparentWnd *m_pTransparentWnd = nullptr;
+
 	afx_msg void OnEnableOpassist();
 	afx_msg void OnBnClickedCheckNodecodedelay();
 };

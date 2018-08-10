@@ -5,29 +5,59 @@
 #include "./DxSurface/DxSurface.h"
 #include "AutoLock.h"
 #include "./VideoDecoder/VideoDecoder.h"
+#include <memory>
+using namespace std;
+using namespace std::tr1;
 
+struct FrameBuffer
+{
+	byte *pBuffer;
+	int	 nLength;
+	FrameBuffer(byte *pData,int nLen)
+		:pBuffer(pData)
+		, nLength(nLen)
+	{
+		pBuffer = new byte[nLen];
+		memcpy(pBuffer, pData, nLen);
+		nLength = nLen;
+	}
+	~FrameBuffer()
+	{
+		if (pBuffer)
+		{
+			delete[]pBuffer;
+			pBuffer = nullptr;
+			nLength = 0;
+		}
+	}
+};
+typedef shared_ptr<FrameBuffer> FrameBufferPtr;
+#define _MaxBuffSize	(512*1024)
 class CStreamParser
 {
 	byte *m_pStreamBuffer = nullptr;
-	int	m_nStreamBufferSize ;		// 流数据的缓冲区长度
-	int	m_nStreamBufferLength;					// 流缓冲区
+	int	m_nStreamBufferSize ;			// 流数据的缓冲区长度
+	int	m_nStreamBufferLength;			// 流缓冲区
 	const AVCodec *m_pCodec = nullptr;
 	AVCodecParserContext *parser;
 	AVCodecContext *m_pAvContext = NULL;
-	CRITICAL_SECTION	m_csBuffer;
 	int		m_nPaserOffset = 0;
+	bool	m_bFrameCacheFulled = false;
+	int		m_nFrameIndex = 0;
 public:
+	CRITICAL_SECTION	m_csBuffer;
+	list<FrameBufferPtr> m_listStream;
 	CStreamParser()
 	{
-		ZeroMemory(this, sizeof(CStreamParser));
+		ZeroMemory(this, offsetof(CStreamParser, m_csBuffer));
 		m_nStreamBufferSize = 128 * 1024;
 		m_pStreamBuffer = new byte[m_nStreamBufferSize];
 		ZeroMemory(m_pStreamBuffer, m_nStreamBufferSize);
-		InitializeCriticalSection(&m_csBuffer);		
+		InitializeCriticalSection(&m_csBuffer);	
+		
 	}
 	int InitStreamParser(AVCodecID  nCodec = AV_CODEC_ID_H264)
 	{
-		/* find the MPEG-1 video decoder */
 		m_pCodec = avcodec_find_decoder(nCodec);
 		if (!m_pCodec)
 			return IPC_Error_UnsupportedCodec;
@@ -44,6 +74,10 @@ public:
 			return IPC_Error_OpenCodecFailed;
 		return IPC_Succeed;
 	}
+	void SetFrameCahceFulled(bool bFulled = true)
+	{
+		m_bFrameCacheFulled = bFulled;
+	}
 	int BufferLength()
 	{
 		CAutoLock lock(&m_csBuffer);
@@ -52,29 +86,117 @@ public:
 	int InputStream(byte *pData, int nLength)
 	{
 		CAutoLock lock(&m_csBuffer);
+		if (m_bFrameCacheFulled ||m_nStreamBufferSize > _MaxBuffSize  )
+			return IPC_Error_FrameCacheIsFulled;
+		
 		MemMerge(&m_pStreamBuffer, m_nStreamBufferLength, m_nStreamBufferSize, pData, nLength);
 		return 0;
 	}
+	static void FreeAvPakcet(AVPacket *pAvPacket)
+	{
+		av_packet_free(&pAvPacket);
+	}
 
-	bool ParserFrame(AVPacket *pAvPacket)
+	void OutputFile(UCHAR *szBuffer, UINT nLength, CHAR *szFileName)
+	{
+		if (szFileName == NULL || strlen(szFileName) == 0)
+		{
+			return;
+		}
+		else
+		{
+			HANDLE hLogFile = NULL;
+			DWORD dwWritten = 0;
+
+			__try
+			{
+				hLogFile = CreateFileA(szFileName,
+					GENERIC_WRITE | GENERIC_READ,
+					FILE_SHARE_READ,
+					NULL,
+					OPEN_ALWAYS,
+					FILE_ATTRIBUTE_ARCHIVE,
+					NULL);
+				if (hLogFile == NULL)
+					return;
+				WriteFile(hLogFile, szBuffer, nLength, &dwWritten, NULL);
+				FlushFileBuffers(hLogFile);
+				CloseHandle(hLogFile);
+			}
+			__except (1)
+			{
+				if (hLogFile != NULL)
+					CloseHandle(hLogFile);
+			}
+		}
+	}
+	bool IsH264KeyFrame(byte *pFrame)
+	{
+		int RTPHeaderBytes = 0;
+		if (pFrame[0] == 0 &&
+			pFrame[1] == 0 &&
+			pFrame[2] == 0 &&
+			pFrame[3] == 1)
+		{
+			int nal_type = pFrame[4] & 0x1F;
+			if (nal_type == 5 || nal_type == 7 || nal_type == 8 || nal_type == 2)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+	int ParserFrame(byte *pData, int nLength, list<FrameBufferPtr> &listFrame)
+	{
+		while (nLength > 0)
+		{
+			AVPacket *pAvPacket = av_packet_alloc();
+			
+			int ret = av_parser_parse2(parser, m_pAvContext, &pAvPacket->data, &pAvPacket->size, pData, nLength, AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0);
+			if (ret < 0)
+			{
+				TraceMsgA("%s Error while parsing.\n", __FUNCTION__);
+				return listFrame.size();
+			}
+			if (pAvPacket->size > 0)
+			{
+				char szFileName[256];
+				if (m_nFrameIndex < 256)
+				{
+					sprintf_s(szFileName, 256, "Frame%04d.bin", m_nFrameIndex++);
+					OutputFile(pAvPacket->data, pAvPacket->size, szFileName);
+				}
+				
+				listFrame.push_back(make_shared<FrameBuffer>(pAvPacket->data, pAvPacket->size));
+			}
+			pData += ret;
+			nLength -= ret;
+		}
+		return listFrame.size();
+	}
+	int ParserFrame(list<FrameBufferPtr> &listFrame)
 	{
 		CAutoLock lock(&m_csBuffer);
 		if (m_nStreamBufferLength == 0)
-			return false;
-		int ret = av_parser_parse2(parser, m_pAvContext, &pAvPacket->data, &pAvPacket->size, &m_pStreamBuffer[m_nPaserOffset], m_nStreamBufferLength - m_nPaserOffset, AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0);
-		if (ret < 0)
+			return m_nStreamBufferLength;
+		byte *pData = m_pStreamBuffer;
+		AVPacket *pAvPacket = av_packet_alloc();
+		shared_ptr<AVPacket> AvPacketPtr(pAvPacket, FreeAvPakcet);
+		while (m_nStreamBufferLength > 0)
 		{
-			TraceMsgA("%s Error while parsing.\n", __FUNCTION__);
-			return false;
+			int ret = av_parser_parse2(parser, m_pAvContext, &pAvPacket->data, &pAvPacket->size, pData, m_nStreamBufferLength, AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0);
+			if (ret < 0)
+			{
+				TraceMsgA("%s Error while parsing.\n", __FUNCTION__);
+				return listFrame.size();
+			}
+			if (pAvPacket->size > 0)
+				listFrame.push_back(make_shared<FrameBuffer>(pAvPacket->data, pAvPacket->size));
+			pData += ret;
+			m_nStreamBufferLength -= ret;
 		}
-		m_nPaserOffset += ret;
-
-		if (m_nStreamBufferLength == m_nPaserOffset)
-		{
-			m_nPaserOffset = 0;
-			m_nStreamBufferLength = 0;
-		}
-		return true;
+		return listFrame.size();
 	}
 	~CStreamParser()
 	{
@@ -97,3 +219,5 @@ public:
 		DeleteCriticalSection(&m_csBuffer);
 	}
 };
+
+

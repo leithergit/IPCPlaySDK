@@ -1003,6 +1003,24 @@ public:
 	*/
 	inline int Decode(INOUT AVFrame *pAvFrame, OUT int &got_picture, IN AVPacket *pPacket)
 	{
+// 		int nSize = pPacket->size - 24;
+// 		if (pPacket->data[0] == 0 &&
+// 			pPacket->data[1] == 0 &&
+// 			pPacket->data[2] == 1 &&
+// 			pPacket->data[3] == 0xed
+// 			)
+// 		{
+// 			pPacket->data += 24;
+// 			pPacket->size -= 24;
+// 		}
+// 		if (pPacket->data[nSize] == 0 && 
+// 			pPacket->data[nSize+1] == 0 &&
+// 			pPacket->data[nSize+2] == 1 &&
+// 			pPacket->data[nSize + 3] == 0xec)
+// 		{
+// 			pPacket->size = nSize;
+// 		}
+			
 		CAutoLock lock(&m_csDecoder);
 		if (m_nManufacturer == FFMPEG)
 		{

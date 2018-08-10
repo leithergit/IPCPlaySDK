@@ -383,6 +383,36 @@ IPCPLAYSDK_API int ipcplay_Start(IN IPC_PLAYHANDLE hPlayHandle,
 	return pPlayer->StartPlay(bEnableAudio, bEnableHaccel,bFitWindow);
 }
 
+/// @brief			开始同步播放
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		bFitWindow		视频是否适应窗口
+/// @param [in]		pSyncSource		同步源，为另一IPCPlaySDK 句柄，若同步源为null,则创建同步时钟，自我同步
+/// @param [in]		nVideoFPS		视频帧率
+/// #- true			视频填满窗口,这样会把图像拉伸,可能会造成图像变形
+/// #- false		只按图像原始比例在窗口中显示,超出比例部分,则以黑色背景显示
+/// @retval			0	操作成功
+/// @retval			1	流缓冲区已满
+/// @retval			-1	输入参数无效
+/// @remark			若pSyncSource为null,当前的播放器成为同步源，nVideoFPS不能为0，否则返回IPC_Error_InvalidParameters错误
+///					若pSyncSource不为null，则当前播放器以pSyncSource为同步源，nVideoFPS值被忽略
+int ipcplay_StartAsyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void *pSyncSource, int nVideoFPS)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+
+	CIPCPlayer *pSyncPlayer = (CIPCPlayer *)pSyncSource;
+	if (pSyncPlayer)
+	{
+		if (pSyncPlayer->nSize != sizeof(CIPCPlayer))
+			return IPC_Error_InvalidParameters;
+	}
+
+	return pPlayer->StartAsyncPlay(bFitWindow, pSyncPlayer, nVideoFPS);
+}
+
 /// @brief			设置解码延时
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 ///	@param [in]		nDecodeDelay	解码延时，单位为ms
@@ -1230,6 +1260,18 @@ IPCPLAYSDK_API int ipcplay_InputStream2(IN IPC_PLAYHANDLE hPlayHandle, byte *pDa
 	return pPlayer->InputStream(pData, nLength);
 }
 
+/// @brief			输入大华视频帧
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		pData			大华视频帧
+IPCPLAYSDK_API int ipcplay_InputDHStream(IN IPC_PLAYHANDLE hPlayHandle, byte *pBuffer,int nLength)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	return pPlayer->InputDHStream(pBuffer,nLength);
+}
 /// @brief			绘制一个实心多边形
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		pPointArray		多边形顶点坐标数组
