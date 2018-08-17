@@ -260,6 +260,7 @@ private:
 	shared_ptr<CDSound> m_pDsPlayer;///< DirectSound播放对象指针
 	//shared_ptr<CDSound> m_pDsPlayer;	///< DirectSound播放对象指针
 	CDSoundBuffer* m_pDsBuffer;
+	Coordinte		m_nCoordinate = Coordinte_Wnd;
 	DxSurfaceInitInfo	m_DxInitInfo;
 	CDxSurfaceEx* m_pDxSurface;			///< Direct3d Surface封装类,用于显示视频
 	void *m_pDCCallBack = nullptr;
@@ -447,6 +448,7 @@ private:
 		m_nMaxYUVCache = 10;
 		m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
 		m_nDecodeDelay = -1;
+		m_nCoordinate = Coordinte_Wnd;
 	}
 	LONGLONG GetSeekOffset()
 	{
@@ -862,7 +864,7 @@ private:
 #endif
 					return false;
 				}
-				
+				m_pDxSurface->SetCoordinateMode(m_nCoordinate);
 				m_pDxSurface->SetExternDraw(m_pDCCallBack, m_pDCCallBackParam);
 				return true;
 			}
@@ -1237,6 +1239,7 @@ public:
 		m_nSampleBit = 16;
 		m_nProbeStreamTimeout = 10000;	// 毫秒
 		m_nMaxYUVCache = 10;
+		m_nCoordinate = Coordinte_Wnd;
 #ifdef _DEBUG
 		OutputMsg("%s Alloc a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
 #endif
@@ -1932,7 +1935,7 @@ public:
 				return IPC_Error_NotVideoFile;
 			// 启动文件解析线程
 			m_bThreadParserRun = true;
-			m_hThreadParser = (HANDLE)_beginthreadex(nullptr, 0, ThreadParser, this, 0, 0);
+			m_hThreadParser = (HANDLE)_beginthreadex(nullptr, 0, ThreadFileParser, this, 0, 0);
 
 		}
 		else
@@ -1952,7 +1955,7 @@ public:
 		if (m_pStreamParser)
 		{
 			m_bStreamParserRun = true;
-			m_hStreamParser = (HANDLE)_beginthreadex(nullptr, 256*1024, ThreadParser2, this, 0, 0);
+			m_hStreamParser = (HANDLE)_beginthreadex(nullptr, 256*1024, ThreadStreamParser, this, 0, 0);
 		}
 // 		m_pDecodeHelperPtr = make_shared<DecodeHelper>();
 //		m_hQueueTimer = m_TimeQueue.CreateTimer(TimerCallBack, this, 0, 20);
@@ -3254,7 +3257,7 @@ public:
 		else
 		{
 			//assert(false);
-			return 0;
+			return IPC_Error_DXRenderNotInitialized;
 		}
 	}
 
@@ -3267,8 +3270,35 @@ public:
 		else
 		{
 			//assert(false);
-			return -1;
+			return IPC_Error_DXRenderNotInitialized;
 		}
+	}
+
+	long AddPolygon(POINT *pPointArray, int nCount, WORD *pVertexIndex, DWORD nColor)
+	{
+		if (m_pDxSurface)
+			return m_pDxSurface->AddPolygon(pPointArray, nCount, pVertexIndex, nColor);
+		else
+			return IPC_Error_DXRenderNotInitialized;
+	}
+	int RemovePolygon(long nIndex)
+	{
+		if (m_pDxSurface)
+		{
+			 m_pDxSurface->RemovePolygon(nIndex);
+			 return IPC_Succeed;
+		}
+		else
+		{
+			//assert(false);
+			return IPC_Error_DXRenderNotInitialized;
+		}
+	}
+
+	int SetCoordinateMode(int nMode = 1)
+	{
+		m_nCoordinate = (Coordinte)nMode;
+		return IPC_Succeed;
 	}
 	int SetCallBack(IPC_CALLBACK nCallBackType, IN void *pUserCallBack, IN void *pUserPtr)
 	{
@@ -3573,7 +3603,7 @@ public:
 	}
 
 	///< @brief 视频文件解析线程
-	static UINT __stdcall ThreadParser(void *p)
+	static UINT __stdcall ThreadFileParser(void *p)
 	{// 若指定了有效的窗口句柄，则把解析后的文件数据放入播放队列，否则不放入播放队列
 		CIPCPlayer* pThis = (CIPCPlayer *)p;
 		LONGLONG nSeekOffset = 0;
@@ -3753,8 +3783,6 @@ public:
 		return 0;
 	}
 
-
-
 	int EnableStreamParser(IPC_CODEC nCodec = CODEC_H264)
 	{
 		if (m_pStreamParser || m_hStreamParser)
@@ -3780,7 +3808,7 @@ public:
 	}
 
 	///< @brief 视频流解析线程
-	static UINT __stdcall ThreadParser2(void *p)
+	static UINT __stdcall ThreadStreamParser(void *p)
 	{
 		CIPCPlayer* pThis = (CIPCPlayer *)p;
 		AVPacket *pAvPkt = av_packet_alloc();
@@ -4364,7 +4392,7 @@ public:
 		SaveRunTime();
 		if (!pThis->m_bThreadDecodeRun)
 		{
-			assert(false);
+			//assert(false);
 			return 0;
 		}
 		
@@ -4542,7 +4570,7 @@ public:
 		SaveRunTime();
 		if (!pThis->m_bThreadDecodeRun)
 		{
-			assert(false);
+			//assert(false);
 			return 0;
 		}
 

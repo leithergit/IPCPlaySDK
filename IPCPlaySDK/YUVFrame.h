@@ -1,7 +1,6 @@
 #pragma once
 #include "Common.h"
 
-
 struct FrameYV12
 {
 	int nWidth;

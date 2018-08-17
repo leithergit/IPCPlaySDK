@@ -114,6 +114,7 @@ struct  D3DLineArray
 	D3DCOLOR	 nColor;
 	int			 nCount;
 	int			 nIndex;
+	bool		 bConvert;		// 是否已经执行坐标转换
 	D3DLineArray()
 	{
 		ZeroMemory(this, sizeof(D3DLineArray));
@@ -160,6 +161,12 @@ class CCriticalSectionProxy1;
 typedef map<HWND,CDxSurface*> WndSurfaceMap;
 
 typedef void (CALLBACK *ExternDrawProc)(HWND hWnd, HDC hDc, RECT rt, void *pUserPtr);
+
+enum Coordinte
+{
+	Coordinte_Video,
+	Coordinte_Wnd
+};
 
 enum GraphicQulityParameter
 {
@@ -597,6 +604,39 @@ public:
 
 typedef IDirect3D9* WINAPI pDirect3DCreate9(UINT);
 typedef HRESULT WINAPI pDirect3DCreate9Ex(UINT, IDirect3D9Ex**);
+
+// 顶点结构
+struct PolygonVertex
+{
+	float x, y, z, rhw;
+	unsigned long color;
+	PolygonVertex()
+	{
+		ZeroMemory(this, sizeof(PolygonVertex));
+	}
+};
+
+// Our custom FVF, which describes our custom vertex structure.
+#define D3DFVF_VERTEX (D3DFVF_XYZRHW | D3DFVF_DIFFUSE)
+
+struct DxPolygon
+{
+	LPDIRECT3DVERTEXBUFFER9 VertexBuff;
+	LPDIRECT3DINDEXBUFFER9 IndexBuff;
+	int		nVertexCount;
+	int		nTriangleCount;
+	DxPolygon()
+	{
+
+	}
+	~DxPolygon()
+	{
+		SafeRelease(VertexBuff);
+		SafeRelease(IndexBuff);
+	}
+};
+
+typedef shared_ptr<DxPolygon>  DxPolygonPtr;
 // 注意:
 /// @brief IDirect3DSurface9对象封类，用于创建和管理IDirect3DSurface9对象，可以显示多种象素格式的图像
 /// @remark 使用CDxSurface对象显示图象时，必须在创建线程内显示图，否则当发生DirectX设备丢失时，无法重置DirectX的资源
@@ -604,12 +644,14 @@ class CDxSurface
 {
 //protected:	
 public:
+	map<long,DxPolygonPtr>		m_mapPolygon;
 	list<D3DLineArrayPtr>	m_listLine;
 	long					m_nVtableAddr;		// 虚函数表地址，该变量地址位置虚函数表之后，仅用于类初始化，请匆移动该变量的位置
 	D3DPRESENT_PARAMETERS	m_d3dpp;
 	CRITICAL_SECTION		m_csRender;			// 渲染临界区
 	CRITICAL_SECTION		m_csSnapShot;		// 截图临界区
 	CCriticalSectionProxyPtr m_pCriListLine;
+	CCriticalSectionProxyPtr m_pCriMapPolygon;
 	bool					m_bD3DShared;		// IDirect3D9接口是否为共享 	
 	/*HWND					m_hWnd;*/
 	DWORD					m_dwExStyle;
@@ -628,6 +670,7 @@ public:
 	UINT					m_nWndHeight;
 	bool					m_bInitialized;	
 	HMODULE					m_hD3D9;
+	Coordinte				m_nCordinateMode = Coordinte_Wnd;
 	shared_ptr<PixelConvert>m_pPixelConvert;
 	HANDLE					m_hYUVCacheReady;
 	IDirect3D9				*m_pDirect3D9		/* = NULL*/;
@@ -674,6 +717,8 @@ public:
 		InitializeCriticalSection(&m_csSnapShot);
 		InitializeCriticalSection(&m_csExternDraw);
 		m_pCriListLine = make_shared<CCriticalSectionProxy>();
+		m_nCordinateMode = Coordinte_Wnd;
+		m_pCriMapPolygon = make_shared<CCriticalSectionProxy>();
 		if (pD3D9)
 		{
 			m_bD3DShared = true;
@@ -712,10 +757,12 @@ public:
 			DxTraceMsg("%s Direct3DCreate9 failed.\n",__FUNCTION__);
 			assert(false);
 		}
+		m_nCordinateMode = Coordinte_Wnd;
 		InitializeCriticalSection(&m_csRender);
 		InitializeCriticalSection(&m_csSnapShot);
 		InitializeCriticalSection(&m_csExternDraw);
 		m_pCriListLine = make_shared<CCriticalSectionProxy>();
+		m_pCriMapPolygon = make_shared<CCriticalSectionProxy>();
 		//m_hEventFrameReady	= CreateEvent(NULL,FALSE,FALSE,NULL);
 		//m_hEventFrameCopied = CreateEvent(NULL,FALSE,FALSE, NULL);
 		m_hEventSnapShot	= CreateEvent(NULL,FALSE,FALSE,NULL);
@@ -725,6 +772,7 @@ public:
 		if (m_pSurfaceRender)
 			SafeRelease(m_pSurfaceRender);
 	}
+	
 	virtual ~CDxSurface()
 	{
 		TraceFunction();
@@ -854,6 +902,66 @@ public:
 		}
 	}
 
+	// 添加一个多边形
+	virtual long AddPolygon(POINT *pPtArray, int nCount, WORD *pInputIndexArray, D3DCOLOR nColor)
+	{
+		if (!m_pDirect3DDevice)
+			return 0;
+		PolygonVertex *pVertexArray = new PolygonVertex[nCount];
+		for (int i = 0; i < nCount; i++)
+		{
+			pVertexArray[i].x = (float)pPtArray[i].x;
+			pVertexArray[i].y = (float)pPtArray[i].y;
+			pVertexArray[i].rhw = 1.0f;
+			pVertexArray[i].color = nColor;
+		}
+		WORD *pIndexArray = new WORD[(nCount - 2) * 3];
+		for (int i = 0; i < nCount - 2; i++)
+		{
+			pIndexArray[i * 3] = 0;
+			pIndexArray[i * 3 + 1] = pInputIndexArray[i + 1];
+			pIndexArray[i * 3 + 2] = pInputIndexArray[i + 2];
+		}
+		bool bSucceed = false;
+		DxPolygonPtr pDxPolygon = make_shared<DxPolygon>();
+		pDxPolygon->nVertexCount = nCount -1;
+		pDxPolygon->nTriangleCount = nCount - 2;
+
+		if (FAILED(m_pDirect3DDevice->CreateVertexBuffer(sizeof(PolygonVertex)*nCount, 0, D3DFVF_VERTEX, D3DPOOL_DEFAULT, &pDxPolygon->VertexBuff, NULL)))
+			goto __Failure;
+
+		// Fill the vertex buffer.
+		void *ptr;
+		if (FAILED(pDxPolygon->VertexBuff->Lock(0, sizeof(PolygonVertex)*nCount, (void**)&ptr, 0)))
+			return false;
+
+		memcpy(ptr, pVertexArray, sizeof(PolygonVertex)*nCount);
+		pDxPolygon->VertexBuff->Unlock();
+
+		INT nIndexSize = (nCount - 2) * 3 * sizeof(WORD);
+		void *pIndex_ptr;
+		if (FAILED(m_pDirect3DDevice->CreateIndexBuffer(nIndexSize, 0, D3DFMT_INDEX16, D3DPOOL_DEFAULT, &pDxPolygon->IndexBuff, NULL)))
+			goto __Failure;
+
+		if (FAILED(pDxPolygon->IndexBuff->Lock(0, nIndexSize, (void**)&pIndex_ptr, 0)))
+			goto __Failure;
+		memcpy(pIndex_ptr, pIndexArray, nIndexSize);
+		pDxPolygon->IndexBuff->Unlock();
+		bSucceed = true;
+
+	__Failure:
+		SafeDeleteArray(pVertexArray);
+		SafeDeleteArray(pIndexArray);
+		if (bSucceed)
+		{
+			m_pCriMapPolygon->Lock();
+			m_mapPolygon.insert(pair<long, DxPolygonPtr >((long)pDxPolygon.get(), pDxPolygon));
+			m_pCriMapPolygon->Unlock();
+			return (long)pDxPolygon.get();
+		}
+		else
+			return 0;
+	}
 	// 添加一组线条坐标
 	// 返回值为索条索引值，删除该线条时需要用到这个索引值
 	// 添加失败时返回0
@@ -882,7 +990,19 @@ public:
 		m_pCriListLine->Unlock();
 		return (long)pLineArray.get();
 	}
-	// 删除线程
+	// 删除多边形
+	void RemovePolygon(long nPolygonIndex)
+	{
+		m_pCriMapPolygon->Lock();
+		auto itFind = m_mapPolygon.find(nPolygonIndex);
+		if (itFind != m_mapPolygon.end())
+		{
+			m_mapPolygon.erase(itFind);
+		}
+		m_pCriMapPolygon->Unlock();
+	}
+
+	// 删除线段
 	// nArrayIndex为AddD3DLineArray返回的索引值
 	int  RemoveD3DLineArray(long nArrayIndex)
 	{
@@ -894,23 +1014,23 @@ public:
 		}
 		return m_listLine.size();
 	}
-
+		
+	void SetCoordinateMode(Coordinte nCoordinate = Coordinte_Video)
+	{
+		m_nCordinateMode = nCoordinate;
+	}
 	virtual bool ProcessExternDraw(HWND hWnd)
 	{
-		if (!m_pD3DXLine)
-		{
-			return false;
-		}
-		if (hWnd)
+		if (m_pD3DXLine && hWnd)
 		{
 			RECT rtWnd;
-			GetWindowRect(hWnd,&rtWnd);
+			GetWindowRect(hWnd, &rtWnd);
 			UINT nWndWidth = RectWidth(rtWnd);
 			UINT nWndHeight = RectHeight(rtWnd);
 			if (nWndWidth == 0 ||
 				nWndHeight == 0)
 				return true;
-			
+
 			CAutoLock lock(m_pCriListLine->Get());
 			if (m_listLine.size())
 			{
@@ -920,19 +1040,33 @@ public:
 					m_pD3DXLine->SetAntialias(TRUE);
 					D3DXVECTOR2* pLineArray = new D3DXVECTOR2[(*it)->nCount];
 					D3DXVECTOR2* pLineArraySrc = (*it)->pLineArray;
-					for (int nIndex = 0; nIndex < (*it)->nCount; nIndex++)
+					if (m_nCordinateMode == Coordinte_Video ||(*it)->bConvert)
 					{
-						pLineArray[nIndex].x = pLineArraySrc[nIndex].x*m_nVideoWidth / nWndWidth;
-						pLineArray[nIndex].y = pLineArraySrc[nIndex].y*m_nVideoHeight / nWndHeight;
+						for (int nIndex = 0; nIndex < (*it)->nCount; nIndex++)
+						{
+							pLineArray[nIndex].x = pLineArraySrc[nIndex].x;
+							pLineArray[nIndex].y = pLineArraySrc[nIndex].y;
+						}
+					}
+					else
+					{
+						for (int nIndex = 0; nIndex < (*it)->nCount; nIndex++)
+						{
+							pLineArraySrc[nIndex].x = pLineArraySrc[nIndex].x*m_nVideoWidth / nWndWidth;
+							pLineArraySrc[nIndex].y = pLineArraySrc[nIndex].y*m_nVideoHeight / nWndHeight;
+							pLineArray[nIndex].x = pLineArraySrc[nIndex].x;
+							pLineArray[nIndex].y = pLineArraySrc[nIndex].y;
+						}
+						(*it)->bConvert = true;
 					}
 					m_pD3DXLine->Draw(pLineArray, (*it)->nCount, (*it)->nColor);
 					delete[]pLineArray;
 				}
 			}
+			return true;
 		}
-
-		
-		return true;
+		else
+			return false;
 	}
 	virtual bool ResetDevice()
 	{
@@ -1870,6 +2004,7 @@ _Failed:
 
 		// 处理外部分绘制接口
 		ExternDrawCall(hWnd, pBackSurface, pRenderRt);
+
 	
 		pBackSurface->Release();
 		m_pDirect3DDevice->EndScene();
@@ -2250,6 +2385,7 @@ public:
 		,m_pDirect3DCreate9Ex(NULL)
 	{
 		InitializeCriticalSection(&m_csRender);
+		m_nCordinateMode = Coordinte_Wnd;
 		if (pD3D9Ex)
 		{
 			m_bD3DShared = true;
@@ -2270,6 +2406,7 @@ public:
 			assert(false);
 			return;
 		}
+		m_nCordinateMode = Coordinte_Wnd;
 		// 释放由基类创建的Direct3D9对象
 		SafeRelease(m_pDirect3D9);
 		m_pDirect3DCreate9Ex = (pDirect3DCreate9Ex*)GetProcAddress(m_hD3D9, "Direct3DCreate9Ex");
@@ -2573,6 +2710,9 @@ public:
 		hr = m_pDirect3DDeviceEx->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_ANISOTROPIC);
 
 		hr = m_pDirect3DDeviceEx->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_ANISOTROPIC);
+
+		hr = m_pDirect3DDeviceEx->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS,TRUE);
+		hr = m_pDirect3DDeviceEx->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
 		// 保存参数
 		m_nVideoWidth	 = nVideoWidth;
 		m_nVideoHeight	 = nVideoHeight;
@@ -2625,7 +2765,6 @@ _Failed:
 		return bSucceed;
 	}
 
-
 // 	UINT GetMaxMultiSampleQualityLevel(D3DFORMAT nColorFmt, D3DFORMAT depth_format, bool is_window_mode)
 // 	{
 // 		if (m_pDirect3D9Ex == 0)
@@ -2642,8 +2781,7 @@ _Failed:
 // 		}
 // 		return 0;
 // 	}
-
-
+	
 	// 矩阵顺转旋转90度
 	void MatrixRocate90(byte *pSrc, byte *pDest, int nWidth, int nHeight, int nStride)
 	{
@@ -3072,6 +3210,68 @@ _Failed:
 // 		}
 	}
 
+	// 添加一个多边形
+	// 操作成功时，返回多边形的索引值，失败返回0
+	virtual long AddPolygon(POINT *pPtArray, int nCount, WORD *pInputIndexArray, D3DCOLOR nColor)
+	{
+		if (!m_pDirect3DDeviceEx)
+			return 0;
+		PolygonVertex *pVertexArray = new PolygonVertex[nCount];
+		for (int i = 0; i < nCount; i++)
+		{
+			pVertexArray[i].x = (float)pPtArray[i].x;
+			pVertexArray[i].y = (float)pPtArray[i].y;
+			pVertexArray[i].rhw = 1.0f;
+			pVertexArray[i].color = nColor;
+		}
+		WORD *pIndexArray = new WORD[(nCount - 2) * 3];
+		for (int i = 0; i < nCount - 2; i++)
+		{
+			pIndexArray[i*3] = 0;
+			pIndexArray[i * 3 + 1] = pInputIndexArray[i + 1];
+			pIndexArray[i * 3 + 2] = pInputIndexArray[i + 2];
+		}
+		bool bSucceed = false;
+		DxPolygonPtr pDxPolygon = make_shared<DxPolygon>();
+		pDxPolygon->nVertexCount = nCount - 1;
+		pDxPolygon->nTriangleCount = nCount - 2;
+
+		if (FAILED(m_pDirect3DDeviceEx->CreateVertexBuffer(sizeof(PolygonVertex)*nCount, 0, D3DFVF_VERTEX, D3DPOOL_DEFAULT, &pDxPolygon->VertexBuff, NULL)))
+			goto __Failure;
+
+		// Fill the vertex buffer.
+		void *ptr;
+		if (FAILED(pDxPolygon->VertexBuff->Lock(0, sizeof(PolygonVertex)*nCount, (void**)&ptr, 0)))
+			return false;
+
+		memcpy(ptr, pVertexArray, sizeof(PolygonVertex)*nCount);
+		pDxPolygon->VertexBuff->Unlock();
+
+		INT nIndexSize = (nCount - 2) * 3 * sizeof(WORD);
+		void *pIndex_ptr;
+		if (FAILED(m_pDirect3DDeviceEx->CreateIndexBuffer(nIndexSize, 0, D3DFMT_INDEX16, D3DPOOL_DEFAULT, &pDxPolygon->IndexBuff, NULL)))
+			goto __Failure;
+
+		if (FAILED(pDxPolygon->IndexBuff->Lock(0, nIndexSize, (void**)&pIndex_ptr, 0)))
+			goto __Failure;
+		memcpy(pIndex_ptr, pIndexArray, nIndexSize);
+		pDxPolygon->IndexBuff->Unlock();
+		bSucceed = true;
+
+__Failure:
+		SafeDeleteArray(pVertexArray);
+		SafeDeleteArray(pIndexArray);
+		if (bSucceed)
+		{
+			m_pCriMapPolygon->Lock();
+			m_mapPolygon.insert(pair<long, DxPolygonPtr >((long)pDxPolygon.get(), pDxPolygon));
+			m_pCriMapPolygon->Unlock();
+			return (long)pDxPolygon.get();
+		}
+		else
+			return 0;
+	}
+
 	// 添加一组线条坐标
 	// 返回值为索条索引值，删除该线条时需要用到这个索引值
 	// 添加失败时返回0
@@ -3152,6 +3352,18 @@ _Failed:
 		//SaveRunTime();
 		
 		ProcessExternDraw(hWnd);
+
+		m_pDirect3DDeviceEx->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
+		m_pDirect3DDeviceEx->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+		m_pCriMapPolygon->Lock();
+		for (auto it = m_mapPolygon.begin(); it != m_mapPolygon.end();it ++)
+		{
+			m_pDirect3DDeviceEx->SetStreamSource(0, it->second->VertexBuff, 0, sizeof(PolygonVertex));
+			m_pDirect3DDeviceEx->SetFVF(D3DFVF_VERTEX);
+			m_pDirect3DDeviceEx->SetIndices(it->second->IndexBuff);
+			m_pDirect3DDeviceEx->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, it->second->nVertexCount, 0, it->second->nTriangleCount);
+		}
+		m_pCriMapPolygon->Unlock();
 		m_pDirect3DDeviceEx->EndScene();
 		
 		if (hRenderWnd)

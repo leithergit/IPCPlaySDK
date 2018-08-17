@@ -159,6 +159,7 @@ typedef enum {
 #define		IPC_Error_OpenCodecFailed			(-42)	///< 分配编码上下文失败
 #define		IPC_Error_StreamParserExisted		(-43)	///< 流解析器已经存在
 #define		IPC_Error_StreamParserNotStarted	(-44)	///< 流解析器尚未启动
+#define		IPC_Error_DXRenderNotInitialized	(-45)	///< DirectX渲染器已经初始化
 #define		IPC_Error_InsufficentMemory			(-255)	///< 内存不足
 
 #define		WM_IPCPLAYER_MESSAGE			WM_USER + 8192	///< 播放器出错时发出的消息 ,消息的LPARAM字段无意义,wparam字段定义如下：
@@ -773,6 +774,27 @@ IPCPLAYSDK_API int ipcplay_EnableStreamParser(IN IPC_PLAYHANDLE hPlayHandle, IPC
 /// @param [in]		pData			输入的数据流
 /// @param [in]		nLength			数据流尺寸
 IPCPLAYSDK_API int ipcplay_InputStream2(IN IPC_PLAYHANDLE hPlayHandle, byte *pData,int nLength);
+
+
+/// @brief			绘制一个实心多边形
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		pPointArray		多边形顶点坐标数组
+/// @param [in]		nCount			pPointArray中包含线条的坐标数量
+/// @param [in]		pVertexIndex	pPointArray中坐标的排列顺序，即绘制多边形画笔移动的顺序
+/// @param [in]		nColor			多边形的颜色
+/// @return 操作成功时，返回线条组的句柄，否则返回0
+/// @remark	注意    设置好线条坐标后,SDK内部会根据坐标信息绘制线条，一组坐标的线条的颜色是相同的，并且是相连的，若要绘制多条不相连的线条，必须多次调用ipcplay_AddLineArray
+IPCPLAYSDK_API long ipcplay_AddPolygon(IN IPC_PLAYHANDLE hPlayHandle, POINT *pPointArray, int nCount, WORD *pVertexIndex , DWORD nColor);
+
+/// @brief			移除一个多边形
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		nLineIndex		由ipcplay_AddPolygon返回的多边形句柄
+IPCPLAYSDK_API int ipcplay_RemovePolygon(IN IPC_PLAYHANDLE hPlayHandle, long nLineIndex);
+
+/// @brief			设置输入座标的模式，
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		nCoordinateMode	为0时输入坐标为图形坐标，为1时输入坐标为窗口坐标
+IPCPLAYSDK_API int ipcplay_SetCoordinateMode(IN IPC_PLAYHANDLE hPlayHandle, int nCoordinateMode = 1);
 
 /// @brief		把YUV图像转换为RGB24图像
 /// @param [in]		hPlayHandle	由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄

@@ -1,8 +1,8 @@
 /////////////////////////////////////////////////////////////////////////
-/// @file  IPCIPCPlaySDK.cpp
-/// Copyright (c) 2015, 上海迪维欧科技
+/// @file  IPCPlaySDK.cpp
+/// Copyright (c) 2015, xionggao.lee
 /// All rights reserved.  
-/// @brief IPCIPC相机播放SDK实现
+/// @brief IPC播放SDK实现
 /// @version 1.0  
 /// @author  xionggao.lee
 /// @date  2015.12.17
@@ -1228,4 +1228,47 @@ IPCPLAYSDK_API int ipcplay_InputStream2(IN IPC_PLAYHANDLE hPlayHandle, byte *pDa
 	if (pPlayer->nSize != sizeof(CIPCPlayer))
 		return IPC_Error_InvalidParameters;
 	return pPlayer->InputStream(pData, nLength);
+}
+
+/// @brief			绘制一个实心多边形
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		pPointArray		多边形顶点坐标数组
+/// @param [in]		nCount			pPointArray中包含线条的坐标数量
+/// @param [in]		pVertexIndex	pPointArray中坐标的排列顺序，即绘制多边形画笔移动的顺序
+/// @param [in]		nColor			多边形的颜色
+/// @return 操作成功时，返回线条组的句柄，否则返回0
+/// @remark	注意    设置好线条坐标后,SDK内部会根据坐标信息绘制线条，一组坐标的线条的颜色是相同的，并且是相连的，若要绘制多条不相连的线条，必须多次调用ipcplay_AddLineArray
+IPCPLAYSDK_API long ipcplay_AddPolygon(IN IPC_PLAYHANDLE hPlayHandle, POINT *pPointArray, int nCount, WORD *pVertexIndex, DWORD nColor)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	return pPlayer->AddPolygon(pPointArray, nCount, pVertexIndex, nColor);
+}
+
+/// @brief			移除一个多边形
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		nLineIndex		由ipcplay_AddPolygon返回的多边形句柄
+IPCPLAYSDK_API int ipcplay_RemovePolygon(IN IPC_PLAYHANDLE hPlayHandle, long nLineIndex)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	pPlayer->RemovePolygon(nLineIndex);
+	return IPC_Succeed;
+}
+
+IPCPLAYSDK_API int ipcplay_SetCoordinateMode(IN IPC_PLAYHANDLE hPlayHandle, int nCoordinateMode )
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	pPlayer->SetCoordinateMode(nCoordinateMode);
+	return IPC_Succeed;
 }
