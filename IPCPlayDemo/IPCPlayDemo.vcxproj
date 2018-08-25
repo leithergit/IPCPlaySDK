@@ -127,6 +127,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TimeUtility.h" />
     <ClInclude Include="TransparentDlg.h" />
+    <ClInclude Include="TransparentWnd.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="VideoFrame.h" />
   </ItemGroup>
@@ -144,6 +145,7 @@
     </ClCompile>
     <ClCompile Include="TimeUtility.cpp" />
     <ClCompile Include="TransparentDlg.cpp" />
+    <ClCompile Include="TransparentWnd.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="VideoFrame.cpp" />
   </ItemGroup>
@@ -156,6 +158,7 @@
   <ItemGroup>
     <Image Include="res\arrow-left-double.ico" />
     <Image Include="res\arrow-right-double.ico" />
+    <Image Include="res\BitmapMask.bmp" />
     <Image Include="res\IPCPlayDemo.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

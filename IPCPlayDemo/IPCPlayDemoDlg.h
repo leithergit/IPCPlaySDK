@@ -587,7 +587,38 @@ struct YUVFrame
 };
 
 typedef shared_ptr<YUVFrame> YUVFramePtr;
+
+struct SubClassInfo
+{
+private:
+	SubClassInfo()
+	{
+
+	}
+public:
+	HWND hMainWnd;
+	HWND hPartnerWnd;
+	WNDPROC	pOldProcWnd;
+	
+
+	SubClassInfo(HWND hWnd,HWND hPartnerWnd,WNDPROC pWndProc)
+	{
+		ZeroMemory(this, sizeof(SubClassInfo));
+		hMainWnd = hWnd;
+		pOldProcWnd = (WNDPROC)::GetWindowLong(hMainWnd, GWL_WNDPROC);
+		this->hPartnerWnd = hPartnerWnd;
+		SetWindowLong(hMainWnd, GWL_WNDPROC, (long)pWndProc);
+	}
+	~SubClassInfo()
+	{
+		if (pOldProcWnd && hMainWnd)
+			SetWindowLong(hMainWnd, GWL_WNDPROC, (long)pOldProcWnd);
+	}
+};
+typedef shared_ptr<SubClassInfo> SubClassInfoPtr;
 // CIPCPlayDemoDlg 对话框
+#include "TransparentWnd.h"
+
 class CIPCPlayDemoDlg : public CDialogEx
 {
 	// 构造
@@ -612,7 +643,8 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-
+	CBitmap		m_bitmapMask;
+	bool		m_bEnableDDraw = false;
 	CListCtrl	m_wndStreamInfo;
 	CMFCEditBrowseCtrl	m_wndBrowseCtrl;
 	int			m_nListWidth;			// List控件的宽度
@@ -650,6 +682,8 @@ public:
 	afx_msg LRESULT OnUpdatePlayInfo(WPARAM, LPARAM);
 	afx_msg void OnNMCustomdrawListStreaminfo(NMHDR *pNMHDR, LRESULT *pResult);
 	shared_ptr<PlayerContext>m_pPlayContext;
+	bool m_bOPAssistEnabled = false;
+	vector<long> m_vecPolygon;
 	afx_msg void OnBnClickedCheckEnableaudio();
 	afx_msg void OnBnClickedCheckFitwindow();
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
@@ -1113,4 +1147,14 @@ public:
 	afx_msg void OnBnClickedCheckEnabletransparent();
 	CTransparentDlg	*m_pTransparentDlg;
 	afx_msg void OnFileDrawline();
+	afx_msg void OnRender(UINT nID);
+	afx_msg void OnMoving(UINT fwSide, LPRECT pRect);
+	afx_msg void OnMove(int x, int y);
+	
+	static CRITICAL_SECTION m_csMapSubclassWnd;
+	static map<HWND, SubClassInfoPtr> m_MapSubclassWnd;
+	static LRESULT SubClassProc(HWND, UINT, WPARAM, LPARAM);
+	CTransparentWnd *m_pTransparentWnd = nullptr;
+	afx_msg void OnEnableOpassist();
+	afx_msg void OnBnClickedCheckNodecodedelay();
 };

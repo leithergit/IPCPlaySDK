@@ -40,6 +40,9 @@
     <ClCompile Include="decSPS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IPCPlayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AudioCodec\g726.h">
@@ -138,10 +141,18 @@
     <ClInclude Include="decSPS.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MMEvent.h" />
-    <ClInclude Include="Stat.h" />
-    <ClInclude Include="CriticalSectionProxy.h" />
-    <ClInclude Include="StreamParser.hpp" />
+    <ClInclude Include="MMEvent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CriticalSectionProxy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Stat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StreamParser.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Audio">

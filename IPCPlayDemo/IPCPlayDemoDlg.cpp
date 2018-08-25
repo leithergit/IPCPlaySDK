@@ -147,6 +147,11 @@ BEGIN_MESSAGE_MAP(CIPCPlayDemoDlg, CDialogEx)
 
 	ON_BN_CLICKED(IDC_CHECK_ENABLETRANSPARENT, &CIPCPlayDemoDlg::OnBnClickedCheckEnabletransparent)
 	ON_COMMAND(ID_FILE_DRAWLINE, &CIPCPlayDemoDlg::OnFileDrawline)
+	ON_COMMAND_RANGE(ID_RENDER_D3D,ID_RENDER_DDRAW, &CIPCPlayDemoDlg::OnRender)
+	ON_WM_MOVING()
+	ON_WM_MOVE()
+	ON_COMMAND(ID_ENABLE_OPASSIST, &CIPCPlayDemoDlg::OnEnableOpassist)
+	ON_BN_CLICKED(IDC_CHECK_NODECODEDELAY, &CIPCPlayDemoDlg::OnBnClickedCheckNodecodedelay)
 END_MESSAGE_MAP()
 
 
@@ -211,7 +216,7 @@ BOOL CIPCPlayDemoDlg::OnInitDialog()
 		}
 	}
 	CenterWindow(this);
-	
+	m_bitmapMask.LoadBitmap(IDB_BITMAP_MASK);
 
 	// 设置此对话框的图标。  当应用程序主窗口不是对话框时，框架将自动
 	//  执行此操作
@@ -377,13 +382,24 @@ BOOL CIPCPlayDemoDlg::OnInitDialog()
 	RECT rtDialog;
 	GetClientRect(&rtDialog);
 	CWnd *pItemWnd =  GetDlgItem(IDC_STATIC_ACCOUNT);
+	InitializeCriticalSection(&m_csMapSubclassWnd);
 #if _MSC_VER >= 1600
  	SaveWndPosition(nIDArreayTop, sizeof(nIDArreayTop) / sizeof(UINT), DockTop, rtDialog);
  	SaveWndPosition(nIDArrayRight, sizeof(nIDArrayRight) / sizeof(UINT), DockRigth, rtDialog);
  	SaveWndPosition(nIDArrayBottom, sizeof(nIDArrayBottom) / sizeof(UINT), DockBottom, rtDialog);
  	SaveWndPosition(nIDArrayCenter, sizeof(nIDArrayCenter) / sizeof(UINT), DockCenter, rtDialog);
 #endif
+	CMenu *pMenu = GetMenu()->GetSubMenu(0);
+	CMenu *pSubMenu = pMenu->GetSubMenu(5);
+	if (pSubMenu)
+	{
+		if (m_bEnableDDraw)
+			pSubMenu->CheckMenuRadioItem(ID_RENDER_D3D, ID_RENDER_DDRAW, ID_RENDER_DDRAW, MF_CHECKED | MF_BYCOMMAND);
+		else
+			pSubMenu->CheckMenuRadioItem(ID_RENDER_D3D, ID_RENDER_DDRAW, ID_RENDER_D3D, MF_CHECKED | MF_BYCOMMAND);
 
+	}
+	
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -560,16 +576,91 @@ void CIPCPlayDemoDlg::OnPaint()
 		// 使图标在工作区矩形中居中
 		int cxIcon = GetSystemMetrics(SM_CXICON);
 		int cyIcon = GetSystemMetrics(SM_CYICON);
-		CRect rect;
-		GetClientRect(&rect);
-		int x = (rect.Width() - cxIcon + 1) / 2;
-		int y = (rect.Height() - cyIcon + 1) / 2;
+		CRect rt;
+		GetClientRect(&rt);
+		int x = (rt.Width() - cxIcon + 1) / 2;
+		int y = (rt.Height() - cyIcon + 1) / 2;
 
 		// 绘制图标
 		dc.DrawIcon(x, y, m_hIcon);
+		
 	}
 	else
 	{
+		CPaintDC dc(this); // 用于绘制的设备上下文
+		CRect rt;
+// 		m_pVideoWndFrame->GetClientRect(&rt);
+// 		ClientToScreen(&rt);
+// 		
+// 		double dfT1 = GetExactTime();
+// 		dc.MoveTo(rt.left, rt.right);
+// 		int nCenterX = (rt.right + rt.left) / 2;
+// 		int nCenterY = (rt.top + rt.bottom) / 2;
+// 
+// 		int w = 0, h = 0, left_w = 0, left_h = 0;
+// 		int nCols = 32, nRows = 32;
+// 		w = (rt.right - rt.left) / nCols;
+// 		h = (rt.bottom - rt.top) / nRows;
+// 
+// 		left_w = (rt.right - rt.left) % nCols;
+// 		left_h = (rt.bottom - rt.top) % nRows;
+// 
+// 		int c = 0, r = 0;
+// 		CPen newPen(0, 1, RGB(250, 0, 0));
+// 		CPen *oldPen = dc.SelectObject(&newPen);
+// 		int nAddX = 1;
+// 		for (c = 1; c < nRows; c++)
+// 		{
+// 			dc.MoveTo(0, h * c);
+// 			dc.LineTo(rt.right, h * c);
+// 		}
+// 
+// 		for (c = 1; c < nCols; c++)
+// 		{
+// 			dc.MoveTo(w * c, 0);
+// 			dc.LineTo(w * c, rt.bottom);
+// 		}
+// 		dc.SelectObject(oldPen);
+// 
+// 		char *szText = "IPCIPCPlaySDK ";
+// 		int nCount = strlen(szText);
+// 		dc.SetBkColor(RGB(0, 0, 0));
+// 		dc.SetTextColor(RGB(255, 0, 0));
+// 		CSize sizet = dc.GetTextExtent(szText, nCount);
+// 		dc.TextOutA(nCenterX - sizet.cx, nCenterY, szText, nCount);
+// 		bool GridMask[32][32] = { 0 };
+// 		for (int r = 0; r < nRows; r++)
+// 		{
+// 			for (int c = 0; c < nCols; c++)
+// 			{
+// 				if ((r * nCols + c) % 2 != 0)
+// 					GridMask[r][c] = true;
+// 			}
+// 		}
+// 
+// 		CDC ImageDC, MaskDC;
+// 		ImageDC.CreateCompatibleDC(&dc);
+// 		ImageDC.SelectObject(&m_bitmapMask);
+// 
+// 
+// 		int morex, morey;
+// 		bool bFlag = false;
+// 		for (r = 0; r < nRows; r++)
+// 		{
+// 			for (c = 0; c < nCols; c++)
+// 			{
+// 				if (GridMask[r][c] == bFlag)
+// 				{
+// 					dc.BitBlt(r * w, c * h, w, h, &ImageDC, 0, 0, SRCPAINT);
+// 					//dc.BitBlt(j * w, i * h, w + morex, h + morey, &ImageDC, 0, 0, SRCPAINT);
+// 
+// 				}
+// 			}
+// 			bFlag = (bFlag == true) ? false : true;
+// 		}
+// 
+// 		double dfTS = TimeSpanEx(dfT1);
+// 		TraceMsgA("%s TimeSpan = %.3f.\n", __FUNCTION__, dfTS);
 		CDialogEx::OnPaint();
 	}
 }
@@ -760,44 +851,99 @@ void CIPCPlayDemoDlg::OnBnClickedButtonDisconnect()
 
 void __stdcall CIPCPlayDemoDlg::ExternDCDraw(HWND hWnd, HDC hDc, RECT rt, void *pUserPtr)
 {
+	double dfT1 = GetExactTime();
 	CIPCPlayDemoDlg *pThis = (CIPCPlayDemoDlg*)pUserPtr;
+	int nWidth = RectWidth(rt);
+	int nHeight = RectHeight(rt);
 	CDC dc;
 	dc.Attach(hDc);
-	dc.MoveTo(rt.left, rt.right);
+	CDC ImageDC,MemDC;
+
+	MemDC.CreateCompatibleDC(&dc);
+	MemDC.SetBkColor(RGB(0, 0, 0));
+	MemDC.FillSolidRect(0, 0, nWidth, nHeight, RGB(255, 255, 255));
+	MemDC.SetTextColor(RGB(255, 0, 0));
+
+	CBitmap *pOldMapMemory;
+	CBitmap mapMemory;
+	mapMemory.CreateCompatibleBitmap(&dc, nWidth, nHeight);
+	pOldMapMemory = MemDC.SelectObject(&mapMemory);//加载兼容位图，只有制定了“桌布”尺寸之后，你才能在内存DC上面绘图
+
+
+	MemDC.MoveTo(rt.left, rt.right);
 	int nCenterX = (rt.right + rt.left) / 2;
 	int nCenterY = (rt.top + rt.bottom) / 2;
 
 	int w = 0, h = 0, left_w = 0, left_h = 0;
-	int nCols = 16, nRows = 16;
+	int nCols = 256, nRows = 256;
 	w = (rt.right - rt.left) / nCols;
 	h = (rt.bottom - rt.top) / nRows;
 
 	left_w = (rt.right - rt.left) % nCols;
 	left_h = (rt.bottom - rt.top) % nRows;
 
-	int i = 0, j = 0;
+	int c = 0, r = 0;
 	CPen newPen(0, 1, RGB(250, 0, 0));
 	CPen *oldPen = dc.SelectObject(&newPen);
-	for (i = 1; i < nRows; i++)
+	int nAddX = 1;
+	for (c = 1; c < nRows; c++)
 	{
-		dc.MoveTo(0, h * i);
-		dc.LineTo(rt.right, h * i);
+		dc.MoveTo(0, h * c );
+		dc.LineTo(rt.right, h * c);
 	}
 
-	for (i = 1; i < nCols; i++)
+	for (c = 1; c < nCols; c++)
 	{
-		dc.MoveTo(w * i, 0);
-		dc.LineTo(w * i, rt.bottom);
+		dc.MoveTo(w * c, 0);
+		dc.LineTo(w * c, rt.bottom);
 	}
 	dc.SelectObject(oldPen);
 
 	char *szText = "IPCIPCPlaySDK ";
 	int nCount = strlen(szText);
-	dc.SetBkColor(RGB(0, 0, 0));
-	dc.SetTextColor(RGB(255, 0, 0));
+	
 	CSize sizet = dc.GetTextExtent(szText, nCount);
 	dc.TextOutA(nCenterX - sizet.cx, nCenterY, szText, nCount);
+	bool GridMask[256][256] = { 0 };
+	for (int r = 0; r< nRows; r++)
+	{
+		for (int c = 0; c < nCols; c++)
+		{
+			if ((r * nCols + c) % 6 != 0)
+				GridMask[r][c] = true;
+		}
+	}
+	
+	bool bStatus = false;
+	bStatus = ImageDC.CreateCompatibleDC(&dc);
+	ImageDC.SelectObject(&pThis->m_bitmapMask);
+
+	BITMAP bitmapMap;
+	pThis->m_bitmapMask.GetBitmap(&bitmapMap);
+
+// 	bool bFlag = false;
+// 	for (r = 0; r < nRows; r++)
+// 	{
+// 		for (c = 0; c < nCols; c++)
+// 		{
+// 			if (GridMask[r][ c] == bFlag)
+// 			{
+// 				bStatus = dc.StretchBlt(r * w, c * h, w, h, &ImageDC, 0, 0, bitmapMap.bmWidth, bitmapMap.bmHeight, SRCCOPY);
+// 				//dc.BitBlt(j * w, i * h, w + morex, h + morey, &ImageDC, 0, 0, SRCPAINT);
+// 
+// 			}
+// 		}
+// 		//bFlag = (bFlag == true) ? false : true;
+// 	}
+
+	// 运行量大副增加
+	//bStatus = dc.StretchBlt(0, 0, nWidth, nHeight, &MemDC, 0, 0,nWidth,nHeight, SRCPAINT);
+	MemDC.SelectObject(pOldMapMemory);
+	ImageDC.DeleteDC();
+	MemDC.DeleteDC();
 	dc.Detach();
+	double dfTS = TimeSpanEx(dfT1);
+	TraceMsgA("%s TimeSpan = %.3f.\n", __FUNCTION__, dfTS);
 }
 
 void CIPCPlayDemoDlg::OnBnClickedButtonPlaystream()
@@ -954,11 +1100,11 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlaystream()
 				}
 				else
 					m_pPlayContext->hPlayer[i] = ipcplay_OpenStream(m_pVideoWndFrame->GetPanelWnd(i), NULL, 0, 100, bEnableLog ? "dvoipcplaysdk" : NULL);
-				if (IsDlgButtonChecked(IDC_CHECK_EXTERNDRAW) == BST_CHECKED)
-				{
-					ipcplay_SetPixFormat(m_pPlayContext->hPlayer[0], R8G8B8);
-					ipcplay_SetExternDrawCallBack(m_pPlayContext->hPlayer[0], ExternDCDraw, this);
-				}
+// 				if (IsDlgButtonChecked(IDC_CHECK_EXTERNDRAW) == BST_CHECKED)
+// 				{
+// 					ipcplay_SetPixFormat(m_pPlayContext->hPlayer[0], R8G8B8);
+// 					ipcplay_SetExternDrawCallBack(m_pPlayContext->hPlayer[0], ExternDCDraw, this);
+// 				}
 				m_pVideoWndFrame->SetPanelParam(i, m_pPlayContext.get());
 				if (!m_pPlayContext->hPlayer[i])
 				{
@@ -1153,10 +1299,14 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 				bool bEnableLog = (bool)IsDlgButtonChecked(IDC_CHECK_ENABLELOG);
 				bool bEnableHaccel = (bool)IsDlgButtonChecked(IDC_CHECK_ENABLEHACCEL);
 				bool bNoDecodeDelay = (bool)IsDlgButtonChecked(IDC_CHECK_NODECODEDELAY);
+				bool bOnlyDeoce = (bool)IsDlgButtonChecked(IDC_CHECK_ONLYDECODE);
 				if (bIsStreamPlay != BST_CHECKED)
 				{
-					//m_pPlayContext->hPlayer[0] = ipcplay_OpenFile(m_pPlayContext->hWndView, (CHAR *)(LPCTSTR)strFilePath,(FilePlayProc)PlayerCallBack,m_pPlayContext.get(),bEnableLog?"dvoipcplaysdk":nullptr);
-					m_pPlayContext->hPlayer[0] = ipcplay_OpenFile(m_pPlayContext->hWndView, (CHAR *)(LPCTSTR)strFilePath, NULL, m_pPlayContext.get(), bEnableLog ? "dvoipcplaysdk" : NULL);
+					//m_pPlayContext->hPlayer[0] = ipcplay_OpenFile(m_pPlayContext->hWndView, (CHAR *)(LPCTSTR)strFilePath,(FilePlayProc)PlayerCallBack,m_pPlayContext.get(),bEnableLog?"ipcplaysdk":nullptr);
+					if (!bOnlyDeoce )
+						m_pPlayContext->hPlayer[0] = ipcplay_OpenFile(m_pPlayContext->hWndView, (CHAR *)(LPCTSTR)strFilePath, NULL, m_pPlayContext.get(), bEnableLog ? "ipcplaysdk" : NULL);
+					else
+						m_pPlayContext->hPlayer[0] = ipcplay_OpenFile(nullptr, (CHAR *)(LPCTSTR)strFilePath, NULL, m_pPlayContext.get(), bEnableLog ? "ipcplaysdk" : NULL);
 					if (!m_pPlayContext->hPlayer[0])
 					{
 						_stprintf_s(szText, 1024, _T("无法打开%s文件."), strFilePath);
@@ -1174,6 +1324,12 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 						m_wndStatus.SetAlarmGllitery();
 					}
 
+					//if (IsDlgButtonChecked(IDC_CHECK_EXTERNDRAW) == BST_CHECKED)
+// 					{
+// 						ipcplay_SetPixFormat(m_pPlayContext->hPlayer[0], R8G8B8);
+// 						ipcplay_SetExternDrawCallBack(m_pPlayContext->hPlayer[0], ExternDCDraw, this);
+// 					}
+//					ipcplay_EnableDDraw(m_pPlayContext->hPlayer[0],m_bEnableDDraw);
 					time_t T1 = pi.tTotalTime / 1000;
 					int nFloat = pi.tTotalTime - T1 * 1000;
 					int nHour = T1 / 3600;
@@ -1227,8 +1383,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 					int nSecond = T1 % 60;
 					TCHAR szPlayText[64] = { 0 };
 					_stprintf_s(szPlayText, 64, _T("%02d:%02d:%02d"), nHour, nMinute, nSecond);
-					SetDlgItemText(IDC_STATIC_TOTALTIME, szPlayText);
-										
+					SetDlgItemText(IDC_STATIC_TOTALTIME, szPlayText);			
 
 					// 创建文件流播放句柄
 					// 一般在客户端创建,用于播放服务端发送的媒体流数据
@@ -2444,6 +2599,36 @@ BOOL CIPCPlayDemoDlg::PreTranslateMessage(MSG* pMsg)
 	return CDialogEx::PreTranslateMessage(pMsg);
 }
 
+CRITICAL_SECTION CIPCPlayDemoDlg::m_csMapSubclassWnd;
+map<HWND, SubClassInfoPtr> CIPCPlayDemoDlg::m_MapSubclassWnd;
+
+LRESULT CIPCPlayDemoDlg::SubClassProc(HWND hWnd, UINT nMessage, WPARAM wParam, LPARAM lParam)
+{
+	
+	EnterCriticalSection(&m_csMapSubclassWnd);
+	auto itFind = m_MapSubclassWnd.find(hWnd);
+	if (itFind == m_MapSubclassWnd.end())
+	{
+		LeaveCriticalSection(&m_csMapSubclassWnd);
+		return 0L;
+	}
+	LeaveCriticalSection(&m_csMapSubclassWnd);
+	RECT rtPartner;
+	::GetWindowRect(itFind->second->hPartnerWnd, &rtPartner);
+	switch (nMessage)
+	{
+	case WM_WINDOWPOSCHANGED:
+	case WM_WINDOWPOSCHANGING:
+	case WM_MOVE:
+	case WM_MOVING:
+	case WM_SIZE:
+	{
+		TraceMsgA("%s Message = %d.\n", __FUNCTION__, nMessage);
+		::MoveWindow(hWnd, rtPartner.left, rtPartner.top, rtPartner.right - rtPartner.left, rtPartner.bottom - rtPartner.top, true);
+	}
+	}
+	return itFind->second->pOldProcWnd(hWnd, nMessage, wParam, lParam);
+}
 
 void CIPCPlayDemoDlg::OnBnClickedCheckEnabletransparent()
 {
@@ -2455,18 +2640,35 @@ void CIPCPlayDemoDlg::OnBnClickedCheckEnabletransparent()
 			AfxMessageBox(_T("请选择一个窗格."));
 			return;
 		}
+		
 		RECT rtPanel =*(m_pVideoWndFrame->GetPanelRect(nPanel));
-		m_pVideoWndFrame->ClientToScreen(&rtPanel);
-		m_pTransparentDlg = new CTransparentDlg;
-		m_pTransparentDlg->Create(IDD_DIALOG_TRANSPARENT, this);
-		m_pTransparentDlg->ShowWindow(SW_SHOW);
-
-		m_pTransparentDlg->MoveWindow(&rtPanel);
+		//m_pVideoWndFrame->ClientToScreen(&rtPanel);
+		//m_pTransparentDlg = new CTransparentDlg;
+		
+		CWnd *pTempWnd = CWnd::FromHandle(m_pVideoWndFrame->GetPanelWnd(nPanel));
+		//m_pTransparentDlg->Create(IDD_DIALOG_TRANSPARENT, pTempWnd);
+		m_pTransparentWnd = new CTransparentWnd;
+		m_pTransparentWnd->Create(nullptr, _T("TransparentWnd"), WS_CHILD, rtPanel, pTempWnd, 1024, nullptr);
+		SubClassInfoPtr pSubClass = make_shared<SubClassInfo>(m_pVideoWndFrame->GetPanelWnd(nPanel), m_pTransparentWnd->GetSafeHwnd(), (WNDPROC)SubClassProc);
+	
+		auto itFind = m_MapSubclassWnd.find(m_pTransparentWnd->GetSafeHwnd());
+		if (itFind == m_MapSubclassWnd.end())
+		{
+			m_pTransparentWnd->ShowWindow(SW_SHOW);
+			//m_pTransparentWnd->MoveWindow(&rtPanel);
+			m_MapSubclassWnd.insert(pair<HWND, SubClassInfoPtr>(m_pTransparentWnd->GetSafeHwnd(), pSubClass));
+		}
+		else
+		{
+			itFind->second = pSubClass;
+		}
+				
 	}
 	else
 	{
-		delete m_pTransparentDlg;
-		m_pTransparentDlg = nullptr;
+		delete m_pTransparentWnd;
+		m_pTransparentWnd = nullptr;
+		m_MapSubclassWnd.erase(m_pTransparentWnd->GetSafeHwnd());
 	}
 }
 
@@ -2485,4 +2687,181 @@ void CIPCPlayDemoDlg::OnFileDrawline()
 	ptArray[1].y = 720;
 	ipcplay_AddLineArray(m_pPlayContext->hPlayer[0], &ptArray[0], 2, 1, IPC_XRGB(255, 0, 0));
 		
+}
+
+
+void CIPCPlayDemoDlg::OnRender(UINT nID)
+{
+	CMenu *pMenu = GetMenu()->GetSubMenu(0);
+	CMenu *pSubMenu = pMenu->GetSubMenu(5);
+	if (pSubMenu)
+	{
+		m_bEnableDDraw = (nID == ID_RENDER_DDRAW);
+		if (m_bEnableDDraw)
+			pSubMenu->CheckMenuRadioItem(ID_RENDER_D3D, ID_RENDER_DDRAW, ID_RENDER_DDRAW, MF_CHECKED | MF_BYCOMMAND);
+		else
+			pSubMenu->CheckMenuRadioItem(ID_RENDER_D3D, ID_RENDER_DDRAW, ID_RENDER_D3D, MF_CHECKED | MF_BYCOMMAND);
+	}
+}
+
+
+void CIPCPlayDemoDlg::OnMoving(UINT fwSide, LPRECT pRect)
+{
+	CDialogEx::OnMoving(fwSide, pRect);
+// 	if (m_pTransparentDlg)
+// 	{
+// 		int nPanel = m_pVideoWndFrame->GetCurPanel();
+// 		RECT rtPanel = *(m_pVideoWndFrame->GetPanelRect(nPanel));
+// 		m_pVideoWndFrame->ClientToScreen(&rtPanel);
+// 		m_pTransparentDlg->MoveWindow(&rtPanel);
+// 	}
+}
+
+
+void CIPCPlayDemoDlg::OnMove(int x, int y)
+{
+	CDialogEx::OnMove(x, y);
+
+// 	if (m_pTransparentDlg)
+// 	{
+// 		int nPanel = m_pVideoWndFrame->GetCurPanel();
+// 		RECT rtPanel = *(m_pVideoWndFrame->GetPanelRect(nPanel));
+// 		m_pVideoWndFrame->ClientToScreen(&rtPanel);
+// 		m_pTransparentDlg->MoveWindow(&rtPanel);
+// 	}
+}
+
+
+void CIPCPlayDemoDlg::OnEnableOpassist()
+{
+	if (!m_pPlayContext || !m_pPlayContext->hPlayer[0])
+	{
+		AfxMessageBox(_T("尚未播放图像像"));
+		return;
+	}
+	CMenu *pSubMenu = GetMenu()->GetSubMenu(0);
+	if (!pSubMenu)
+		return;
+	if (m_bOPAssistEnabled)
+	{
+		for (auto it = m_vecPolygon.begin(); it != m_vecPolygon.end(); it++)
+			ipcplay_RemovePolygon(m_pPlayContext->hPlayer[0] ,*it);
+	}
+	else
+	{
+		int nWidth = 200;
+		int nHeight = 150;
+
+		int nThickVerical = 10;		// 垂直方向厚度
+		int nThickHorizontal = 20;		// 水平方向厚度
+
+		int nDistanceV = 100;
+		int nDistanceH = 100;
+
+		POINT ptArray[4][6];
+		int nStartX = nDistanceH;
+		int nStartY = nDistanceV;
+
+		ptArray[0][0].x = nStartX;
+		ptArray[0][0].y = nStartY;
+
+		ptArray[0][1].x = nStartX + nWidth;
+		ptArray[0][1].y = nStartY;
+
+		ptArray[0][2].x = ptArray[0][1].x - nThickVerical;
+		ptArray[0][2].y = ptArray[0][1].y + nThickVerical;
+
+		ptArray[0][3].x = nStartX + nThickHorizontal;
+		ptArray[0][3].y = nStartY + nThickVerical;
+
+		ptArray[0][4].x = nStartX + nThickHorizontal;
+		ptArray[0][4].y = nStartY + nHeight - nThickHorizontal;
+
+		ptArray[0][5].x = nStartX;
+		ptArray[0][5].y = nStartY + nHeight;
+
+
+		nStartX = 800;
+		nStartY = 100;
+
+		ptArray[1][0].x = nStartX;
+		ptArray[1][0].y = nStartY;
+
+		ptArray[1][1].x = nStartX - nWidth;
+		ptArray[1][1].y = nStartY;
+
+		ptArray[1][2].x = ptArray[1][1].x + nThickVerical;
+		ptArray[1][2].y = ptArray[1][1].y + nThickVerical;
+
+		ptArray[1][3].x = nStartX - nThickHorizontal;
+		ptArray[1][3].y = nStartY + nThickVerical;
+
+		ptArray[1][4].x = ptArray[1][3].x;
+		ptArray[1][4].y = nStartY + nHeight - nThickHorizontal;
+
+		ptArray[1][5].x = nStartX;
+		ptArray[1][5].y = nStartY + nHeight;
+
+
+		nStartX = 800;
+		nStartY = 600;
+
+		ptArray[2][0].x = nStartX;
+		ptArray[2][0].y = nStartY;
+
+		ptArray[2][1].x = nStartX - nWidth;
+		ptArray[2][1].y = nStartY;
+
+		ptArray[2][2].x = ptArray[2][1].x + nThickVerical;
+		ptArray[2][2].y = ptArray[2][1].y - nThickVerical;
+
+		ptArray[2][3].x = nStartX - nThickHorizontal;
+		ptArray[2][3].y = nStartY - nThickVerical;
+
+		ptArray[2][4].x = ptArray[2][3].x;
+		ptArray[2][4].y = nStartY - nHeight + nThickHorizontal;
+
+		ptArray[2][5].x = nStartX;
+		ptArray[2][5].y = nStartY - nHeight;
+
+
+		nStartX = 100;
+		nStartY = 600;
+
+		ptArray[3][0].x = nStartX;
+		ptArray[3][0].y = nStartY;
+
+		ptArray[3][1].x = nStartX + nWidth;
+		ptArray[3][1].y = nStartY;
+
+		ptArray[3][2].x = ptArray[3][1].x - nThickVerical;
+		ptArray[3][2].y = ptArray[3][1].y - nThickVerical;
+
+		ptArray[3][3].x = nStartX + nThickHorizontal;
+		ptArray[3][3].y = nStartY - nThickVerical;
+
+		ptArray[3][4].x = ptArray[3][3].x;
+		ptArray[3][4].y = nStartY - nHeight + nThickHorizontal;
+
+		ptArray[3][5].x = nStartX;
+		ptArray[3][5].y = nStartY - nHeight;
+
+	
+		WORD Index[2][6] = { { 0, 1, 2, 3,4,5 }, { 0, 5, 4, 3 ,2, 1 } };
+		for (int i = 0; i < 4; i++)
+		{
+			long nPolygonIndex = ipcplay_AddPolygon(m_pPlayContext->hPlayer[0], ptArray[i], 6, Index[i %2], IPC_XRGB(255, 0, 0));
+			if (nPolygonIndex)
+				m_vecPolygon.push_back(nPolygonIndex);
+		}
+			
+	}
+	m_bOPAssistEnabled = !m_bOPAssistEnabled;
+	pSubMenu->CheckMenuItem(ID_ENABLE_OPASSIST, MF_BYCOMMAND | MF_CHECKED);
+}
+
+
+void CIPCPlayDemoDlg::OnBnClickedCheckNodecodedelay()
+{
+	// TODO: Add your control notification handler code here
 }

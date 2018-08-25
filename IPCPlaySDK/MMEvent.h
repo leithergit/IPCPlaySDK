@@ -5,7 +5,7 @@
 class CMMEvent
 {
 	MMRESULT nTimerID;				///< 多媒体定时器ID，需要使用多媒体定时器	
-	HANDLE	 &hEvent;
+	HANDLE	 &hEvent;				///< 通知事件
 public:
 	int		 nPeriod;
 	CMMEvent(HANDLE &hEventInput, int nPeriodInput = 40)

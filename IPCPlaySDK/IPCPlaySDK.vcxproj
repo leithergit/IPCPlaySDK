@@ -173,6 +173,7 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk" /y</Command>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="IPCPlayer.cpp" />
     <ClCompile Include="IPCPlaySDK.cpp" />
     <ClCompile Include="DxSurface\DxSurface.cpp" />
     <ClCompile Include="DxSurface\DxTrace.cpp" />
