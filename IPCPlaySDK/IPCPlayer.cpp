@@ -1322,7 +1322,7 @@ int CIPCPlayer::InputStream(IN byte *pFrameData, IN int nFrameType, IN int nFram
 		return IPC_Error_VideoThreadAbnormalExit;
 	}
 
-	m_bIpcStream = false;
+	m_bIpcStream = true;
 	switch (nFrameType)
 	{
 	case 0:									// 海思I帧号为0，这是固件的一个BUG，有待修正

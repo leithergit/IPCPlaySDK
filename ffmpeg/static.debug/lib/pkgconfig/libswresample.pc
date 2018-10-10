@@ -1,0 +1,14 @@
+prefix=/e/ffmpeg/Static.debug
+exec_prefix=${prefix}
+libdir=/e/ffmpeg/Static.debug/lib
+includedir=/e/ffmpeg/Static.debug/include
+
+Name: libswresample
+Description: FFmpeg audio resampling library
+Version: 3.0.101
+Requires: libavutil >= 56.11.100
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lswresample 
+Libs.private: 
+Cflags: -I${includedir}

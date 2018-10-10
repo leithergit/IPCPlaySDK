@@ -1,0 +1,14 @@
+prefix=/e/ffmpeg/static
+exec_prefix=${prefix}
+libdir=/e/ffmpeg/static/lib
+includedir=/e/ffmpeg/static/include
+
+Name: libavcodec
+Description: FFmpeg codec library
+Version: 58.15.100
+Requires: libavutil >= 56.11.100
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavcodec ole32.lib user32.lib
+Libs.private: 
+Cflags: -I${includedir}
