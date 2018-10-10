@@ -28,11 +28,372 @@ CIPCPlayer::CIPCPlayer()
 	m_nAudioPlayFPS = 50;
 	m_nSampleFreq = 8000;
 	m_nSampleBit = 16;
+	m_nListAvFrameMaxSize = 50;
 	m_nProbeStreamTimeout = 10000;	// 毫秒
 	m_nMaxYUVCache = 10;
 	m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
 	m_nDecodeDelay = -1;
 	m_nCoordinate = Coordinte_Wnd;
+}
+
+CIPCPlayer::CIPCPlayer(HWND hWnd, CHAR *szFileName, char *szLogFile)
+{
+	ZeroMemory(&m_nZeroOffset, sizeof(CIPCPlayer) - offsetof(CIPCPlayer, m_nZeroOffset));
+#ifdef _DEBUG
+	m_pCSGlobalCount->Lock();
+	m_nObjIndex = m_nGloabalCount++;
+	m_pCSGlobalCount->Unlock();
+	m_nLifeTime = timeGetTime();
+
+	// 		m_OuputTime.nDecode = m_nLifeTime;
+	// 		m_OuputTime.nInputStream = m_nLifeTime;
+	// 		m_OuputTime.nRender = m_nLifeTime;
+
+	OutputMsg("%s \tObject:%d m_nLifeTime = %d.\n", __FUNCTION__, m_nObjIndex, m_nLifeTime);
+#endif 
+	m_nSDKVersion = IPC_IPC_SDK_VERSION_2015_12_16;
+	if (szLogFile)
+	{
+		strcpy(m_szLogFileName, szLogFile);
+		m_pRunlog = make_shared<CRunlogA>(szLogFile);
+	}
+	m_hEvnetYUVReady = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+	m_hEventDecodeStart = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+	m_hEventYUVRequire = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	m_hEventFrameCopied = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	/*
+	使用CCriticalSectionProxy类代理，不再直接调用InitializeCriticalSection函数
+	InitializeCriticalSection(&m_csVideoCache); */
+
+	m_csDsoundEnum->Lock();
+	if (!m_pDsoundEnum)
+		m_pDsoundEnum = make_shared<CDSoundEnum>();	///< 音频设备枚举器
+	m_csDsoundEnum->Unlock();
+	m_nAudioPlayFPS = 50;
+	m_nSampleFreq = 8000;
+	m_nSampleBit = 16;
+	m_nListAvFrameMaxSize = 50;
+	m_nProbeStreamTimeout = 10000;	// 毫秒
+	m_nMaxYUVCache = 10;
+	m_nCoordinate = Coordinte_Wnd;
+#ifdef _DEBUG
+	OutputMsg("%s Alloc a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
+#endif
+	nSize = sizeof(CIPCPlayer);
+	m_nMaxFrameSize = 1024 * 256;
+	m_nVideoFPS = 25;				// FPS的默认值为25
+	m_fPlayRate = 1;
+	m_fPlayInterval = 40.0f;
+	//m_nVideoCodec	 = CODEC_H264;		// 视频默认使用H.264编码
+	m_nVideoCodec = CODEC_UNKNOWN;
+	m_nAudioCodec = CODEC_G711U;		// 音频默认使用G711U编码
+	//#ifdef _DEBUG
+	//		m_nMaxFrameCache = 200;				// 默认最大视频缓冲数量为200
+	// #else
+	m_nMaxFrameCache = 100;				// 默认最大视频缓冲数量为100
+	m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+
+	m_hRenderWnd = hWnd;
+	// #endif
+	if (szFileName)
+	{
+		m_pszFileName = _New char[MAX_PATH];
+		strcpy(m_pszFileName, szFileName);
+		// 打开文件
+		m_hVideoFile = CreateFileA(m_pszFileName,
+			GENERIC_READ,
+			FILE_SHARE_READ,
+			NULL,
+			OPEN_ALWAYS,
+			FILE_ATTRIBUTE_ARCHIVE,
+			NULL);
+		if (m_hVideoFile != INVALID_HANDLE_VALUE)
+		{
+			int nError = GetFileHeader();
+			if (nError != IPC_Succeed)
+			{
+				OutputMsg("%s %d(%s):Not a IPC Media File.\n", __FILE__, __LINE__, __FUNCTION__);
+				ClearOnException();
+				throw std::exception("Not a IPC Media File.");
+			}
+			// GetLastFrameID取得的是最后一帧的ID，总帧数还要在此基础上+1
+			if (m_pMediaHeader)
+			{
+				m_nSDKVersion = m_pMediaHeader->nSDKversion;
+				switch (m_nSDKVersion)
+				{
+				case IPC_IPC_SDK_VERSION_2015_09_07:
+				case IPC_IPC_SDK_VERSION_2015_10_20:
+				case IPC_IPC_SDK_GSJ_HEADER:
+				{
+					m_nVideoFPS = 25;
+					m_nVideoCodec = CODEC_UNKNOWN;
+					m_nVideoWidth = 0;
+					m_nVideoHeight = 0;
+					// 取得第一帧和最后一帧的信息
+					if (GetFrame(&m_FirstFrame, true) != IPC_Succeed ||
+						GetFrame(&m_LastFrame, false) != IPC_Succeed)
+					{
+						OutputMsg("%s %d(%s):Can't get the First or Last.\n", __FILE__, __LINE__, __FUNCTION__);
+						ClearOnException();
+						throw std::exception("Can't get the First or Last.");
+					}
+					// 取得文件总时长(ms)
+					__int64 nTotalTime = 0;
+					__int64 nTotalTime2 = 0;
+					if (m_pMediaHeader->nCameraType == 1)	// 安讯士相机
+					{
+						nTotalTime = (m_LastFrame.nFrameUTCTime - m_FirstFrame.nFrameUTCTime) * 100;
+						nTotalTime2 = (m_LastFrame.nTimestamp - m_FirstFrame.nTimestamp) / 10000;
+					}
+					else
+					{
+						nTotalTime = (m_LastFrame.nFrameUTCTime - m_FirstFrame.nFrameUTCTime) * 1000;
+						nTotalTime2 = (m_LastFrame.nTimestamp - m_FirstFrame.nTimestamp) / 1000;
+					}
+					if (nTotalTime < 0)
+					{
+						OutputMsg("%s %d(%s):The Frame timestamp is invalid.\n", __FILE__, __LINE__, __FUNCTION__);
+						ClearOnException();
+						throw std::exception("The Frame timestamp is invalid.");
+					}
+					if (nTotalTime2 > 0)
+					{
+						m_nTotalTime = nTotalTime2;
+						// 根据总时间预测总帧数
+						m_nTotalFrames = m_nTotalTime / 40;		// 老版文件使用固定帧率,每帧间隔为40ms
+						m_nTotalFrames += 25;
+					}
+					else if (nTotalTime > 0)
+					{
+						m_nTotalTime = nTotalTime;
+						// 根据总时间预测总帧数
+						m_nTotalFrames = m_nTotalTime / 40;		// 老版文件使用固定帧率,每帧间隔为40ms
+						m_nTotalFrames += 50;
+					}
+					else
+					{
+						OutputMsg("%s %d(%s):Frame timestamp error.\n", __FILE__, __LINE__, __FUNCTION__);
+						ClearOnException();
+						throw std::exception("Frame timestamp error.");
+					}
+					break;
+				}
+
+				case IPC_IPC_SDK_VERSION_2015_12_16:
+				{
+					int nError = GetLastFrameID(m_nTotalFrames);
+					if (nError != IPC_Succeed)
+					{
+						OutputMsg("%s %d(%s):Can't get last FrameID .\n", __FILE__, __LINE__, __FUNCTION__);
+						ClearOnException();
+						throw std::exception("Can't get last FrameID.");
+					}
+					m_nTotalFrames++;
+					m_nVideoCodec = m_pMediaHeader->nVideoCodec;
+					m_nAudioCodec = m_pMediaHeader->nAudioCodec;
+					if (m_nVideoCodec == CODEC_UNKNOWN)
+					{
+						m_nVideoWidth = 0;
+						m_nVideoHeight = 0;
+					}
+					else
+					{
+						m_nVideoWidth = m_pMediaHeader->nVideoWidth;
+						m_nVideoHeight = m_pMediaHeader->nVideoHeight;
+						if (!m_nVideoWidth || !m_nVideoHeight)
+						{
+							// 								OutputMsg("%s %d(%s):Invalid Mdeia File Header.\n", __FILE__, __LINE__, __FUNCTION__);
+							// 								ClearOnException();
+							// 								throw std::exception("Invalid Mdeia File Header.");
+							m_nVideoCodec = CODEC_UNKNOWN;
+						}
+					}
+					if (m_pMediaHeader->nFps == 0)
+						m_nVideoFPS = 25;
+					else
+						m_nVideoFPS = m_pMediaHeader->nFps;
+				}
+				break;
+				default:
+				{
+					OutputMsg("%s %d(%s):Invalid SDK Version.\n", __FILE__, __LINE__, __FUNCTION__);
+					ClearOnException();
+					throw std::exception("Invalid SDK Version.");
+				}
+				}
+				m_nFileFrameInterval = 1000 / m_nVideoFPS;
+			}
+			// 				m_hCacheFulled = CreateEvent(nullptr, true, false, nullptr);
+			// 				m_bThreadSummaryRun = true;
+			// 				m_hThreadGetFileSummary = (HANDLE)_beginthreadex(nullptr, 0, ThreadGetFileSummary, this, 0, 0);
+			// 				if (!m_hThreadGetFileSummary)
+			// 				{
+			// 					OutputMsg("%s %d(%s):_beginthreadex ThreadGetFileSummary Failed.\n", __FILE__, __LINE__, __FUNCTION__);
+			// 					ClearOnException();
+			// 					throw std::exception("_beginthreadex ThreadGetFileSummary Failed.");
+			// 				}
+			m_nParserBufferSize = m_nMaxFrameSize * 4;
+			m_pParserBuffer = (byte *)_aligned_malloc(m_nParserBufferSize, 16);
+		}
+		else
+		{
+			OutputMsg("%s %d(%s):Open file failed.\n", __FILE__, __LINE__, __FUNCTION__);
+			ClearOnException();
+			throw std::exception("Open file failed.");
+		}
+	}
+
+}
+
+CIPCPlayer::CIPCPlayer(HWND hWnd, int nBufferSize, char *szLogFile)
+{
+	ZeroMemory(&m_nZeroOffset, sizeof(CIPCPlayer) - offsetof(CIPCPlayer, m_nZeroOffset));
+#ifdef _DEBUG
+	m_pCSGlobalCount->Lock();
+	m_nObjIndex = m_nGloabalCount++;
+	m_pCSGlobalCount->Unlock();
+	m_nLifeTime = timeGetTime();
+
+	OutputMsg("%s \tObject:%d m_nLifeTime = %d.\n", __FUNCTION__, m_nObjIndex, m_nLifeTime);
+#endif 
+	m_nSDKVersion = IPC_IPC_SDK_VERSION_2015_12_16;
+	if (szLogFile)
+	{
+		strcpy(m_szLogFileName, szLogFile);
+		m_pRunlog = make_shared<CRunlogA>(szLogFile);
+	}
+	m_hEvnetYUVReady = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+	m_hEventDecodeStart = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+	m_hEventYUVRequire = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	m_hEventFrameCopied = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+
+	// 使用CCriticalSectionProxy类代理，不再直接调用InitializeCriticalSection函数
+
+	m_csDsoundEnum->Lock();
+	if (!m_pDsoundEnum)
+		m_pDsoundEnum = make_shared<CDSoundEnum>();	///< 音频设备枚举器
+	m_csDsoundEnum->Unlock();
+	m_nAudioPlayFPS = 50;
+	m_nSampleFreq = 8000;
+	m_nSampleBit = 16;
+	m_nListAvFrameMaxSize = 50;
+	m_nProbeStreamTimeout = 10000;	// 毫秒
+	m_nMaxYUVCache = 10;
+#ifdef _DEBUG
+	OutputMsg("%s Alloc a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
+#endif
+	nSize = sizeof(CIPCPlayer);
+	m_nMaxFrameSize = 1024 * 256;
+	m_nVideoFPS = 25;				// FPS的默认值为25
+	m_fPlayRate = 1;
+	m_fPlayInterval = 40.0f;
+	//m_nVideoCodec	 = CODEC_H264;		// 视频默认使用H.264编码
+	m_nVideoCodec = CODEC_UNKNOWN;
+	m_nAudioCodec = CODEC_G711U;		// 音频默认使用G711U编码
+	//#ifdef _DEBUG
+	//		m_nMaxFrameCache = 200;				// 默认最大视频缓冲数量为200
+	// #else
+	m_nMaxFrameCache = 100;				// 默认最大视频缓冲数量为100
+	m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+
+	AddRenderWindow(hWnd, nullptr);
+	m_hRenderWnd = hWnd;
+	m_nDecodeDelay = -1;
+	// #endif
+
+}
+
+CIPCPlayer::~CIPCPlayer()
+{
+#ifdef _DEBUG
+	OutputMsg("%s \tReady to Free a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
+#endif
+	//StopPlay(0);
+	/*
+	if (m_hWnd)
+	{
+	if (m_bRefreshWnd)
+	{
+	PAINTSTRUCT ps;
+	HDC hdc;
+	hdc = ::BeginPaint(m_hWnd, &ps);
+	HBRUSH hBrush = (HBRUSH)GetStockObject(NULL_BRUSH);
+	::SetBkColor(hdc, RGB(0, 0, 0));
+	RECT rtWnd;
+	GetWindowRect(m_hWnd, &rtWnd);
+	::ScreenToClient(m_hWnd, (LPPOINT)&rtWnd);
+	::ScreenToClient(m_hWnd, ((LPPOINT)&rtWnd) + 1);
+	if (GetWindowLong(m_hWnd, GWL_EXSTYLE) & WS_EX_LAYOUTRTL)
+	swap(rtWnd.left, rtWnd.right);
+
+	::ExtTextOut(hdc, 0, 0, ETO_OPAQUE, &rtWnd, NULL, 0, NULL);
+	::EndPaint(m_hWnd, &ps);
+	}
+	}
+	*/
+	if (m_pParserBuffer)
+	{
+		//delete[]m_pParserBuffer;
+		_aligned_free(m_pParserBuffer);
+#ifdef _DEBUG
+		m_pParserBuffer = nullptr;
+#endif
+	}
+	if (m_pDsBuffer)
+	{
+		m_pDsPlayer->DestroyDsoundBuffer(m_pDsBuffer);
+#ifdef _DEBUG
+		m_pDsBuffer = nullptr;
+#endif
+	}
+	if (m_pDecoder)
+		m_pDecoder.reset();
+
+	if (m_pRocateImage)
+	{
+		_aligned_free(m_pRocateImage);
+		m_pRocateImage = nullptr;
+	}
+	if (m_pRacoateFrame)
+	{
+		av_free(m_pRacoateFrame);
+		m_pRacoateFrame = nullptr;
+	}
+	m_listVideoCache.clear();
+	if (m_pszFileName)
+		delete[]m_pszFileName;
+	if (m_hVideoFile)
+		CloseHandle(m_hVideoFile);
+
+	if (m_hEvnetYUVReady)
+		CloseHandle(m_hEvnetYUVReady);
+	if (m_hEventDecodeStart)
+		CloseHandle(m_hEventDecodeStart);
+
+	if (m_hEventYUVRequire)
+		CloseHandle(m_hEventYUVRequire);
+	if (m_hEventFrameCopied)
+		CloseHandle(m_hEventFrameCopied);
+
+	if (m_hRenderAsyncEvent && !m_pSyncPlayer)
+	{
+		CloseHandle(m_hRenderAsyncEvent);
+		m_hRenderAsyncEvent = nullptr;
+	}
+
+	/*
+	使用CCriticalSectionProxy类代理，不再直接调用DeleteCriticalSection函数
+	DeleteCriticalSection(&m_csVideoCache);*/
+
+	if (m_pszBackImagePath)
+	{
+		delete[]m_pszBackImagePath;
+	}
+#ifdef _DEBUG
+	OutputMsg("%s \tFinish Free a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
+	OutputMsg("%s \tObject:%d Exist Time = %u(ms).\n", __FUNCTION__, m_nObjIndex, timeGetTime() - m_nLifeTime);
+#endif
 }
 
 __int64 CIPCPlayer::LargerFileSeek(HANDLE hFile, __int64 nOffset64, DWORD MoveMethod)
@@ -437,363 +798,6 @@ bool CIPCPlayer::InitizlizeDx(AVFrame *pAvFrame )
 	}
 }
 
-CIPCPlayer::CIPCPlayer(HWND hWnd, CHAR *szFileName , char *szLogFile)
-{
-	ZeroMemory(&m_nZeroOffset, sizeof(CIPCPlayer) - offsetof(CIPCPlayer, m_nZeroOffset));
-#ifdef _DEBUG
-	m_pCSGlobalCount->Lock();
-	m_nObjIndex = m_nGloabalCount++;
-	m_pCSGlobalCount->Unlock();
-	m_nLifeTime = timeGetTime();
-
-	// 		m_OuputTime.nDecode = m_nLifeTime;
-	// 		m_OuputTime.nInputStream = m_nLifeTime;
-	// 		m_OuputTime.nRender = m_nLifeTime;
-
-	OutputMsg("%s \tObject:%d m_nLifeTime = %d.\n", __FUNCTION__, m_nObjIndex, m_nLifeTime);
-#endif 
-	m_nSDKVersion = IPC_IPC_SDK_VERSION_2015_12_16;
-	if (szLogFile)
-	{
-		strcpy(m_szLogFileName, szLogFile);
-		m_pRunlog = make_shared<CRunlogA>(szLogFile);
-	}
-	m_hEvnetYUVReady = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-	m_hEventDecodeStart = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-	m_hEventYUVRequire = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-	m_hEventFrameCopied = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-	/*
-	使用CCriticalSectionProxy类代理，不再直接调用InitializeCriticalSection函数
-	InitializeCriticalSection(&m_csVideoCache); */
-
-	m_csDsoundEnum->Lock();
-	if (!m_pDsoundEnum)
-		m_pDsoundEnum = make_shared<CDSoundEnum>();	///< 音频设备枚举器
-	m_csDsoundEnum->Unlock();
-	m_nAudioPlayFPS = 50;
-	m_nSampleFreq = 8000;
-	m_nSampleBit = 16;
-	m_nProbeStreamTimeout = 10000;	// 毫秒
-	m_nMaxYUVCache = 10;
-	m_nCoordinate = Coordinte_Wnd;
-#ifdef _DEBUG
-	OutputMsg("%s Alloc a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
-#endif
-	nSize = sizeof(CIPCPlayer);
-	m_nMaxFrameSize = 1024 * 256;
-	m_nVideoFPS = 25;				// FPS的默认值为25
-	m_fPlayRate = 1;
-	m_fPlayInterval = 40.0f;
-	//m_nVideoCodec	 = CODEC_H264;		// 视频默认使用H.264编码
-	m_nVideoCodec = CODEC_UNKNOWN;
-	m_nAudioCodec = CODEC_G711U;		// 音频默认使用G711U编码
-	//#ifdef _DEBUG
-	//		m_nMaxFrameCache = 200;				// 默认最大视频缓冲数量为200
-	// #else
-	m_nMaxFrameCache = 100;				// 默认最大视频缓冲数量为100
-	m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
-
-	m_hRenderWnd = hWnd;
-	// #endif
-	if (szFileName)
-	{
-		m_pszFileName = _New char[MAX_PATH];
-		strcpy(m_pszFileName, szFileName);
-		// 打开文件
-		m_hVideoFile = CreateFileA(m_pszFileName,
-			GENERIC_READ,
-			FILE_SHARE_READ,
-			NULL,
-			OPEN_ALWAYS,
-			FILE_ATTRIBUTE_ARCHIVE,
-			NULL);
-		if (m_hVideoFile != INVALID_HANDLE_VALUE)
-		{
-			int nError = GetFileHeader();
-			if (nError != IPC_Succeed)
-			{
-				OutputMsg("%s %d(%s):Not a IPC Media File.\n", __FILE__, __LINE__, __FUNCTION__);
-				ClearOnException();
-				throw std::exception("Not a IPC Media File.");
-			}
-			// GetLastFrameID取得的是最后一帧的ID，总帧数还要在此基础上+1
-			if (m_pMediaHeader)
-			{
-				m_nSDKVersion = m_pMediaHeader->nSDKversion;
-				switch (m_nSDKVersion)
-				{
-				case IPC_IPC_SDK_VERSION_2015_09_07:
-				case IPC_IPC_SDK_VERSION_2015_10_20:
-				case IPC_IPC_SDK_GSJ_HEADER:
-				{
-					m_nVideoFPS = 25;
-					m_nVideoCodec = CODEC_UNKNOWN;
-					m_nVideoWidth = 0;
-					m_nVideoHeight = 0;
-					// 取得第一帧和最后一帧的信息
-					if (GetFrame(&m_FirstFrame, true) != IPC_Succeed ||
-						GetFrame(&m_LastFrame, false) != IPC_Succeed)
-					{
-						OutputMsg("%s %d(%s):Can't get the First or Last.\n", __FILE__, __LINE__, __FUNCTION__);
-						ClearOnException();
-						throw std::exception("Can't get the First or Last.");
-					}
-					// 取得文件总时长(ms)
-					__int64 nTotalTime = 0;
-					__int64 nTotalTime2 = 0;
-					if (m_pMediaHeader->nCameraType == 1)	// 安讯士相机
-					{
-						nTotalTime = (m_LastFrame.nFrameUTCTime - m_FirstFrame.nFrameUTCTime) * 100;
-						nTotalTime2 = (m_LastFrame.nTimestamp - m_FirstFrame.nTimestamp) / 10000;
-					}
-					else
-					{
-						nTotalTime = (m_LastFrame.nFrameUTCTime - m_FirstFrame.nFrameUTCTime) * 1000;
-						nTotalTime2 = (m_LastFrame.nTimestamp - m_FirstFrame.nTimestamp) / 1000;
-					}
-					if (nTotalTime < 0)
-					{
-						OutputMsg("%s %d(%s):The Frame timestamp is invalid.\n", __FILE__, __LINE__, __FUNCTION__);
-						ClearOnException();
-						throw std::exception("The Frame timestamp is invalid.");
-					}
-					if (nTotalTime2 > 0)
-					{
-						m_nTotalTime = nTotalTime2;
-						// 根据总时间预测总帧数
-						m_nTotalFrames = m_nTotalTime / 40;		// 老版文件使用固定帧率,每帧间隔为40ms
-						m_nTotalFrames += 25;
-					}
-					else if (nTotalTime > 0)
-					{
-						m_nTotalTime = nTotalTime;
-						// 根据总时间预测总帧数
-						m_nTotalFrames = m_nTotalTime / 40;		// 老版文件使用固定帧率,每帧间隔为40ms
-						m_nTotalFrames += 50;
-					}
-					else
-					{
-						OutputMsg("%s %d(%s):Frame timestamp error.\n", __FILE__, __LINE__, __FUNCTION__);
-						ClearOnException();
-						throw std::exception("Frame timestamp error.");
-					}
-					break;
-				}
-
-				case IPC_IPC_SDK_VERSION_2015_12_16:
-				{
-					int nError = GetLastFrameID(m_nTotalFrames);
-					if (nError != IPC_Succeed)
-					{
-						OutputMsg("%s %d(%s):Can't get last FrameID .\n", __FILE__, __LINE__, __FUNCTION__);
-						ClearOnException();
-						throw std::exception("Can't get last FrameID.");
-					}
-					m_nTotalFrames++;
-					m_nVideoCodec = m_pMediaHeader->nVideoCodec;
-					m_nAudioCodec = m_pMediaHeader->nAudioCodec;
-					if (m_nVideoCodec == CODEC_UNKNOWN)
-					{
-						m_nVideoWidth = 0;
-						m_nVideoHeight = 0;
-					}
-					else
-					{
-						m_nVideoWidth = m_pMediaHeader->nVideoWidth;
-						m_nVideoHeight = m_pMediaHeader->nVideoHeight;
-						if (!m_nVideoWidth || !m_nVideoHeight)
-						{
-							// 								OutputMsg("%s %d(%s):Invalid Mdeia File Header.\n", __FILE__, __LINE__, __FUNCTION__);
-							// 								ClearOnException();
-							// 								throw std::exception("Invalid Mdeia File Header.");
-							m_nVideoCodec = CODEC_UNKNOWN;
-						}
-					}
-					if (m_pMediaHeader->nFps == 0)
-						m_nVideoFPS = 25;
-					else
-						m_nVideoFPS = m_pMediaHeader->nFps;
-				}
-				break;
-				default:
-				{
-					OutputMsg("%s %d(%s):Invalid SDK Version.\n", __FILE__, __LINE__, __FUNCTION__);
-					ClearOnException();
-					throw std::exception("Invalid SDK Version.");
-				}
-				}
-				m_nFileFrameInterval = 1000 / m_nVideoFPS;
-			}
-			// 				m_hCacheFulled = CreateEvent(nullptr, true, false, nullptr);
-			// 				m_bThreadSummaryRun = true;
-			// 				m_hThreadGetFileSummary = (HANDLE)_beginthreadex(nullptr, 0, ThreadGetFileSummary, this, 0, 0);
-			// 				if (!m_hThreadGetFileSummary)
-			// 				{
-			// 					OutputMsg("%s %d(%s):_beginthreadex ThreadGetFileSummary Failed.\n", __FILE__, __LINE__, __FUNCTION__);
-			// 					ClearOnException();
-			// 					throw std::exception("_beginthreadex ThreadGetFileSummary Failed.");
-			// 				}
-			m_nParserBufferSize = m_nMaxFrameSize * 4;
-			m_pParserBuffer = (byte *)_aligned_malloc(m_nParserBufferSize, 16);
-		}
-		else
-		{
-			OutputMsg("%s %d(%s):Open file failed.\n", __FILE__, __LINE__, __FUNCTION__);
-			ClearOnException();
-			throw std::exception("Open file failed.");
-		}
-	}
-
-}
-
-CIPCPlayer::CIPCPlayer(HWND hWnd, int nBufferSize, char *szLogFile )
-{
-	ZeroMemory(&m_nZeroOffset, sizeof(CIPCPlayer) - offsetof(CIPCPlayer, m_nZeroOffset));
-#ifdef _DEBUG
-	m_pCSGlobalCount->Lock();
-	m_nObjIndex = m_nGloabalCount++;
-	m_pCSGlobalCount->Unlock();
-	m_nLifeTime = timeGetTime();
-
-	OutputMsg("%s \tObject:%d m_nLifeTime = %d.\n", __FUNCTION__, m_nObjIndex, m_nLifeTime);
-#endif 
-	m_nSDKVersion = IPC_IPC_SDK_VERSION_2015_12_16;
-	if (szLogFile)
-	{
-		strcpy(m_szLogFileName, szLogFile);
-		m_pRunlog = make_shared<CRunlogA>(szLogFile);
-	}
-	m_hEvnetYUVReady = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-	m_hEventDecodeStart = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-	m_hEventYUVRequire = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-	m_hEventFrameCopied = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-
-	// 使用CCriticalSectionProxy类代理，不再直接调用InitializeCriticalSection函数
-
-	m_csDsoundEnum->Lock();
-	if (!m_pDsoundEnum)
-		m_pDsoundEnum = make_shared<CDSoundEnum>();	///< 音频设备枚举器
-	m_csDsoundEnum->Unlock();
-	m_nAudioPlayFPS = 50;
-	m_nSampleFreq = 8000;
-	m_nSampleBit = 16;
-	m_nProbeStreamTimeout = 10000;	// 毫秒
-	m_nMaxYUVCache = 10;
-#ifdef _DEBUG
-	OutputMsg("%s Alloc a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
-#endif
-	nSize = sizeof(CIPCPlayer);
-	m_nMaxFrameSize = 1024 * 256;
-	m_nVideoFPS = 25;				// FPS的默认值为25
-	m_fPlayRate = 1;
-	m_fPlayInterval = 40.0f;
-	//m_nVideoCodec	 = CODEC_H264;		// 视频默认使用H.264编码
-	m_nVideoCodec = CODEC_UNKNOWN;
-	m_nAudioCodec = CODEC_G711U;		// 音频默认使用G711U编码
-	//#ifdef _DEBUG
-	//		m_nMaxFrameCache = 200;				// 默认最大视频缓冲数量为200
-	// #else
-	m_nMaxFrameCache = 100;				// 默认最大视频缓冲数量为100
-	m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
-
-	AddRenderWindow(hWnd, nullptr);
-	m_hRenderWnd = hWnd;
-	m_nDecodeDelay = -1;
-	// #endif
-
-}
-
-CIPCPlayer::~CIPCPlayer()
-{
-#ifdef _DEBUG
-	OutputMsg("%s \tReady to Free a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
-#endif
-	//StopPlay(0);
-	/*
-	if (m_hWnd)
-	{
-	if (m_bRefreshWnd)
-	{
-	PAINTSTRUCT ps;
-	HDC hdc;
-	hdc = ::BeginPaint(m_hWnd, &ps);
-	HBRUSH hBrush = (HBRUSH)GetStockObject(NULL_BRUSH);
-	::SetBkColor(hdc, RGB(0, 0, 0));
-	RECT rtWnd;
-	GetWindowRect(m_hWnd, &rtWnd);
-	::ScreenToClient(m_hWnd, (LPPOINT)&rtWnd);
-	::ScreenToClient(m_hWnd, ((LPPOINT)&rtWnd) + 1);
-	if (GetWindowLong(m_hWnd, GWL_EXSTYLE) & WS_EX_LAYOUTRTL)
-	swap(rtWnd.left, rtWnd.right);
-
-	::ExtTextOut(hdc, 0, 0, ETO_OPAQUE, &rtWnd, NULL, 0, NULL);
-	::EndPaint(m_hWnd, &ps);
-	}
-	}
-	*/
-	if (m_pParserBuffer)
-	{
-		//delete[]m_pParserBuffer;
-		_aligned_free(m_pParserBuffer);
-#ifdef _DEBUG
-		m_pParserBuffer = nullptr;
-#endif
-	}
-	if (m_pDsBuffer)
-	{
-		m_pDsPlayer->DestroyDsoundBuffer(m_pDsBuffer);
-#ifdef _DEBUG
-		m_pDsBuffer = nullptr;
-#endif
-	}
-	if (m_pDecoder)
-		m_pDecoder.reset();
-
-	if (m_pRocateImage)
-	{
-		_aligned_free(m_pRocateImage);
-		m_pRocateImage = nullptr;
-	}
-	if (m_pRacoateFrame)
-	{
-		av_free(m_pRacoateFrame);
-		m_pRacoateFrame = nullptr;
-	}
-	m_listVideoCache.clear();
-	if (m_pszFileName)
-		delete[]m_pszFileName;
-	if (m_hVideoFile)
-		CloseHandle(m_hVideoFile);
-
-	if (m_hEvnetYUVReady)
-		CloseHandle(m_hEvnetYUVReady);
-	if (m_hEventDecodeStart)
-		CloseHandle(m_hEventDecodeStart);
-
-	if (m_hEventYUVRequire)
-		CloseHandle(m_hEventYUVRequire);
-	if (m_hEventFrameCopied)
-		CloseHandle(m_hEventFrameCopied);
-
-	if (m_hRenderAsyncEvent && !m_pSyncPlayer)
-	{
-		CloseHandle(m_hRenderAsyncEvent);
-		m_hRenderAsyncEvent = nullptr;
-	}
-
-	/*
-	使用CCriticalSectionProxy类代理，不再直接调用DeleteCriticalSection函数
-	DeleteCriticalSection(&m_csVideoCache);*/
-
-	if (m_pszBackImagePath)
-	{
-		delete[]m_pszBackImagePath;
-	}
-#ifdef _DEBUG
-	OutputMsg("%s \tFinish Free a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
-	OutputMsg("%s \tObject:%d Exist Time = %u(ms).\n", __FUNCTION__, m_nObjIndex, timeGetTime() - m_nLifeTime);
-#endif
-}
 
 int CIPCPlayer::AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent )
 {
@@ -1083,7 +1087,7 @@ int CIPCPlayer::StartSyncPlay(bool bFitWindow,CIPCPlayer *pSyncSource,int nVideo
 	// 启动流播放线程
 	m_bThreadDecodeRun = true;
 	
-	m_hThreadDecode = (HANDLE)_beginthreadex(nullptr, 256 * 1024, ThreadAsyncDecode, this, 0, 0);
+	m_hThreadDecode = (HANDLE)_beginthreadex(nullptr, 256 * 1024, ThreadSyncDecode, this, 0, 0);
 	//m_hThreadAsyncReander = (HANDLE)_beginthreadex(nullptr, 256 * 1024, ThreadAsyncRender, this, 0, 0);
 
 	if (!m_hThreadDecode)
@@ -4035,7 +4039,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		}
 		else
 		{// IPC 码流，则直接播放
-			WaitForSingleObject(pThis->m_hRenderAsyncEvent, nIPCPlayInterval);
+			WaitForSingleObject(pThis->m_hRenderAsyncEvent, nIPCPlayInterval);		// 此处为何要用这个等待函数？
 			if (nVideoCacheSize >= 3)
 			{
 				if (pRenderTimer->nPeriod != (nIPCPlayInterval * 3 / 5))	// 播放间隔降低40%,可以迅速清空积累帧
@@ -4087,36 +4091,46 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		if (nGot_picture)
 		{
 			pThis->m_nDecodePixelFmt = (AVPixelFormat)pAvFrame->format;
-			SetEvent(pThis->m_hEvnetYUVReady);
-			SetEvent(pThis->m_hEventDecodeStart);
-			pThis->m_nCurVideoFrame = FramePtr->FrameHeader()->nFrameID;
-			pThis->m_tCurFrameTimeStamp = FramePtr->FrameHeader()->nTimestamp;
-			pThis->ProcessYUVFilter(pAvFrame, (LONGLONG)pThis->m_nCurVideoFrame);
-			if (!pThis->m_bIpcStream &&
-				1.0f == pThis->m_fPlayRate  &&
-				pThis->m_bEnableAudio &&
-				pThis->m_hAudioFrameEvent[0] &&
-				pThis->m_hAudioFrameEvent[1])
-			{
-				if (pThis->m_nDecodeDelay == -1)
-					WaitForMultipleObjects(2, pThis->m_hAudioFrameEvent, TRUE, 40);
-				else if (!pThis->m_nDecodeDelay)
-					WaitForMultipleObjects(2, pThis->m_hAudioFrameEvent, TRUE, pThis->m_nDecodeDelay);
+			if (pThis->m_hThreadAsyncReander)
+			{// 是否启用异步渲染？
+				pThis->PushFrame(pAvFrame, pThis->m_tCurFrameTimeStamp);
 			}
-			dfRenderStartTime = GetExactTime();
-			pThis->RenderFrame(pAvFrame);
-			float dfRenderTimespan = (float)(TimeSpanEx(dfRenderStartTime) * 1000);
-			RenderInterval.Stat(dfRenderTimespan);
-			if (RenderInterval.IsFull())
-			{
-				//RenderInterval.OutputStat();
-				RenderInterval.Reset();
+			else
+			{// 正常渲染
+				SetEvent(pThis->m_hEvnetYUVReady);
+				SetEvent(pThis->m_hEventDecodeStart);
+				pThis->m_nCurVideoFrame = FramePtr->FrameHeader()->nFrameID;
+				pThis->m_tCurFrameTimeStamp = FramePtr->FrameHeader()->nTimestamp;
+				pThis->ProcessYUVFilter(pAvFrame, (LONGLONG)pThis->m_nCurVideoFrame);
+				if (!pThis->m_bIpcStream &&
+					1.0f == pThis->m_fPlayRate  &&
+					pThis->m_bEnableAudio &&
+					pThis->m_hAudioFrameEvent[0] &&
+					pThis->m_hAudioFrameEvent[1])
+				{
+					if (pThis->m_nDecodeDelay == -1)
+						WaitForMultipleObjects(2, pThis->m_hAudioFrameEvent, TRUE, 40);
+					else if (!pThis->m_nDecodeDelay)
+						WaitForMultipleObjects(2, pThis->m_hAudioFrameEvent, TRUE, pThis->m_nDecodeDelay);
+				}
+				dfRenderStartTime = GetExactTime();
+				pThis->RenderFrame(pAvFrame);
+//////////////////////////////////////////////////////////////////////////
+// 渲染时间统计代码，可屏蔽
+// 				float dfRenderTimespan = (float)(TimeSpanEx(dfRenderStartTime) * 1000);
+// 				RenderInterval.Stat(dfRenderTimespan);
+// 				if (RenderInterval.IsFull())
+// 				{
+// 					//RenderInterval.OutputStat();
+// 					RenderInterval.Reset();
+// 				}
+// 				if (dfRenderTimeSpan > 60.0f)
+// 				{// 渲染时间超过60ms
+// 
+// 				}
+// 				nRenderTimes++;
+//////////////////////////////////////////////////////////////////////////
 			}
-			if (dfRenderTimeSpan > 60.0f)
-			{// 渲染时间超过60ms
-
-			}
-			nRenderTimes++;
 			if (!bDecodeSucceed)
 			{
 				bDecodeSucceed = true;
@@ -4181,7 +4195,8 @@ UINT __stdcall CIPCPlayer::ThreadAsyncRender(void *p)
 	}
 	shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface, pThis->m_pDDraw);
 	int nFameListSize = 0;
-	while (pThis->m_bThreadDecodeRun)
+	while (pThis->m_bThreadDecodeRun &&
+		pThis->m_bAsyncThreadRenderRun)
 	{
 		pThis->m_cslistAVFrame.Lock();
 		nFameListSize = pThis->m_listAVFrame.size();
@@ -4231,7 +4246,7 @@ UINT __stdcall CIPCPlayer::ThreadAsyncRender(void *p)
 	return 0;
 }
 
-UINT __stdcall CIPCPlayer::ThreadAsyncDecode(void *p)
+UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 {
 	CIPCPlayer *pThis = (CIPCPlayer*)p;
 
@@ -4516,4 +4531,33 @@ UINT __stdcall CIPCPlayer::ThreadAsyncDecode(void *p)
 	SaveRunTime();
 	pThis->m_pDecoder = nullptr;
 	return 0;
+}
+
+/// @brief			启用逆向播放
+/// @remark			逆向播放的原理是先高速解码，把图像放入先入先出队列的缓存进行播放，当需要逆向播放放，则从缓存尾部向头部播放，形成逆向效果
+/// @param [in]		bFlag			是否启用逆向播放，为true时则启用，为false时，则关闭同时同空缓存
+/// @param [in]		nCacheFrames	逆向播放缓存容量
+void CIPCPlayer::EnableReservePlay(bool bFlag , int nCacheFrames)
+{
+	if (bFlag)
+	{// 创建异步渲染线程
+		m_bAsyncThreadRenderRun = true;
+		m_hThreadAsyncReander = (HANDLE)_beginthreadex(nullptr, 128, ThreadAsyncRender, this, 0, 0);
+	}
+	else
+	{// 关闭异步渲染线程
+		if (m_hRenderAsyncEvent)
+			SetEvent(m_hRenderAsyncEvent);
+		m_bAsyncThreadRenderRun = false;
+		if (m_hThreadAsyncReander)
+		{
+			WaitForSingleObject(m_hThreadAsyncReander, INFINITE);
+			CloseHandle(m_hThreadAsyncReander);
+			m_hThreadAsyncReander = nullptr;
+		}
+	}
+	EnterCriticalSection(m_cslistAVFrame.Get());
+	m_nListAvFrameMaxSize = nCacheFrames;
+	m_listAVFrame.clear();
+	LeaveCriticalSection(m_cslistAVFrame.Get());
 }

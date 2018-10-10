@@ -305,10 +305,9 @@ UINT CSyncPlayerDlg::ReadFileRun(UINT nIndex)
 
 		//ipcplay_SetDecodeDelay(hPlayHandle, 0);
 		if (nIndex == 0)
-			ipcplay_StartAsyncPlay(hPlayHandle, true,nullptr,25);
+			ipcplay_StartSyncPlay(hPlayHandle, true,nullptr,25);
 		else
-			ipcplay_StartAsyncPlay(hPlayHandle, true, m_hSyncSource, 25);
-
+			ipcplay_StartSyncPlay(hPlayHandle, true, m_hSyncSource, 25);
 
 		while (m_bThreadRun)
 		{
@@ -330,7 +329,6 @@ UINT CSyncPlayerDlg::ReadFileRun(UINT nIndex)
 	{
 	}
 	delete[]pFileBuffer;
-	return 0;
 	return 0;
 }
 

@@ -208,6 +208,7 @@ private:
 	list <RenderUnitPtr>	m_listRenderUnit;
 	list <RenderWndPtr>		m_listRenderWnd;	///< 多窗口显示同一视频图像
 	list<CAVFramePtr>		m_listAVFrame;		///<视频帧缓存，用于异步显示图像
+	UINT					m_nListAvFrameMaxSize;	///<视频帧缓存最大容量
 	
 	CCriticalSectionProxy	m_cslistRenderWnd;
 	CCriticalSectionProxy	m_csAudioCache;		
@@ -311,7 +312,7 @@ public:		// 实时流播放参数
 	int			m_nProbeOffset ;
 	volatile bool m_bAsyncRender ;
 	HANDLE		m_hRenderAsyncEvent;	///< 异步渲染事件
-	time_t		m_tSyncTimeBase;			///< 同步时间轴
+	time_t		m_tSyncTimeBase;		///< 同步时间轴
 	CIPCPlayer *m_pSyncPlayer;			///< 同步播放对象
 	int			m_nVideoFPS;			///< 视频帧的原始帧率
 	
@@ -351,6 +352,7 @@ private:
 	bool		m_bStopFlag;			///< 播放已停止标志，不再接收码流
 	volatile bool m_bThreadParserRun;
 	volatile bool m_bThreadDecodeRun;
+	volatile bool m_bAsyncThreadRenderRun;
 	volatile bool m_bThreadPlayAudioRun;
 	volatile bool m_bStreamParserRun = false;
 	
@@ -1407,7 +1409,13 @@ public:
 	{
 		CAVFramePtr pFrame = make_shared<CAvFrame>(pSrcFrame,tFrame);
 		CAutoLock lock(m_cslistAVFrame.Get(),false,__FILE__,__FUNCTION__,__LINE__);
-		m_listAVFrame.push_back(pFrame);
+		if (m_listAVFrame.size() < m_nListAvFrameMaxSize)
+			m_listAVFrame.push_back(pFrame);
+		else
+		{
+			while (m_listAVFrame.size() >= m_nListAvFrameMaxSize)
+				m_listAVFrame.pop_front();
+		}
 		return m_listAVFrame.size();
 	}
 	
@@ -1428,5 +1436,11 @@ public:
 		return IPC_Succeed;
 	}
 	static UINT __stdcall ThreadAsyncRender(void *p);
-	static UINT __stdcall ThreadAsyncDecode(void *p);
+	static UINT __stdcall ThreadSyncDecode(void *p);
+
+	/// @brief			启用逆向播放
+	/// @remark			逆向播放的原理是先高速解码，把图像放入先入先出队列的缓存进行播放，当需要逆向播放放，则从缓存尾部向头部播放，形成逆向效果
+	/// @param [in]		bFlag			是否启用逆向播放，为true时则启用，为false时，则关闭，关闭和开户动作都会视频帧缓存
+	/// @param [in]		nCacheFrames	逆向播放视频帧缓存容量
+	void EnableReservePlay(bool bFlag = true, int nCacheFrames = 50);
 };
