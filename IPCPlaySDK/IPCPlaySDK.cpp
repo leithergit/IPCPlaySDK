@@ -30,7 +30,7 @@ CCriticalSectionProxyPtr CIPCPlayer::m_pCSGlobalCount = make_shared<CCriticalSec
 extern CCriticalSectionProxy g_csPlayerHandles;
 extern UINT	g_nPlayerHandles;
 #endif
-//shared_ptr<CDSound> CDvoPlayer::m_pDsPlayer = make_shared<CDSound>(nullptr);
+//shared_ptr<CDSound> CPlayer::m_pDsPlayer = make_shared<CDSound>(nullptr);
 shared_ptr<CSimpleWnd> CIPCPlayer::m_pWndDxInit = make_shared<CSimpleWnd>();	///< 视频显示时，用以初始化DirectX的隐藏窗口对象
 
 using namespace std;
@@ -171,8 +171,8 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenStream(IN HWND hWnd, byte *szStreamHea
 	if (szStreamHeader && nHeaderSize)
 	{
 		pPlayer->SetMaxFrameCache(nMaxFramesCache);
-		int nDvoError = pPlayer->SetStreamHeader((CHAR *)szStreamHeader, nHeaderSize);
-		if (nDvoError == IPC_Succeed)
+		int nError = pPlayer->SetStreamHeader((CHAR *)szStreamHeader, nHeaderSize);
+		if (nError == IPC_Succeed)
 		{
 #if _DEBUG
 			g_csPlayerHandles.Lock();
@@ -183,7 +183,7 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenStream(IN HWND hWnd, byte *szStreamHea
 		}
 		else
 		{
-			SetLastError(nDvoError);
+			SetLastError(nError);
 			delete pPlayer;
 			return nullptr;
 		}
@@ -228,7 +228,7 @@ IPCPLAYSDK_API int ipcplay_Close(IN IPC_PLAYHANDLE hPlayHandle, bool bAsyncClose
 #ifdef _DEBUG
 	if (strlen(pPlayer->m_szLogFileName) > 0)
 		TraceMsgA("%s %s.\n", __FUNCTION__, pPlayer->m_szLogFileName);
-	DxTraceMsg("%s DvoPlayer Object:%d.\n", __FUNCTION__, pPlayer->m_nObjIndex);
+	DxTraceMsg("%s Player Object:%d.\n", __FUNCTION__, pPlayer->m_nObjIndex);
 	
 #endif
 	if (!pPlayer->StopPlay(25))
@@ -395,7 +395,7 @@ IPCPLAYSDK_API int ipcplay_Start(IN IPC_PLAYHANDLE hPlayHandle,
 /// @retval			-1	输入参数无效
 /// @remark			若pSyncSource为null,当前的播放器成为同步源，nVideoFPS不能为0，否则返回IPC_Error_InvalidParameters错误
 ///					若pSyncSource不为null，则当前播放器以pSyncSource为同步源，nVideoFPS值被忽略
-int ipcplay_StartAsyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void *pSyncSource, int nVideoFPS)
+int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void *pSyncSource, int nVideoFPS)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -410,7 +410,7 @@ int ipcplay_StartAsyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void
 			return IPC_Error_InvalidParameters;
 	}
 
-	return pPlayer->StartAsyncPlay(bFitWindow, pSyncPlayer, nVideoFPS);
+	return pPlayer->StartSyncPlay(bFitWindow, pSyncPlayer, nVideoFPS);
 }
 
 /// @brief			设置解码延时
@@ -450,8 +450,8 @@ IPCPLAYSDK_API int  ipcplay_Reset(IN IPC_PLAYHANDLE hPlayHandle, HWND hWnd, int 
 {
 // 	if (!hPlayHandle)
 // 		return IPC_Error_InvalidParameters;
-// 	CDvoPlayer *pPlayer = (CDvoPlayer *)hPlayHandle;
-// 	if (pPlayer->nSize != sizeof(CDvoPlayer))
+// 	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+// 	if (pPlayer->nSize != sizeof(CIPCPlayer))
 // 		return IPC_Error_InvalidParameters;
 // 	if (pPlayer->Reset(hWnd, nWidth, nHeight))
 		return IPC_Succeed;

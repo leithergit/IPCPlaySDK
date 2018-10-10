@@ -429,7 +429,7 @@ IPCPLAYSDK_API int ipcplay_Start(IN IPC_PLAYHANDLE hPlayHandle, IN bool bEnableA
 /// @retval			-1	输入参数无效
 /// @remark			若pSyncSource为null,当前的播放器成为同步源，nVideoFPS不能为0，否则返回IPC_Error_InvalidParameters错误
 ///					若pSyncSource不为null，则当前播放器以pSyncSource为同步源，nVideoFPS值被忽略
-int ipcplay_StartAsyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow = true, void *pSyncSource = nullptr, int nVideoFPS = 25);
+int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow = true, void *pSyncSource = nullptr, int nVideoFPS = 25);
 
 /// @brief			设置解码延时
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄

@@ -243,7 +243,7 @@ public:
 //#ifdef _DEBUG
 	
 	int			m_nObjIndex;			///< 当前对象的计数
-	static int	m_nGloabalCount;		///< 当前进程中CDvoPlayer对象总数
+	static int	m_nGloabalCount;		///< 当前进程中CIPCPlayer对象总数
 private:
 	DWORD		m_nLifeTime;			///< 当前对象存在时间
 	_OutputTime	m_OuputTime;
@@ -374,7 +374,7 @@ private:
 	
 private:	// 文件播放相关变量
 	
-	HANDLE		m_hDvoFile;				///< 正在播放的文件句柄
+	HANDLE		m_hVideoFile;				///< 正在播放的文件句柄
 	INT64		m_nSummaryOffset;		///< 在读取索引时获得的文件解析偏移
 #ifdef _DEBUG
 	bool		m_bSeekSetDetected = false;///< 是否存在跳动帧动作
@@ -767,8 +767,8 @@ public:
 		使用CCriticalSectionProxy类代理，不再直接调用DeleteCriticalSection函数
 		DeleteCriticalSection(&m_csVideoCache); 
 		*/
-		if (m_hDvoFile)
-			CloseHandle(m_hDvoFile);
+		if (m_hVideoFile)
+			CloseHandle(m_hVideoFile);
 	}
 	CIPCPlayer(HWND hWnd, CHAR *szFileName = nullptr, char *szLogFile = nullptr);
 	
@@ -781,7 +781,7 @@ public:
 	/// @retval			false	流播放
 	bool IsFilePlayer()
 	{
-		if (m_hDvoFile || m_pszFileName)
+		if (m_hVideoFile || m_pszFileName)
 			return true;
 		else
 			return false;
@@ -940,7 +940,7 @@ public:
 	/// @retval			-1	输入参数无效
 	/// @remark			若pSyncSource为null,当前的播放器成为同步源，nVideoFPS不能为0，否则返回IPC_Error_InvalidParameters错误
 	///					若pSyncSource不为null，则当前播放器以pSyncSource为同步源，nVideoFPS值被忽略
-	int StartAsyncPlay(bool bFitWindow = true, CIPCPlayer *pSyncSource = nullptr, int nVideoFPS = 25);
+	int StartSyncPlay(bool bFitWindow = true, CIPCPlayer *pSyncSource = nullptr, int nVideoFPS = 25);
 
 	/// @brief			判断播放器是否正在播放中	
 	/// @retval			true	播放器正在播放中

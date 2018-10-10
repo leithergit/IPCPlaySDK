@@ -2,7 +2,7 @@
 #include "Common.h"
 
 /// @brief  截图类开，且于FFMPEG解码的帧的截图,目前只支持jpeg和bmp两种格式的截图
-/// @code 详见 CDvoPlayer::SnapShot(IN CHAR *szFileName, IN SNAPSHOT_FORMAT nFileFormat = XIFF_JPG)函数
+/// @code 详见 CIPCPlayer::SnapShot(IN CHAR *szFileName, IN SNAPSHOT_FORMAT nFileFormat = XIFF_JPG)函数
 class CSnapshot
 {
 	AVFrame* pAvFrame;

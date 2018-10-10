@@ -87,10 +87,10 @@ bool CIPCPlayer::IsIPCVideoFrame(IPCFrameHeader *pFrameHeader, bool &bIFrame, in
 
 int CIPCPlayer::GetFrame(IPCFrameHeader *pFrame, bool bFirstFrame)
 {
-	if (!m_hDvoFile)
+	if (!m_hVideoFile)
 		return IPC_Error_FileNotOpened;
 	LARGE_INTEGER liFileSize;
-	if (!GetFileSizeEx(m_hDvoFile, &liFileSize))
+	if (!GetFileSizeEx(m_hVideoFile, &liFileSize))
 		return GetLastError();
 	byte *pBuffer = _New byte[m_nMaxFrameSize];
 	shared_ptr<byte>TempBuffPtr(pBuffer);
@@ -104,12 +104,12 @@ int CIPCPlayer::GetFrame(IPCFrameHeader *pFrame, bool bFirstFrame)
 	}
 
 	if (liFileSize.QuadPart >= m_nMaxFrameSize &&
-		LargerFileSeek(m_hDvoFile, nMoveOffset, nMoveMothod) == INVALID_SET_FILE_POINTER)
+		LargerFileSeek(m_hVideoFile, nMoveOffset, nMoveMothod) == INVALID_SET_FILE_POINTER)
 		return GetLastError();
 	DWORD nBytesRead = 0;
 	DWORD nDataLength = m_nMaxFrameSize;
 
-	if (!ReadFile(m_hDvoFile, pBuffer, nDataLength, &nBytesRead, nullptr))
+	if (!ReadFile(m_hVideoFile, pBuffer, nDataLength, &nBytesRead, nullptr))
 	{
 		OutputMsg("%s ReadFile Failed,Error = %d.\n", __FUNCTION__, GetLastError());
 		return GetLastError();
@@ -180,7 +180,7 @@ int CIPCPlayer::GetFrame(IPCFrameHeader *pFrame, bool bFirstFrame)
 		nOffset += Parser.nFrameSize;
 	}
 #endif
-	if (SetFilePointer(m_hDvoFile, sizeof(IPC_MEDIAINFO), nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+	if (SetFilePointer(m_hVideoFile, sizeof(IPC_MEDIAINFO), nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
 		return GetLastError();
 	if (bFoundVideo)
 	{
@@ -193,21 +193,21 @@ int CIPCPlayer::GetFrame(IPCFrameHeader *pFrame, bool bFirstFrame)
 
 int CIPCPlayer::GetLastFrameID(int &nLastFrameID)
 {
-	if (!m_hDvoFile)
+	if (!m_hVideoFile)
 		return IPC_Error_FileNotOpened;
 	LARGE_INTEGER liFileSize;
-	if (!GetFileSizeEx(m_hDvoFile, &liFileSize))
+	if (!GetFileSizeEx(m_hVideoFile, &liFileSize))
 		return GetLastError();
 	byte *pBuffer = _New byte[m_nMaxFrameSize];
 	shared_ptr<byte>TempBuffPtr(pBuffer);
 
 	if (liFileSize.QuadPart >= m_nMaxFrameSize &&
-		LargerFileSeek(m_hDvoFile, -m_nMaxFrameSize, FILE_END) == INVALID_SET_FILE_POINTER)
+		LargerFileSeek(m_hVideoFile, -m_nMaxFrameSize, FILE_END) == INVALID_SET_FILE_POINTER)
 		return GetLastError();
 	DWORD nBytesRead = 0;
 	DWORD nDataLength = m_nMaxFrameSize;
 
-	if (!ReadFile(m_hDvoFile, pBuffer, nDataLength, &nBytesRead, nullptr))
+	if (!ReadFile(m_hVideoFile, pBuffer, nDataLength, &nBytesRead, nullptr))
 	{
 		OutputMsg("%s ReadFile Failed,Error = %d.\n", __FUNCTION__, GetLastError());
 		return GetLastError();
@@ -292,7 +292,7 @@ int CIPCPlayer::GetLastFrameID(int &nLastFrameID)
 		nOffset += Parser.nFrameSize;
 	}
 #endif
-	if (SetFilePointer(m_hDvoFile, sizeof(IPC_MEDIAINFO), nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+	if (SetFilePointer(m_hVideoFile, sizeof(IPC_MEDIAINFO), nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
 		return GetLastError();
 	if (bFoundVideo)
 		return IPC_Succeed;
@@ -500,14 +500,14 @@ CIPCPlayer::CIPCPlayer(HWND hWnd, CHAR *szFileName , char *szLogFile)
 		m_pszFileName = _New char[MAX_PATH];
 		strcpy(m_pszFileName, szFileName);
 		// 打开文件
-		m_hDvoFile = CreateFileA(m_pszFileName,
+		m_hVideoFile = CreateFileA(m_pszFileName,
 			GENERIC_READ,
 			FILE_SHARE_READ,
 			NULL,
 			OPEN_ALWAYS,
 			FILE_ATTRIBUTE_ARCHIVE,
 			NULL);
-		if (m_hDvoFile != INVALID_HANDLE_VALUE)
+		if (m_hVideoFile != INVALID_HANDLE_VALUE)
 		{
 			int nError = GetFileHeader();
 			if (nError != IPC_Succeed)
@@ -582,8 +582,8 @@ CIPCPlayer::CIPCPlayer(HWND hWnd, CHAR *szFileName , char *szLogFile)
 
 				case IPC_IPC_SDK_VERSION_2015_12_16:
 				{
-					int nDvoError = GetLastFrameID(m_nTotalFrames);
-					if (nDvoError != IPC_Succeed)
+					int nError = GetLastFrameID(m_nTotalFrames);
+					if (nError != IPC_Succeed)
 					{
 						OutputMsg("%s %d(%s):Can't get last FrameID .\n", __FILE__, __LINE__, __FUNCTION__);
 						ClearOnException();
@@ -762,8 +762,8 @@ CIPCPlayer::~CIPCPlayer()
 	m_listVideoCache.clear();
 	if (m_pszFileName)
 		delete[]m_pszFileName;
-	if (m_hDvoFile)
-		CloseHandle(m_hDvoFile);
+	if (m_hVideoFile)
+		CloseHandle(m_hVideoFile);
 
 	if (m_hEvnetYUVReady)
 		CloseHandle(m_hEvnetYUVReady);
@@ -994,7 +994,7 @@ int CIPCPlayer::StartPlay(bool bEnaleAudio , bool bEnableHaccel , bool bFitWindo
 	// 		}
 	if (m_pszFileName)
 	{
-		if (m_hDvoFile == INVALID_HANDLE_VALUE)
+		if (m_hVideoFile == INVALID_HANDLE_VALUE)
 		{
 			return GetLastError();
 		}
@@ -1047,7 +1047,7 @@ int CIPCPlayer::StartPlay(bool bEnaleAudio , bool bEnableHaccel , bool bFitWindo
 	return IPC_Succeed;
 }
 
-int CIPCPlayer::StartAsyncPlay(bool bFitWindow,CIPCPlayer *pSyncSource,int nVideoFPS )
+int CIPCPlayer::StartSyncPlay(bool bFitWindow,CIPCPlayer *pSyncSource,int nVideoFPS )
 {
 #ifdef _DEBUG
 	OutputMsg("%s \tObject:%d Time = %d.\n", __FUNCTION__, m_nObjIndex, timeGetTime() - m_nLifeTime);
@@ -1100,25 +1100,25 @@ int CIPCPlayer::StartAsyncPlay(bool bFitWindow,CIPCPlayer *pSyncSource,int nVide
 }
 int CIPCPlayer::GetFileHeader()
 {
-	if (!m_hDvoFile)
+	if (!m_hVideoFile)
 		return IPC_Error_FileNotOpened;
 	DWORD dwBytesRead = 0;
 	m_pMediaHeader = make_shared<IPC_MEDIAINFO>();
 	if (!m_pMediaHeader)
 	{
-		CloseHandle(m_hDvoFile);
+		CloseHandle(m_hVideoFile);
 		return -1;
 	}
 
-	if (SetFilePointer(m_hDvoFile, 0, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+	if (SetFilePointer(m_hVideoFile, 0, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
 	{
 		assert(false);
 		return 0;
 	}
 
-	if (!ReadFile(m_hDvoFile, (void *)m_pMediaHeader.get(), sizeof(IPC_MEDIAINFO), &dwBytesRead, nullptr))
+	if (!ReadFile(m_hVideoFile, (void *)m_pMediaHeader.get(), sizeof(IPC_MEDIAINFO), &dwBytesRead, nullptr))
 	{
-		CloseHandle(m_hDvoFile);
+		CloseHandle(m_hVideoFile);
 		return GetLastError();
 	}
 	// 分析视频文件头
@@ -1126,7 +1126,7 @@ int CIPCPlayer::GetFileHeader()
 		m_pMediaHeader->nMediaTag != GSJ_TAG) ||
 		dwBytesRead != sizeof(IPC_MEDIAINFO))
 	{
-		CloseHandle(m_hDvoFile);
+		CloseHandle(m_hVideoFile);
 		return IPC_Error_NotVideoFile;
 	}
 	m_nSDKVersion = m_pMediaHeader->nSDKversion;
@@ -1623,7 +1623,7 @@ int CIPCPlayer::GetPlayerInfo(PlayerInfo *pPlayInfo)
 {
 	if (!pPlayInfo)
 		return IPC_Error_InvalidParameters;
-	if (m_hThreadDecode || m_hDvoFile)
+	if (m_hThreadDecode || m_hVideoFile)
 	{
 		ZeroMemory(pPlayInfo, sizeof(PlayerInfo));
 		pPlayInfo->nVideoCodec = m_nVideoCodec;
@@ -1777,7 +1777,7 @@ int CIPCPlayer::SeekFrame(IN int nFrameID, bool bUpdate )
 	if (!m_bSummaryIsReady)
 		return IPC_Error_SummaryNotReady;
 
-	if (!m_hDvoFile || !m_pFrameOffsetTable)
+	if (!m_hVideoFile || !m_pFrameOffsetTable)
 		return IPC_Error_NotFilePlayer;
 
 	if (nFrameID < 0 || nFrameID > m_nTotalFrames)
@@ -1823,7 +1823,7 @@ int CIPCPlayer::SeekFrame(IN int nFrameID, bool bUpdate )
 		m_nParserOffset = 0;
 		m_nParserDataLength = 0;
 		LONGLONG nOffset = m_pFrameOffsetTable[m_nFrametoRead].nOffset;
-		if (LargerFileSeek(m_hDvoFile, nOffset, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+		if (LargerFileSeek(m_hVideoFile, nOffset, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
 		{
 			OutputMsg("%s LargerFileSeek  Failed,Error = %d.\n", __FUNCTION__, GetLastError());
 			return GetLastError();
@@ -1844,13 +1844,13 @@ int CIPCPlayer::SeekFrame(IN int nFrameID, bool bUpdate )
 
 		unique_ptr<byte>BufferPtr(pBuffer);
 		DWORD nBytesRead = 0;
-		if (LargerFileSeek(m_hDvoFile, nOffset, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+		if (LargerFileSeek(m_hVideoFile, nOffset, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
 		{
 			OutputMsg("%s LargerFileSeek  Failed,Error = %d.\n", __FUNCTION__, GetLastError());
 			return GetLastError();
 		}
 
-		if (!ReadFile(m_hDvoFile, pBuffer, nBufferSize, &nBytesRead, nullptr))
+		if (!ReadFile(m_hVideoFile, pBuffer, nBufferSize, &nBytesRead, nullptr))
 		{
 			OutputMsg("%s ReadFile Failed,Error = %d.\n", __FUNCTION__, GetLastError());
 			return GetLastError();
@@ -1889,7 +1889,7 @@ int CIPCPlayer::SeekFrame(IN int nFrameID, bool bUpdate )
 
 int CIPCPlayer::SeekTime(IN time_t tTimeOffset, bool bUpdate)
 {
-	if (!m_hDvoFile)
+	if (!m_hVideoFile)
 		return IPC_Error_NotFilePlayer;
 	if (!m_bSummaryIsReady)
 		return IPC_Error_SummaryNotReady;
@@ -1913,7 +1913,7 @@ int CIPCPlayer::SeekTime(IN time_t tTimeOffset, bool bUpdate)
 
 int CIPCPlayer::GetFrame(INOUT byte **pBuffer, OUT UINT &nBufferSize)
 {
-	if (!m_hDvoFile)
+	if (!m_hVideoFile)
 		return IPC_Error_NotFilePlayer;
 	if (m_hThreadDecode || m_hThreadFileParser)
 		return IPC_Error_PlayerHasStart;
@@ -1928,7 +1928,7 @@ int CIPCPlayer::GetFrame(INOUT byte **pBuffer, OUT UINT &nBufferSize)
 	{
 		// 残留数据长为nDataLength
 		memmove(m_pParserBuffer, pFrameBuffer, m_nParserDataLength);
-		if (!ReadFile(m_hDvoFile, &m_pParserBuffer[m_nParserDataLength], (m_nParserBufferSize - m_nParserDataLength), &nBytesRead, nullptr))
+		if (!ReadFile(m_hVideoFile, &m_pParserBuffer[m_nParserDataLength], (m_nParserBufferSize - m_nParserDataLength), &nBytesRead, nullptr))
 		{
 			OutputMsg("%s ReadFile Failed,Error = %d.\n", __FUNCTION__, GetLastError());
 			return GetLastError();
@@ -1953,7 +1953,7 @@ int CIPCPlayer::SeekNextFrame()
 		m_bPause &&				// 必须是暂停模式			
 		m_pDecoder)				// 解码器必须已启动
 	{
-		if (!m_hDvoFile || !m_pFrameOffsetTable)
+		if (!m_hVideoFile || !m_pFrameOffsetTable)
 			return IPC_Error_NotFilePlayer;
 
 		m_csVideoCache.Lock();
@@ -1975,13 +1975,13 @@ int CIPCPlayer::SeekNextFrame()
 
 		unique_ptr<byte>BufferPtr(pBuffer);
 		DWORD nBytesRead = 0;
-		if (LargerFileSeek(m_hDvoFile, nOffset, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+		if (LargerFileSeek(m_hVideoFile, nOffset, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
 		{
 			OutputMsg("%s LargerFileSeek  Failed,Error = %d.\n", __FUNCTION__, GetLastError());
 			return GetLastError();
 		}
 
-		if (!ReadFile(m_hDvoFile, pBuffer, nBufferSize, &nBytesRead, nullptr))
+		if (!ReadFile(m_hVideoFile, pBuffer, nBufferSize, &nBytesRead, nullptr))
 		{
 			OutputMsg("%s ReadFile Failed,Error = %d.\n", __FUNCTION__, GetLastError());
 			return GetLastError();
@@ -2264,7 +2264,7 @@ int CIPCPlayer::GetFileSummary(volatile bool &bWorking)
 
 	// 不再分析文件，因为StartPlay已经作过分析的确认
 	DWORD nOffset = sizeof(IPC_MEDIAINFO);
-	if (SetFilePointer(m_hDvoFile, nOffset, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+	if (SetFilePointer(m_hVideoFile, nOffset, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
 	{
 		assert(false);
 		return -1;
@@ -2308,7 +2308,7 @@ int CIPCPlayer::GetFileSummary(volatile bool &bWorking)
 	while (true && bWorking)
 	{
 		double dfT1 = GetExactTime();
-		if (!ReadFile(m_hDvoFile, &pBuffer[nDataLength], (nBufferSize - nDataLength), &nBytesRead, nullptr))
+		if (!ReadFile(m_hVideoFile, &pBuffer[nDataLength], (nBufferSize - nDataLength), &nBytesRead, nullptr))
 		{
 			OutputMsg("%s ReadFile Failed,Error = %d.\n", __FUNCTION__, GetLastError());
 			return IPC_Error_ReadFileFailed;
@@ -2490,7 +2490,7 @@ UINT __stdcall CIPCPlayer::ThreadFileParser(void *p)
 	DWORD nDataLength = 0;
 
 	LARGE_INTEGER liFileSize;
-	if (!GetFileSizeEx(pThis->m_hDvoFile, &liFileSize))
+	if (!GetFileSizeEx(pThis->m_hVideoFile, &liFileSize))
 		return 0;
 
 	if (pThis->GetFileSummary(pThis->m_bThreadParserRun) != IPC_Succeed)
@@ -2503,7 +2503,7 @@ UINT __stdcall CIPCPlayer::ThreadFileParser(void *p)
 	shared_ptr<byte>BufferPtr(pBuffer);
 	FrameParser Parser;
 	pThis->m_tLastFrameTime = 0;
-	if (SetFilePointer(pThis->m_hDvoFile, (LONG)sizeof(IPC_MEDIAINFO), nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+	if (SetFilePointer(pThis->m_hVideoFile, (LONG)sizeof(IPC_MEDIAINFO), nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
 	{
 		pThis->OutputMsg("%s SetFilePointer Failed,Error = %d.\n", __FUNCTION__, GetLastError());
 		assert(false);
@@ -2529,7 +2529,7 @@ UINT __stdcall CIPCPlayer::ThreadFileParser(void *p)
 			CAutoLock lock(&pThis->m_csVideoCache);
 			if (pThis->m_listVideoCache.size() < pThis->m_nMaxFrameCache)
 			{
-				if (SetFilePointer(pThis->m_hDvoFile, (LONG)pThis->m_nSummaryOffset, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+				if (SetFilePointer(pThis->m_hVideoFile, (LONG)pThis->m_nSummaryOffset, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
 					pThis->OutputMsg("%s SetFilePointer Failed,Error = %d.\n", __FUNCTION__, GetLastError());
 				pThis->m_nSummaryOffset = 0;
 				lock.Unlock();
@@ -2561,7 +2561,7 @@ UINT __stdcall CIPCPlayer::ThreadFileParser(void *p)
 #ifdef _DEBUG
 			pThis->m_bSeekSetDetected = true;
 #endif
-			if (SetFilePointer(pThis->m_hDvoFile, (LONG)nSeekOffset, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+			if (SetFilePointer(pThis->m_hVideoFile, (LONG)nSeekOffset, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
 				pThis->OutputMsg("%s SetFilePointer Failed,Error = %d.\n", __FUNCTION__, GetLastError());
 		}
 		if (bFileEnd)
@@ -2576,7 +2576,7 @@ UINT __stdcall CIPCPlayer::ThreadFileParser(void *p)
 			Sleep(20);
 			continue;
 		}
-		if (!ReadFile(pThis->m_hDvoFile, &pBuffer[nDataLength], (nBufferSize - nDataLength), &nBytesRead, nullptr))
+		if (!ReadFile(pThis->m_hVideoFile, &pBuffer[nDataLength], (nBufferSize - nDataLength), &nBytesRead, nullptr))
 		{
 			pThis->OutputMsg("%s ReadFile Failed,Error = %d.\n", __FUNCTION__, GetLastError());
 			return 0;
@@ -2586,7 +2586,7 @@ UINT __stdcall CIPCPlayer::ThreadFileParser(void *p)
 		{// 到达文件结尾
 			pThis->OutputMsg("%s Reaching File end nBytesRead = %d.\n", __FUNCTION__, nBytesRead);
 			LONGLONG nOffset = 0;
-			if (!GetFilePosition(pThis->m_hDvoFile, nOffset))
+			if (!GetFilePosition(pThis->m_hVideoFile, nOffset))
 			{
 				pThis->OutputMsg("%s GetFilePosition Failed,Error =%d.\n", __FUNCTION__, GetLastError());
 				return 0;

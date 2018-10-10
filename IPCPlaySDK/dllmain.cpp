@@ -34,7 +34,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	{
 		g_hDllModule = hModule;
 		g_dfProcessLoadTime = GetExactTime();
-		//TraceMsgA("%s DvoIPCPlaySDK is loaded.\r\n", __FUNCTION__);
+		//TraceMsgA("%s IPCPlaySDK is loaded.\r\n", __FUNCTION__);
 #ifdef _DEBUG
 		g_nPlayerHandles = 0;
 #endif
@@ -64,7 +64,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 			TerminateThread(g_hThread_ClosePlayer, 0);
 		CloseHandle(g_hThread_ClosePlayer);
 
-		//TraceMsgA("%s DvoIPCPlaySDK is Unloaded.\r\n", __FUNCTION__);
+		//TraceMsgA("%s IPCPlaySDK is Unloaded.\r\n", __FUNCTION__);
 		CloseHandle(g_hEventThreadExit);
 		g_hEventThreadExit = nullptr;
 	}

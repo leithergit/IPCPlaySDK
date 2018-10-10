@@ -68,4 +68,4 @@ EXPORTS
 	ipcplay_AddPolygon
 	ipcplay_RemovePolygon
 	ipcplay_SetCoordinateMode
-	ipcplay_StartAsyncPlay
+	ipcplay_StartSyncPlay
