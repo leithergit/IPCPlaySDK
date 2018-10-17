@@ -41,6 +41,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		g_bThread_ClosePlayer = true;
 		g_hEventThreadExit = CreateEvent(nullptr, true, false, nullptr);
 		g_hThread_ClosePlayer = CreateThread(nullptr, 0, Thread_Helper, nullptr, 0, 0);
+		
 	}
 		break;
 	case DLL_THREAD_ATTACH:

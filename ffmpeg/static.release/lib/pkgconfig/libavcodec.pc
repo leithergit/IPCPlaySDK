@@ -1,12 +1,12 @@
-prefix=/e/ffmpeg/static
+prefix=/e/ffmpeg/static.20181012/Release
 exec_prefix=${prefix}
-libdir=/e/ffmpeg/static/lib
-includedir=/e/ffmpeg/static/include
+libdir=/e/ffmpeg/static.20181012/Release/lib
+includedir=/e/ffmpeg/static.20181012/Release/include
 
 Name: libavcodec
 Description: FFmpeg codec library
-Version: 58.15.100
-Requires: libavutil >= 56.11.100
+Version: 58.33.100
+Requires: libavutil >= 56.19.101
 Requires.private: 
 Conflicts:
 Libs: -L${libdir}  -lavcodec ole32.lib user32.lib

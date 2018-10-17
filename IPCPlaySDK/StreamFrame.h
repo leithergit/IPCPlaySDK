@@ -56,6 +56,7 @@ struct StreamFrame
 		if (pInputData)
 			memcpy(pInputData, pBuffer, nLenth);
 		IPCFrameHeader* pHeader = (IPCFrameHeader *)pInputData;
+		dfInputTime = GetExactTime();
 		if (nSDKVersion >= IPC_IPC_SDK_VERSION_2015_12_16 && nSDKVersion != IPC_IPC_SDK_GSJ_HEADER)
 			pHeader->nTimestamp = ((IPCFrameHeaderEx*)pHeader)->nFrameID*nFrameInterval * 1000;
 	}
@@ -69,7 +70,7 @@ struct StreamFrame
 			assert(false);
 			return;
 		}
-
+		dfInputTime = GetExactTime();
 		IPCFrameHeaderEx *pHeader = (IPCFrameHeaderEx *)pInputData;
 #ifdef _DEBUG
 		ZeroMemory(pHeader, nSize);
@@ -147,6 +148,7 @@ struct StreamFrame
 			|| pHeader->nType == FRAME_I
 			|| pHeader->nType == FRAME_GOV);
 	}
+	double  dfInputTime;
 	int		nSize;
 	byte	*pInputData;
 };

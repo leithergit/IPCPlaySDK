@@ -1,14 +1,14 @@
-prefix=/e/ffmpeg/static
+prefix=/e/ffmpeg/static.20181012/Release
 exec_prefix=${prefix}
-libdir=/e/ffmpeg/static/lib
-includedir=/e/ffmpeg/static/include
+libdir=/e/ffmpeg/static.20181012/Release/lib
+includedir=/e/ffmpeg/static.20181012/Release/include
 
 Name: libavutil
 Description: FFmpeg utility library
-Version: 56.11.100
+Version: 56.19.101
 Requires: 
 Requires.private: 
 Conflicts:
-Libs: -L${libdir}  -lavutil user32.lib advapi32.lib
+Libs: -L${libdir}  -lavutil user32.lib bcrypt.lib
 Libs.private: 
 Cflags: -I${includedir}

@@ -274,6 +274,7 @@ private:
 	void *m_pDCCallBackParam = nullptr;
   	CDirectDraw *m_pDDraw;				///< DirectDraw封装类对象，用于在xp下显示视频
 	WCHAR		*m_pszBackImagePath;
+	bool		m_bEnableBackImage = false;
   	shared_ptr<ImageSpace> m_pYUVImage = NULL;
 // 	bool		m_bDxReset;				///< 是否重置DxSurface
 // 	HWND		m_hDxReset;
@@ -340,6 +341,7 @@ private:
 	HANDLE		m_hThreadPlayAudio;		///< 音频解码和播放线程
 	HANDLE		m_hThreadAsyncReander;	///< 异步显示线程
 	HANDLE		m_hThreadStreamParser;	///< 流解析线程;
+	HANDLE		m_hThreadReversePlay;	///< 逆序播放线程
 	
 	//HANDLE		m_hThreadGetFileSummary;///< 文件信息摘要线程
 	UINT		m_nVideoCache;
@@ -352,12 +354,15 @@ private:
 	bool		m_bStopFlag;			///< 播放已停止标志，不再接收码流
 	volatile bool m_bThreadParserRun;
 	volatile bool m_bThreadDecodeRun;
-	volatile bool m_bAsyncThreadRenderRun;
+	volatile bool m_bThreadReversePlayRun; ///<  启用逆序播放
 	volatile bool m_bThreadPlayAudioRun;
 	volatile bool m_bStreamParserRun = false;
 	
 	shared_ptr<CStreamParser> m_pStreamParser = nullptr;
 	shared_ptr<CDHStreamParser> m_pDHStreamParser = nullptr;
+#ifdef _DEBUG
+	double		m_dfFirstFrameTime;
+#endif
 	byte*		m_pParserBuffer;		///< 数据解析缓冲区
 	UINT		m_nParserBufferSize;	///< 数据解析缓冲区尺寸
 	DWORD		m_nParserDataLength;	///< 数据解析缓冲区中的有效数据长度
@@ -1223,7 +1228,7 @@ public:
 	/// @remark			该功能一般用于播放结束后，刷新窗口，把画面置为黑色
 	void  Refresh();
 
-	void SetBackgroundImage(LPCWSTR szImageFilePath);
+	void SetBackgroundImage(LPCWSTR szImageFilePath = nullptr);
 
 	// 添加线条失败时，返回0，否则返回线条组的句柄
 	long AddLineArray(POINT *pPointArray, int nCount, float fWidth, D3DCOLOR nColor);
@@ -1428,19 +1433,26 @@ public:
 		av_free(p);
 	}
 	
-	int EnableAsyncRender(bool bAsync)
-	{
-		if (m_hThreadDecode)
-			return IPC_Error_PlayerHasStart;
-		m_bAsyncRender = bAsync;
-		return IPC_Succeed;
-	}
+// 	int EnableAsyncRender(bool bAsync)
+// 	{
+// 		if (m_hThreadDecode)
+// 			return IPC_Error_PlayerHasStart;
+// 		m_bAsyncRender = bAsync;
+// 		return IPC_Succeed;
+// 	}
 	static UINT __stdcall ThreadAsyncRender(void *p);
 	static UINT __stdcall ThreadSyncDecode(void *p);
-
+// 	static UINT __stdcall ThreadReversePlay(void *p)
+// 	{
+// 		CIPCPlayer *pThis = (CIPCPlayer *)p;
+// 		return pThis->ReversePlayRun();
+// 	}
+//
+// 	UINT ReversePlayRun();
 	/// @brief			启用逆向播放
 	/// @remark			逆向播放的原理是先高速解码，把图像放入先入先出队列的缓存进行播放，当需要逆向播放放，则从缓存尾部向头部播放，形成逆向效果
 	/// @param [in]		bFlag			是否启用逆向播放，为true时则启用，为false时，则关闭，关闭和开户动作都会视频帧缓存
 	/// @param [in]		nCacheFrames	逆向播放视频帧缓存容量
-	void EnableReservePlay(bool bFlag = true, int nCacheFrames = 50);
+	/// void EnableReservePlay(bool bFlag = true);
+	
 };

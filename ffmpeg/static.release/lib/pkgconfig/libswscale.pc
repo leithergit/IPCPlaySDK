@@ -1,12 +1,12 @@
-prefix=/e/ffmpeg/static
+prefix=/e/ffmpeg/static.20181012/Release
 exec_prefix=${prefix}
-libdir=/e/ffmpeg/static/lib
-includedir=/e/ffmpeg/static/include
+libdir=/e/ffmpeg/static.20181012/Release/lib
+includedir=/e/ffmpeg/static.20181012/Release/include
 
 Name: libswscale
 Description: FFmpeg image rescaling library
-Version: 5.0.102
-Requires: libavutil >= 56.11.100
+Version: 5.2.100
+Requires: libavutil >= 56.19.101
 Requires.private: 
 Conflicts:
 Libs: -L${libdir}  -lswscale 

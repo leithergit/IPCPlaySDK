@@ -184,7 +184,7 @@ enum GraphicQulityParameter
 };
 
 //#define _TraceMemory
-#define TraceTimeout		150
+#define TraceTimeout		2
 #if defined(_DEBUG) && defined(_TraceMemory)
 
 #define TraceFunction()	CTraceFunction Tx(__FUNCTION__);
@@ -220,9 +220,9 @@ public:
 		strcpy_s(m_szFunction, 256, szFunction);
 		if (szTxt)
 			strcpy_s(m_szText, 1024, szTxt);
-		CHAR szText[1024] = { 0 };
-		sprintf_s(szText, 1024, "%s\t_IN_ %s \tMemory = %d KB.\n",__FUNCTION__, szFunction, m_nMemoryCount);
-		OutputDebugStringA(szText);
+		//CHAR szText[1024] = { 0 };
+		//sprintf_s(szText, 1024, "%s\t_IN_ %s \tMemory = %d KB.\n",__FUNCTION__, szFunction, m_nMemoryCount);
+		//OutputDebugStringA(szText);
 	}
 	~CTraceFunction()
 	{
@@ -267,7 +267,7 @@ struct LineTime
 	}
 };
 #ifdef _LineTime
-#define SaveRunTime()		LineSave.SaveLineTime(__FILE__,__LINE__);
+#define SaveRunTime()				LineSave.SaveLineTime(__FILE__,__LINE__);
 #define DeclareRunTime(nTimeout)	CLineRunTime LineSave(nTimeout,__FUNCTION__);LineSave.SaveLineTime(__FILE__,__LINE__);
 #else
 #define SaveRunTime()
@@ -637,14 +637,72 @@ struct DxPolygon
 };
 
 typedef shared_ptr<DxPolygon>  DxPolygonPtr;
+class CD3D9Helper
+{
+public:
+	HMODULE		 m_hD3D9 ;
+	pDirect3DCreate9*	 m_pDirect3DCreate9;
+	pDirect3DCreate9Ex*	 m_pDirect3DCreate9Ex;
+	IDirect3D9 *  m_pDirect3D9;
+	IDirect3D9Ex* m_pDirect3D9Ex;	/* = NULL*/;
+	CD3D9Helper()
+	{
+		ZeroMemory(this, sizeof(CD3D9Helper));
+		m_hD3D9 = ::LoadLibraryA("d3d9.dll");
+		if (!m_hD3D9)
+		{
+			MessageBox(nullptr, _T("CD3D9Helper"), _T("Can't load d3d9.dll."), MB_OK | MB_ICONSTOP);
+			return;
+		}
+		m_pDirect3DCreate9 = (pDirect3DCreate9*)GetProcAddress(m_hD3D9, "Direct3DCreate9");
+		if (m_pDirect3DCreate9 == NULL)
+		{
+			DxTraceMsg("%s Can't locate the Procedure \"Direct3DCreate9\".\n", __FUNCTION__);
+			assert(false);
+			return;
+		}
+		m_pDirect3D9 = m_pDirect3DCreate9(D3D_SDK_VERSION);
+		if (!m_pDirect3D9)
+		{
+			DxTraceMsg("%s Direct3DCreate9 failed.\n", __FUNCTION__);
+			assert(false);
+		}
+
+		m_pDirect3DCreate9Ex = (pDirect3DCreate9Ex*)GetProcAddress(m_hD3D9, "Direct3DCreate9Ex");
+		if (!m_pDirect3DCreate9Ex)
+		{
+			DxTraceMsg("%s Can't locate the Procedure \"Direct3DCreate9Ex\".\n", __FUNCTION__);
+			assert(false);
+			return;
+		}
+		HRESULT hr = m_pDirect3DCreate9Ex(D3D_SDK_VERSION, &m_pDirect3D9Ex);
+		if (!m_pDirect3D9Ex)
+		{
+			DxTraceMsg("%s Direct3DCreate9Ex failed.\n", __FUNCTION__);
+			assert(false);
+		}
+	}
+	~CD3D9Helper()
+	{
+		SafeRelease(m_pDirect3D9);
+		SafeRelease(m_pDirect3D9Ex);
+		if (m_hD3D9)
+		{
+			FreeLibrary(m_hD3D9);
+			m_hD3D9 = NULL;
+		}
+	}
+};
 // 注意:
 /// @brief IDirect3DSurface9对象封类，用于创建和管理IDirect3DSurface9对象，可以显示多种象素格式的图像
 /// @remark 使用CDxSurface对象显示图象时，必须在创建线程内显示图，否则当发生DirectX设备丢失时，无法重置DirectX的资源
+
+extern CD3D9Helper    g_D3D9Helper;
 class CDxSurface
 {
 //protected:	
 public:
-	map<long,DxPolygonPtr>		m_mapPolygon;
+	map<long,DxPolygonPtr>	m_mapPolygon;
 	list<D3DLineArrayPtr>	m_listLine;
 	long					m_nVtableAddr;		// 虚函数表地址，该变量地址位置虚函数表之后，仅用于类初始化，请匆移动该变量的位置
 	D3DPRESENT_PARAMETERS	m_d3dpp;
@@ -669,7 +727,6 @@ public:
 	UINT					m_nWndWidth;
 	UINT					m_nWndHeight;
 	bool					m_bInitialized;	
-	HMODULE					m_hD3D9;
 	Coordinte				m_nCordinateMode = Coordinte_Wnd;
 	shared_ptr<PixelConvert>m_pPixelConvert;
 	HANDLE					m_hYUVCacheReady;
@@ -710,53 +767,52 @@ public:
 	D3DXVECTOR2*            m_pLineArray = NULL; //线段顶点 
 public:
 		
-	explicit CDxSurface(IDirect3D9 *pD3D9)
-	{
-		ZeroMemory(&m_nVtableAddr, sizeof(CDxSurface) - offsetof(CDxSurface,m_nVtableAddr));
-		InitializeCriticalSection(&m_csRender);
-		InitializeCriticalSection(&m_csSnapShot);
-		InitializeCriticalSection(&m_csExternDraw);
-		m_pCriListLine = make_shared<CCriticalSectionProxy>();
-		m_nCordinateMode = Coordinte_Wnd;
-		m_pCriMapPolygon = make_shared<CCriticalSectionProxy>();
-		if (pD3D9)
-		{
-			m_bD3DShared = true;
-			m_pDirect3D9 = pD3D9;
-		}
-	}
+// 	explicit CDxSurface(IDirect3D9 *pD3D9)
+// 	{
+// 		ZeroMemory(&m_nVtableAddr, sizeof(CDxSurface) - offsetof(CDxSurface,m_nVtableAddr));
+// 		InitializeCriticalSection(&m_csRender);
+// 		InitializeCriticalSection(&m_csSnapShot);
+// 		InitializeCriticalSection(&m_csExternDraw);
+// 		m_pCriListLine = make_shared<CCriticalSectionProxy>();
+// 		m_nCordinateMode = Coordinte_Wnd;
+// 		m_pCriMapPolygon = make_shared<CCriticalSectionProxy>();
+// 		if (pD3D9)
+// 		{
+// 			m_bD3DShared = true;
+// 			m_pDirect3D9 = pD3D9;
+// 		}
+// 	}
 	CDxSurface()
 	{
-		TraceFunction();
+		// TraceFunction();
 		// 借助于m_nVtableAddr变量，避开对虚函数表的初始化
 		// 仅适用于微软的Visual C++编译器
+		DeclareRunTime(5);
 		ZeroMemory(&m_nVtableAddr, sizeof(CDxSurface) - offsetof(CDxSurface,m_nVtableAddr));
 		m_csObjectCount->Lock();
 		m_nObjectCount++;
 		DxTraceMsg("%s CDxSurface Count = %d.\n", __FUNCTION__, m_nObjectCount);
 		m_csObjectCount->Unlock();
+		SaveRunTime();
 		m_bEnableVsync = true;
-		if (!m_hD3D9)
-			m_hD3D9 = LoadLibraryA("d3d9.dll");
-		if (!m_hD3D9)
-		{
-			DxTraceMsg("%s Failed load D3d9.dll.\n",__FUNCTION__);
-			assert(false);
-			return;
-		}
-		m_pDirect3DCreate9 = (pDirect3DCreate9*)GetProcAddress(m_hD3D9, "Direct3DCreate9");
+		
+
+		m_pDirect3DCreate9 = g_D3D9Helper.m_pDirect3DCreate9;
+		SaveRunTime();
 		if (m_pDirect3DCreate9 == NULL)
 		{
 			DxTraceMsg("%s Can't locate the Procedure \"Direct3DCreate9\".\n",__FUNCTION__);
 			assert(false);
 			return;
 		}
-		m_pDirect3D9 = m_pDirect3DCreate9(D3D_SDK_VERSION);
+		m_pDirect3D9 = g_D3D9Helper.m_pDirect3D9;
 		if (!m_pDirect3D9)
 		{
 			DxTraceMsg("%s Direct3DCreate9 failed.\n",__FUNCTION__);
 			assert(false);
 		}
+
+		SaveRunTime();
 		m_nCordinateMode = Coordinte_Wnd;
 		InitializeCriticalSection(&m_csRender);
 		InitializeCriticalSection(&m_csSnapShot);
@@ -766,6 +822,7 @@ public:
 		//m_hEventFrameReady	= CreateEvent(NULL,FALSE,FALSE,NULL);
 		//m_hEventFrameCopied = CreateEvent(NULL,FALSE,FALSE, NULL);
 		m_hEventSnapShot	= CreateEvent(NULL,FALSE,FALSE,NULL);
+		SaveRunTime();
 	}
 	void ReleaseOffSurface()
 	{
@@ -778,12 +835,12 @@ public:
 		TraceFunction();
 		//DetachWnd();
 		DxCleanup();
-		SafeRelease(m_pDirect3D9);
-		if (m_hD3D9)
-		{
-			FreeLibrary(m_hD3D9);
-			m_hD3D9 = NULL;
-		}
+//		SafeRelease(m_pDirect3D9);
+// 		if (m_hD3D9)
+// 		{
+// 			FreeLibrary(m_hD3D9);
+// 			m_hD3D9 = NULL;
+// 		}
 		DeleteCriticalSection(&m_csRender);
 		DeleteCriticalSection(&m_csSnapShot);
 		DeleteCriticalSection(&m_csExternDraw);
@@ -835,7 +892,7 @@ public:
 	
 	bool SetBackgroundPictureFile(LPCWSTR szPhotoFile, HWND hBackImageWnd)
 	{
-		if (!szPhotoFile || !PathFileExistsW(szPhotoFile))
+		if (!szPhotoFile /*|| !PathFileExistsW(szPhotoFile)*/)
 			return false;
 		int nLength = wcslen(szPhotoFile);
 		m_pszBackImageFileW = new WCHAR[nLength + 1];
@@ -1799,22 +1856,34 @@ _Failed:
 
 		// YUV420P的U和V分量对调，便成为YV12格式
 		// 复制Y分量
- 		for (int i = 0; i < nVideoHeight; i++)
- 			memcpy_s(pDestY + i * nStride, nSize*3/2 - i*nStride, pFrame420P->data[0] + i * pFrame420P->linesize[0], pFrame420P->width);
+//  		for (int i = 0; i < nVideoHeight; i++)
+// 			gpu_memcpy(pDestY + i * nStride, /*nSize * 3 / 2 - i*nStride,*/ pFrame420P->data[0] + i * pFrame420P->linesize[0], pFrame420P->width);
+// 
+// 		// 复制YUV420P的U分量到目村的YV12的U分量
+//  		for (int i = 0; i < nVideoHeight / 2; i++)
+// 			gpu_memcpy(pDestU + i * nStride / 2,/* nSizoefU - i*nStride / 2,*/ pFrame420P->data[1] + i * pFrame420P->linesize[1], pFrame420P->width / 2);
+// 
+// 		// 复制YUV420P的V分量到目村的YV12的V分量
+//  		for (int i = 0; i < nVideoHeight / 2; i++)
+// 			gpu_memcpy(pDestV + i * nStride / 2, /*nSizeofV - i*nStride / 2,*/ pFrame420P->data[2] + i * pFrame420P->linesize[2], pFrame420P->width / 2);
+		
+
+		for (int i = 0; i < nVideoHeight; i++)
+			memcpy(pDestY + i * nStride, /*nSize * 3 / 2 - i*nStride,*/ pFrame420P->data[0] + i * pFrame420P->linesize[0], pFrame420P->width);
 
 		// 复制YUV420P的U分量到目村的YV12的U分量
- 		for (int i = 0; i < nVideoHeight / 2; i++)
- 			memcpy_s(pDestU + i * nStride / 2,nSizoefU - i*nStride/2, pFrame420P->data[1] + i * pFrame420P->linesize[1], pFrame420P->width/2);
+		for (int i = 0; i < nVideoHeight / 2; i++)
+			memcpy(pDestU + i * nStride / 2,/* nSizoefU - i*nStride / 2,*/ pFrame420P->data[1] + i * pFrame420P->linesize[1], pFrame420P->width / 2);
 
 		// 复制YUV420P的V分量到目村的YV12的V分量
- 		for (int i = 0; i < nVideoHeight / 2; i++)
- 			memcpy_s(pDestV + i * nStride / 2,nSizeofV - i*nStride/2, pFrame420P->data[2] + i * pFrame420P->linesize[2], pFrame420P->width/2);
+		for (int i = 0; i < nVideoHeight / 2; i++)
+			memcpy(pDestV + i * nStride / 2, /*nSizeofV - i*nStride / 2,*/ pFrame420P->data[2] + i * pFrame420P->linesize[2], pFrame420P->width / 2);
 	}
 
 	void CopyFrameARGB(byte *pDest,int nDestSize,int nStride,AVFrame *pFrameARGB)
 	{	
 		for (int i = 0; i < pFrameARGB->height; i++)
-			memcpy_s(pDest + i * nStride, nDestSize - i*nStride,pFrameARGB->data[0] + i * pFrameARGB->linesize[0], pFrameARGB->width);
+			memcpy(pDest + i * nStride, /*nDestSize - i*nStride,*/pFrameARGB->data[0] + i * pFrameARGB->linesize[0], pFrameARGB->width);
 	}
 	
 	virtual bool Render(AVFrame *pAvFrame/*, HWND hWnd = NULL, RECT *pClippedRT = nullptr, RECT *pRenderRt = nullptr*/)
@@ -2379,51 +2448,34 @@ public:
 	IDirect3DDevice9Ex		*m_pDirect3DDeviceEx	/*= NULL*/;
 	pDirect3DCreate9Ex*		m_pDirect3DCreate9Ex;
 public:
-	explicit CDxSurfaceEx(IDirect3D9Ex *pD3D9Ex)
-		:m_pDirect3D9Ex(NULL)
-		,m_pDirect3DDeviceEx(NULL)
-		,m_pDirect3DCreate9Ex(NULL)
-	{
-		InitializeCriticalSection(&m_csRender);
-		m_nCordinateMode = Coordinte_Wnd;
-		if (pD3D9Ex)
-		{
-			m_bD3DShared = true;
-			m_pDirect3D9Ex = pD3D9Ex;
-		}
-	}
+// 	CDxSurfaceEx(IDirect3D9Ex *pD3D9Ex)
+// 		//:m_pDirect3D9Ex(NULL)*,
+// 		m_pDirect3DDeviceEx(NULL),
+// 		m_pDirect3DCreate9Ex(NULL)
+// 	{
+// 		InitializeCriticalSection(&m_csRender);
+// 		m_nCordinateMode = Coordinte_Wnd;
+// 		if (pD3D9Ex)
+// 		{
+// 			m_bD3DShared = true;
+// 			m_pDirect3D9Ex = pD3D9Ex;
+// 		}
+// 	}
 	CDxSurfaceEx()
-		:m_pDirect3D9Ex(NULL)
-		,m_pDirect3DDeviceEx(NULL)
-		,m_pDirect3DCreate9Ex(NULL)
+		//:m_pDirect3D9Ex(NULL),
+		:m_pDirect3DDeviceEx(NULL),
+		m_pDirect3DCreate9Ex(NULL)
 	{
-		TraceFunction();		
-		if (!m_hD3D9)
-			m_hD3D9 = LoadLibraryA("d3d9.dll");
-		if (!m_hD3D9)
-		{
-			DxTraceMsg("%s Failed load D3d9.dll.\n",__FUNCTION__);
-			assert(false);
-			return;
-		}
+		DeclareRunTime(5);
+
 		m_nCordinateMode = Coordinte_Wnd;
 		// 释放由基类创建的Direct3D9对象
-		SafeRelease(m_pDirect3D9);
-		m_pDirect3DCreate9Ex = (pDirect3DCreate9Ex*)GetProcAddress(m_hD3D9, "Direct3DCreate9Ex");
-		if (!m_pDirect3DCreate9Ex)
-		{
-			DxTraceMsg("%s Can't locate the Procedure \"Direct3DCreate9Ex\".\n",__FUNCTION__);
-			assert(false);
-			return;
-		}		
-		HRESULT hr = m_pDirect3DCreate9Ex(D3D_SDK_VERSION, &m_pDirect3D9Ex);
-		if (FAILED(hr))
-		{
-			DxTraceMsg("%s Direct3DCreate9Ex failed.\n",__FUNCTION__);
-			assert(false);
-		}
+		//SafeRelease(m_pDirect3D9);
+		m_pDirect3DCreate9Ex = g_D3D9Helper.m_pDirect3DCreate9Ex;	
+		m_pDirect3D9Ex = g_D3D9Helper.m_pDirect3D9Ex;
+		
 #ifdef _DEBUG
-		PrintDisplayInfo(m_pDirect3D9Ex);
+		//PrintDisplayInfo(m_pDirect3D9Ex);
 #endif
 	}
 #ifdef _DEBUG
@@ -2444,12 +2496,12 @@ public:
 	~CDxSurfaceEx()
 	{
 		DxCleanup();
-		SafeRelease(m_pDirect3D9Ex);
-		if (m_hD3D9)
-		{
-			FreeLibrary(m_hD3D9);
-			m_hD3D9 = NULL;
-		}
+//		SafeRelease(m_pDirect3D9Ex);
+// 		if (m_hD3D9)
+// 		{
+// 			FreeLibrary(m_hD3D9);
+// 			m_hD3D9 = NULL;
+// 		}
 	}
 
 	virtual bool PresetBackImage(IDirect3DSurface9 * pSurfaceBackImage, D3DXIMAGE_INFO &ImageInfo,HWND hWnd)

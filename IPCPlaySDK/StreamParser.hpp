@@ -161,13 +161,12 @@ public:
 			}
 			if (pAvPacket->size > 0)
 			{
-				char szFileName[256];
-				if (m_nFrameIndex < 256)
-				{
-					sprintf_s(szFileName, 256, "Frame%04d.bin", m_nFrameIndex++);
-					OutputFile(pAvPacket->data, pAvPacket->size, szFileName);
-				}
-				
+// 				char szFileName[256];
+// 				if (m_nFrameIndex < 256)
+// 				{
+// 					sprintf_s(szFileName, 256, "Frame%04d.bin", m_nFrameIndex++);
+// 					OutputFile(pAvPacket->data, pAvPacket->size, szFileName);
+// 				}
 				listFrame.push_back(make_shared<FrameBuffer>(pAvPacket->data, pAvPacket->size));
 			}
 			pData += ret;
