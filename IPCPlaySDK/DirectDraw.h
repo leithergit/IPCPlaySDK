@@ -511,16 +511,16 @@ public:
 		m_copyCallback((LPBYTE)ddOffScreenSurfaceDesc.lpSurface, imageSpace, ddOffScreenSurfaceDesc.dwWidth, ddOffScreenSurfaceDesc.dwHeight, ddOffScreenSurfaceDesc.lPitch);
 		m_pSurfaceOffScreen->Unlock(NULL);
 		
-		HDC hDC = nullptr;
-		hr = m_pSurfaceOffScreen->GetDC(&hDC);
-		RECT MotionRect;
-		MotionRect.left = 0;
-		MotionRect.top = 0;
-		MotionRect.right = ddOffScreenSurfaceDesc.dwWidth;
-		MotionRect.bottom = ddOffScreenSurfaceDesc.dwHeight;
-		m_pExternDraw(m_hWnd, hDC, MotionRect, m_pUserPtr);
-		
-		m_pSurfaceOffScreen->ReleaseDC(hDC);
+// 		HDC hDC = nullptr;
+// 		hr = m_pSurfaceOffScreen->GetDC(&hDC);
+// 		RECT MotionRect;
+// 		MotionRect.left = 0;
+// 		MotionRect.top = 0;
+// 		MotionRect.right = ddOffScreenSurfaceDesc.dwWidth;
+// 		MotionRect.bottom = ddOffScreenSurfaceDesc.dwHeight;
+// 		m_pExternDraw(m_hWnd, hDC, MotionRect, m_pUserPtr);
+// 		
+// 		m_pSurfaceOffScreen->ReleaseDC(hDC);
 		
 		if (pRectClip)
 		{

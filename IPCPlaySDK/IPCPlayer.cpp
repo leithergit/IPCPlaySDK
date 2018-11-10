@@ -1330,7 +1330,6 @@ int CIPCPlayer::InputStream(IN byte *pFrameData, IN int nFrameType, IN int nFram
 	case IPC_B_FRAME:       // B帧。
 	case IPC_GOV_FRAME: 	// GOV帧。
 	{
-		//m_nVideoFraems++;
 		StreamFramePtr pStream = make_shared<StreamFrame>(pFrameData, nFrameType, nFrameLength, nFrameNum, nFrameTime);
 		CAutoLock lock(&m_csVideoCache, false, __FILE__, __FUNCTION__, __LINE__);
 		if (m_listVideoCache.size() >= m_nMaxFrameCache)
@@ -1388,6 +1387,7 @@ int CIPCPlayer::InputStream(IN byte *pData, IN int nLength)
 		return IPC_Error_InvalidParameters;
 	if (m_pStreamParser/* || m_hThreadStreamParser*/)
 	{
+		m_bIpcStream = true;
 #ifdef _DEBUG
 		if (m_dfFirstFrameTime == 0.0f)
 			m_dfFirstFrameTime = GetExactTime();
@@ -3593,6 +3593,7 @@ bool CIPCPlayer::InitialziePlayer()
 	}
 	}
 
+	m_bEnableHaccel = m_bEnableDDraw ? false : m_bEnableHaccel;
 	if (!m_pDecoder->InitDecoder(nCodecID, m_nVideoWidth, m_nVideoHeight, m_bEnableHaccel))
 	{
 		OutputMsg("%s Failed in Initializing Decoder.\n", __FUNCTION__);
@@ -3812,6 +3813,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 
 	shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface, pThis->m_pDDraw);
 	SaveRunTime();
+	pThis->m_bD3dShared = pThis->m_bEnableDDraw ? false : pThis->m_bD3dShared;
 	if (pThis->m_bD3dShared)
 	{
 		pDecodec->SetD3DShared(pThis->m_pDxSurface->GetD3D9(), pThis->m_pDxSurface->GetD3DDevice());
@@ -4063,11 +4065,11 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		}
 		else
 		{// IPC 码流，则直接播放
-			//WaitForSingleObject(pThis->m_hRenderAsyncEvent, nIPCPlayInterval);		// 此处为何要用这个等待函数？
+			WaitForSingleObject(pThis->m_hRenderAsyncEvent, nIPCPlayInterval);		// 用于根据帧率来控制播放速度，使画面稳定流畅播放
 			if (nVideoCacheSize >= 3)
 			{
-				if (pRenderTimer->nPeriod != (nIPCPlayInterval * 3 / 5))	// 播放间隔降低40%,可以迅速清空积累帧
-					pRenderTimer->UpdateInterval(25);
+				if (pRenderTimer->nPeriod != (nIPCPlayInterval / 2))	// 播放间隔降低40%,可以迅速清空积累帧
+					pRenderTimer->UpdateInterval(20);
 			}
 			else if (pRenderTimer->nPeriod != nIPCPlayInterval)
 				pRenderTimer->UpdateInterval(nIPCPlayInterval);
@@ -4095,7 +4097,6 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 			dfDecodeTimeSpan = TimeSpanEx(FramePtr->dfInputTime);
 #endif
 			nAvError = pDecodec->Decode(pAvFrame, nGot_picture, pAvPacket);
-
 			nTotalDecodeFrames++;
 			av_packet_unref(pAvPacket);
 			if (nAvError < 0)
@@ -4140,12 +4141,12 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 			pThis->RenderFrame(pAvFrame);
 #ifdef _DEBUG
 			//RenderInterval.Stat(dfDecodeTimeSpan);
-			RenderInterval.Stat(TimeSpanEx(FramePtr->dfInputTime));
-			if (RenderInterval.IsFull())
-			{
-				RenderInterval.OutputStat();
-				RenderInterval.Reset();
-			}
+// 			RenderInterval.Stat(TimeSpanEx(FramePtr->dfInputTime));
+// 			if (RenderInterval.IsFull())
+// 			{
+// 				RenderInterval.OutputStat();
+// 				RenderInterval.Reset();
+// 			}
 #endif
 ////////////////////////////////////////////////////////////////////////
 //渲染时间统计代码，可屏蔽
@@ -4188,6 +4189,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 // 				TraceMsgA("%s nTotalDecodeFrames = %d\tnRenderTimes = %d.\n", __FUNCTION__,nTotalDecodeFrames, nRenderTimes);
 // 			}
 	}
+	TraceMsgA("%s Object %d Decode Frames:%d.\n", __FUNCTION__, pThis->m_nObjIndex, nTotalDecodeFrames);
 	av_frame_unref(pAvFrame);
 	SaveRunTime();
 	pThis->m_pDecoder = nullptr;

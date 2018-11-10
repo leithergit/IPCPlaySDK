@@ -41,6 +41,7 @@ class CStreamParser
 	const AVCodec *m_pCodec = nullptr;
 	AVCodecParserContext *parser;
 	AVCodecContext *m_pAvContext = NULL;
+	AVPacket *pAvPacket = nullptr;
 	int		m_nPaserOffset = 0;
 	bool	m_bFrameCacheFulled = false;
 	int		m_nFrameIndex = 0;
@@ -58,6 +59,11 @@ public:
 	}
 	int InitStreamParser(AVCodecID  nCodec = AV_CODEC_ID_H264)
 	{
+		pAvPacket = av_packet_alloc();
+		if (!pAvPacket)
+		{
+			return IPC_Error_InsufficentMemory;
+		}
 		m_pCodec = avcodec_find_decoder(nCodec);
 		if (!m_pCodec)
 			return IPC_Error_UnsupportedCodec;
@@ -150,9 +156,7 @@ public:
 	int ParserFrame(byte *pData, int nLength, list<FrameBufferPtr> &listFrame)
 	{
 		while (nLength > 0)
-		{
-			AVPacket *pAvPacket = av_packet_alloc();
-			
+		{			
 			int ret = av_parser_parse2(parser, m_pAvContext, &pAvPacket->data, &pAvPacket->size, pData, nLength, AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0);
 			if (ret < 0)
 			{
@@ -160,15 +164,7 @@ public:
 				return listFrame.size();
 			}
 			if (pAvPacket->size > 0)
-			{
-// 				char szFileName[256];
-// 				if (m_nFrameIndex < 256)
-// 				{
-// 					sprintf_s(szFileName, 256, "Frame%04d.bin", m_nFrameIndex++);
-// 					OutputFile(pAvPacket->data, pAvPacket->size, szFileName);
-// 				}
 				listFrame.push_back(make_shared<FrameBuffer>(pAvPacket->data, pAvPacket->size));
-			}
 			pData += ret;
 			nLength -= ret;
 		}
@@ -199,6 +195,12 @@ public:
 	}
 	~CStreamParser()
 	{
+		if (pAvPacket)
+		{
+			av_packet_free(&pAvPacket);
+			pAvPacket = nullptr;
+		}
+
 		if (parser)
 		{
 			av_parser_close(parser);

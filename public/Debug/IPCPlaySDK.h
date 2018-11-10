@@ -94,7 +94,8 @@ enum IPC_CALLBACK
 	YUVCaptureEx,	/// 扩展的YUV回调，可得到已分离的YUV数据和相应的参数数据,回调定义详见@see CaptureYUVEx
 	YUVFilter,		/// YUV过滤器，可得到已分离的YUV数据和相应的参数数据，若对数据作出改变会显示在画面上,回调定义详见@see CaptureYUVEx
 	FramePaser,		/// 文件帧解析回调，可得到完整正在播放的文件中的一帧未解码的帧,回调定义详见@see CaptureFrame
-	FilePlayer		/// 文件播放回调，可得到关于播放器的一些完整信息,回调定义详见@see FilePlayProc
+	FilePlayer,		/// 文件播放回调，可得到关于播放器的一些完整信息,回调定义详见@see FilePlayProc
+	RGBCapture,		/// RGB数据回调
 };
 
 typedef enum {
@@ -109,7 +110,7 @@ typedef enum {
 	IPC_726,            ///< 726编码帧
 	IPC_AAC,            ///< AAC编码帧。
 	IPC_MAX,
-} APP_NET_TCP_STREAM_TYPE;
+} IPC_STREAM_TYPE;
 
 #define		IPC_Succeed							(0)		///< 操作成功
 #define		IPC_Error_InvalidParameters			(-1)	///< 无效的参数
@@ -234,6 +235,20 @@ typedef void(__stdcall *CaptureYUVEx)(IPC_PLAYHANDLE hPlayHandle,
 	const unsigned char* pV,
 	int nStrideY,
 	int nStrideUV,
+	int nWidth,
+	int nHeight,
+	INT64 nTime,
+	void *pUserPtr);
+
+/// @brief		解码后YVU数据回调函数定义
+/// @param [in]		hPlayHandle	由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		pRGBBuffer	RGB数据指针
+/// @param [in]		nWidth		图像的宽度
+/// @param [in]		nHeight		图像的高度
+/// @param [in]		nTime		产生YUV数据的时间
+/// @param [in]		pUserPtr	用户自定义指针
+typedef void(__stdcall *CaptureRGB)(IPC_PLAYHANDLE hPlayHandle,
+	const unsigned char* pRGBBuffer,
 	int nWidth,
 	int nHeight,
 	INT64 nTime,
@@ -402,6 +417,19 @@ IPCPLAYSDK_API int ipcplay_InputIPCStream(IN IPC_PLAYHANDLE hPlayHandle, IN byte
 ///					ipcplay_GetHaccelStatus判断是否已经开启硬解码
 IPCPLAYSDK_API int ipcplay_Start(IN IPC_PLAYHANDLE hPlayHandle, IN bool bEnableAudio = false, bool bFitWindow = true, bool bEnableHaccel = false);
 
+/// @brief			开始同步播放
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		bFitWindow		视频是否适应窗口
+/// @param [in]		pSyncSource		同步源，为另一IPCPlaySDK 句柄，若同步源为null,则创建同步时钟，自我同步
+/// @param [in]		nVideoFPS		视频帧率
+/// #- true			视频填满窗口,这样会把图像拉伸,可能会造成图像变形
+/// #- false		只按图像原始比例在窗口中显示,超出比例部分,则以黑色背景显示
+/// @retval			0	操作成功
+/// @retval			1	流缓冲区已满
+/// @retval			-1	输入参数无效
+/// @remark			若pSyncSource为null,当前的播放器成为同步源，nVideoFPS不能为0，否则返回IPC_Error_InvalidParameters错误
+///					若pSyncSource不为null，则当前播放器以pSyncSource为同步源，nVideoFPS值被忽略
+IPCPLAYSDK_API int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow = true, void *pSyncSource = nullptr, int nVideoFPS = 25);
 
 /// @brief			设置解码延时
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
@@ -750,13 +778,17 @@ IPCPLAYSDK_API int ipcplay_RemoveLineArray(IN IPC_PLAYHANDLE hPlayHandle, long n
 
 /// @brief			设置背景图片路径，即视频图像出现前，作为背景的图像，若未设置则默认为黑色背景
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
-/// @param [in]		szImageFile		背景图片路径，背景图片可以jpg,png或bmp文件,为null时，则删除背景图片
-IPCPLAYSDK_API int ipcplay_SetBackgroundImageA(IN IPC_PLAYHANDLE hPlayHandle, LPCSTR szImageFile);
+/// @param [in]		szImageFile		背景图片路径，背景图片可以jpg,png或bmp文件
+/// @remark 注意，若之前未调用ipcplay_SetBackgroundImage函数，即使szImageFile为null,SDK仍会启用默认的图像，
+///                若已经调用过SDK，当szImageFile为null时，则禁用背景图片
+IPCPLAYSDK_API int ipcplay_SetBackgroundImageA(IN IPC_PLAYHANDLE hPlayHandle, LPCSTR szImageFile= nullptr);
 
 /// @brief			设置背景图片路径,即视频图像出现前，作为背景的图像，若未设置则默认为黑色背景
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
-/// @param [in]		szImageFile		背景图片路径，背景图片可以jpg,png或bmp文件,为null时，则删除背景图片
-IPCPLAYSDK_API int ipcplay_SetBackgroundImageW(IN IPC_PLAYHANDLE hPlayHandle, LPCWSTR szImageFile);
+/// @param [in]		szImageFile		背景图片路径，背景图片可以jpg,png或bmp文件
+/// @remark 注意，若之前未调用ipcplay_SetBackgroundImage函数，即使szImageFile为null,SDK仍会启用默认的图像，
+///                若已经调用过SDK，当szImageFile为null时，则禁用背景图片
+IPCPLAYSDK_API int ipcplay_SetBackgroundImageW(IN IPC_PLAYHANDLE hPlayHandle, LPCWSTR szImageFile = nullptr);
 
 /// @brief			启用DirectDraw作为渲染器,这将禁用D3D渲染,硬解码时无法启用D3D共享模式，这交大副降低硬解码的效率
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
@@ -775,6 +807,11 @@ IPCPLAYSDK_API int ipcplay_EnableStreamParser(IN IPC_PLAYHANDLE hPlayHandle, IPC
 /// @param [in]		nLength			数据流尺寸
 IPCPLAYSDK_API int ipcplay_InputStream2(IN IPC_PLAYHANDLE hPlayHandle, byte *pData,int nLength);
 
+/// @brief			输入大华视频帧
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		pBuffer			大华视频流
+/// @param [in]		nLength			视频流的长度
+IPCPLAYSDK_API int ipcplay_InputDHStream(IN IPC_PLAYHANDLE hPlayHandle, byte *pBuffer, int nLength);
 
 /// @brief			绘制一个实心多边形
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄

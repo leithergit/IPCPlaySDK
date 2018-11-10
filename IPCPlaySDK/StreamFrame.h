@@ -52,6 +52,11 @@ struct StreamFrame
 		assert(nLenth >= sizeof(IPCFrameHeader));
 		nSize = nLenth;
 		pInputData = (byte *)_aligned_malloc(nSize, 16);
+		if (!pInputData)
+		{
+			assert(false);
+			return;
+		}
 		//pInputData = _New byte[nSize];
 		if (pInputData)
 			memcpy(pInputData, pBuffer, nLenth);
