@@ -54,7 +54,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_STD_SMARTPTR;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../debug;../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../debug;../include;../IPCPlaySDK;./DhStreamParser;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -113,6 +113,12 @@
     <ClInclude Include="..\Include\TimeUtility.h" />
     <ClInclude Include="..\Include\Utility.h" />
     <ClInclude Include="..\Include\VideoFrame.h" />
+    <ClInclude Include="..\IPCPlaySDK\IPCPlaySDK.h" />
+    <ClInclude Include="DHStream.hpp" />
+    <ClInclude Include="DhStreamParser\DhStreamParser.h" />
+    <ClInclude Include="DhStreamParser\FrameList.h" />
+    <ClInclude Include="DhStreamParser\StreamParser.h" />
+    <ClInclude Include="DhStreamParser\svacstream.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="SyncPlayer.h" />
@@ -124,6 +130,9 @@
     <ClCompile Include="..\Include\TimeUtility.cpp" />
     <ClCompile Include="..\Include\Utility.cpp" />
     <ClCompile Include="..\Include\VideoFrame.cpp" />
+    <ClCompile Include="DhStreamParser\DhStreamParser.cpp" />
+    <ClCompile Include="DhStreamParser\StreamParser.cpp" />
+    <ClCompile Include="DhStreamParser\svacstream.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

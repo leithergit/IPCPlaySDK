@@ -3,9 +3,7 @@
 #include <assert.h>
 #include <Windows.h>
 #include <stdio.h>
-#include <MMSystem.h>
-#pragma comment(lib,"winmm")
-
+#include "CriticalSectionProxy.h"
 #ifdef Release_D
 #undef assert
 #define assert	((void)0)
@@ -19,15 +17,46 @@
 /// CAutoLock  lock(&cs,true);
 /// @endcode 
 ///
-
-#ifndef nullptr
-#define nullptr	NULL
-#endif
 #define _OuputLockTime
 #define _LockOverTime	100
+struct MYCRITICAL_SECTION :public CRITICAL_SECTION
+{
+	MYCRITICAL_SECTION()
+	{
+		ZeroMemory(this, sizeof(MYCRITICAL_SECTION));
+		InitializeCriticalSection(&cs);
+	}
+	~MYCRITICAL_SECTION()
+	{
+		DeleteCriticalSection(&cs);
+	}
+	DWORD	dwLockTime;
+	int		nLine;
+	CHAR	szFile[1024];
+	char	szFunction[256];
+	CRITICAL_SECTION cs;
+};
+void MyInitializeCriticalSection(MYCRITICAL_SECTION *);
+BOOL MyTryEnterCriticalSection(MYCRITICAL_SECTION *, const CHAR *szFile = nullptr,char *szFunction =  nullptr, int nLine = 0);
+void MyEnterCriticalSection(MYCRITICAL_SECTION *, const CHAR *szFile = nullptr, char *szFunction = nullptr, int nLine = 0);
+void MyLeaveCriticalSection(MYCRITICAL_SECTION *);
+void MyDeleteCriticalSection(MYCRITICAL_SECTION *);
 
+// #define _MyTryEnterCriticalSection(cs)	MyTryEnterCriticalSection(cs,__FILE__,__FUNCTION__,__LINE__)
+// #define _MyEnterCriticalSection(cs)		MyEnterCriticalSection(cs,__FILE__,__FUNCTION__,__LINE__)
+// #define _MyLeaveCriticalSection			MyLeaveCriticalSection
+
+#define _MyTryEnterCriticalSection		TryEnterCriticalSection
+#define _MyEnterCriticalSection			EnterCriticalSection
+#define _MyLeaveCriticalSection			LeaveCriticalSection
 
 #define Autolock(cs)	CAutoLock lock(cs,false,__FILE__,__FUNCTION__,__LINE__);
+#define Autolock1(cs)	CAutoLock lock1(cs,false,__FILE__,__FUNCTION__,__LINE__);
+#define Autolock2(cs)	CAutoLock lock2(cs,false,__FILE__,__FUNCTION__,__LINE__);
+#define Autolock3(cs)	CAutoLock lock3(cs,false,__FILE__,__FUNCTION__,__LINE__);
+#define Autolock4(cs)	CAutoLock lock4(cs,false,__FILE__,__FUNCTION__,__LINE__);
+#define Autolock5(cs)	CAutoLock lock5(cs,false,__FILE__,__FUNCTION__,__LINE__);
+
 class CAutoLock
 {
 private:
@@ -63,7 +92,6 @@ public:
 			}
 #endif
 			m_pCS = pCS;
-			m_bAutoDelete = bAutoDelete;
 			::EnterCriticalSection(m_pCS);
 			m_bLocked = true;
 			if (timeGetTime() - m_dwLockTime >= _LockOverTime)
@@ -71,7 +99,40 @@ public:
 				CHAR szOuput[1024] = { 0 };
 				if (szFile)
 				{
-					sprintf(szOuput, "Wait Lock @File:%s:%d(%s),Waittime = %d.\n", szFile, nLine, szFunction,timeGetTime() - m_dwLockTime);
+					sprintf(szOuput, "Wait Lock @File:%s:%d(%s),Waittime = %d.\n", m_pszFile, m_nLockLine, m_pszFunction , timeGetTime() - m_dwLockTime);
+				}
+				else
+					sprintf(szOuput, "Wait Lock Waittime = %d.\n", timeGetTime() - m_dwLockTime);
+				OutputDebugStringA(szOuput);
+			}
+		}
+	}
+	CAutoLock(CCriticalSectionProxy *pCS, bool bAutoDelete = false, const CHAR *szFile = nullptr, char *szFunction = nullptr, int nLine = 0)
+	{
+		ZeroMemory(this, sizeof(CAutoLock));
+		assert(pCS != NULL);
+		if (pCS)
+		{
+#ifdef _LockOverTime
+			m_dwLockTime = timeGetTime();
+			if (szFile)
+			{
+				m_pszFile = new CHAR[strlen(szFile) + 1];
+				strcpy(m_pszFile, szFile);
+				m_pszFunction = new char[strlen(szFunction) + 1];
+				strcpy(m_pszFunction, szFunction);
+				m_nLockLine = nLine;
+			}
+#endif
+			m_pCS = pCS->Get();
+			::EnterCriticalSection(m_pCS);
+			m_bLocked = true;
+			if (timeGetTime() - m_dwLockTime >= _LockOverTime)
+			{
+				CHAR szOuput[1024] = { 0 };
+				if (szFile)
+				{
+					sprintf(szOuput, "Wait Lock @File:%s:%d(%s),Waittime = %d.\n", m_pszFile, m_nLockLine, m_pszFunction, timeGetTime() - m_dwLockTime);
 				}
 				else
 					sprintf(szOuput, "Wait Lock Waittime = %d.\n", timeGetTime() - m_dwLockTime);
@@ -81,10 +142,26 @@ public:
 	}
 	void Lock()
 	{
-		if (!m_pCS)
+		if (m_bLocked)
 			return;
+#if _LockOverTime
+		m_dwLockTime = timeGetTime();
+#endif
 		::EnterCriticalSection(m_pCS);
 		m_bLocked = true;
+		if (timeGetTime() - m_dwLockTime >= _LockOverTime)
+		{
+			CHAR szOuput[1024] = { 0 };
+			if (m_pszFile)
+			{
+				sprintf(szOuput, "Wait Lock @File:%s:%d(%s),Waittime = %d.\n", m_pszFile, m_nLockLine, m_pszFunction, timeGetTime() - m_dwLockTime);
+			}
+			else
+				sprintf(szOuput, "Wait Lock Waittime = %d.\n", timeGetTime() - m_dwLockTime);
+			OutputDebugStringA(szOuput);
+		}
+		
+		
 	}
 	void Unlock()
 	{
@@ -106,19 +183,29 @@ public:
 					sprintf(szOuput, "Lock locktime = %d.\n", timeGetTime() - m_dwLockTime);
 				OutputDebugStringA(szOuput);
 			}
-			if (m_pszFile)
-				delete[]m_pszFile;
-			if (m_pszFunction)
-				delete[]m_pszFunction;
+		
 #endif
-			if (m_bAutoDelete)
-				::DeleteCriticalSection((CRITICAL_SECTION *)m_pCS);
+			
 		}
 	}
 	~CAutoLock()
 	{
 		if (m_bLocked)
 			Unlock();
+		
+		if (m_pszFile)
+		{
+			delete[]m_pszFile;
+			m_pszFile = nullptr;
+		}
+		if (m_pszFunction)
+		{
+			delete[]m_pszFunction;
+			m_pszFunction = nullptr;
+		}
+		
+		if (m_bAutoDelete)
+			::DeleteCriticalSection((CRITICAL_SECTION *)m_pCS);
 	}
 };
 
@@ -133,17 +220,6 @@ public:
 	{
 	}
 
-	CTryLock(CRITICAL_SECTION *pCS, bool bAutoDelete = false) 
-		:m_pCS(pCS), m_bAutoDelete(bAutoDelete), m_bLocked(false)
-	{
-		assert(pCS != NULL);
-		if (pCS)
-		{
-			m_pCS = pCS;
-			m_bAutoDelete = bAutoDelete;
-			m_bLocked = ::TryEnterCriticalSection(m_pCS);
-		}
-	}
 	BOOL TryLock(CRITICAL_SECTION *pCS,bool bAutoDelete = false)
 	{
 		assert(pCS != NULL);
@@ -154,10 +230,6 @@ public:
 			return (m_bLocked = ::TryEnterCriticalSection(m_pCS));
 		}
 		return false;
-	}
-	bool IsLocked()
-	{
-		return m_bLocked;
 	}
 	~CTryLock()
 	{

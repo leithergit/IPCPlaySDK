@@ -7,6 +7,9 @@
 #include "SyncPlayerDlg.h"
 #include "afxdialogex.h"
 
+#include "DHStream.hpp"
+#include "DhStreamParser.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -235,7 +238,8 @@ void CSyncPlayerDlg::OnBnClickedButtonStart()
 	UpdateData();
 	bool bExistSameFile = false;
 	CString strText;
-	for (int i = 0; i < 4; i++)
+	int nCount = 1;
+	for (int i = 0; i < nCount; i++)
 	{
 		CString strTemp = m_strFile[i];
 		for (int k = 0; k < 0; k++)
@@ -255,15 +259,16 @@ void CSyncPlayerDlg::OnBnClickedButtonStart()
 		AfxMessageBox(strText);
 	else
 	{
-		for (int i = 0; i < 4; i++)
+		for (int i = 0; i < nCount; i++)
 		{
 			ThreadParam *pTP = new ThreadParam;
 			pTP->pDialog = this;
 			pTP->nID = i;
 			m_bThreadRun = true;
+			m_nTimeEvent = timeSetEvent(100, 1, (LPTIMECALLBACK)MMTIMECALLBACK, (DWORD_PTR)this, TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
 			m_hReadFile[i] = (HANDLE)_beginthreadex(nullptr, 0, ThreadReadFile, pTP, CREATE_SUSPENDED, 0);
 		}
-		for (int i = 0; i < 4; i++)
+		for (int i = 0; i < nCount; i++)
 			ResumeThread(m_hReadFile[i]);
 		EnableDlgItem(IDC_BUTTON_START, false);
 		EnableDlgItem(IDC_BUTTON_STOP, true);
@@ -272,58 +277,98 @@ void CSyncPlayerDlg::OnBnClickedButtonStart()
 
 UINT CSyncPlayerDlg::ReadFileRun(UINT nIndex)
 {
-	IPC_PLAYHANDLE	hPlayHandle = ipcplay_OpenRTStream(m_pVideoFrame->GetPanelWnd(nIndex));
-	if (nIndex == 0)
-		m_hSyncSource = hPlayHandle;
-	else
-	{
-		while (!m_hSyncSource)
-		{
-			Sleep(10);
-		} ;
-	}
 	
-	int nBufferSize = 16 * 1024;
+	int nBufferSize = 8 * 1024;
 	byte *pFileBuffer = new byte[nBufferSize];
 	ZeroMemory(pFileBuffer, nBufferSize);
+	DhStreamParser* pStreamParser = nullptr;
+	
 	
 	try
 	{
 		CFile file(m_strFile[nIndex], CFile::modeRead | CFile::shareDenyWrite);
 		int nWidth = 0, nHeight = 0, nFramerate = 0;
-		int nOffsetStart = 0;
-		int nOffsetMatched = 0;
-		
-		IPC_MEDIAINFO MediaHeader;
-		MediaHeader.nVideoCodec = CODEC_H264;
-		MediaHeader.nAudioCodec = CODEC_UNKNOWN;
-		MediaHeader.nVideoWidth = 1920;
-		MediaHeader.nVideoHeight = 1080;
-		MediaHeader.nFps = 200;
-		ipcplay_SetStreamHeader(hPlayHandle, (byte *)&MediaHeader, sizeof(IPC_MEDIAINFO));
+			
 		//ipcplay_EnableStreamParser(hPlayHandle, CODEC_H264);
 
 		//ipcplay_SetDecodeDelay(hPlayHandle, 0);
-		if (nIndex == 0)
-			ipcplay_StartSyncPlay(hPlayHandle, true,nullptr,25);
-		else
-			ipcplay_StartSyncPlay(hPlayHandle, true, m_hSyncSource, 25);
-
+//		Í¬²½²¥·Å
+// 		if (nIndex == 0)
+// 			ipcplay_StartSyncPlay(hPlayHandle, true,nullptr,25);
+// 		else
+// 			ipcplay_StartSyncPlay(hPlayHandle, true, m_hSyncSource, 25);
+		
+		time_t tFrameTimeStamp = 0;
+		int nFrameInterval = 40;
 		while (m_bThreadRun)
 		{
 			int nReadLength = file.Read(pFileBuffer, nBufferSize);
 			if (nReadLength > 0)
 			{
-				do 
+				if (!pStreamParser)
+					pStreamParser = new DhStreamParser();
+				pStreamParser->InputData(pFileBuffer, nReadLength);
+				while (true)
 				{
-					if (ipcplay_InputDHStream(hPlayHandle, pFileBuffer, nReadLength) == IPC_Succeed)
+					DH_FRAME_INFO *pFrame = pStreamParser->GetNextFrame();
+					if (!pFrame)
 						break;
-				} while (m_bThreadRun);
+					else if (!m_hAsyncPlayHandle)
+					{
+						IPC_MEDIAINFO MediaHeader;
+						MediaHeader.nVideoCodec = CODEC_H264;
+						MediaHeader.nAudioCodec = CODEC_UNKNOWN;
+						MediaHeader.nVideoWidth = pFrame->nWidth;
+						MediaHeader.nVideoHeight = pFrame->nHeight;
+						MediaHeader.nFps = pFrame->nFrameRate;
+						m_hAsyncPlayHandle = ipcplay_OpenStream(m_pVideoFrame->GetPanelWnd(nIndex), (byte *)&MediaHeader, sizeof(IPC_MEDIAINFO), pFrame->nFrameRate);
+						ipcplay_EnableAsyncRender(m_hAsyncPlayHandle);
+						ipcplay_EnablePlayOneFrame(m_hAsyncPlayHandle);
+						ipcplay_Start(m_hAsyncPlayHandle);
+						
+					}
+					
+					if (pFrame->nType == DH_FRAME_TYPE_VIDEO)
+					{
+						time_t tTimeStamp = pFrame->nTimeStamp;
+						
+						tTimeStamp *= 1000;
+						
+						if (pFrame->nFrameRate)
+							nFrameInterval = 1000 / pFrame->nFrameRate;
+						else
+							nFrameInterval = 40;
+						if (pFrame->nSubType == DH_FRAME_TYPE_VIDEO_I_FRAME)
+							tFrameTimeStamp = tTimeStamp;
+						else
+							tFrameTimeStamp += nFrameInterval;
+						
+						do
+						{
+							//TraceMsgA("%s InputTimeStamp = %I64d.\n", __FUNCTION__, tFrameTimeStamp);
+							int nStatus = ipcplay_InputIPCStream(m_hAsyncPlayHandle, pFrame->pContent,
+								pFrame->nSubType == DH_FRAME_TYPE_VIDEO_I_FRAME ? IPC_I_FRAME : IPC_P_FRAME,
+								pFrame->nLength,
+								pFrame->nRequence,
+								tFrameTimeStamp);
+							if (IPC_Succeed == nStatus)
+							
+								break;
+							else if (IPC_Error_FrameCacheIsFulled == nStatus)
+							{
+								Sleep(10);
+								continue;
+							}
+						} while (m_bThreadRun);
+					}
+				}
 			}
-			Sleep(10);
+			else
+				break;
+			Sleep(5);
 		}
-		ipcplay_Stop(hPlayHandle);
-		ipcplay_Close(hPlayHandle);
+		ipcplay_Stop(m_hAsyncPlayHandle);
+		ipcplay_Close(m_hAsyncPlayHandle);
 	}
 	catch (CFileException* e)
 	{
@@ -332,6 +377,50 @@ UINT CSyncPlayerDlg::ReadFileRun(UINT nIndex)
 	return 0;
 }
 
+
+UINT CSyncPlayerDlg::ReadFileRun2(UINT nIndex)
+{
+	DhStreamParser* pStreamParser = nullptr;
+	int nBufferSize =  16*1024;
+	byte *pFileBuffer = new byte[nBufferSize];
+	ZeroMemory(pFileBuffer, nBufferSize);
+
+	try
+	{
+		CFile fileRead(m_strFile[nIndex], CFile::modeRead | CFile::shareDenyWrite);
+		CFile fileWrite(_T("FileSave.dav"), CFile::modeCreate | CFile::modeWrite);
+		int nWidth = 0, nHeight = 0, nFramerate = 0;
+		int nOffsetStart = 0;
+		int nOffsetMatched = 0;
+		DHFrame *pDHFrame = nullptr;
+		int nFrames = 0;
+		while (m_bThreadRun)
+		{
+			int nReadLength = fileRead.Read(pFileBuffer, nBufferSize);
+			if (nReadLength > 0)
+			{
+				if (!pStreamParser)
+					pStreamParser = new DhStreamParser();
+				pStreamParser->InputData(pFileBuffer, nReadLength);
+				while (true)
+				{
+					DH_FRAME_INFO *pFrame = pStreamParser->GetNextFrame();
+					if (!pFrame)
+						break;
+					nFrames++;
+					if (pFrame->nEncodeType)
+					TraceMsgA("%s Frames = %d.\n", __FUNCTION__, nFrames);
+				}
+			}
+		}
+
+	}
+	catch (CFileException* e)
+	{
+	}
+	delete[]pFileBuffer;
+	return 0;
+}
 void CSyncPlayerDlg::OnBnClickedButtonStop()
 {
 	CWaitCursor Wait;

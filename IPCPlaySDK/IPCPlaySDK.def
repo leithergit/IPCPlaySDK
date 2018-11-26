@@ -69,3 +69,8 @@ EXPORTS
 	ipcplay_RemovePolygon
 	ipcplay_SetCoordinateMode
 	ipcplay_StartSyncPlay
+	ipcplay_EnableAsyncRender
+	ipcplay_AsyncSeekFrame
+	ipcplay_EnablePlayOneFrame
+	ipcplay_GetErrorMessageA
+	ipcplay_GetErrorMessageW

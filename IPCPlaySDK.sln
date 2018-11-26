@@ -12,6 +12,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ComboPlay", "ComboPlay\ComboPlay.vcxproj", "{C4C7A9DB-373F-4AC5-BEEF-83BE97ABB94C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SyncPlayer", "SyncPlayer\SyncPlayer.vcxproj", "{7E151E3C-154C-4D88-9F76-529DC22A2B8D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CEA53F20-0470-4F00-B2DE-C049FCF04F80} = {CEA53F20-0470-4F00-B2DE-C049FCF04F80}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TDecodeLeak", "TDecodeLeak\TDecodeLeak.vcxproj", "{14B87607-6AC3-4C1A-B409-65E482F9548D}"
 EndProject

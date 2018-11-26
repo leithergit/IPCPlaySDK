@@ -43,6 +43,15 @@
     <ClCompile Include="IPCPlayer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="svacparser\DhStreamParser.cpp">
+      <Filter>savcSteamparser</Filter>
+    </ClCompile>
+    <ClCompile Include="svacparser\StreamParser.cpp">
+      <Filter>savcSteamparser</Filter>
+    </ClCompile>
+    <ClCompile Include="svacparser\svacstream.cpp">
+      <Filter>savcSteamparser</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AudioCodec\g726.h">
@@ -153,8 +162,17 @@
     <ClInclude Include="StreamParser.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DHStream.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="svacparser\DhStreamParser.h">
+      <Filter>savcSteamparser</Filter>
+    </ClInclude>
+    <ClInclude Include="svacparser\FrameList.h">
+      <Filter>savcSteamparser</Filter>
+    </ClInclude>
+    <ClInclude Include="svacparser\StreamParser.h">
+      <Filter>savcSteamparser</Filter>
+    </ClInclude>
+    <ClInclude Include="svacparser\svacstream.h">
+      <Filter>savcSteamparser</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -175,6 +193,9 @@
     </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{c22a52e2-b72c-477b-af58-51e7266180ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="savcSteamparser">
+      <UniqueIdentifier>{d4167686-9a8c-486d-91fe-eddd5ce104e8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

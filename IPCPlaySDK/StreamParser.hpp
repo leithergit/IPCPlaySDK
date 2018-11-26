@@ -74,7 +74,7 @@ public:
 
 		m_pAvContext = avcodec_alloc_context3(m_pCodec);
 		if (!m_pAvContext)
-			return IPC_Error_AllocateCodecContextFaled;		///< 分配编码上下文失败
+			return IPC_Error_AllocateCodecContextFailed;		///< 分配编码上下文失败
 
 		if (avcodec_open2(m_pAvContext, m_pCodec, NULL) < 0)
 			return IPC_Error_OpenCodecFailed;

@@ -3,7 +3,7 @@
 //
 
 #pragma once
-
+#include "IPCPlaySDK.h"
 struct ThreadParam
 {
 	void *pDialog;
@@ -53,6 +53,23 @@ public:
 		return ((CSyncPlayerDlg *)(TP->pDialog))->ReadFileRun(TP->nID);
 	}
 	UINT	ReadFileRun(UINT nIdex);
+	UINT	ReadFileRun2(UINT nIdex);
+
+	IPC_PLAYHANDLE	m_hAsyncPlayHandle = nullptr;
+	time_t	m_tFrameOffset = 0;
+	MMRESULT	m_nTimeEvent = 0;
+	static void  MMTIMECALLBACK(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
+	{
+		CSyncPlayerDlg* pThis = (CSyncPlayerDlg *)dwUser;
+		if (pThis->m_hAsyncPlayHandle && pThis->m_tFrameOffset)
+		{
+			int nStatus = ipcplay_AsyncSeekFrame(pThis->m_hAsyncPlayHandle, pThis->m_tFrameOffset);
+			if (nStatus != IPC_Succeed)
+				TraceMsgA("%s ipcplay_AsyncSeekFrame(%d).\n", __FUNCTION__, nStatus);
+			pThis->m_tFrameOffset += 200;
+		}
+	}
+	
 
 	afx_msg void OnBnClickedButtonStop();
 	afx_msg void OnDestroy();

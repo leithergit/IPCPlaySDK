@@ -88,7 +88,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;IPCPLAYSDK_EXPORTS;_ENABLE_FFMPEG_STAITC_LIB;_XKEYCHECK_H;_CRT_SECURE_NO_WARNINGS;_LineTime_;D3D_DEBUG_INFO;_TraceMemory_;_STD_SMARTPTR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\ffmpeg\static.20181012\Release\include;..\faad2-2.7\include;$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\ffmpeg\static.20181119\Release\include;..\faad2-2.7\include;$(DXSDK_DIR)Include;.\svacparser;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
     </ClCompile>
@@ -163,7 +163,7 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk" /y</Command>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;IPCPLAYSDK_EXPORTS;_ENABLE_FFMPEG_STAITC_LIB;_XKEYCHECK_H;_CRT_SECURE_NO_WARNINGS;_STD_SMARTPTR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\ffmpeg\static.20181012\Release\include;..\faad2-2.7\include;$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\ffmpeg\static.20181012\Release\include;..\faad2-2.7\include;$(DXSDK_DIR)Include;.\svacparser;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
@@ -240,7 +240,6 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk" /y</Command>
     <ClInclude Include="Common.h" />
     <ClInclude Include="CriticalSectionProxy.h" />
     <ClInclude Include="decSPS.h" />
-    <ClInclude Include="DHStream.hpp" />
     <ClInclude Include="DirectDraw.h" />
     <ClInclude Include="DSoundPlayer.hpp" />
     <ClInclude Include="IPCPlaySDK.h" />
@@ -259,6 +258,10 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk" /y</Command>
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StreamFrame.h" />
     <ClInclude Include="StreamParser.hpp" />
+    <ClInclude Include="svacparser\DhStreamParser.h" />
+    <ClInclude Include="svacparser\FrameList.h" />
+    <ClInclude Include="svacparser\StreamParser.h" />
+    <ClInclude Include="svacparser\svacstream.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TimeTrace.h" />
     <ClInclude Include="TimeUtility.h" />
@@ -301,6 +304,9 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk" /y</Command>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release.Shared|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="svacparser\DhStreamParser.cpp" />
+    <ClCompile Include="svacparser\StreamParser.cpp" />
+    <ClCompile Include="svacparser\svacstream.cpp" />
     <ClCompile Include="TimeUtility.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="VideoDecoder\VideoDecoder.cpp" />

@@ -61,7 +61,7 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenFileA(IN HWND hWnd, IN char *szFileNam
 {
 	if (!szFileName)
 	{
-		SetLastError(IPC_Error_InvalidParameters);
+		SetLastError(ERROR_INVALID_PARAMETER);
 		return nullptr;
 	}
 	if (!PathFileExistsA(szFileName))
@@ -730,6 +730,46 @@ IPCPLAYSDK_API int  ipcplay_SeekTime(IN IPC_PLAYHANDLE hPlayHandle, IN time_t tT
 		return IPC_Error_NotFilePlayer;
 }
 
+
+/// @brief			播放指定时间点的一帧画面
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		nTimeOffset		要播放的起始时间(单位:毫秒)
+/// @param [in]		bUpdate			是否更新画面,bUpdate为true则予以更新画面,画面则不更新
+/// @retval			0	操作成功
+/// @retval			-1	输入参数无效
+/// @remark			1.若所指定时间点对应帧为非关键帧，帧自动移动到就近的关键帧进行播放
+///					2.若所指定帧为非关键帧，帧自动移动到就近的关键帧进行播放
+///					3.只有在播放暂时,bUpdate参数才有效
+///					4.用于单帧播放时只能向前移动
+IPCPLAYSDK_API int  ipcplay_AsyncSeekFrame(IN IPC_PLAYHANDLE hPlayHandle, IN time_t tTimeOffset, bool bUpdate)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	
+	return pPlayer->AsyncSeekTime(tTimeOffset, bUpdate);
+	
+}
+
+/// @brief			启用单帧播放
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		bEnable		要播放的起始时间(单位:毫秒)
+/// @retval			0	操作成功
+/// @retval			-1	输入参数无效
+IPCPLAYSDK_API int  ipcplay_EnablePlayOneFrame(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	
+	return pPlayer->EnabelPlayOneFrame(bEnable);
+	
+}
+
 /// @brief 从文件中读取一帧，读取的起点默认值为0,SeekFrame或SeekTime可设定其起点位置
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [out]	pFrameBuffer	帧数据缓冲区
@@ -1317,4 +1357,213 @@ IPCPLAYSDK_API int ipcplay_SetCoordinateMode(IN IPC_PLAYHANDLE hPlayHandle, int 
 		return IPC_Error_InvalidParameters;
 	pPlayer->SetCoordinateMode(nCoordinateMode);
 	return IPC_Succeed;
+}
+
+
+/// @brief			启用/禁用异步渲染
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		bEnable			是否启用异步渲染
+/// -#	true		启用异步渲染
+/// -#	false		禁用异步渲染
+/// @retval			0	操作成功
+/// @retval			-1	输入参数无效		
+IPCPLAYSDK_API int ipcplay_EnableAsyncRender(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable,int nFrameCache)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	pPlayer->EnableAsyncRender(bEnable, nFrameCache);
+	return IPC_Succeed;
+}
+
+/// @brief		获取指定的错误代码所包含的错误信息
+/// @param [in] nErrorCode 错误代码
+/// @param [in] szMessage  返回错误代码的文本缓冲区
+/// @param [in] nBufferSize 文本缓冲区的容量，最大能容纳的字符数
+/// @retval		0  操作成功
+/// @retval		-1 操作失败，输入了一个未知的错误代码。
+IPCPLAYSDK_API int ipcplay_GetErrorMessageA(int nErrorCode, LPSTR szMessage, int nBufferSize)
+{
+	WCHAR szMessageW[4096] = { 0 };
+	int nCode = ipcplay_GetErrorMessageW(nErrorCode, szMessageW, 4096);
+	if (nCode == IPC_Succeed)
+	{
+		W2AHelper(szMessageW, szMessage, nBufferSize);
+		return nCode;
+	}
+	else
+		return nCode;
+}
+
+IPCPLAYSDK_API int ipcplay_GetErrorMessageW(int nErrorCode, LPWSTR szMessage, int nBufferSize)
+{
+	IPCPLAY_Status nIPCPlayStatus = (IPCPLAY_Status)nErrorCode;
+	WCHAR *szMessaageW = nullptr;
+	if (nErrorCode <= 0 && nErrorCode >= 255)
+	{
+		switch (nIPCPlayStatus)
+		{
+		case IPC_Succeed:
+			szMessaageW = L"Succeed.";
+			break;
+		case IPC_Error_InvalidParameters:
+			szMessaageW = L"Invalid Parameters.";
+			break;
+		case IPC_Error_NotVideoFile:
+			szMessaageW = L"The input file is not a video file or it's a unknow video file.";
+			break;
+		case IPC_Error_NotInputStreamHeader:
+			szMessaageW = L"No  StreamHeader is Input.";
+			break;
+		case IPC_Error_InvalidSDKVersion:
+			szMessaageW = L"Thie SDK Version of StreamHeader is invalid.";
+			break;
+		case IPC_Error_PlayerNotStart:
+			szMessaageW = L"The Player not started";
+			break;
+		case IPC_Error_PlayerHasStart:
+			szMessaageW = L"The player is started.";
+			break;
+		case IPC_Error_NotFilePlayer:
+			szMessaageW = L"The input handle is not a FilePlayer.";
+			break;
+		case IPC_Error_InvalidFrame:
+			szMessaageW = L"A invalid frame is input.";
+			break;
+		case IPC_Error_InvalidFrameType:
+			szMessaageW = L"The Frame type is invalid.";
+			break;
+		case IPC_Error_SummaryNotReady:
+			szMessaageW = L"The Summary is not ready.";
+			break;
+		case IPC_Error_FrameCacheIsFulled:
+			szMessaageW = L"The frame cache is fulled";
+			break;
+		case IPC_Error_FileNotOpened:
+			szMessaageW = L"The file is not opened.";
+			break;
+		case IPC_Error_MaxFrameSizeNotEnough:
+			szMessaageW = L"the size of MaxFrame is not Enough,please specified a larger one.";
+			break;
+		case IPC_Error_InvalidPlayRate:
+			szMessaageW = L"The play rate is Invalid .";
+			break;
+		case IPC_Error_BufferSizeNotEnough:
+			szMessaageW = L"The Buffer Size Not Enough.";
+			break;
+		case IPC_Error_VideoThreadNotRun:
+			szMessaageW = L"The Video Thread Not Run.";
+			break;
+		case IPC_Error_AudioThreadNotRun:
+			szMessaageW = L"The Audio Thread Not Run.";
+			break;
+		case IPC_Error_ReadFileFailed:
+			szMessaageW = L"Failed in read file.";
+			break;
+		case IPC_Error_FileNotExist:
+			szMessaageW = L"The specified file is not exist.";
+			break;
+		case IPC_Error_InvalidTimeOffset:
+			szMessaageW = L"The time offset is invalid.";
+			break;
+		case IPC_Error_DecodeFailed:
+			szMessaageW = L"Failed in decoding.";
+			break;
+		case IPC_Error_InvalidWindow:
+			szMessaageW = L"Input a invalid window";
+			break;
+		case IPC_Error_AudioDeviceNotReady:
+			szMessaageW = L"Audio Device is Not Ready.";
+			break;
+		case IPC_Error_DxError:
+			szMessaageW = L"DirectX Error.";
+			break;
+		case IPC_Error_PlayerIsNotPaused:
+			szMessaageW = L"The Player is not paused.";
+			break;
+		case IPC_Error_VideoThreadStartFailed:
+			szMessaageW = L"The Video Thread start failed.";
+			break;
+		case IPC_Error_VideoThreadAbnormalExit:
+			szMessaageW = L"The video thread exit abnormal.";
+			break;
+		case IPC_Error_MediaFileHeaderError:
+			szMessaageW = L"There is a error in Media file header.";
+			break;
+		case IPC_Error_WindowNotAssigned:
+			szMessaageW = L"Please specify a window to show video.";
+			break;
+		case IPC_Error_SnapShotProcessNotRun:
+			szMessaageW = L"SnapShot Process Not Run.";
+			break;
+		case IPC_Error_SnapShotProcessFileMissed:
+			szMessaageW = L"SnapShot Process File Missed.";
+			break;
+		case IPC_Error_SnapShotProcessStartFailed:
+			szMessaageW = L"SnapShot Process Start Failed.";
+			break;
+		case IPC_Error_SnapShotFailed:
+			szMessaageW = L"SnapShot Failed.";
+			break;
+		case IPC_Error_PlayerHasStop:
+			szMessaageW = L"The Player Has Stopped.";
+			break;
+		case IPC_Error_InvalidCacheSize:
+			szMessaageW = L"Invalid Cache Size";
+			break;
+		case IPC_Error_UnsupportHaccel:
+			szMessaageW = L"Unsupport Haccel.";
+			break;
+		case IPC_Error_UnsupportedFormat:
+			szMessaageW = L"Unsupported Photo Format.";
+			break;
+		case IPC_Error_UnsupportedCodec:
+			szMessaageW = L"Unsupported Video Codec.";
+			break;
+		case IPC_Error_RenderWndOverflow:
+			szMessaageW = L"Render window Overflow.";
+			break;
+		case IPC_Error_RocateNotWork:
+			szMessaageW = L"Rocate Not Work";
+			break;
+		case IPC_Error_BufferOverflow:
+			szMessaageW = L"Buffer Over flow";
+			break;
+		case IPC_Error_DXRenderInitialized:
+			szMessaageW = L"DirectX Render has been Initialized.";
+			break;
+		case IPC_Error_ParserNotFound:
+			szMessaageW = L"Parser Not Found.";
+			break;
+		case IPC_Error_AllocateCodecContextFailed:
+			szMessaageW = L"Allocate Codec Context Failed.";
+			break;
+		case IPC_Error_OpenCodecFailed:
+			szMessaageW = L"Open Codec Failed.";
+			break;
+		case IPC_Error_StreamParserExisted:
+			szMessaageW = L"Stream Parser Existed.";
+			break;
+		case IPC_Error_StreamParserNotStarted:
+			szMessaageW = L"Stream Parser Not Started.";
+			break;
+		case IPC_Error_DXRenderNotInitialized:
+			szMessaageW = L"DirectX Render Not Initialized";
+			break;
+		case IPC_Error_NotAsyncPlayer:
+			szMessaageW = L"Not a AsyncPlayer";
+			break;
+		case IPC_Error_InsufficentMemory:
+			szMessaageW = L"Insufficent Memory";
+			break;
+		default:
+			szMessaageW = L"Unknown Error.";
+			break;
+		}
+		return 0;
+	}
+	else
+		return -1;
 }

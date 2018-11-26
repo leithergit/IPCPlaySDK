@@ -107,7 +107,7 @@ public:
 		else
 		{
 			if (nBufferSize * 2 > _MaxBuffSize)
-				return IPC_Error_BufferOverflow;
+				return IPC_Error_FrameCacheIsFulled;
 			MemMerge((unsigned char **)&pBuffer, nDataLength, nBufferSize, (unsigned char *)pData, nInputLen);
 			return 0;
 		}
@@ -115,6 +115,8 @@ public:
 	}
 	DHFrame *ParserFrame()
 	{
+		int nFrameSize = 0;
+		int nExtLen = 0;
 		CAutoLock Lock(&csBuffer);
 		static const byte 	szFlag[3] = { 0x00, 0x00, 0x01 };
 		static const byte 	I_FRAME_FLAG = 0xED;
@@ -129,29 +131,31 @@ public:
 			pData[3] != P_FRAME_C_FLAG)
 			return nullptr;
 
-		DHFrame *pFrame = new DHFrame;
-		if (!pFrame)
-			return nullptr;
+		
 		int extNum = pData[18];
 		unsigned char* extptr = pData + 16;
-		pFrame->nExtLen = 0;
+		nExtLen = 0;
 		while (extNum > 0)
 		{
 			int exttype = extptr[0] | extptr[1] << 8;
 			int extlen = 4 + extptr[2] | extptr[3] << 8;//2字节类型，2字节长度
-			pFrame->nExtLen += extlen;
-			if (nDataLength < 20 + pFrame->nExtLen)
+			nExtLen += extlen;
+			if (nDataLength < 20 + nExtLen)
 				return nullptr;
 			extptr += extlen;
 			extNum--;
 		}
-		pFrame->nFrameSize = pData[23] << 24 | pData[22] << 16 | pData[21] << 8 | pData[20];
+		// pFrame->nFrameSize = pData[23] << 24 | pData[22] << 16 | pData[21] << 8 | pData[20];
+		nFrameSize = pData[23] << 24 | pData[22] << 16 | pData[21] << 8 | pData[20];
 		//pFrame->nFrameSize = pFrame->nFrameSize + 24 + pFrame->nExtLen;
-		if (nDataLength < (pFrame->nFrameSize + 24))
-		{
-			delete pFrame;
+		if (nDataLength < (nFrameSize + 24))
 			return nullptr;
-		}
+		
+		DHFrame *pFrame = new DHFrame;
+		if (!pFrame)
+			return nullptr;
+		pFrame->nFrameSize = nFrameSize;
+		pFrame->nExtLen = nExtLen;
 
 #ifndef _DEBUG
 		pFrame->pContent = new byte[pFrame->nFrameSize];
@@ -185,7 +189,7 @@ public:
 		tmp_time.tm_mon		 = pFrame->nMonth - 1;
 		tmp_time.tm_year	 = pFrame->nYear - 1900;
 		pFrame->tTimeStamp	 = mktime(&tmp_time);
-		if (!pFrame->nFrameRate)
+		if (pFrame->nFrameRate)
 			nFrameInterval = 1000 / pFrame->nFrameRate;
 		else
 			nFrameInterval = 40;
@@ -206,6 +210,7 @@ public:
 #ifdef _DEBUG
 		ZeroMemory(pFrame->pContent, pFrame->nFrameSize + 16);
 #endif
+		
 		pData += 24;
 		memcpy_s(pFrame->pContent, pFrame->nFrameSize, pData, pFrame->nFrameSize);
 		memmove(pBuffer, pData + pFrame->nFrameSize, nDataLength - (pFrame->nFrameSize + 24));

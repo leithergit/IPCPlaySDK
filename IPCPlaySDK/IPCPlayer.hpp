@@ -33,7 +33,8 @@
 #include "MMEvent.h"
 #include "Stat.h"
 #include "./DxSurface/gpu_memcpy_sse4.h"
-#include "DHStream.hpp"
+//#include "DHStream.hpp"
+#include "DhStreamParser.h"
 #define  Win7MajorVersion	6
 class CIPCPlayer;
 /// @brief 文件帧信息，用于标识每一帧在文件的位置
@@ -46,7 +47,7 @@ struct FileFrameInfo
 };
 
  
-// 用于异步渲染的帧缓存，由于不再使用异步渲染，所以该代码被弃用
+// 用于异步渲染的帧缓存
 struct CAvFrame
 {
 private:
@@ -222,7 +223,12 @@ private:
 	CCriticalSectionProxy	m_csYUVFilter;
 	CCriticalSectionProxy	m_csVideoCache;
 	CCriticalSectionProxy	m_csCaptureRGB;
-	CCriticalSectionProxy	m_cslistAVFrame;	// 异步渲染帧缓存锁		
+	CCriticalSectionProxy	m_cslistAVFrame;	// 异步渲染帧缓存锁
+	CCriticalSectionProxy	m_csTimebase;
+	//////////////////////////////////////////////////////////////////////////
+	/// 注意：所有CCriticalSectionProxy类的对象和模板类的对象都必须定义在m_nZeroOffset
+	/// 成员变量之前，否则可能会出访问错误
+	//////////////////////////////////////////////////////////////////////////
 	int			m_nZeroOffset;
 	bool		m_bEnableDDraw = false;			// 是否启用DDRAW，启用DDRAW将禁用D3D，并且无法启用硬件黄享模式，导致解码效果下降
 
@@ -313,6 +319,7 @@ public:		// 实时流播放参数
 	int			m_nProbeOffset ;
 	volatile bool m_bAsyncRender ;
 	HANDLE		m_hRenderAsyncEvent;	///< 异步渲染事件
+	
 	time_t		m_tSyncTimeBase;		///< 同步时间轴
 	CIPCPlayer *m_pSyncPlayer;			///< 同步播放对象
 	int			m_nVideoFPS;			///< 视频帧的原始帧率
@@ -359,7 +366,8 @@ private:
 	volatile bool m_bStreamParserRun = false;
 	
 	shared_ptr<CStreamParser> m_pStreamParser = nullptr;
-	shared_ptr<CDHStreamParser> m_pDHStreamParser = nullptr;
+	//shared_ptr<CDHStreamParser> m_pDHStreamParser = nullptr;
+	shared_ptr<DhStreamParser> m_pDHStreamParser = nullptr;
 #ifdef _DEBUG
 	double		m_dfFirstFrameTime;
 #endif
@@ -400,6 +408,7 @@ private:	// 文件播放相关变量
 	USHORT		m_nFileFrameInterval;	///< 文件中,视频帧的原始帧间隔
 	float		m_fPlayInterval;		///< 帧播放间隔,单位毫秒
 	bool		m_bFilePlayFinished;	///< 文件播放完成标志, 为true时，播放结束，为false时，则未结束
+	bool		m_bPlayOneFrame;		///< 启用单帧播放
 	DWORD		m_dwStartTime;
 private:
 // 	CaptureFrame	m_pfnCaptureFrame;
@@ -829,6 +838,24 @@ public:
 	public:
 		HWND hWnd;
 	};
+
+	class FrameFinder {
+	public:
+		FrameFinder(const time_t tFrame)
+		{
+			this->tFrame = tFrame;
+		}
+
+		bool operator()(CAVFramePtr& Value)
+		{
+			if (abs(Value->tFrame - tFrame)< 40)
+				return true;
+			else
+				return false;
+		}
+	public:
+		time_t tFrame;
+	};
 	int AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent = false);
 
 	int RemoveRenderWindow(HWND hRenderWnd);
@@ -948,6 +975,17 @@ public:
 	/// @remark			若pSyncSource为null,当前的播放器成为同步源，nVideoFPS不能为0，否则返回IPC_Error_InvalidParameters错误
 	///					若pSyncSource不为null，则当前播放器以pSyncSource为同步源，nVideoFPS值被忽略
 	int StartSyncPlay(bool bFitWindow = true, CIPCPlayer *pSyncSource = nullptr, int nVideoFPS = 25);
+
+	/// 移动播放时间点到指位位置
+	/// tTime			需要到达的时间点，单位毫秒
+	int SeekTime(time_t tTime)
+	{
+		if (!m_bAsyncRender)
+			return IPC_Error_NotAsyncPlayer;
+		if (m_hThreadAsyncReander)
+			return IPC_Error_PlayerNotStart;
+		m_tSyncTimeBase = tTime;
+	}
 
 	/// @brief			判断播放器是否正在播放中	
 	/// @retval			true	播放器正在播放中
@@ -1076,6 +1114,23 @@ public:
 		return m_bEnableHaccel;
 	}
 
+
+/// @brief			启用/禁用异步渲染
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		bEnable			是否启用异步渲染
+/// -#	true		启用异步渲染
+/// -#	false		禁用异步渲染
+/// @retval			0	操作成功
+/// @retval			-1	输入参数无效
+/// 启用异步渲染后，解码得到的YUV数据会被存入YUV队列，渲染时从YUV队列取出，因此必须先设置YUV队列的最大值，不然可能会导致内存不足
+	int EnableAsyncRender(bool bEnable = true,int nFrameCache = 50)
+	{
+		if (m_hThreadDecode)
+			return IPC_Error_PlayerHasStart;
+		m_bAsyncRender = bEnable;
+		m_nListAvFrameMaxSize = nFrameCache;
+		return IPC_Succeed;
+	}
 	/// @brief			检查是否支持特定视频编码的硬解码
 	/// @param [in]		nCodec		视频编码格式,@see IPC_CODEC
 	/// @retval			true		支持指定视频编码的硬解码
@@ -1201,6 +1256,15 @@ public:
 	///					2.若所指定帧为非关键帧，帧自动移动到就近的关键帧进行播放
 	///					3.只有在播放暂时,bUpdate参数才有效
 	int  SeekTime(IN time_t tTimeOffset, bool bUpdate);
+
+	/// 跳到指定的帧，并只渲染一帧
+	/// @param [in]		tTimeOffset		要播放的起始时间,单位秒,如FPS=25,则0.04秒为第2帧，1.00秒，为第25帧
+	/// @param [in]		bUpdate		是否更新画面,bUpdate为true则予以更新画面,画面则不更新
+	/// @retval			0	操作成功
+	/// @retval			-1	输入参数无效
+	/// @remark			1.只有异步渲染时，该函数才能生效，否则返回IPC_Error_NotAsyncPlayer错误
+	///					2.必须启动播放器后，该函数才能生交，否则返回IPC_Error_PlayerNotStart错误
+	int  AsyncSeekTime(IN time_t tTimeOffset, bool bUpdate);
 
 	/// @brief 从文件中读取一帧，读取的起点默认值为0,SeekFrame或SeekTime可设定其起点位置
 	/// @param [in,out]		pBuffer		帧数据缓冲区,可设置为null
@@ -1385,7 +1449,7 @@ public:
 	int SetRocate(RocateAngle nRocate = Rocate90)
 	{
 		if (m_bEnableHaccel)
-			return IPC_Error_AudioFailed;
+			return IPC_Error_AudioDeviceNotReady;
 		m_nRocateAngle = nRocate;
 		return IPC_Succeed;
 	}
@@ -1408,6 +1472,15 @@ public:
 			return false;
 	}
 	
+	/// 启用单帧播放
+	/// 须在Start之前调用
+	int EnabelPlayOneFrame(bool bEanble = true)
+	{
+		if (m_hThreadDecode || m_hThreadAsyncReander)
+			return IPC_Error_PlayerHasStart;
+		m_bPlayOneFrame = true;
+		return IPC_Succeed;
+	}
 	
 	// 用于异步渲染的压入帧操作
 	int PushFrame(AVFrame *pSrcFrame,time_t tFrame)

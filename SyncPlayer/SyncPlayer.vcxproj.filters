@@ -16,6 +16,9 @@
     <Filter Include="inc">
       <UniqueIdentifier>{bb0652af-f98d-43c3-b636-caac4354e0bf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="DHParser">
+      <UniqueIdentifier>{e0774bd3-a1a9-4f50-82c4-6bb6fbba8768}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -48,6 +51,24 @@
     <ClInclude Include="..\Include\VideoFrame.h">
       <Filter>inc</Filter>
     </ClInclude>
+    <ClInclude Include="DHStream.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DhStreamParser\DhStreamParser.h">
+      <Filter>DHParser</Filter>
+    </ClInclude>
+    <ClInclude Include="DhStreamParser\FrameList.h">
+      <Filter>DHParser</Filter>
+    </ClInclude>
+    <ClInclude Include="DhStreamParser\StreamParser.h">
+      <Filter>DHParser</Filter>
+    </ClInclude>
+    <ClInclude Include="DhStreamParser\svacstream.h">
+      <Filter>DHParser</Filter>
+    </ClInclude>
+    <ClInclude Include="..\IPCPlaySDK\IPCPlaySDK.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SyncPlayer.cpp">
@@ -70,6 +91,15 @@
     </ClCompile>
     <ClCompile Include="..\Include\VideoFrame.cpp">
       <Filter>inc</Filter>
+    </ClCompile>
+    <ClCompile Include="DhStreamParser\DhStreamParser.cpp">
+      <Filter>DHParser</Filter>
+    </ClCompile>
+    <ClCompile Include="DhStreamParser\StreamParser.cpp">
+      <Filter>DHParser</Filter>
+    </ClCompile>
+    <ClCompile Include="DhStreamParser\svacstream.cpp">
+      <Filter>DHParser</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -1631,14 +1631,14 @@ double RangedRand( double range_min, double range_max)
 	return  ((double)rand() / (RAND_MAX + 1) * (range_max - range_min) + range_min);
 }
 
-bool MemMerge(INOUT byte **pDestBuff,INOUT int &nDestBuffLength,INOUT int &nDestBuffSize,IN byte *szTempBuff,IN int nTempLen)
+bool MemMerge(INOUT byte **pDestBuff,INOUT int &nDestBuffLength,INOUT int &nDestBuffSize,IN byte *szSrcBuff,IN int nSrcLen)
 {
-	if (!pDestBuff || !szTempBuff || !nDestBuffSize|| !nTempLen)
+	if (!pDestBuff || !szSrcBuff || !nDestBuffSize|| !nSrcLen)
 		return false;
-	int nNewBufferLength = nTempLen + nDestBuffLength;
+	int nNewBufferLength = nSrcLen + nDestBuffLength;
 	if (nNewBufferLength <= nDestBuffSize)
 	{
-		memcpy(&(*pDestBuff)[nDestBuffLength],szTempBuff,nTempLen);
+		memcpy(&(*pDestBuff)[nDestBuffLength],szSrcBuff,nSrcLen);
 		nDestBuffLength = nNewBufferLength;		
 	}
 	else
@@ -1651,7 +1651,7 @@ bool MemMerge(INOUT byte **pDestBuff,INOUT int &nDestBuffLength,INOUT int &nDest
 		if (pTemp == NULL)
 			return false;
 		memcpy(pTemp,*pDestBuff,nDestBuffLength);
-		memcpy(&pTemp[nDestBuffLength],szTempBuff,nTempLen);
+		memcpy(&pTemp[nDestBuffLength],szSrcBuff,nSrcLen);
 		delete [](*pDestBuff);
 		*pDestBuff = pTemp;		
 		nDestBuffLength = nNewBufferLength;
