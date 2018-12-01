@@ -1,5 +1,6 @@
 #include "IPCPlayer.hpp"
 
+extern bool g_bEnableDDraw;
 
 CIPCPlayer::CIPCPlayer()
 {
@@ -308,11 +309,9 @@ CIPCPlayer::CIPCPlayer(HWND hWnd, int nBufferSize, char *szLogFile)
 	m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
 
 	AddRenderWindow(hWnd, nullptr);
-	TCHAR szAppPath[1024] = { 0 };
-	GetAppPath(szAppPath, 1024);
-	_tcscat_s(szAppPath, 1024, _T("\\RenderOption.ini"));
-	if (GetPrivateProfileInt(_T("RenderOption"), _T("EnableDDraw"), 0, szAppPath) > 0)
-		m_bEnableDDraw = true;
+
+	
+	m_bEnableDDraw = g_bEnableDDraw;
 	
 	m_hRenderWnd = hWnd;
 	m_nDecodeDelay = -1;
@@ -771,8 +770,11 @@ bool CIPCPlayer::InitizlizeDx(AVFrame *pAvFrame )
 // 			if (!m_pWndDxInit->GetSafeHwnd())
 // 				InitInfo.hPresentWnd = m_hRenderWnd;
 // 			else
-			InitInfo.hPresentWnd = m_pWndDxInit->GetSafeHwnd();
-			//InitInfo.hPresentWnd = m_hRenderWnd;
+			//InitInfo.hPresentWnd = m_pWndDxInit->GetSafeHwnd();
+			/// 集中使用同一个窗口作d3d初始化，有可能是造成多显器视频显示时卡顿的原因
+			/// 2018.11.30 在这里作一个测试，使用原始输入窗口进行显示，并根据窗口所在显示器连接的显卡序号，决定用哪一块显卡来作d3d初始化
+			InitInfo.hPresentWnd = m_hRenderWnd;
+			
 			SaveRunTime();
 			if (m_nRocateAngle == Rocate90 ||
 				m_nRocateAngle == Rocate270 ||
@@ -783,6 +785,7 @@ bool CIPCPlayer::InitizlizeDx(AVFrame *pAvFrame )
 			if (m_pszBackImagePath)
 				m_pDxSurface->SetBackgroundPictureFile(m_pszBackImagePath, m_hRenderWnd);
 			SaveRunTime();
+			m_pDxSurface->SetDisplayAdapter(m_nDisplayAdapter);
 			m_pDxSurface->DisableVsync();		// 禁用垂直同步，播放帧才有可能超过显示器的刷新率，从而达到高速播放的目的
 			if (!m_pDxSurface->InitD3D(InitInfo.hPresentWnd,
 				InitInfo.nFrameWidth,
@@ -796,6 +799,7 @@ bool CIPCPlayer::InitizlizeDx(AVFrame *pAvFrame )
 #endif
 				return false;
 			}
+			//m_pDxSurface->TestDxCheck(InitInfo.hPresentWnd, InitInfo.nFrameWidth, InitInfo.nFrameHeight);
 			SaveRunTime();
 			m_pDxSurface->SetCoordinateMode(m_nCoordinate);
 			m_pDxSurface->SetExternDraw(m_pDCCallBack, m_pDCCallBackParam);
@@ -3767,8 +3771,24 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		~DxDeallocator()
 		{
 			TraceMsgA("%s pSurface = %08X\tpDDraw = %08X.\n", __FUNCTION__, m_pDxSurface, m_pDDraw);
+			if (m_pDxSurface)
+			{
+				if (strlen(m_pDxSurface->m_szAdapterID) > 0)
+				{
+					EnterCriticalSection(CIPCPlayer::m_csMapHacceConfig.Get());
+					auto itFind = CIPCPlayer::m_MapHacceConfig.find(m_pDxSurface->m_szAdapterID);
+					if (itFind != CIPCPlayer::m_MapHacceConfig.end())
+					{
+						itFind->second.nOpenedCount--;
+						//pThis->OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s is %d.\n", __FUNCTION__, mi.szDevice, g_pD39Helper.m_AdapterArray[i].Description, itFind->second.nOpenedCount);
+					}
+					LeaveCriticalSection(CIPCPlayer::m_csMapHacceConfig.Get());
+				}
+
+			}
 			Safe_Delete(m_pDxSurface);
 			Safe_Delete(m_pDDraw);
+			
 		}
 	};
 	DeclareRunTime(5);
@@ -3948,13 +3968,22 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		return 0;
 	}
 	SaveRunTime();
+
+	CHAR szAdapterID[64] = { 0 };
+	pThis->TryEnableHAccel(szAdapterID, 64);
 	if (!pThis->InitizlizeDx())
 	{
 		assert(false);
 		return 0;
 	}
-
+	
+	if (strlen(szAdapterID) > 0 && pThis->m_pDxSurface)
+	{
+		strcpy_s(pThis->m_pDxSurface->m_szAdapterID, 64, szAdapterID);
+	}
+		
 	shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface, pThis->m_pDDraw);
+
 	SaveRunTime();
 	pThis->m_bD3dShared = pThis->m_bEnableDDraw ? false : pThis->m_bD3dShared;
 	if (pThis->m_bD3dShared)

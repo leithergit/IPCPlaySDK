@@ -226,6 +226,8 @@ BOOL CIPCPlayDemoDlg::OnInitDialog()
 	m_pPlayerInfo =make_shared<PlayerInfo>();
 	m_wndStatus.SubclassDlgItem(IDC_STATIC_STATUS, this);
 
+	
+
 	SendDlgItemMessage(IDC_COMBO_PICTYPE, CB_SETCURSEL, 1, 0);		// 默认使用JPG截图
 	SendDlgItemMessage(IDC_COMBO_PLAYSPEED, CB_SETCURSEL, 8, 0);	// 默认播放速度为1X
 	//m_wndBrowseCtrl.SubclassDlgItem(IDC_MFCEDITBROWSE, this);
@@ -1251,6 +1253,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonRecord()
 
 void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 {
+	ipcplay_GetDisplayAdapterInfo();
 	bool bEnableWnd = true;
 	UINT bIsStreamPlay = IsDlgButtonChecked(IDC_CHECK_STREAMPLAY);
 	if (!m_pPlayContext)

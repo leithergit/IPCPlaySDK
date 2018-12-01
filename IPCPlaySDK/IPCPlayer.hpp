@@ -195,6 +195,15 @@ extern HMODULE  g_hDllModule;
 //extern HWND g_hSnapShotWnd;
 
 /// IPCIPCPlay SDK主要功能实现类
+struct HAccelRec
+{
+	HAccelRec()
+	{
+		ZeroMemory(this, sizeof(HAccelRec));
+	}
+	int		nMaxCount;		// 最大允许路数
+	int		nOpenedCount;	// 已经开启路数
+};
 
 class CIPCPlayer
 {
@@ -209,8 +218,11 @@ private:
 	list <RenderUnitPtr>	m_listRenderUnit;
 	list <RenderWndPtr>		m_listRenderWnd;	///< 多窗口显示同一视频图像
 	list<CAVFramePtr>		m_listAVFrame;		///<视频帧缓存，用于异步显示图像
-	UINT					m_nListAvFrameMaxSize;	///<视频帧缓存最大容量
-	
+public:
+	static map<string, HAccelRec>m_MapHacceConfig;	///不同显卡上开启硬解的路数
+	static CCriticalSectionProxy m_csMapHacceConfig;
+private:
+		
 	CCriticalSectionProxy	m_cslistRenderWnd;
 	CCriticalSectionProxy	m_csAudioCache;		
 	CCriticalSectionProxy	m_csBorderRect;
@@ -231,7 +243,7 @@ private:
 	//////////////////////////////////////////////////////////////////////////
 	int			m_nZeroOffset;
 	bool		m_bEnableDDraw = false;			// 是否启用DDRAW，启用DDRAW将禁用D3D，并且无法启用硬件黄享模式，导致解码效果下降
-
+	UINT					m_nListAvFrameMaxSize;	///<视频帧缓存最大容量
 	/************************************************************************/
 	//   ********注意 ********                                                               
 	//请匆移动m_nZeroOffset变量定义的位置，因为在构造函数中,为实现快速初始化，需要使用      
@@ -276,6 +288,7 @@ private:
 	Coordinte		m_nCoordinate = Coordinte_Wnd;
 	DxSurfaceInitInfo	m_DxInitInfo;
 	CDxSurfaceEx* m_pDxSurface;			///< Direct3d Surface封装类,用于显示视频
+	
 	void *m_pDCCallBack = nullptr;
 	void *m_pDCCallBackParam = nullptr;
   	CDirectDraw *m_pDDraw;				///< DirectDraw封装类对象，用于在xp下显示视频
@@ -285,7 +298,7 @@ private:
 // 	bool		m_bDxReset;				///< 是否重置DxSurface
 // 	HWND		m_hDxReset;
 	shared_ptr<CVideoDecoder>	m_pDecoder;
-	static shared_ptr<CSimpleWnd>m_pWndDxInit;///< 视频显示时，用以初始化DirectX的隐藏窗口对象
+	
 	bool		m_bRefreshWnd;			///< 停止播放时是否刷新画面
 	int			m_nVideoWidth;			///< 视频宽度
 	int			m_nVideoHeight;			///< 视频高度	
@@ -314,7 +327,7 @@ private:
 	bool		m_bPlayerInialized;		///< 播放器是否已经完成初始化
 	shared_ptr<PixelConvert> m_pConvert;
 public:		// 实时流播放参数
-	
+	static shared_ptr<CSimpleWnd>m_pWndDxInit;///< 视频显示时，用以初始化DirectX的隐藏窗口对象
 	bool		m_bProbeStream ;
 	int			m_nProbeOffset ;
 	volatile bool m_bAsyncRender ;
@@ -323,6 +336,7 @@ public:		// 实时流播放参数
 	time_t		m_tSyncTimeBase;		///< 同步时间轴
 	CIPCPlayer *m_pSyncPlayer;			///< 同步播放对象
 	int			m_nVideoFPS;			///< 视频帧的原始帧率
+	int			m_nDisplayAdapter = 0;
 	
 private:	// 音频播放相关变量
 
@@ -1036,6 +1050,51 @@ public:
 
 	int GetFileHeader();
 	
+	void TryEnableHAccel(CHAR* szAdapterID,int nBuffer)
+	{
+		HMONITOR hMonitor = MonitorFromWindow(m_hRenderWnd, MONITOR_DEFAULTTONEAREST);
+		if (hMonitor)
+		{
+			MONITORINFOEX mi;
+			mi.cbSize = sizeof(MONITORINFOEX);
+			if (GetMonitorInfo(hMonitor, &mi))
+			{
+				for (int i = 0; i < g_pD3D9Helper.m_nAdapterCount; i++)
+				{
+					if (strcmp(g_pD3D9Helper.m_AdapterArray[i].DeviceName, mi.szDevice) == 0)
+					{
+						m_nDisplayAdapter = i;
+						OutputMsg("%s Wnd[%08X] is on Monitor:[%s],it's connected on Adapter[%i]:%s.\n", __FUNCTION__, m_hRenderWnd, mi.szDevice, i, g_pD3D9Helper.m_AdapterArray[i].Description);
+						WCHAR szGuidW[64] = { 0 };
+						CHAR szGuidA[64] = { 0 };
+						StringFromGUID2(g_pD3D9Helper.m_AdapterArray[i].DeviceIdentifier, szGuidW,64);
+						
+						W2AHelper(szGuidW, szGuidA, 64);
+						if (szAdapterID)
+							strcpy_s(szAdapterID, nBuffer, szGuidA);
+						CAutoLock lock(m_csMapHacceConfig.Get());
+						auto itFind = m_MapHacceConfig.find(szGuidA);
+						if (itFind != m_MapHacceConfig.end())
+						{
+							if (itFind->second.nOpenedCount < itFind->second.nMaxCount)
+							{
+								m_bD3dShared = true;
+								m_bEnableHaccel = true;
+								itFind->second.nOpenedCount++;
+								OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s is %d.\n", __FUNCTION__, mi.szDevice, g_pD3D9Helper.m_AdapterArray[i].Description, itFind->second.nOpenedCount);
+							}
+							else
+							{
+								OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s has reached up limit：%d.\n", __FUNCTION__, mi.szDevice, g_pD3D9Helper.m_AdapterArray[i].Description, itFind->second.nMaxCount);
+							}
+						}
+						break;
+					}
+				}
+			}
+		}
+
+	}
 	void FitWindow(bool bFitWindow)
 	{
 		m_bFitWindow = bFitWindow;
@@ -1527,5 +1586,14 @@ public:
 	/// @param [in]		bFlag			是否启用逆向播放，为true时则启用，为false时，则关闭，关闭和开户动作都会视频帧缓存
 	/// @param [in]		nCacheFrames	逆向播放视频帧缓存容量
 	/// void EnableReservePlay(bool bFlag = true);
-	
+	int SetDisplayAdapter(int nAdapterNo)
+	{
+		if (nAdapterNo >= 0)
+		{ 
+			m_nDisplayAdapter = nAdapterNo;
+			return IPC_Succeed;
+		}
+		else
+			return IPC_Error_InvalidParameters;
+	}
 };

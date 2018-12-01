@@ -18,6 +18,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SyncPlayer", "SyncPlayer\Sy
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TDecodeLeak", "TDecodeLeak\TDecodeLeak.vcxproj", "{14B87607-6AC3-4C1A-B409-65E482F9548D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MagoHAccelConfig", "MagoHAccelConfig\MagoHAccelConfig.vcxproj", "{459FAFEE-FEC5-4337-9938-609667834FB0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug.shared|Win32 = Debug.shared|Win32
@@ -74,6 +76,14 @@ Global
 		{14B87607-6AC3-4C1A-B409-65E482F9548D}.Release.Shared|Win32.Build.0 = Release|Win32
 		{14B87607-6AC3-4C1A-B409-65E482F9548D}.Release|Win32.ActiveCfg = Release|Win32
 		{14B87607-6AC3-4C1A-B409-65E482F9548D}.Release|Win32.Build.0 = Release|Win32
+		{459FAFEE-FEC5-4337-9938-609667834FB0}.Debug.shared|Win32.ActiveCfg = Debug|Win32
+		{459FAFEE-FEC5-4337-9938-609667834FB0}.Debug.shared|Win32.Build.0 = Debug|Win32
+		{459FAFEE-FEC5-4337-9938-609667834FB0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{459FAFEE-FEC5-4337-9938-609667834FB0}.Debug|Win32.Build.0 = Debug|Win32
+		{459FAFEE-FEC5-4337-9938-609667834FB0}.Release.Shared|Win32.ActiveCfg = Release|Win32
+		{459FAFEE-FEC5-4337-9938-609667834FB0}.Release.Shared|Win32.Build.0 = Release|Win32
+		{459FAFEE-FEC5-4337-9938-609667834FB0}.Release|Win32.ActiveCfg = Release|Win32
+		{459FAFEE-FEC5-4337-9938-609667834FB0}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

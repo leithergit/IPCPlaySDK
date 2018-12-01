@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <memory>
 #include <Shlwapi.h>
+#include <map>
 #include "IPCPlaySDK.h"
 #include "IPCPlayer.hpp"
 
@@ -32,6 +33,9 @@ extern UINT	g_nPlayerHandles;
 #endif
 //shared_ptr<CDSound> CPlayer::m_pDsPlayer = make_shared<CDSound>(nullptr);
 shared_ptr<CSimpleWnd> CIPCPlayer::m_pWndDxInit = make_shared<CSimpleWnd>();	///< 视频显示时，用以初始化DirectX的隐藏窗口对象
+
+map<string, HAccelRec> CIPCPlayer::m_MapHacceConfig;
+CCriticalSectionProxy CIPCPlayer::m_csMapHacceConfig;
 
 using namespace std;
 using namespace std::tr1;
@@ -1566,4 +1570,52 @@ IPCPLAYSDK_API int ipcplay_GetErrorMessageW(int nErrorCode, LPWSTR szMessage, in
 	}
 	else
 		return -1;
+}
+
+IPCPLAYSDK_API int ipcplay_SetDisplayAdapter(IN IPC_PLAYHANDLE hPlayHandle, int nAdapterNo)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	return pPlayer->SetDisplayAdapter(nAdapterNo);
+
+}
+
+/// @brief			获取系统中连接显器的数量和所连接显卡的信息
+/// @param [in,out]	pAdapterBuffer	显卡信息接收缓冲区,当该缓冲区为null时，只返回实际连接显器的数量
+/// @param [in,out]	nAdapterNo		输入时，指定pAdapterBuffer最大可保存显卡信息的数量，输出时返回实际显卡的数量
+/// @retval			0	操作成功
+/// @retval			-1	输入参数无效	
+/// @retval			-15	输入缓冲区不足，系统中安装显卡的数量超过nBufferSize指定的数量
+/// @remark	注意    这里获得的显卡数量和系统中实际安装的显卡数量不一定相同，而是所有显卡连接显示器的实际数量,比如系统
+////				中安装了两块显卡，但每块显卡又各连接了两台显示器，则获得的显卡数量则为4
+IPCPLAYSDK_API int ipcplay_GetDisplayAdapterInfo(AdapterInfo *pAdapterBuffer,int &nBufferSize)
+{
+	TraceFunction();
+	int nAdapterCount = g_pD3D9Helper.m_pDirect3D9Ex->GetAdapterCount();
+	if (!pAdapterBuffer)
+	{
+		nBufferSize = nAdapterCount;
+		return IPC_Succeed;
+	}
+	else if (!nBufferSize)
+	{
+		return IPC_Error_InvalidParameters;
+	}
+	else if (nBufferSize < nAdapterCount)
+	{
+		nBufferSize = nAdapterCount;
+		return IPC_Error_BufferSizeNotEnough;
+	}
+
+	g_pD3D9Helper.UpdateAdapterInfo();
+	if (g_pD3D9Helper.m_nAdapterCount)
+	{
+		memcpy(pAdapterBuffer, g_pD3D9Helper.m_AdapterArray, g_pD3D9Helper.m_nAdapterCount*sizeof(AdapterInfo));
+		nBufferSize = g_pD3D9Helper.m_nAdapterCount;
+	}
+	
+	return IPC_Succeed;
 }

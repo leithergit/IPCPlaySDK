@@ -483,3 +483,13 @@ bool  GetFilePosition(HANDLE hFile, LONGLONG &nFileOffset);
 bool IsNeedRender(HWND hRenderWnd);
 
 bool IsWindowPall(HWND hWnd);
+
+char* StringFromGUIDA(GUID *pGuid);
+
+WCHAR* StringFromGUIDW(GUID *pGuid);
+
+#ifdef _UNICODE
+#define StringFromGUID		StringFromGUIDA
+#else
+#define StringFromGUID		StringFromGUIDW
+#endif

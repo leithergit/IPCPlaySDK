@@ -2832,3 +2832,20 @@ bool IsNeedRender(HWND hRenderWnd)
 	}
 	return true;
 }
+
+
+char* StringFromGUIDA(GUID *pGuid)
+{
+	static char szGuidStringA[64] = { 0 };
+	WCHAR szGuidStringW[64] = { 0 };
+	StringFromGUID2(*pGuid, szGuidStringW, 64);
+	W2AHelper(szGuidStringW, szGuidStringA, 64);
+	return szGuidStringA;
+}
+
+WCHAR* StringFromGUIDW(GUID *pGuid)
+{
+	static WCHAR szGuidStringW[64] = { 0 };
+	StringFromGUID2(*pGuid, szGuidStringW, 64);
+	return szGuidStringW;
+}

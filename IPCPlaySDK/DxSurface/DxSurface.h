@@ -185,7 +185,7 @@ enum GraphicQulityParameter
 
 //#define _TraceMemory
 #define TraceTimeout		2
-#if defined(_DEBUG) && defined(_TraceMemory)
+#if defined(_DEBUG) && defined(_TraceFunction)
 
 #define TraceFunction()	CTraceFunction Tx(__FUNCTION__);
 #define TraceFunction1(szText)	CTraceFunction Tx(__FUNCTION__,true,szText);
@@ -645,6 +645,8 @@ public:
 	pDirect3DCreate9Ex*	 m_pDirect3DCreate9Ex;
 	IDirect3D9 *  m_pDirect3D9;
 	IDirect3D9Ex* m_pDirect3D9Ex;	/* = NULL*/;
+	D3DADAPTER_IDENTIFIER9 m_AdapterArray[64];
+	int		m_nAdapterCount;
 	CD3D9Helper()
 	{
 		ZeroMemory(this, sizeof(CD3D9Helper));
@@ -681,6 +683,43 @@ public:
 			DxTraceMsg("%s Direct3DCreate9Ex failed.\n", __FUNCTION__);
 			assert(false);
 		}
+		UpdateAdapterInfo();
+	}
+	bool UpdateAdapterInfo()
+	{
+		if (m_pDirect3D9Ex)
+		{
+			m_nAdapterCount = m_pDirect3D9Ex->GetAdapterCount();
+			
+			for (DWORD i = 0; i < m_nAdapterCount; i++)
+			{
+				if (m_pDirect3D9Ex->GetAdapterIdentifier(i/*D3DADAPTER_DEFAULT*/, 0, (D3DADAPTER_IDENTIFIER9 *)&m_AdapterArray[i]) != D3D_OK)
+					return false;
+				memcpy(&m_AdapterArray[i], &m_AdapterArray[i], sizeof(D3DADAPTER_IDENTIFIER9));
+				DxTraceMsg("[%d]Driver: %s.\n", i, m_AdapterArray[i].Driver);
+				DxTraceMsg("[%d]Description: %s\n", i, m_AdapterArray[i].Description);
+				DxTraceMsg("[%d]Device Name: %s\n", i, m_AdapterArray[i].DeviceName);
+				DxTraceMsg("[%d]Vendor id:%4x\n", i, m_AdapterArray[i].VendorId);
+				DxTraceMsg("[%d]Device id: %4x\n", i, m_AdapterArray[i].DeviceId);
+				DxTraceMsg("[%d]Product: %x\n", i, HIWORD(m_AdapterArray[i].DriverVersion.HighPart));
+				DxTraceMsg("[%d]Version:%x\n", i, LOWORD(m_AdapterArray[i].DriverVersion.HighPart));
+				DxTraceMsg("[%d]SubVersion: %x\n", i, HIWORD(m_AdapterArray[i].DriverVersion.LowPart));
+				DxTraceMsg("[%d]Build: %x %d.%d.%d.%d\n", i, LOWORD(m_AdapterArray[i].DriverVersion.LowPart),
+					HIWORD(m_AdapterArray[i].DriverVersion.HighPart),
+					LOWORD(m_AdapterArray[i].DriverVersion.HighPart),
+					HIWORD(m_AdapterArray[i].DriverVersion.LowPart),
+					LOWORD(m_AdapterArray[i].DriverVersion.LowPart));
+				
+				DxTraceMsg("[%d]SubSysId: %x\n, Revision: %x\n,GUID:%s\n, WHQLLevel:%d\n", i,
+					m_AdapterArray[i].SubSysId,
+					m_AdapterArray[i].Revision,
+					StringFromGUIDA(&m_AdapterArray[i].DeviceIdentifier),
+					m_AdapterArray[i].WHQLLevel);
+			}
+			return true;
+		}
+		else
+			return false;
 	}
 	~CD3D9Helper()
 	{
@@ -697,7 +736,7 @@ public:
 /// @brief IDirect3DSurface9对象封类，用于创建和管理IDirect3DSurface9对象，可以显示多种象素格式的图像
 /// @remark 使用CDxSurface对象显示图象时，必须在创建线程内显示图，否则当发生DirectX设备丢失时，无法重置DirectX的资源
 
-extern CD3D9Helper    g_D3D9Helper;
+extern CD3D9Helper    g_pD3D9Helper;
 class CDxSurface
 {
 //protected:	
@@ -757,6 +796,7 @@ public:
 												// 当m_bVideoScaleFixed为false,m_fWHScale参数将被忽略,此时像将填满窗口客户区
 	float					m_fWHScale;	
 	WNDPROC					m_pOldWndProc;
+	int						m_nDisplayAdapter;
 	static WndSurfaceMap	m_WndSurfaceMap;
 	static CCriticalSectionProxyPtr m_WndSurfaceMapcs;
 	static	int				m_nObjectCount;
@@ -765,6 +805,7 @@ public:
 	pDirect3DCreate9*		m_pDirect3DCreate9;
 	LPD3DXLINE              m_pD3DXLine = NULL; //Direct3D线对象  
 	D3DXVECTOR2*            m_pLineArray = NULL; //线段顶点 
+	CHAR					m_szAdapterID[64];	///< 显卡的GUID
 public:
 		
 // 	explicit CDxSurface(IDirect3D9 *pD3D9)
@@ -797,7 +838,7 @@ public:
 		m_bEnableVsync = true;
 		
 
-		m_pDirect3DCreate9 = g_D3D9Helper.m_pDirect3DCreate9;
+		m_pDirect3DCreate9 = g_pD3D9Helper.m_pDirect3DCreate9;
 		SaveRunTime();
 		if (m_pDirect3DCreate9 == NULL)
 		{
@@ -805,7 +846,7 @@ public:
 			assert(false);
 			return;
 		}
-		m_pDirect3D9 = g_D3D9Helper.m_pDirect3D9;
+		m_pDirect3D9 = g_pD3D9Helper.m_pDirect3D9;
 		if (!m_pDirect3D9)
 		{
 			DxTraceMsg("%s Direct3DCreate9 failed.\n",__FUNCTION__);
@@ -824,6 +865,18 @@ public:
 		m_hEventSnapShot	= CreateEvent(NULL,FALSE,FALSE,NULL);
 		SaveRunTime();
 	}
+
+	int SetDisplayAdapter(int nAdapter = 0)
+	{
+		if (nAdapter >= 0)
+		{
+			m_nDisplayAdapter = nAdapter;
+			return 0;
+		}
+		else
+			return -1;
+	}
+
 	void ReleaseOffSurface()
 	{
 		if (m_pSurfaceRender)
@@ -2252,36 +2305,36 @@ public:
 
 	// 3.输出显卡信息,Description描述，厂商型号，Dircet3D的驱动Driver版本号，显卡的唯一标识号：DeviceIdentifier
 	// GetAdapterCount()，GetAdapterIdentifier的使用。
-	void PrintDisplayInfo(IDirect3D9* pDirect3D9)
+	void PrintDisplayInfo()
 	{
-		if (pDirect3D9 == NULL)
+		if (m_pDirect3D9 == NULL)
 			return;
 
 		D3DADAPTER_IDENTIFIER9 adapterID; // Used to store device info
-		DWORD dwDisplayCount = pDirect3D9->GetAdapterCount();
+		DWORD dwDisplayCount = m_pDirect3D9->GetAdapterCount();
 		for(DWORD i = 0; i < dwDisplayCount; i++)
 		{
-			if (pDirect3D9->GetAdapterIdentifier(i/*D3DADAPTER_DEFAULT*/, 0, &adapterID) != D3D_OK)
+			if (m_pDirect3D9->GetAdapterIdentifier(i/*D3DADAPTER_DEFAULT*/, 0, &adapterID) != D3D_OK)
 				return;
 
-			DxTraceMsg("Driver: %s.\n",adapterID.Driver);
-			DxTraceMsg("Description: %s\n",adapterID.Description);
-			DxTraceMsg("Device Name: %s\n",adapterID.DeviceName);
-			DxTraceMsg("Vendor id:%4x\n",adapterID.VendorId);
-			DxTraceMsg("Device id: %4x\n",adapterID.DeviceId);
-			DxTraceMsg("Product: %x\n",HIWORD(adapterID.DriverVersion.HighPart));
-			DxTraceMsg("Version:%x\n",LOWORD(adapterID.DriverVersion.HighPart));
-			DxTraceMsg("SubVersion: %x\n",HIWORD(adapterID.DriverVersion.LowPart));
-			DxTraceMsg("Build: %x %d.%d.%d.%d\n",LOWORD(adapterID.DriverVersion.LowPart),
-												 HIWORD(adapterID.DriverVersion.HighPart),
-												 LOWORD(adapterID.DriverVersion.HighPart),
-												 HIWORD(adapterID.DriverVersion.LowPart),
-												 LOWORD(adapterID.DriverVersion.LowPart));
-			DxTraceMsg("SubSysId: %x\n, Revision: %x\n,GUID %s\n, WHQLLevel:%d\n",
-						adapterID.SubSysId, 
-						adapterID.Revision,
-						StringFromGUID(&adapterID.DeviceIdentifier), 
-						adapterID.WHQLLevel);
+			DxTraceMsg("[%d]Driver: %s.\n", i, adapterID.Driver);
+			DxTraceMsg("[%d]Description: %s\n", i, adapterID.Description);
+			DxTraceMsg("[%d]Device Name: %s\n", i, adapterID.DeviceName);
+			DxTraceMsg("[%d]Vendor id:%4x\n", i, adapterID.VendorId);
+			DxTraceMsg("[%d]Device id: %4x\n", i, adapterID.DeviceId);
+			DxTraceMsg("[%d]Product: %x\n", i, HIWORD(adapterID.DriverVersion.HighPart));
+			DxTraceMsg("[%d]Version:%x\n", i, LOWORD(adapterID.DriverVersion.HighPart));
+			DxTraceMsg("[%d]SubVersion: %x\n", i, HIWORD(adapterID.DriverVersion.LowPart));
+			DxTraceMsg("[%d]Build: %x %d.%d.%d.%d\n", i, LOWORD(adapterID.DriverVersion.LowPart),
+				HIWORD(adapterID.DriverVersion.HighPart),
+				LOWORD(adapterID.DriverVersion.HighPart),
+				HIWORD(adapterID.DriverVersion.LowPart),
+				LOWORD(adapterID.DriverVersion.LowPart));
+			DxTraceMsg("[%d]SubSysId: %x\n, Revision: %x\n,GUID %s\n, WHQLLevel:%d\n", i,
+				adapterID.SubSysId,
+				adapterID.Revision,
+				StringFromGUID(&adapterID.DeviceIdentifier),
+				adapterID.WHQLLevel);
 		}
 	}
 
@@ -2383,7 +2436,7 @@ public:
 			return false;
 		}
 		// 3.显示显卡的信息
-		PrintDisplayInfo(m_pDirect3D9);
+		PrintDisplayInfo();
 
 		D3DDISPLAYMODE d3ddm;
 		if(FAILED(m_pDirect3D9->GetAdapterDisplayMode(D3DADAPTER_DEFAULT,&d3ddm)))
@@ -2447,6 +2500,7 @@ public:
 	IDirect3D9Ex			*m_pDirect3D9Ex		/* = NULL*/;
 	IDirect3DDevice9Ex		*m_pDirect3DDeviceEx	/*= NULL*/;
 	pDirect3DCreate9Ex*		m_pDirect3DCreate9Ex;
+	
 public:
 // 	CDxSurfaceEx(IDirect3D9Ex *pD3D9Ex)
 // 		//:m_pDirect3D9Ex(NULL)*,
@@ -2471,8 +2525,8 @@ public:
 		m_nCordinateMode = Coordinte_Wnd;
 		// 释放由基类创建的Direct3D9对象
 		//SafeRelease(m_pDirect3D9);
-		m_pDirect3DCreate9Ex = g_D3D9Helper.m_pDirect3DCreate9Ex;	
-		m_pDirect3D9Ex = g_D3D9Helper.m_pDirect3D9Ex;
+		m_pDirect3DCreate9Ex = g_pD3D9Helper.m_pDirect3DCreate9Ex;	
+		m_pDirect3D9Ex = g_pD3D9Helper.m_pDirect3D9Ex;
 		
 #ifdef _DEBUG
 		//PrintDisplayInfo(m_pDirect3D9Ex);
@@ -2530,6 +2584,7 @@ public:
 		hr = m_pDirect3DDeviceEx->PresentEx(NULL, nullptr, m_hBackImageWnd, NULL, 0);
 		return true;
 	}
+
 	// 调用InitD3D之前必须先调用AttachWnd函数关联视频显示窗口
 	// nD3DFormat 必须为以下格式之一
 	// MAKEFOURCC('Y', 'V', '1', '2')	默认格式,可以很方便地由YUV420P转换得到,而YUV420P是FFMPEG解码后得到的默认像素格式
@@ -2589,7 +2644,7 @@ public:
 		double dfTStart = GetExactTime();		
 #endif
 		D3DCAPS9 caps;
-		m_pDirect3D9Ex->GetDeviceCaps(D3DADAPTER_DEFAULT,D3DDEVTYPE_HAL,&caps);
+		m_pDirect3D9Ex->GetDeviceCaps(m_nDisplayAdapter, D3DDEVTYPE_HAL, &caps);
 		int vp = 0;
 		if (caps.DevCaps& D3DDEVCAPS_HWTRANSFORMANDLIGHT)		
 			vp = D3DCREATE_HARDWARE_VERTEXPROCESSING;
@@ -2678,19 +2733,19 @@ public:
 		}
 		/*
 		CreateDevice的BehaviorFlags参数选项：
-		D3DCREATE_ADAPTERGROUP_DEVICE只对主显卡有效，让设备驱动输出给它所拥有的所有显示输出
-		D3DCREATE_DISABLE_DRIVER_MANAGEMENT代替设备驱动来管理资源，这样在发生资源不足时D3D调用不会失败
-		D3DCREATE_DISABLE_PRINTSCREEN:不注册截屏快捷键，只对Direct3D 9Ex
-		D3DCREATE_DISABLE_PSGP_THREADING：强制计算工作必须在主线程上，vista以上有效
-		D3DCREATE_ENABLE_PRESENTSTATS：允许GetPresentStatistics收集统计信息只对Direct3D 9Ex
-		D3DCREATE_FPU_PRESERVE；强制D3D与线程使用相同的浮点精度，会降低性能
+		D3DCREATE_ADAPTERGROUP_DEVICE		只对主显卡有效，让设备驱动输出给它所拥有的所有显示输出
+		D3DCREATE_DISABLE_DRIVER_MANAGEMENT	代替设备驱动来管理资源，这样在发生资源不足时D3D调用不会失败
+		D3DCREATE_DISABLE_PRINTSCREEN:		不注册截屏快捷键，只对Direct3D 9Ex
+		D3DCREATE_DISABLE_PSGP_THREADING：	强制计算工作必须在主线程上，vista以上有效
+		D3DCREATE_ENABLE_PRESENTSTATS：		允许GetPresentStatistics收集统计信息只对Direct3D 9Ex
+		D3DCREATE_FPU_PRESERVE；				强制D3D与线程使用相同的浮点精度，会降低性能
 		D3DCREATE_HARDWARE_VERTEXPROCESSING：指定硬件进行顶点处理，必须跟随D3DCREATE_PUREDEVICE
-		D3DCREATE_MIXED_VERTEXPROCESSING：指定混合顶点处理
+		D3DCREATE_MIXED_VERTEXPROCESSING：	指定混合顶点处理
 		D3DCREATE_SOFTWARE_VERTEXPROCESSING：指定纯软的顶点处理
-		D3DCREATE_MULTITHREADED：要求D3D是线程安全的，多线程时
-		D3DCREATE_NOWINDOWCHANGES：拥有不改变窗口焦点
-		D3DCREATE_PUREDEVICE：只试图使用纯硬件的渲染
-		D3DCREATE_SCREENSAVER：允许被屏保打断只对Direct3D 9Ex
+		D3DCREATE_MULTITHREADED：			要求D3D是线程安全的，多线程时
+		D3DCREATE_NOWINDOWCHANGES：			拥有不改变窗口焦点
+		D3DCREATE_PUREDEVICE：				只试图使用纯硬件的渲染
+		D3DCREATE_SCREENSAVER：				允许被屏保打断只对Direct3D 9Ex
 		D3DCREATE_HARDWARE_VERTEXPROCESSING, D3DCREATE_MIXED_VERTEXPROCESSING, and D3DCREATE_SOFTWARE_VERTEXPROCESSING中至少有一个一定要设置
 		*/
 		if (m_pDirect3DDeviceEx)
@@ -2722,7 +2777,7 @@ public:
 // 				break;
 // 			}
 // 		}
-		if (FAILED(hr = m_pDirect3D9Ex->CreateDeviceEx(D3DADAPTER_DEFAULT,
+		if (FAILED(hr = m_pDirect3D9Ex->CreateDeviceEx(m_nDisplayAdapter,
 			D3DDEVTYPE_HAL,
 			m_d3dpp.hDeviceWindow,
 			vp | D3DCREATE_MULTITHREADED,
@@ -2731,7 +2786,7 @@ public:
 			&m_pDirect3DDeviceEx)))
 		{
 			vp = D3DCREATE_SOFTWARE_VERTEXPROCESSING;
-			if (FAILED(hr = m_pDirect3D9Ex->CreateDeviceEx(D3DADAPTER_DEFAULT,
+			if (FAILED(hr = m_pDirect3D9Ex->CreateDeviceEx(m_nDisplayAdapter,
 				D3DDEVTYPE_HAL,
 				m_d3dpp.hDeviceWindow,
 				vp,
@@ -3433,6 +3488,151 @@ __Failure:
 			//SaveRunTime();
 			return bRet;
 		}
+	}
+
+	// 1.检查指定的表面像素格式，是否在指定的适配器类型、适配器像素格式下可用。
+	// GetAdapterDisplayMode,CheckDeviceType的应用
+	bool GetBackBufferFormat(D3DDEVTYPE deviceType, BOOL bWindow, D3DFORMAT &fmt)
+	{
+		if (m_pDirect3D9 == NULL)
+			return false;
+
+		D3DDISPLAYMODE adapterMode;
+		m_pDirect3D9Ex->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &adapterMode);
+		if (D3D_OK != m_pDirect3D9Ex->CheckDeviceType(D3DADAPTER_DEFAULT, deviceType, adapterMode.Format, fmt, bWindow))
+			fmt = adapterMode.Format;
+		return true;
+	}
+
+	// 2.根据适配器类型，获取顶点运算(变换和光照运算)的格式
+	// D3DCAPS9结构体，GetDeviceCaps的应用
+	bool GetDisplayVertexType(D3DDEVTYPE deviceType, int &nVertexType)
+	{
+		if (m_pDirect3D9 == NULL)
+			return false;
+
+		D3DCAPS9 caps;
+		m_pDirect3D9Ex->GetDeviceCaps(D3DADAPTER_DEFAULT, deviceType, &caps);
+		if (caps.DevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT)
+			nVertexType = D3DCREATE_HARDWARE_VERTEXPROCESSING;
+		else
+			nVertexType = D3DCREATE_SOFTWARE_VERTEXPROCESSING;
+		return true;
+
+	}
+
+
+
+	// 3.输出显卡信息,Description描述，厂商型号，Dircet3D的驱动Driver版本号，显卡的唯一标识号：DeviceIdentifier
+	// GetAdapterCount()，GetAdapterIdentifier的使用。
+	void PrintDisplayInfo()
+	{
+		if (m_pDirect3D9Ex == NULL)
+			return;
+
+		D3DADAPTER_IDENTIFIER9 adapterID; // Used to store device info
+		DWORD dwDisplayCount = m_pDirect3D9Ex->GetAdapterCount();
+		for (DWORD i = 0; i < dwDisplayCount; i++)
+		{
+			if (m_pDirect3D9Ex->GetAdapterIdentifier(i/*D3DADAPTER_DEFAULT*/, 0, &adapterID) != D3D_OK)
+				return;
+
+			DxTraceMsg("[%d]Driver: %s.\n", i,adapterID.Driver);
+			DxTraceMsg("[%d]Description: %s\n", i, adapterID.Description);
+			DxTraceMsg("[%d]Device Name: %s\n", i, adapterID.DeviceName);
+			DxTraceMsg("[%d]Vendor id:%4x\n", i, adapterID.VendorId);
+			DxTraceMsg("[%d]Device id: %4x\n", i, adapterID.DeviceId);
+			DxTraceMsg("[%d]Product: %x\n", i, HIWORD(adapterID.DriverVersion.HighPart));
+			DxTraceMsg("[%d]Version:%x\n", i, LOWORD(adapterID.DriverVersion.HighPart));
+			DxTraceMsg("[%d]SubVersion: %x\n", i, HIWORD(adapterID.DriverVersion.LowPart));
+			DxTraceMsg("[%d]Build: %x %d.%d.%d.%d\n", i, LOWORD(adapterID.DriverVersion.LowPart),
+				HIWORD(adapterID.DriverVersion.HighPart),
+				LOWORD(adapterID.DriverVersion.HighPart),
+				HIWORD(adapterID.DriverVersion.LowPart),
+				LOWORD(adapterID.DriverVersion.LowPart));
+			DxTraceMsg("[%d]SubSysId: %x\n, Revision: %x\n,GUID %s\n, WHQLLevel:%d\n", i,
+				adapterID.SubSysId,
+				adapterID.Revision,
+				StringFromGUID(&adapterID.DeviceIdentifier),
+				adapterID.WHQLLevel);
+		}
+	}
+
+	// 4.输出指定Adapter，显卡像素模式(不会与缓存表面格式做兼容考虑)的显卡适配器模式信息
+	// GetAdapterModeCount,EnumAdapterModes的使用
+	void PrintDisplayModeInfo(D3DFORMAT fmt)
+	{
+		if (m_pDirect3D9Ex == NULL)
+		{
+			DxTraceMsg("%s Direct3D9 not initialized.\n", __FUNCTION__);
+			return;
+		}
+		// 显卡适配器模式的个数，主要是分辨率的差异
+		DWORD nAdapterModeCount = m_pDirect3D9Ex->GetAdapterModeCount(D3DADAPTER_DEFAULT, fmt);
+		if (nAdapterModeCount == 0)
+		{
+			DxTraceMsg("%s D3DFMT_格式：%x不支持", __FUNCTION__, fmt);
+		}
+		for (DWORD i = 0; i < nAdapterModeCount; i++)
+		{
+			D3DDISPLAYMODE mode;
+			if (D3D_OK == m_pDirect3D9->EnumAdapterModes(D3DADAPTER_DEFAULT, fmt, i, &mode))
+				DxTraceMsg("D3DDISPLAYMODE info, width:%u,height:%u, freshRate:%u, Format:%d \n",
+				mode.Width,
+				mode.Height,
+				mode.RefreshRate,
+				mode.Format);
+		}
+	}
+
+	// 5.对于指定的资源类型，检查资源的使用方式，资源像素格式，在默认的显卡适配器下是否支持
+	// GetAdapterDisplayMode，CheckDeviceFormat的使用
+	bool CheckResourceFormat(DWORD nSrcUsage, D3DRESOURCETYPE srcType, D3DFORMAT srcFmt)
+	{
+		if (m_pDirect3D9 == NULL)
+			return false;
+
+		D3DDISPLAYMODE displayMode;
+		m_pDirect3D9Ex->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &displayMode);
+		if (D3D_OK == m_pDirect3D9Ex->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, displayMode.Format, nSrcUsage, srcType, srcFmt))
+			return true;
+		return false;
+	}
+
+	// 6.对指定的表面像素格式，窗口模式，和显卡像素模式；检查对指定的多重采样类型支持不，且返回质量水平等级
+	// CheckDeviceMultiSampleType的应用
+	bool CheckMultiSampleType(D3DFORMAT surfaceFmt, BOOL bWindow, D3DMULTISAMPLE_TYPE &eSampleType, DWORD *pQualityLevel)
+	{
+		//变量MultiSampleType的值设为D3DMULTISAMPLE_NONMASKABLE，就必须设定成员变量MultiSampleQuality的质量等级值
+		for (int i = eSampleType; i >= D3DMULTISAMPLE_NONE; i--)
+		{
+			if (SUCCEEDED(m_pDirect3D9Ex->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT/*caps.AdapterOrdinal*/,
+				D3DDEVTYPE_HAL/*caps.DeviceType*/,
+				surfaceFmt,
+				bWindow,
+				(D3DMULTISAMPLE_TYPE)i,
+				pQualityLevel)))
+			{
+				eSampleType = (D3DMULTISAMPLE_TYPE)i;
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	// 7.根据显卡适配器和目标缓存类型，检查指定深度缓存的格式是否支持
+	// CheckDepthStencilMatch的应用
+	bool CheckDepthBufferFormt(D3DFORMAT targetBufferFmt, D3DFORMAT depthFmt)
+	{
+		if (m_pDirect3D9 == NULL)
+			return false;
+
+		D3DDISPLAYMODE mode;
+		m_pDirect3D9Ex->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &mode);
+		if (D3D_OK == m_pDirect3D9->CheckDepthStencilMatch(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, mode.Format, targetBufferFmt, depthFmt))
+			return true;
+		return false;
 	}
 };
 

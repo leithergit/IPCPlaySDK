@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "../MagoACS/stdafx.h"
+#include "../MagoHAccelConfig/stdafx.h"
 #include "Utility.h"
 
 #define IDC_CTRL_INLIST			4096

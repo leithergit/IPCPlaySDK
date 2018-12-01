@@ -74,3 +74,5 @@ EXPORTS
 	ipcplay_EnablePlayOneFrame
 	ipcplay_GetErrorMessageA
 	ipcplay_GetErrorMessageW
+	ipcplay_SetDisplayAdapter
+	ipcplay_GetDisplayAdapterInfo

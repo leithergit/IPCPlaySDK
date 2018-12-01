@@ -209,6 +209,33 @@ struct PlayerInfo
 ///	@brief	IPC文件播放句柄
 typedef void* 	IPC_PLAYHANDLE;
 
+
+/// @brief  显卡参数信息，完全复制于D3DADAPTER_IDENTIFIER9结构
+#define MAX_DEVICE_IDENTIFIER_STRING        512
+#pragma pack(push)
+#pragma pack(4)
+struct AdapterInfo
+{
+	char            Driver[MAX_DEVICE_IDENTIFIER_STRING];
+	char            Description[MAX_DEVICE_IDENTIFIER_STRING];
+	char            DeviceName[32];         /* Device name for GDI (ex. \\.\DISPLAY1) */
+
+#ifdef _WIN32
+	LARGE_INTEGER   DriverVersion;          /* Defined for 32 bit components */
+#else
+	DWORD           DriverVersionLowPart;   /* Defined for 16 bit driver components */
+	DWORD           DriverVersionHighPart;
+#endif
+
+	DWORD           VendorId;
+	DWORD           DeviceId;
+	DWORD           SubSysId;
+	DWORD           Revision;
+	GUID            DeviceIdentifier;
+	DWORD           WHQLLevel;
+};
+#pragma pack(pop)
+
 /// @brief		解码后YVU数据回调函数定义
 /// @param [in]		hPlayHandle	由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		pYUV		YUV数据指针
@@ -894,6 +921,23 @@ IPCPLAYSDK_API int ipcplay_EnableAsyncRender(IN IPC_PLAYHANDLE hPlayHandle, bool
 	byte **ppRGBBuffer,
 	long &nBufferSize);
 	*/
+
+/// @brief			获取系统中连接显器的数量和所连接显卡的信息
+/// @param [in,out]	pAdapterBuffer	显卡信息接收缓冲区
+/// @param [in,out]	nAdapterNo		输入时，指定pAdapterBuffer最大可保存显卡信息的数量，输出时返回实际显卡的数量
+/// @retval			0	操作成功
+/// @retval			-1	输入参数无效	
+/// @retval			-15	输入缓冲区不足，系统中安装显卡的数量超过nBufferSize指定的数量
+/// @remark	注意    这里获得的显卡数量和系统中实际安装的显卡数量不一定相同，而是所有显卡连接显示器的实际数量,比如系统
+////				中安装了两块显卡，但每块显卡又各连接了两台显示器，则获得的显卡数量则为4
+IPCPLAYSDK_API int ipcplay_GetDisplayAdapterInfo(AdapterInfo *pAdapterBuffer, int &nBufferSize);
+
+
+/// @brief			设置显示图像的显卡编号
+/// @param [in]		hPlayHandle	由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		nAdapterNo			显卡编码，该编号为ipcplay_GetDisplayAdapterInfo返回显卡列表中的序号
+
+IPCPLAYSDK_API int ipcplay_SetDisplayAdapter(IN IPC_PLAYHANDLE hPlayHandle, int nAdapterNo = 0);
 
 #ifdef _UNICODE
 #define ipcplay_GetErrorMessage	ipcplay_GetErrorMessageW

@@ -86,7 +86,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;IPCPLAYSDK_EXPORTS;_ENABLE_FFMPEG_STAITC_LIB;_XKEYCHECK_H;_CRT_SECURE_NO_WARNINGS;_LineTime_;D3D_DEBUG_INFO;_TraceMemory_;_STD_SMARTPTR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;IPCPLAYSDK_EXPORTS;_ENABLE_FFMPEG_STAITC_LIB;_XKEYCHECK_H;_CRT_SECURE_NO_WARNINGS;_LineTime_;D3D_DEBUG_INFO;_TraceFunction;_STD_SMARTPTR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\ffmpeg\static.20181119\Release\include;..\faad2-2.7\include;$(DXSDK_DIR)Include;.\svacparser;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -108,13 +108,15 @@
 copy $(TargetDir)$(TargetName).lib "E:\MaiGao\AS300\AS300ClientSDK_2018.07.26_V2.0.0.0-alpha_r9839\lib" /y
 copy $(ProjectDir)ipcplaysdk.h "E:\MaiGao\AS300\AS300ClientSDK_2018.07.26_V2.0.0.0-alpha_r9839\include" /y
 
-::copy $(TargetPath)  "E:\SVN.NET\PlayRTSP\Debug" /y
-::copy $(TargetDir)$(TargetName).lib "E:\SVN.NET\PlayRTSP\ipcplaysdk" /y
-::copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\PlayRTSP\ipcplaysdk" /y
-
+echo Copy Files to  "D:\Git\AVPlayerActiveX"
 copy $(TargetDir)$(TargetName).lib "D:\Git\AVPlayerActiveX\Debug" /y
 copy $(TargetPath) "D:\Git\AVPlayerActiveX\Debug\" /y
-copy $(ProjectDir)ipcplaysdk.h "D:\Git\AVPlayerActiveX\Debug" /y</Command>
+copy $(ProjectDir)ipcplaysdk.h "D:\Git\AVPlayerActiveX\Debug" /y
+
+echo Copy Files to  "E:\SVN.NET\PlayRTSP.net"
+copy $(TargetPath) "E:\SVN.NET\PlayRTSP.net\Debug\" /y
+copy $(TargetDir)$(TargetName).lib "E:\SVN.NET\PlayRTSP.net\IPCPlaySDK" /y
+copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\PlayRTSP.net\IPCPlaySDK" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug.shared|Win32'">
