@@ -819,6 +819,11 @@ int CIPCPlayer::AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent
 	// 		if (hRenderWnd == m_hRenderWnd)
 	// 			return IPC_Succeed;
 	Autolock(&m_cslistRenderWnd);
+	if (!m_hRenderWnd)
+	{
+		m_hRenderWnd = hRenderWnd;
+		return IPC_Succeed;
+	}
 	if (m_bEnableDDraw)
 	{
 		if (m_listRenderUnit.size() >= 4)
@@ -3779,7 +3784,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 					auto itFind = CIPCPlayer::m_MapHacceConfig.find(m_pDxSurface->m_szAdapterID);
 					if (itFind != CIPCPlayer::m_MapHacceConfig.end())
 					{
-						itFind->second.nOpenedCount--;
+						itFind->second->nOpenedCount--;
 						//pThis->OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s is %d.\n", __FUNCTION__, mi.szDevice, g_pD39Helper.m_AdapterArray[i].Description, itFind->second.nOpenedCount);
 					}
 					LeaveCriticalSection(CIPCPlayer::m_csMapHacceConfig.Get());

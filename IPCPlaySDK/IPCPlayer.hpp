@@ -205,6 +205,7 @@ struct HAccelRec
 	int		nOpenedCount;	// 已经开启路数
 };
 
+typedef shared_ptr<HAccelRec> HAccelRecPtr;
 class CIPCPlayer
 {
 public:
@@ -219,7 +220,7 @@ private:
 	list <RenderWndPtr>		m_listRenderWnd;	///< 多窗口显示同一视频图像
 	list<CAVFramePtr>		m_listAVFrame;		///<视频帧缓存，用于异步显示图像
 public:
-	static map<string, HAccelRec>m_MapHacceConfig;	///不同显卡上开启硬解的路数
+	static map<string, HAccelRecPtr>m_MapHacceConfig;	///不同显卡上开启硬解的路数
 	static CCriticalSectionProxy m_csMapHacceConfig;
 private:
 		
@@ -1076,16 +1077,16 @@ public:
 						auto itFind = m_MapHacceConfig.find(szGuidA);
 						if (itFind != m_MapHacceConfig.end())
 						{
-							if (itFind->second.nOpenedCount < itFind->second.nMaxCount)
+							if (itFind->second->nOpenedCount < itFind->second->nMaxCount)
 							{
 								m_bD3dShared = true;
 								m_bEnableHaccel = true;
-								itFind->second.nOpenedCount++;
-								OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s is %d.\n", __FUNCTION__, mi.szDevice, g_pD3D9Helper.m_AdapterArray[i].Description, itFind->second.nOpenedCount);
+								itFind->second->nOpenedCount++;
+								OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s is %d.\n", __FUNCTION__, mi.szDevice, g_pD3D9Helper.m_AdapterArray[i].Description, itFind->second->nOpenedCount);
 							}
 							else
 							{
-								OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s has reached up limit：%d.\n", __FUNCTION__, mi.szDevice, g_pD3D9Helper.m_AdapterArray[i].Description, itFind->second.nMaxCount);
+								OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s has reached up limit：%d.\n", __FUNCTION__, mi.szDevice, g_pD3D9Helper.m_AdapterArray[i].Description, itFind->second->nMaxCount);
 							}
 						}
 						break;

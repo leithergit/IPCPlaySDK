@@ -23,7 +23,7 @@ UINT	g_nPlayerHandles = 0;
 double	g_dfProcessLoadTime = 0.0f;
 bool g_bEnableDDraw = false;
 
-DWORD WINAPI Thread_Helper(void *);
+UINT __stdcall Thread_Helper(void *);
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
                        LPVOID lpReserved
@@ -46,20 +46,21 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		GetModuleFileNameA(hModule, szTempPath, MAX_PATH);
 		int nPos = StrReserverFind(szTempPath, '\\');
 		strncpy_s(szPath, MAX_PATH, szTempPath, nPos);
-		strcat_s(szPath, 1024, "\\RenderOption.ini");
+		strcat_s(szPath, MAX_PATH, "\\RenderOption.ini");
 		CHAR szValue[256] = { 0 };
 		CHAR szKeyName[64] = { 0 };
 		CHAR szGUID[64] = { 0 };
 		int nIndex = 1;
 		do 
 		{
-			HAccelRec HR;
+			
 			sprintf_s(szKeyName, 64, "Adapter%d", nIndex++);
 			if (GetPrivateProfileStringA("HAccel", szKeyName, nullptr, szValue, 256, szPath) <= 0)
 				break;
-			sscanf_s(szValue, "%d,%[^;]", &HR.nMaxCount, szGUID, _countof(szGUID));
-			TraceMsgA("AdapterID = %s,HAccelCount = %d.\n", szGUID, HR.nMaxCount);
-			CIPCPlayer::m_MapHacceConfig.insert(pair<char*, HAccelRec>(szGUID, HR));
+			HAccelRecPtr  pHR = make_shared<HAccelRec>();
+			sscanf_s(szValue, "%d,%[^;]", &pHR->nMaxCount, szGUID, _countof(szGUID));
+			TraceMsgA("AdapterID = %s,HAccelCount = %d.\n", szGUID, pHR->nMaxCount);
+			CIPCPlayer::m_MapHacceConfig.insert(pair<char*, HAccelRecPtr>(szGUID, pHR));
 		} while (true);
 		
 		if (GetPrivateProfileInt(_T("RenderOption"), _T("EnableDDraw"), 0, szPath) > 0)
@@ -67,7 +68,8 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 
 		g_bThread_ClosePlayer = true;
 		g_hEventThreadExit = CreateEvent(nullptr, true, false, nullptr);
-		g_hThread_ClosePlayer = CreateThread(nullptr, 0, Thread_Helper, nullptr, 0, 0);
+		UINT nThreadID;
+		g_hThread_ClosePlayer = (HANDLE)_beginthreadex(nullptr, 0, Thread_Helper, nullptr, 0,&nThreadID);
 		
 	}
 		break;
@@ -109,7 +111,7 @@ void PreventScreenSave()
 	input.mi.dwFlags = MOUSEEVENTF_MOVE;
 	SendInput(1, &input, sizeof(INPUT));
 }
-DWORD WINAPI Thread_Helper(void *)
+UINT __stdcall Thread_Helper(void *)
 {
 //#ifdef _DEBUG
 	DWORD dwTime = timeGetTime();

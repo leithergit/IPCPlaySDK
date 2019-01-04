@@ -650,6 +650,7 @@ public:
 	CD3D9Helper()
 	{
 		ZeroMemory(this, sizeof(CD3D9Helper));
+		
 		m_hD3D9 = ::LoadLibraryA("d3d9.dll");
 		if (!m_hD3D9)
 		{
@@ -683,6 +684,8 @@ public:
 			DxTraceMsg("%s Direct3DCreate9Ex failed.\n", __FUNCTION__);
 			assert(false);
 		}
+		//BOOL bResult = VirtualProtectEx(GetCurrentProcess(), m_pDirect3D9, sizeof(IDirect3D9), PAGE_EXECUTE_READ);
+		//bResult = VirtualProtectEx(GetCurrentProcess(), m_pDirect3D9Ex, sizeof(IDirect3D9Ex), PAGE_EXECUTE_READ);
 		UpdateAdapterInfo();
 	}
 	bool UpdateAdapterInfo()
@@ -723,8 +726,8 @@ public:
 	}
 	~CD3D9Helper()
 	{
-		SafeRelease(m_pDirect3D9);
-		SafeRelease(m_pDirect3D9Ex);
+		//SafeRelease(m_pDirect3D9);
+		//SafeRelease(m_pDirect3D9Ex);
 		if (m_hD3D9)
 		{
 			FreeLibrary(m_hD3D9);
@@ -3067,10 +3070,10 @@ _Failed:
 			{
 				DxTraceMsg("%s if the device has been removed.\n",__FUNCTION__);
 				DxCleanup();
-				SafeRelease(m_pDirect3D9Ex);
-				hr = m_pDirect3DCreate9Ex(D3D_SDK_VERSION, &m_pDirect3D9Ex);
-				if (FAILED(hr))
-					return false;
+//				SafeRelease(m_pDirect3D9Ex);
+// 				hr = m_pDirect3DCreate9Ex(D3D_SDK_VERSION, &m_pDirect3D9Ex);
+// 				if (FAILED(hr))
+// 					return false;
 				return InitD3D(m_d3dpp.hDeviceWindow,m_nVideoWidth,m_nVideoHeight,m_bFullScreen);	
 			}
 			break;

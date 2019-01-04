@@ -179,8 +179,7 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk" /y</Command>
       <ModuleDefinitionFile>IPCPlaySDK.def</ModuleDefinitionFile>
       <OptimizeReferences>false</OptimizeReferences>
       <AdditionalDependencies>Bcrypt.lib;libtcmalloc_minimal.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ForceSymbolReferences>
-      </ForceSymbolReferences>
+      <ForceSymbolReferences>__tcmalloc</ForceSymbolReferences>
     </Link>
     <PostBuildEvent>
       <Command>@echo off

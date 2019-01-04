@@ -34,7 +34,7 @@ extern UINT	g_nPlayerHandles;
 //shared_ptr<CDSound> CPlayer::m_pDsPlayer = make_shared<CDSound>(nullptr);
 shared_ptr<CSimpleWnd> CIPCPlayer::m_pWndDxInit = make_shared<CSimpleWnd>();	///< 视频显示时，用以初始化DirectX的隐藏窗口对象
 
-map<string, HAccelRec> CIPCPlayer::m_MapHacceConfig;
+map<string, HAccelRecPtr> CIPCPlayer::m_MapHacceConfig;
 CCriticalSectionProxy CIPCPlayer::m_csMapHacceConfig;
 
 using namespace std;
