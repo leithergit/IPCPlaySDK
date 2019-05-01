@@ -48,7 +48,7 @@ public:
 			nWidth = GetSystemMetrics(SM_CXSCREEN);
 			nHeight = GetSystemMetrics(SM_CYSCREEN);
 		}
-		TraceMsgA("%s nWidth = %d\tnHeight = %d", __FUNCTION__, nWidth, nHeight);
+		//TraceMsgA("%s nWidth = %d\tnHeight = %d", __FUNCTION__, nWidth, nHeight);
 		return ::CreateWindow(szWindowClass,			// 窗口类
 			szWindowClass,			// 窗口标题 
 			WS_EX_TOPMOST | WS_POPUP,	// 窗口风格

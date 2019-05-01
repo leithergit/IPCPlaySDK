@@ -745,6 +745,7 @@ HRESULT CVideoDecoder::SetD3DDeviceManager(IDirect3DDeviceManager9 *pDevManager)
 			goto done;
 		}
 
+		/* 2019.01.13 暂禁测试代码 by lee
 		// 测试是否能创建DXVA解码渲染对象
 		LPDIRECT3DSURFACE9 pSurfaces[DXVA2_MAX_SURFACES] = { 0 };
 		UINT numSurfaces = max(config.ConfigMinRenderTargetBuffCount, 1);
@@ -782,6 +783,7 @@ HRESULT CVideoDecoder::SetD3DDeviceManager(IDirect3DDeviceManager9 *pDevManager)
 			SafeRelease(pSurfaces[i]);		// 不要把i写成i++
 			i++;
 		}
+		*/
 	}
 
 done:
@@ -843,7 +845,7 @@ HRESULT CVideoDecoder::FindDecoderConfiguration(const GUID &input, const DXVA2_V
 HRESULT CVideoDecoder::CreateDXVA2Decoder(int nSurfaces, IDirect3DSurface9 **ppSurfaces)
 {
 	HRESULT hr = S_OK;
-	LPDIRECT3DSURFACE9 pSurfaces[DXVA2_MAX_SURFACES];
+	LPDIRECT3DSURFACE9 pSurfaces[DXVA2_MAX_SURFACES] = {0};
 
 	if (!m_pDXVADecoderService)
 		return E_FAIL;
@@ -982,8 +984,8 @@ enum AVPixelFormat CVideoDecoder::get_dxva2_format(struct AVCodecContext *c, con
 }
 
 typedef struct SurfaceWrapper {
-	LPDIRECT3DSURFACE9 surface;
-	IMediaSample *sample;
+	LPDIRECT3DSURFACE9 pSurface;
+	IMediaSample *pSample;
 	CVideoDecoder *pDec;
 	IDirectXVideoDecoder *pDXDecoder;
 } SurfaceWrapper;
@@ -993,7 +995,7 @@ void CVideoDecoder::free_dxva2_buffer(void *opaque, uint8_t *data)
 	SurfaceWrapper *sw = (SurfaceWrapper *)opaque;	
 	CVideoDecoder *pDec = sw->pDec;
 	
-	LPDIRECT3DSURFACE9 pSurface = sw->surface;
+	LPDIRECT3DSURFACE9 pSurface = sw->pSurface;
 	for (int i = 0; i < pDec->m_NumSurfaces; i++) 
 	{
 		if (pDec->m_pSurfaces[i].pSurface == pSurface) 
@@ -1004,7 +1006,7 @@ void CVideoDecoder::free_dxva2_buffer(void *opaque, uint8_t *data)
 	}
 	SafeRelease(pSurface);
 	SafeRelease(sw->pDXDecoder);
-	SafeRelease(sw->sample);
+	SafeRelease(sw->pSample);
 	delete sw;
 }
 
@@ -1089,8 +1091,8 @@ int CVideoDecoder::get_dxva2_buffer(struct AVCodecContext *c, AVFrame *pic, int 
 	pic->data[0] = pic->data[3]		 = (uint8_t *)pSurface;	
 	SurfaceWrapper *surfaceWrapper	 = new SurfaceWrapper();
 	surfaceWrapper->pDec			 = pDec;
-	surfaceWrapper->surface			 = pSurface;
-	surfaceWrapper->surface->AddRef();
+	surfaceWrapper->pSurface			 = pSurface;
+	surfaceWrapper->pSurface->AddRef();
 	surfaceWrapper->pDXDecoder		 = pDec->m_pDecoder;
 	surfaceWrapper->pDXDecoder->AddRef();
 	pic->buf[0]						 = av_buffer_create(nullptr, 0, free_dxva2_buffer, surfaceWrapper, 0);

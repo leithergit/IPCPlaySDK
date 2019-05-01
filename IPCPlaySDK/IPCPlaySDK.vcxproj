@@ -88,14 +88,14 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;IPCPLAYSDK_EXPORTS;_ENABLE_FFMPEG_STAITC_LIB;_XKEYCHECK_H;_CRT_SECURE_NO_WARNINGS;_LineTime_;D3D_DEBUG_INFO;_TraceFunction;_STD_SMARTPTR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\ffmpeg\static.20181119\Release\include;..\faad2-2.7\include;$(DXSDK_DIR)Include;.\svacparser;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\ffmpeg\static.20190113\debug\include;..\faad2-2.7\include;..\DirectX9.0 SDK\Include;.\svacparser;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\ffmpeg\static.20181012\Release\lib;$(DXSDK_DIR)Lib\x86;..\faad2-2.7\include;..\MinGW\lib\gcc\mingw32\4.8.1;..\MinGW\lib;.\TCmalloc;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\ffmpeg\static.20190113\debug\lib;..\DirectX9.0 SDK\Lib\x86;..\faad2-2.7\include;..\MinGW\lib\gcc\mingw32\4.8.1;..\MinGW\lib;.\TCmalloc;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMTD.lib LIBCMT.lib</IgnoreSpecificDefaultLibraries>
       <AdditionalOptions>/NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:libcmtd.lib %(AdditionalOptions)</AdditionalOptions>
       <ModuleDefinitionFile>IPCPlaySDK.def</ModuleDefinitionFile>

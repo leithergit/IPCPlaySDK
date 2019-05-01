@@ -233,6 +233,7 @@ struct AdapterInfo
 	DWORD           Revision;
 	GUID            DeviceIdentifier;
 	DWORD           WHQLLevel;
+	//int				nAdapter;			// the adapter NO.
 };
 #pragma pack(pop)
 

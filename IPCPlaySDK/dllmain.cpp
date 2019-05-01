@@ -23,6 +23,9 @@ UINT	g_nPlayerHandles = 0;
 double	g_dfProcessLoadTime = 0.0f;
 bool g_bEnableDDraw = false;
 
+extern map<string, DxSurfaceList>g_DxSurfacePool;	// 用于缓存DxSurface对象
+extern CCriticalSectionProxy g_csDxSurfacePool;
+
 UINT __stdcall Thread_Helper(void *);
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -97,6 +100,17 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		//TraceMsgA("%s IPCPlaySDK is Unloaded.\r\n", __FUNCTION__);
 		CloseHandle(g_hEventThreadExit);
 		g_hEventThreadExit = nullptr;
+// 		g_csDxSurfacePool.Lock();
+// 		for (auto itList = g_DxSurfacePool.begin(); itList != g_DxSurfacePool.end();)
+// 		{
+// 			for (auto it = itList->second.begin(); it != itList->second.end();)
+// 			{
+// 				delete (*it);
+// 				it = itList->second.erase(it);
+// 			}
+// 			itList = g_DxSurfacePool.erase(itList);
+// 		}
+// 		g_csDxSurfacePool.Unlock();
 	}
 		break;
 	}

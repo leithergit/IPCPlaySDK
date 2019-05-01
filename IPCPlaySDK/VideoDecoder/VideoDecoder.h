@@ -807,9 +807,9 @@ public:
 		// Native decoding should use 16 buffers to enable seamless codec changes
 		// Buffers based on max ref frames
 		if (m_nCodecId == AV_CODEC_ID_H264)
-			buffers = 8;
+			buffers = 2;
 		else if (m_nCodecId == AV_CODEC_ID_HEVC)
-			buffers = 8;
+			buffers = 2;
 		else
 			buffers = 2;
 
@@ -974,6 +974,14 @@ public:
 	inline IDirect3D9 *GetD3D9()
 	{
 		return m_pD3D;
+	}
+
+	void FlushDecodeBuffer()
+	{
+		CAutoLock lock(&m_csDecoder);
+		if (m_nManufacturer == FFMPEG)
+			avcodec_flush_buffers(m_pAVCtx);
+		
 	}
 	/// @brief 解码
 	/// 以下注释摘自于ffmpeg的解码函数avcodec_decode_video2，并有所删减

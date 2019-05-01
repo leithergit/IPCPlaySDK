@@ -4,6 +4,7 @@
 //#include <ppl.h>
 #include <assert.h>
 using namespace std;
+#include "../../include/Runlog.h"
 
 #ifdef _STD_SMARTPTR
 #include <memory>
@@ -220,9 +221,9 @@ public:
 		strcpy_s(m_szFunction, 256, szFunction);
 		if (szTxt)
 			strcpy_s(m_szText, 1024, szTxt);
-		//CHAR szText[1024] = { 0 };
-		//sprintf_s(szText, 1024, "%s\t_IN_ %s \tMemory = %d KB.\n",__FUNCTION__, szFunction, m_nMemoryCount);
-		//OutputDebugStringA(szText);
+		CHAR szText[1024] = { 0 };
+		sprintf_s(szText, 1024, "%s\t_IN_ %s \tMemory = %d KB.\n",__FUNCTION__, szFunction, m_nMemoryCount);
+		OutputDebugStringA(szText);
 	}
 	~CTraceFunction()
 	{
@@ -692,28 +693,31 @@ public:
 	{
 		if (m_pDirect3D9Ex)
 		{
+			CRunlog AdaperLog(_T("Adapter"));
 			m_nAdapterCount = m_pDirect3D9Ex->GetAdapterCount();
+			AdaperLog.Runlog(_T("%s AdapterCount = %d.\r\n"),__FUNCTION__, m_nAdapterCount);
 			
 			for (DWORD i = 0; i < m_nAdapterCount; i++)
 			{
 				if (m_pDirect3D9Ex->GetAdapterIdentifier(i/*D3DADAPTER_DEFAULT*/, 0, (D3DADAPTER_IDENTIFIER9 *)&m_AdapterArray[i]) != D3D_OK)
 					return false;
 				memcpy(&m_AdapterArray[i], &m_AdapterArray[i], sizeof(D3DADAPTER_IDENTIFIER9));
-				DxTraceMsg("[%d]Driver: %s.\n", i, m_AdapterArray[i].Driver);
-				DxTraceMsg("[%d]Description: %s\n", i, m_AdapterArray[i].Description);
-				DxTraceMsg("[%d]Device Name: %s\n", i, m_AdapterArray[i].DeviceName);
-				DxTraceMsg("[%d]Vendor id:%4x\n", i, m_AdapterArray[i].VendorId);
-				DxTraceMsg("[%d]Device id: %4x\n", i, m_AdapterArray[i].DeviceId);
-				DxTraceMsg("[%d]Product: %x\n", i, HIWORD(m_AdapterArray[i].DriverVersion.HighPart));
-				DxTraceMsg("[%d]Version:%x\n", i, LOWORD(m_AdapterArray[i].DriverVersion.HighPart));
-				DxTraceMsg("[%d]SubVersion: %x\n", i, HIWORD(m_AdapterArray[i].DriverVersion.LowPart));
-				DxTraceMsg("[%d]Build: %x %d.%d.%d.%d\n", i, LOWORD(m_AdapterArray[i].DriverVersion.LowPart),
+				
+				AdaperLog.Runlog("[%d]Driver: %s.\n", i, m_AdapterArray[i].Driver);
+				AdaperLog.Runlog("[%d]Description: %s\n", i, m_AdapterArray[i].Description);
+				AdaperLog.Runlog("[%d]Device Name: %s\n", i, m_AdapterArray[i].DeviceName);
+				AdaperLog.Runlog("[%d]Vendor id:%4x\n", i, m_AdapterArray[i].VendorId);
+				AdaperLog.Runlog("[%d]Device id: %4x\n", i, m_AdapterArray[i].DeviceId);
+				AdaperLog.Runlog("[%d]Product: %x\n", i, HIWORD(m_AdapterArray[i].DriverVersion.HighPart));
+				AdaperLog.Runlog("[%d]Version:%x\n", i, LOWORD(m_AdapterArray[i].DriverVersion.HighPart));
+				AdaperLog.Runlog("[%d]SubVersion: %x\n", i, HIWORD(m_AdapterArray[i].DriverVersion.LowPart));
+				AdaperLog.Runlog("[%d]Build: %x %d.%d.%d.%d\n", i, LOWORD(m_AdapterArray[i].DriverVersion.LowPart),
 					HIWORD(m_AdapterArray[i].DriverVersion.HighPart),
 					LOWORD(m_AdapterArray[i].DriverVersion.HighPart),
 					HIWORD(m_AdapterArray[i].DriverVersion.LowPart),
 					LOWORD(m_AdapterArray[i].DriverVersion.LowPart));
 				
-				DxTraceMsg("[%d]SubSysId: %x\n, Revision: %x\n,GUID:%s\n, WHQLLevel:%d\n", i,
+				AdaperLog.Runlog("[%d]SubSysId: %x\n, Revision: %x\n,GUID:%s\n, WHQLLevel:%d\n", i,
 					m_AdapterArray[i].SubSysId,
 					m_AdapterArray[i].Revision,
 					StringFromGUIDA(&m_AdapterArray[i].DeviceIdentifier),
@@ -3638,4 +3642,5 @@ __Failure:
 		return false;
 	}
 };
+typedef shared_ptr<CDxSurfaceEx> CDxSurfaceExPtr;
 

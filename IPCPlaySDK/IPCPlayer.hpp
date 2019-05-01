@@ -187,6 +187,55 @@ struct StreamProbe
 	int			nProbeOffset;			///< 码流探测时视频帧复制时的帧内偏移
 };
 
+
+struct  CItemStatus;
+typedef shared_ptr<CItemStatus> CItemStatusPtr;
+struct  CItemStatus
+{
+	bool bUsed;
+	void *pValue;
+private:
+	CItemStatus()
+	{
+		ZeroMemory(this, sizeof(CItemStatus));
+	}
+public:
+	CItemStatus(void *ItemValue,bool bUsed = true)
+	{
+		this->pValue = ItemValue;
+		this->bUsed = bUsed;
+	}
+};
+
+
+class CFreeItemFinder
+{
+public:
+	CFreeItemFinder()
+	{
+	}
+	bool operator()(CItemStatusPtr & pItem)
+	{
+		return !pItem->bUsed;
+	}
+};
+
+class CItemValueFinder
+{
+public:
+	CItemValueFinder(void *ItempValue)
+		:pValue(ItempValue)
+	{
+	}
+	bool operator()(CItemStatusPtr & pItem)
+	{
+		return (pValue == pItem->pValue);
+	}
+	void *pValue;
+};
+
+typedef list<CDxSurfaceEx* >DxSurfaceList;
+
 extern volatile bool g_bThread_ClosePlayer/* = false*/;
 extern list<IPC_PLAYHANDLE > g_listPlayerAsyncClose;
 extern CCriticalSectionProxy  g_csListPlayertoFree;
@@ -260,6 +309,7 @@ public:
 	static CCriticalSectionProxyPtr m_pCSGlobalCount;
 	shared_ptr<CMMEvent> m_pRenderTimer;
 	CHAR		m_szLogFileName[512];
+	HANDLE		m_hEventFlushDecoder = nullptr;
 //#ifdef _DEBUG
 	
 	int			m_nObjIndex;			///< 当前对象的计数
@@ -497,9 +547,15 @@ private:
 
 	// 初始化DirectX显示组件
 	bool InitizlizeDx(AVFrame *pAvFrame = nullptr);
+
+	static CDxSurfaceEx *GetDxSurfaceFromPool(int nWidth, int  nHeight);
+
+	static void PutDxSurfacePool(CDxSurfaceEx *pSurface);
 	
 	void UnInitlizeDx()
 	{
+		//PutDxSurfacePool(m_pDxSurface);
+		//m_pDxSurface = nullptr;
 		Safe_Delete(m_pDxSurface);
 		Safe_Delete(m_pDDraw);
 	}
@@ -909,11 +965,13 @@ public:
 	{
 		m_csVideoCache.Lock();
 		m_listVideoCache.clear();
-		m_csVideoCache.Lock();
+		m_csVideoCache.Unlock();
 
 		m_csAudioCache.Lock();
 		m_listAudioCache.clear();
-		m_csAudioCache.Lock();
+		m_csAudioCache.Unlock();
+		if (m_hEventFlushDecoder)
+			SetEvent(m_hEventFlushDecoder);
 	}
 	
 	/// @brief 设置显示边界,边界外的图像将不予以显示

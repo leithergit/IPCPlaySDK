@@ -37,6 +37,8 @@ shared_ptr<CSimpleWnd> CIPCPlayer::m_pWndDxInit = make_shared<CSimpleWnd>();	///
 map<string, HAccelRecPtr> CIPCPlayer::m_MapHacceConfig;
 CCriticalSectionProxy CIPCPlayer::m_csMapHacceConfig;
 
+
+
 using namespace std;
 using namespace std::tr1;
 
