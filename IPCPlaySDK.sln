@@ -19,6 +19,13 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TDecodeLeak", "TDecodeLeak\TDecodeLeak.vcxproj", "{14B87607-6AC3-4C1A-B409-65E482F9548D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MagoHAccelConfig", "MagoHAccelConfig\MagoHAccelConfig.vcxproj", "{459FAFEE-FEC5-4337-9938-609667834FB0}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CEA53F20-0470-4F00-B2DE-C049FCF04F80} = {CEA53F20-0470-4F00-B2DE-C049FCF04F80}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DHStreamParserSample", "DHStreamParserSample\DHStreamParserSample.vcxproj", "{7C01A154-D299-421B-8F40-BF58825426BC}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MemLeakT", "MemLeakT\MemLeakT.vcxproj", "{8233FF37-3C77-4685-9854-86E7F1E19B4D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -84,6 +91,22 @@ Global
 		{459FAFEE-FEC5-4337-9938-609667834FB0}.Release.Shared|Win32.Build.0 = Release|Win32
 		{459FAFEE-FEC5-4337-9938-609667834FB0}.Release|Win32.ActiveCfg = Release|Win32
 		{459FAFEE-FEC5-4337-9938-609667834FB0}.Release|Win32.Build.0 = Release|Win32
+		{7C01A154-D299-421B-8F40-BF58825426BC}.Debug.shared|Win32.ActiveCfg = Debug|Win32
+		{7C01A154-D299-421B-8F40-BF58825426BC}.Debug.shared|Win32.Build.0 = Debug|Win32
+		{7C01A154-D299-421B-8F40-BF58825426BC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7C01A154-D299-421B-8F40-BF58825426BC}.Debug|Win32.Build.0 = Debug|Win32
+		{7C01A154-D299-421B-8F40-BF58825426BC}.Release.Shared|Win32.ActiveCfg = Release|Win32
+		{7C01A154-D299-421B-8F40-BF58825426BC}.Release.Shared|Win32.Build.0 = Release|Win32
+		{7C01A154-D299-421B-8F40-BF58825426BC}.Release|Win32.ActiveCfg = Release|Win32
+		{7C01A154-D299-421B-8F40-BF58825426BC}.Release|Win32.Build.0 = Release|Win32
+		{8233FF37-3C77-4685-9854-86E7F1E19B4D}.Debug.shared|Win32.ActiveCfg = Debug|Win32
+		{8233FF37-3C77-4685-9854-86E7F1E19B4D}.Debug.shared|Win32.Build.0 = Debug|Win32
+		{8233FF37-3C77-4685-9854-86E7F1E19B4D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8233FF37-3C77-4685-9854-86E7F1E19B4D}.Debug|Win32.Build.0 = Debug|Win32
+		{8233FF37-3C77-4685-9854-86E7F1E19B4D}.Release.Shared|Win32.ActiveCfg = Release|Win32
+		{8233FF37-3C77-4685-9854-86E7F1E19B4D}.Release.Shared|Win32.Build.0 = Release|Win32
+		{8233FF37-3C77-4685-9854-86E7F1E19B4D}.Release|Win32.ActiveCfg = Release|Win32
+		{8233FF37-3C77-4685-9854-86E7F1E19B4D}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

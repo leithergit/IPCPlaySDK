@@ -52,15 +52,17 @@ END_MESSAGE_MAP()
 CSyncPlayerDlg::CSyncPlayerDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CSyncPlayerDlg::IDD, pParent)
 	, m_nTestTimes(200)
+	, m_nPlayerCount(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_pVideoFrame = new CVideoFrame;
 	m_pWndSizeManager = new CWndSizeManger;
 	
-	m_strFile[0] = _T("E:\\DVORecord\\TestDAV\\SaveRecord_1.dav");
-	m_strFile[1] = _T("E:\\DVORecord\\TestDAV\\SaveRecord_2.dav");
-	m_strFile[2] = _T("E:\\DVORecord\\TestDAV\\SaveRecord_3.dav");
-	m_strFile[3] = _T("E:\\DVORecord\\TestDAV\\SaveRecord_4.dav");
+// 	m_strFile[0] = _T("I:\\1\\3301061000001$0\\3301061000001$0_2019-04-25 10;20;50.dat\\0-0.dav");
+// 	m_strFile[1] = _T("I:\\1\\3301061000002$0\\3301061000002$0_2019-04-25 10;20;50.dat\\0-1.dav");
+// 	m_strFile[2] = _T("I:\\1\\3301061000003$0\\3301061000003$0_2019-04-25 10;20;51.dat\\0-2.dav");
+// 	m_strFile[3] = _T("I:\\1\\3301061000004$0\\3301061000004$0_2019-04-25 10;20;51.dat\\0-3.dav");
+	LoadConfig();
 	m_nTestTimes = 200;
 }
 
@@ -71,7 +73,9 @@ void CSyncPlayerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_FILE2, m_strFile[1]);
 	DDX_Text(pDX, IDC_EDIT_FILE3, m_strFile[2]);
 	DDX_Text(pDX, IDC_EDIT_FILE4, m_strFile[3]);
+	DDX_Text(pDX, IDC_EDIT_FILE5, m_strFile[4]);
 	DDX_Text(pDX, IDC_EDIT_TEST, m_nTestTimes);
+	DDX_Text(pDX, IDC_EDIT_PLAYERS, m_nPlayerCount);
 }
 
 BEGIN_MESSAGE_MAP(CSyncPlayerDlg, CDialogEx)
@@ -80,12 +84,13 @@ BEGIN_MESSAGE_MAP(CSyncPlayerDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON_START, &CSyncPlayerDlg::OnBnClickedButtonStart)
 	ON_WM_SIZE()
-	ON_COMMAND_RANGE(IDC_BUTTON_BROWSE1, IDC_BUTTON_BROWSE4, &CSyncPlayerDlg::OnBrowse)
+	ON_COMMAND_RANGE(IDC_BUTTON_BROWSE1, IDC_BUTTON_BROWSE5, &CSyncPlayerDlg::OnBrowse)
 	ON_BN_CLICKED(IDC_BUTTON_STOP, &CSyncPlayerDlg::OnBnClickedButtonStop)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BUTTON_TEST, &CSyncPlayerDlg::OnBnClickedButtonTest)
 	ON_BN_CLICKED(IDC_BUTTON_STOPTEST, &CSyncPlayerDlg::OnBnClickedButtonStoptest)
 	ON_WM_TIMER()
+	ON_BN_CLICKED(IDC_BUTTON_VIDEOFILEMANAGER, &CSyncPlayerDlg::OnBnClickedButtonVideofilemanager)
 END_MESSAGE_MAP()
 
 
@@ -120,9 +125,11 @@ BOOL CSyncPlayerDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
+	ZeroMemory(m_pPlayer, sizeof(CDialogVideo*) * 16);
 	CRect rtClient;
 	GetDlgItemRect(IDC_STATIC_FRAME, rtClient);
 	m_pVideoFrame->Create(1024, rtClient, 4, this);
+	//SetDlgItemInt(IDC_EDIT_PLAYERS, 5);
 
 	UINT nIDArrayBottom[] = { IDC_STATIC1, IDC_EDIT_FILE1, IDC_BUTTON_BROWSE1,
 		IDC_STATIC2, IDC_EDIT_FILE2, IDC_BUTTON_BROWSE2,
@@ -214,9 +221,9 @@ void CSyncPlayerDlg::OnSize(UINT nType, int cx, int cy)
 void CSyncPlayerDlg::OnBrowse(UINT nID)
 {
 	int nIndex = nID - IDC_BUTTON_BROWSE1;
-	if (nIndex >= 0 && nIndex <= 3)
+	if (nIndex >= 0 && nIndex <= 4)
 	{
-		UINT nEditID[] = { IDC_EDIT_FILE1, IDC_EDIT_FILE2, IDC_EDIT_FILE3, IDC_EDIT_FILE4 };
+		UINT nEditID[] = { IDC_EDIT_FILE1, IDC_EDIT_FILE2, IDC_EDIT_FILE3, IDC_EDIT_FILE4, IDC_EDIT_FILE5 };
 		TCHAR szText[1024] = { 0 };
 		DWORD dwFlags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_ALLOWMULTISELECT;
 		TCHAR  szFilter[] = _T("Video File(*.dav)|*.dav|Viedo File (*.mp4)|*.mp4|H.264 Video File(*.H264)|*.H264|H.265 Video File(*.H265)|*.H265|All Files (*.*)|*.*||");
@@ -233,39 +240,136 @@ void CSyncPlayerDlg::OnBrowse(UINT nID)
 	}
 }
 
+
+bool CSyncPlayerDlg::LoadConfig( )
+{
+	TCHAR szPath[MAX_PATH] = { 0 };
+	GetAppPath(szPath, MAX_PATH);
+	_tcscat_s(szPath, MAX_PATH, _T("\\Configuration.xml"));
+	if (!PathFileExists(szPath))
+	{
+		return false;
+	}
+	CMarkup xml;
+	if (!xml.Load(szPath))
+		return false;
+	/*
+	<?xml version="1.0" encoding="utf-8"?>
+	<Configuration >
+	<CameraList>
+	<Camera IP="192.168.1.26"/>
+	<Camera IP="192.168.1.30"/>
+	</CameraList>
+	</Configuration>
+	*/
+
+	int nCount = 0;
+	TCHAR szItemText[64] = { 0 };
+
+	CString strValue;
+	m_nPlayerCount = 0;
+
+	CString strIP, strAcount, strPassword, strPort;
+	CString strURL;
+	if (xml.FindElem(_T("Configuration")))
+	{
+		if (xml.FindChildElem(_T("FileList")))
+		{
+			xml.IntoElem();
+			while (xml.FindChildElem(_T("File")))
+			{
+				xml.IntoElem();
+				m_strFile[m_nPlayerCount++] = xml.GetAttrib(_T("Name"));
+
+				xml.OutOfElem();
+			}
+			xml.OutOfElem();
+		}
+		//nCount = 0;	
+	}
+	return true;
+}
+
+bool CSyncPlayerDlg::SaveConfig()
+{
+	TCHAR szPath[MAX_PATH] = { 0 };
+	GetAppPath(szPath, MAX_PATH);
+	_tcscat_s(szPath, MAX_PATH, _T("\\Configuration.xml"));
+
+	TCHAR szItemText[1024] = { 0 };
+	CMarkup xml;
+	TCHAR *szDoc = _T("<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n");
+	xml.SetDoc(szDoc);
+	/*
+	<?xml version="1.0" encoding="utf-8"?>
+	<Configuration >
+	<FileList>
+	<File Name="192.168.1.26"/>
+	<File Name="192.168.1.26"/>
+	</FileList>
+	</Configuration>
+	*/
+
+	xml.AddElem(_T("Configuration"));
+	xml.IntoElem();	// Configuration	
+	xml.AddElem(_T("FileList"));	//CameraList
+
+	xml.IntoElem();	// CameraList	
+	int nCount = GetDlgItemInt(IDC_EDIT_PLAYERS);
+	bool bFlag = false;
+	for (int i = 0; i < nCount; i++)
+	{
+		bFlag = xml.AddElem(_T("File"));
+		bFlag = xml.AddAttrib(_T("Name"), m_strFile[i]);
+	}
+
+	xml.OutOfElem();// CameraList
+	xml.OutOfElem();// Configuration
+	xml.Save(szPath);
+	return true;
+}
 void CSyncPlayerDlg::OnBnClickedButtonStart()
 {
 	UpdateData();
+	SaveConfig();
 	bool bExistSameFile = false;
 	CString strText;
-	int nCount = 1;
-	for (int i = 0; i < nCount; i++)
+	
+	int nCount = GetDlgItemInt(IDC_EDIT_PLAYERS);
+
+// 	for (int i = 0; i < nCount; i++)
+// 	{
+// 		CString strTemp = m_strFile[i];
+// 		for (int k = 0; k < nCount; k++)
+// 		{
+// 			if (k == i)
+// 				continue;
+// 			if (strTemp = m_strFile[k])
+// 			{
+// 				bExistSameFile = true;
+// 				strText.Format(_T("%d号和%d号文件名相同，同步播放不能播放同一个文件。"), i, k);
+// 				
+// 				break;
+// 			}
+// 		}
+// 	}
+// 	if (bExistSameFile)
+// 		AfxMessageBox(strText);
+// 	else
 	{
-		CString strTemp = m_strFile[i];
-		for (int k = 0; k < 0; k++)
-		{
-			if (k == i)
-				continue;
-			if (strTemp = m_strFile[k])
-			{
-				bExistSameFile = true;
-				strText.Format(_T("%d号和%d号文件名相同，同步播放不能播放同一个文件。"), i, k);
-				
-				break;
-			}
-		}
-	}
-	if (bExistSameFile)
-		AfxMessageBox(strText);
-	else
-	{
+		TCHAR szTitle[256] = { 0 };
 		for (int i = 0; i < nCount; i++)
 		{
 			ThreadParam *pTP = new ThreadParam;
 			pTP->pDialog = this;
+			m_pPlayer[i] = new CDialogVideo;
+			m_pPlayer[i]->Create(IDD_DIALOG_VIDEO, this);
+			_stprintf_s(szTitle, 256, _T("VideoPlayer(%d)"), i + 1);
+			m_pPlayer[i]->SetWindowText(szTitle);
+			m_pPlayer[i]->ShowWindow(SW_SHOW);
 			pTP->nID = i;
 			m_bThreadRun = true;
-			m_nTimeEvent = timeSetEvent(100, 1, (LPTIMECALLBACK)MMTIMECALLBACK, (DWORD_PTR)this, TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
+			//m_nTimeEvent = timeSetEvent(100, 1, (LPTIMECALLBACK)MMTIMECALLBACK, (DWORD_PTR)this, TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
 			m_hReadFile[i] = (HANDLE)_beginthreadex(nullptr, 0, ThreadReadFile, pTP, CREATE_SUSPENDED, 0);
 		}
 		for (int i = 0; i < nCount; i++)
@@ -277,29 +381,26 @@ void CSyncPlayerDlg::OnBnClickedButtonStart()
 
 UINT CSyncPlayerDlg::ReadFileRun(UINT nIndex)
 {
-	
-	int nBufferSize = 8 * 1024;
+	int nBufferSize = 128 * 1024;
 	byte *pFileBuffer = new byte[nBufferSize];
 	ZeroMemory(pFileBuffer, nBufferSize);
-	DhStreamParser* pStreamParser = nullptr;
-	
-	
+	DhStreamParser* pStreamParser = nullptr;	
 	try
 	{
 		CFile file(m_strFile[nIndex], CFile::modeRead | CFile::shareDenyWrite);
-		int nWidth = 0, nHeight = 0, nFramerate = 0;
-			
-		//ipcplay_EnableStreamParser(hPlayHandle, CODEC_H264);
-
-		//ipcplay_SetDecodeDelay(hPlayHandle, 0);
+		int nWidth = 0, nHeight = 0, nFramerate = 0;		
+//		ipcplay_EnableStreamParser(hPlayHandle, CODEC_H264);
+//		ipcplay_SetDecodeDelay(hPlayHandle, 0);
 //		同步播放
 // 		if (nIndex == 0)
 // 			ipcplay_StartSyncPlay(hPlayHandle, true,nullptr,25);
 // 		else
 // 			ipcplay_StartSyncPlay(hPlayHandle, true, m_hSyncSource, 25);
-		
+		time_t tTimeStamp1st = 0;
 		time_t tFrameTimeStamp = 0;
 		int nFrameInterval = 40;
+		bool bInput1stFrame = false;
+		int nFrames = 0;
 		while (m_bThreadRun)
 		{
 			int nReadLength = file.Read(pFileBuffer, nBufferSize);
@@ -313,7 +414,7 @@ UINT CSyncPlayerDlg::ReadFileRun(UINT nIndex)
 					DH_FRAME_INFO *pFrame = pStreamParser->GetNextFrame();
 					if (!pFrame)
 						break;
-					else if (!m_hAsyncPlayHandle)
+					else if (!m_hAsyncPlayHandle[nIndex])
 					{
 						IPC_MEDIAINFO MediaHeader;
 						MediaHeader.nVideoCodec = CODEC_H264;
@@ -321,39 +422,82 @@ UINT CSyncPlayerDlg::ReadFileRun(UINT nIndex)
 						MediaHeader.nVideoWidth = pFrame->nWidth;
 						MediaHeader.nVideoHeight = pFrame->nHeight;
 						MediaHeader.nFps = pFrame->nFrameRate;
-						m_hAsyncPlayHandle = ipcplay_OpenStream(m_pVideoFrame->GetPanelWnd(nIndex), (byte *)&MediaHeader, sizeof(IPC_MEDIAINFO), pFrame->nFrameRate);
+						m_hAsyncPlayHandle[nIndex] = ipcplay_OpenStream(m_pPlayer[nIndex]->m_hWnd, (byte *)&MediaHeader, sizeof(IPC_MEDIAINFO), pFrame->nFrameRate);
 						ipcplay_EnableAsyncRender(m_hAsyncPlayHandle);
-						ipcplay_EnablePlayOneFrame(m_hAsyncPlayHandle);
-						ipcplay_Start(m_hAsyncPlayHandle);
-						
+						//ipcplay_EnablePlayOneFrame(m_hAsyncPlayHandle);
+						if (nIndex == 0)
+						{
+							TraceMsgA("%s Start Play[0]:%.3f\n", __FUNCTION__, GetExactTime());
+							ipcplay_StartSyncPlay(m_hAsyncPlayHandle[nIndex], true, nullptr, pFrame->nFrameRate ? pFrame->nFrameRate : 25);
+						}
+						else
+						{
+							TraceMsgA("%s Start Play[%d]:%.3f\n", __FUNCTION__,nIndex, GetExactTime());
+							ipcplay_StartSyncPlay(m_hAsyncPlayHandle[nIndex], true, m_hAsyncPlayHandle[0], pFrame->nFrameRate ? pFrame->nFrameRate : 25);
+						}
+							
 					}
-					
+					if (pFrame->nLength < 100)
+						continue;
 					if (pFrame->nType == DH_FRAME_TYPE_VIDEO)
 					{
-						time_t tTimeStamp = pFrame->nTimeStamp;
+						if (!tTimeStamp1st)
+						{
+							tTimeStamp1st = pFrame->nTimeStamp;
+							tTimeStamp1st *= 1000;
+						}
 						
-						tTimeStamp *= 1000;
+						
+						nFrames++;
+						//TraceMsgA("%s Frame[%d] Length = %d.\n", __FUNCTION__, nFrames, pFrame->nLength);
+						
+						bool bKeyFrame = false;
 						
 						if (pFrame->nFrameRate)
 							nFrameInterval = 1000 / pFrame->nFrameRate;
 						else
 							nFrameInterval = 40;
-						if (pFrame->nSubType == DH_FRAME_TYPE_VIDEO_I_FRAME)
-							tFrameTimeStamp = tTimeStamp;
+// 						if (pFrame->nSubType == DH_FRAME_TYPE_VIDEO_I_FRAME)
+// 						{
+// 							tFrameTimeStamp = tTimeStamp1st;
+// 							bKeyFrame = true;
+// 						}
+// 							
+// 						else
+						tTimeStamp1st += nFrameInterval;
+
+						if (nIndex == 0 && tFirstFrameTime == 0)
+							tFirstFrameTime = tTimeStamp1st;
+						if (nIndex != 0)
+						{
+							if ((tFirstFrameTime != 0) && (tTimeStamp1st >= tFirstFrameTime))
+								vecFrameTime[nIndex].push_back(make_shared<FrameTime>(tTimeStamp1st, bKeyFrame));
+						}
 						else
-							tFrameTimeStamp += nFrameInterval;
-						
+							vecFrameTime[nIndex].push_back(make_shared<FrameTime>(tTimeStamp1st, bKeyFrame));
+							
+						if (bKeyFrame && m_pFrameView)
+						{
+							m_pFrameView->m_ctlFrameList.SetItemCount(vecFrameTime[0].size());
+							m_pFrameView->m_ctlFrameList.Invalidate();
+						}
 						do
 						{
-							//TraceMsgA("%s InputTimeStamp = %I64d.\n", __FUNCTION__, tFrameTimeStamp);
-							int nStatus = ipcplay_InputIPCStream(m_hAsyncPlayHandle, pFrame->pContent,
+							//TraceMsgA("%s Player[%d] Frame Time[%I64d]\n", __FUNCTION__, nIndex, tFrameTimeStamp);
+							int nStatus = ipcplay_InputIPCStream(m_hAsyncPlayHandle[nIndex], pFrame->pContent,
 								pFrame->nSubType == DH_FRAME_TYPE_VIDEO_I_FRAME ? IPC_I_FRAME : IPC_P_FRAME,
 								pFrame->nLength,
 								pFrame->nRequence,
-								tFrameTimeStamp);
+								tTimeStamp1st);
 							if (IPC_Succeed == nStatus)
-							
+							{
+// 								if (pFrame->nLength < 80)
+// 								{
+// 									TraceMsgA("%s Player[%d] Input1stFrame Time:%.3f,FrameTime = %I64d\n", __FUNCTION__, nIndex, GetExactTime(), tFrameTimeStamp);
+// 									bInput1stFrame = true;
+// 								}
 								break;
+							}
 							else if (IPC_Error_FrameCacheIsFulled == nStatus)
 							{
 								Sleep(10);
@@ -372,8 +516,15 @@ UINT CSyncPlayerDlg::ReadFileRun(UINT nIndex)
 	}
 	catch (CFileException* e)
 	{
+		TCHAR szError[1024] = { 0 };
+		e->GetErrorMessage(szError, 1024, nullptr);
+		TraceMsg(_T("%s Exception:%s.\n"), __FUNCTIONW__, szError);
 	}
 	delete[]pFileBuffer;
+	if (nIndex == 0)
+	{
+		SetTimer(ID_RESTART, 2000, nullptr);
+	}
 	return 0;
 }
 
@@ -428,6 +579,12 @@ void CSyncPlayerDlg::OnBnClickedButtonStop()
 	::MsgWaitForMultipleObjects(4, m_hReadFile, true, INFINITE, QS_ALLINPUT);
 	for (int i = 0; i < 4; i++)
 	{
+		if (m_pPlayer[i])
+		{
+			m_pPlayer[i]->DestroyWindow();
+			delete m_pPlayer[i];
+			m_pPlayer[i] = nullptr;
+		}
 		CloseHandle(m_hReadFile[i]);
 		m_hReadFile[i] = nullptr;
 	}
@@ -439,7 +596,7 @@ void CSyncPlayerDlg::OnBnClickedButtonStop()
 void CSyncPlayerDlg::OnDestroy()
 {
 	CDialogEx::OnDestroy();
-
+	OnBnClickedButtonStop();
 	delete m_pVideoFrame;
 	delete m_pWndSizeManager;
 }
@@ -458,6 +615,16 @@ void CSyncPlayerDlg::OnBnClickedButtonStoptest()
 	if (m_nTestTimer)
 		KillTimer(m_nTestTimer);
 	EnableDlgItem(IDC_EDIT_TEST, TRUE);
+	if (m_pFrameView)
+	{
+		m_pFrameView->ShowWindow(SW_SHOW);
+	}
+	else
+	{
+		m_pFrameView = new CFrameView;
+		m_pFrameView->Create(IDD_FRAME_VIEW, this);
+		m_pFrameView->ShowWindow(SW_SHOW);
+	}
 }
 
 
@@ -477,6 +644,21 @@ void CSyncPlayerDlg::OnTimer(UINT_PTR nIDEvent)
 			UpdateData(FALSE);
 		}
 	}
+	if (nIDEvent == ID_RESTART)
+	{
+		OnBnClickedButtonStop();
+		OnBnClickedButtonStart();
+		KillTimer(ID_RESTART);
+			
+	}
 
 	CDialogEx::OnTimer(nIDEvent);
 }
+
+#include "DavFileManager.h"
+void CSyncPlayerDlg::OnBnClickedButtonVideofilemanager()
+{
+	CDavFileManager dlg;
+	dlg.DoModal();
+}
+

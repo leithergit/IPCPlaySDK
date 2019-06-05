@@ -193,6 +193,7 @@ struct PlayerInfo
 	UINT		nTotalFrames;	///< 视频总帧数,只有文件播放时才有效
 	time_t		tTotalTime;		///< 文件总时长(单位:毫秒),只有文件播放时才有效
 	UINT		nCurFrameID;	///< 当前播放视频的帧ID,只有文件播放时才有效,nSDKVersion<IPC_IPC_SDK_VERSION_2015_12_16无效
+	time_t		tFirstFrameTime;///< 收到的第一帧的时间(单位:毫秒)
 	time_t		tCurFrameTime;	///< 返回当前播放视频的帧相对起点的时间(单位:毫秒)
 	time_t		tTimeEplased;	///< 已播放时间(单位:毫秒)
 	USHORT		nFPS;			///< 文件或码流中视频的原始帧率

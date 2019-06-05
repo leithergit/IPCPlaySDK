@@ -83,14 +83,14 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_STD_SMARTPTR;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../include;../release;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include;../release;./DhStreamParser;C:\Program Files (x86)\BugTrap for Win32 &amp; .NET\Win32\BugTrap;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>../release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../release;C:\Program Files (x86)\BugTrap for Win32 &amp; .NET\Win32\BugTrap;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>uafxcw.lib;LIBCMT.lib;</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>uafxcw.lib;LIBCMT.lib;</IgnoreSpecificDefaultLibraries>
     </Link>
@@ -109,16 +109,20 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Include\Markup.h" />
     <ClInclude Include="..\Include\Runlog.h" />
     <ClInclude Include="..\Include\TimeUtility.h" />
     <ClInclude Include="..\Include\Utility.h" />
     <ClInclude Include="..\Include\VideoFrame.h" />
     <ClInclude Include="..\IPCPlaySDK\IPCPlaySDK.h" />
+    <ClInclude Include="DavFileManager.h" />
     <ClInclude Include="DHStream.hpp" />
     <ClInclude Include="DhStreamParser\DhStreamParser.h" />
     <ClInclude Include="DhStreamParser\FrameList.h" />
     <ClInclude Include="DhStreamParser\StreamParser.h" />
     <ClInclude Include="DhStreamParser\svacstream.h" />
+    <ClInclude Include="DialogVideo.h" />
+    <ClInclude Include="FrameView.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="SyncPlayer.h" />
@@ -126,13 +130,17 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Include\Markup.cpp" />
     <ClCompile Include="..\Include\Runlog.cpp" />
     <ClCompile Include="..\Include\TimeUtility.cpp" />
     <ClCompile Include="..\Include\Utility.cpp" />
     <ClCompile Include="..\Include\VideoFrame.cpp" />
+    <ClCompile Include="DavFileManager.cpp" />
     <ClCompile Include="DhStreamParser\DhStreamParser.cpp" />
     <ClCompile Include="DhStreamParser\StreamParser.cpp" />
     <ClCompile Include="DhStreamParser\svacstream.cpp" />
+    <ClCompile Include="DialogVideo.cpp" />
+    <ClCompile Include="FrameView.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

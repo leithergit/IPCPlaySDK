@@ -39,6 +39,7 @@
 #include "Runlog.h"
 #include "WndSizeManager.h"
 #include "IPCPlaySDK.h"
+#include "Markup.h"
 #pragma comment(lib,"ipcplaysdk")
 
 #ifdef _UNICODE

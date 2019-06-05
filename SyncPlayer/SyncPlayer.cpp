@@ -5,6 +5,8 @@
 #include "stdafx.h"
 #include "SyncPlayer.h"
 #include "SyncPlayerDlg.h"
+#include "BugTrap.h"
+#pragma comment(lib,"BugTrap.lib")
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -25,10 +27,18 @@ CSyncPlayerApp::CSyncPlayerApp()
 	// 支持重新启动管理器
 	m_dwRestartManagerSupportFlags = AFX_RESTART_MANAGER_SUPPORT_RESTART;
 
-	// TODO:  在此处添加构造代码，
-	// 将所有重要的初始化放置在 InitInstance 中
 }
 
+static void SetupExceptionHandler()
+{
+	BT_SetAppName(_T("SyncPlayer"));
+	BT_SetActivityType(BTA_SHOWUI);
+	TCHAR szReportPath[1024] = { 0 };
+	GetAppPath(szReportPath, 1024);
+	BT_SetReportFilePath(szReportPath);
+	BT_SetFlags(BTF_RESTARTAPP);
+	BT_InstallSehFilter();
+}
 
 // 唯一的一个 CSyncPlayerApp 对象
 
@@ -39,6 +49,7 @@ CSyncPlayerApp theApp;
 
 BOOL CSyncPlayerApp::InitInstance()
 {
+	SetupExceptionHandler();
 	// 如果一个运行在 Windows XP 上的应用程序清单指定要
 	// 使用 ComCtl32.dll 版本 6 或更高版本来启用可视化方式，
 	//则需要 InitCommonControlsEx()。  否则，将无法创建窗口。

@@ -20,22 +20,22 @@
 
 CAvRegister CIPCPlayer::avRegister;
 //CTimerQueue CIPCPlayer::m_TimeQueue;
-CCriticalSectionProxyPtr CIPCPlayer::m_csDsoundEnum = make_shared<CCriticalSectionProxy>();
+CCriticalSectionAgentPtr CIPCPlayer::m_csDsoundEnum = make_shared<CCriticalSectionAgent>();
 shared_ptr<CDSoundEnum> CIPCPlayer::m_pDsoundEnum = nullptr;/*= make_shared<CDSoundEnum>()*/;	///< 音频设备枚举器
 #ifdef _DEBUG
 int	CIPCPlayer::m_nGloabalCount = 0;
-CCriticalSectionProxyPtr CIPCPlayer::m_pCSGlobalCount = make_shared<CCriticalSectionProxy>();
+CCriticalSectionAgentPtr CIPCPlayer::m_pCSGlobalCount = make_shared<CCriticalSectionAgent>();
 #endif
 
 #ifdef _DEBUG
-extern CCriticalSectionProxy g_csPlayerHandles;
+extern CCriticalSectionAgent g_csPlayerHandles;
 extern UINT	g_nPlayerHandles;
 #endif
 //shared_ptr<CDSound> CPlayer::m_pDsPlayer = make_shared<CDSound>(nullptr);
 shared_ptr<CSimpleWnd> CIPCPlayer::m_pWndDxInit = make_shared<CSimpleWnd>();	///< 视频显示时，用以初始化DirectX的隐藏窗口对象
 
 map<string, HAccelRecPtr> CIPCPlayer::m_MapHacceConfig;
-CCriticalSectionProxy CIPCPlayer::m_csMapHacceConfig;
+CCriticalSectionAgent CIPCPlayer::m_csMapHacceConfig;
 
 
 

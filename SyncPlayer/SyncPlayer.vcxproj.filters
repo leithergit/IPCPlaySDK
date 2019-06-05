@@ -69,6 +69,18 @@
     <ClInclude Include="..\IPCPlaySDK\IPCPlaySDK.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FrameView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DialogVideo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Markup.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="DavFileManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SyncPlayer.cpp">
@@ -100,6 +112,18 @@
     </ClCompile>
     <ClCompile Include="DhStreamParser\svacstream.cpp">
       <Filter>DHParser</Filter>
+    </ClCompile>
+    <ClCompile Include="FrameView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DialogVideo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Include\Markup.cpp">
+      <Filter>inc</Filter>
+    </ClCompile>
+    <ClCompile Include="DavFileManager.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -10,14 +10,14 @@ using namespace std::tr1;
 #include <boost/shared_ptr.hpp>
 using namespace boost;
 #endif
-class CCriticalSectionProxy
+class CCriticalSectionAgent
 {
 public:
-	CCriticalSectionProxy()
+	CCriticalSectionAgent()
 	{
 		InitializeCriticalSection(&m_cs);
 	}
-	~CCriticalSectionProxy()
+	~CCriticalSectionAgent()
 	{
 		DeleteCriticalSection(&m_cs);
 	}
@@ -42,4 +42,4 @@ protected:
 	CRITICAL_SECTION	m_cs;
 };
 
-typedef shared_ptr<CCriticalSectionProxy>CCriticalSectionProxyPtr;
+typedef shared_ptr<CCriticalSectionAgent>CCriticalSectionAgentPtr;

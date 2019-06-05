@@ -59,7 +59,7 @@ public:
 
 	bool IsFull()
 	{
-		return (nCount >= 200);
+		return (nCount >= nArraySize);
 	}
 
 	void Reset()
@@ -67,18 +67,26 @@ public:
 		ZeroMemory(this, offsetof(CStat, nObjIndex));
 	}
 
-	void OutputStat()
+	void OutputStat(double dfOuputcondition = 0.0f)
 	{
 		fAvgValue = fTotalValue / nCount;
-
 		TraceMsgA("%s Obj(%d)(%s)\t nQueueSize = %d\tMaxValue = %.3f\tMinValue = %.3f\tAvgValue = %.3f\n\t", __FUNCTION__, nObjIndex, szStatName, nCount, fMax, fMin, fAvgValue);
-		char szText[2048] = { 0 };
+		char szText[4096] = { 0 };
 		for (int i = 0; i < nCount; i++)
-		{
-			sprintf(&szText[strlen(szText)], "%.03f\t", pArray[i]);
-			if (i % 100 == 0 && i != 0)
-				strcat(szText, "\n\t");
-		}
+			if (dfOuputcondition == 0.0f)
+			{
+				sprintf(&szText[strlen(szText)], "[%03d] = %.03f\t", i, pArray[i]);
+				if (i % 100 == 0 && i != 0)
+					strcat(szText, "\n\t");
+
+			}
+			else
+			{
+				if (pArray[i] < dfOuputcondition)
+					continue;
+				sprintf(&szText[strlen(szText)], "[%03d] = %.03f\t", i, pArray[i]);
+			}
+
 		strcat(szText, "\r\n");
 		TraceMsgA(szText);
 	}

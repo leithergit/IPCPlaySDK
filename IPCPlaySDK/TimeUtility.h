@@ -60,6 +60,7 @@ BOOL NTPTiming(const char* szTimeServer);
 
 #define TimeSpan(t)		(time(NULL) - (time_t)t)
 #define TimeSpanEx(t)	(GetExactTime() - t)
+#define MMTimeSpan(t)	(timeGetTime() - t)
 typedef struct __ExactTimeBase
 {
 	LONGLONG	dfFreq;

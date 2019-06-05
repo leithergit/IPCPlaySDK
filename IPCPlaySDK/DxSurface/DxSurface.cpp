@@ -5,7 +5,7 @@ CD3D9Helper    g_pD3D9Helper;
 // IDirect3D9*  CDxSurface::m_pDirect3D9 = nullptr;
 // IDirect3D9Ex*  CDxSurfaceEx::m_pDirect3D9Ex = nullptr;
 
-CCriticalSectionProxyPtr CDxSurface::m_WndSurfaceMapcs = shared_ptr<CCriticalSectionProxy>(new CCriticalSectionProxy());
+CCriticalSectionAgentPtr CDxSurface::m_WndSurfaceMapcs = shared_ptr<CCriticalSectionAgent>(new CCriticalSectionAgent());
 
 int	CDxSurface::m_nObjectCount = 0;
-CCriticalSectionProxyPtr CDxSurface::m_csObjectCount = shared_ptr<CCriticalSectionProxy>(new CCriticalSectionProxy());
+CCriticalSectionAgentPtr CDxSurface::m_csObjectCount = shared_ptr<CCriticalSectionAgent>(new CCriticalSectionAgent());

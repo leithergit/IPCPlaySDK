@@ -238,7 +238,7 @@ typedef list<CDxSurfaceEx* >DxSurfaceList;
 
 extern volatile bool g_bThread_ClosePlayer/* = false*/;
 extern list<IPC_PLAYHANDLE > g_listPlayerAsyncClose;
-extern CCriticalSectionProxy  g_csListPlayertoFree;
+extern CCriticalSectionAgent  g_csListPlayertoFree;
 extern double	g_dfProcessLoadTime ;
 extern HMODULE  g_hDllModule;
 //extern HWND g_hSnapShotWnd;
@@ -270,23 +270,23 @@ private:
 	list<CAVFramePtr>		m_listAVFrame;		///<视频帧缓存，用于异步显示图像
 public:
 	static map<string, HAccelRecPtr>m_MapHacceConfig;	///不同显卡上开启硬解的路数
-	static CCriticalSectionProxy m_csMapHacceConfig;
+	static CCriticalSectionAgent m_csMapHacceConfig;
 private:
 		
-	CCriticalSectionProxy	m_cslistRenderWnd;
-	CCriticalSectionProxy	m_csAudioCache;		
-	CCriticalSectionProxy	m_csBorderRect;
-	CCriticalSectionProxy	m_csListRenderUnit;
-	CCriticalSectionProxy	m_csParser;
-	CCriticalSectionProxy	m_csSeekOffset;
-	CCriticalSectionProxy	m_csCaptureYUV;
-	CCriticalSectionProxy	m_csFilePlayCallBack;
-	CCriticalSectionProxy	m_csCaptureYUVEx;
-	CCriticalSectionProxy	m_csYUVFilter;
-	CCriticalSectionProxy	m_csVideoCache;
-	CCriticalSectionProxy	m_csCaptureRGB;
-	CCriticalSectionProxy	m_cslistAVFrame;	// 异步渲染帧缓存锁
-	CCriticalSectionProxy	m_csTimebase;
+	CCriticalSectionAgent	m_cslistRenderWnd;
+	CCriticalSectionAgent	m_csAudioCache;		
+	CCriticalSectionAgent	m_csBorderRect;
+	CCriticalSectionAgent	m_csListRenderUnit;
+	CCriticalSectionAgent	m_csParser;
+	CCriticalSectionAgent	m_csSeekOffset;
+	CCriticalSectionAgent	m_csCaptureYUV;
+	CCriticalSectionAgent	m_csFilePlayCallBack;
+	CCriticalSectionAgent	m_csCaptureYUVEx;
+	CCriticalSectionAgent	m_csYUVFilter;
+	CCriticalSectionAgent	m_csVideoCache;
+	CCriticalSectionAgent	m_csCaptureRGB;
+	CCriticalSectionAgent	m_cslistAVFrame;	// 异步渲染帧缓存锁
+	CCriticalSectionAgent	m_csTimebase;
 	//////////////////////////////////////////////////////////////////////////
 	/// 注意：所有CCriticalSectionProxy类的对象和模板类的对象都必须定义在m_nZeroOffset
 	/// 成员变量之前，否则可能会出访问错误
@@ -306,7 +306,7 @@ private:
 	int					m_nMaxFrameCache;///< 最大视频缓冲数量,默认值100
 		///< 当m_FrameCache中的视频帧数量超过m_nMaxFrameCache时，便无法再继续输入流数
 public:
-	static CCriticalSectionProxyPtr m_pCSGlobalCount;
+	static CCriticalSectionAgentPtr m_pCSGlobalCount;
 	shared_ptr<CMMEvent> m_pRenderTimer;
 	CHAR		m_szLogFileName[512];
 	HANDLE		m_hEventFlushDecoder = nullptr;
@@ -357,7 +357,7 @@ private:
 	AVPixelFormat	m_nDecodePixelFmt;	///< 解码后的象素格式
 	int			m_nFrameEplased;		///< 已经播放帧数
 	int			m_nCurVideoFrame;		///< 当前正播放的视频帧ID
-	time_t		m_nFirstFrameTime;		///< 文件播放或流回放的第1帧的时间
+	time_t		m_tFirstFrameTime;		///< 文件播放或流回放的第1帧的时间
 	time_t		m_tCurFrameTimeStamp;
 	time_t		m_tLastFrameTime;
 	USHORT		m_nPlayFPS;				///< 实际播放时帧率
@@ -406,7 +406,7 @@ private:	// 音频播放相关变量
 	WORD		m_nAudioPlayFPS;		///< 音频播放帧率
 
 	static shared_ptr<CDSoundEnum> m_pDsoundEnum;	///< 音频设备枚举器
-	static CCriticalSectionProxyPtr m_csDsoundEnum;
+	static CCriticalSectionAgentPtr m_csDsoundEnum;
 private:
 	HANDLE		m_hThreadFileParser;	///< 解析IPC私有格式录像的线程
 	HANDLE		m_hThreadDecode;		///< 视频解码和播放线程

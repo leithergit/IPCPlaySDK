@@ -693,31 +693,34 @@ public:
 	{
 		if (m_pDirect3D9Ex)
 		{
-			CRunlog AdaperLog(_T("Adapter"));
+			//CRunlog AdaperLog(_T("Adapter"));
 			m_nAdapterCount = m_pDirect3D9Ex->GetAdapterCount();
-			AdaperLog.Runlog(_T("%s AdapterCount = %d.\r\n"),__FUNCTION__, m_nAdapterCount);
+			TraceMsgA(_T("%s AdapterCount = %d.\r\n"),__FUNCTION__, m_nAdapterCount);
 			
 			for (DWORD i = 0; i < m_nAdapterCount; i++)
 			{
 				if (m_pDirect3D9Ex->GetAdapterIdentifier(i/*D3DADAPTER_DEFAULT*/, 0, (D3DADAPTER_IDENTIFIER9 *)&m_AdapterArray[i]) != D3D_OK)
 					return false;
+				LUID luid;
+				HRESULT hr = m_pDirect3D9Ex->GetAdapterLUID(i, &luid);
+					
 				memcpy(&m_AdapterArray[i], &m_AdapterArray[i], sizeof(D3DADAPTER_IDENTIFIER9));
 				
-				AdaperLog.Runlog("[%d]Driver: %s.\n", i, m_AdapterArray[i].Driver);
-				AdaperLog.Runlog("[%d]Description: %s\n", i, m_AdapterArray[i].Description);
-				AdaperLog.Runlog("[%d]Device Name: %s\n", i, m_AdapterArray[i].DeviceName);
-				AdaperLog.Runlog("[%d]Vendor id:%4x\n", i, m_AdapterArray[i].VendorId);
-				AdaperLog.Runlog("[%d]Device id: %4x\n", i, m_AdapterArray[i].DeviceId);
-				AdaperLog.Runlog("[%d]Product: %x\n", i, HIWORD(m_AdapterArray[i].DriverVersion.HighPart));
-				AdaperLog.Runlog("[%d]Version:%x\n", i, LOWORD(m_AdapterArray[i].DriverVersion.HighPart));
-				AdaperLog.Runlog("[%d]SubVersion: %x\n", i, HIWORD(m_AdapterArray[i].DriverVersion.LowPart));
-				AdaperLog.Runlog("[%d]Build: %x %d.%d.%d.%d\n", i, LOWORD(m_AdapterArray[i].DriverVersion.LowPart),
+				TraceMsgA("[%d]Driver: %s.\n", i, m_AdapterArray[i].Driver);
+				TraceMsgA("[%d]Description: %s\n", i, m_AdapterArray[i].Description);
+				TraceMsgA("[%d]Device Name: %s\n", i, m_AdapterArray[i].DeviceName);
+				TraceMsgA("[%d]Vendor id:%4x\n", i, m_AdapterArray[i].VendorId);
+				TraceMsgA("[%d]Device id: %4x\n", i, m_AdapterArray[i].DeviceId);
+				TraceMsgA("[%d]Product: %x\n", i, HIWORD(m_AdapterArray[i].DriverVersion.HighPart));
+				TraceMsgA("[%d]Version:%x\n", i, LOWORD(m_AdapterArray[i].DriverVersion.HighPart));
+				TraceMsgA("[%d]SubVersion: %x\n", i, HIWORD(m_AdapterArray[i].DriverVersion.LowPart));
+				TraceMsgA("[%d]Build: %x %d.%d.%d.%d\n", i, LOWORD(m_AdapterArray[i].DriverVersion.LowPart),
 					HIWORD(m_AdapterArray[i].DriverVersion.HighPart),
 					LOWORD(m_AdapterArray[i].DriverVersion.HighPart),
 					HIWORD(m_AdapterArray[i].DriverVersion.LowPart),
 					LOWORD(m_AdapterArray[i].DriverVersion.LowPart));
 				
-				AdaperLog.Runlog("[%d]SubSysId: %x\n, Revision: %x\n,GUID:%s\n, WHQLLevel:%d\n", i,
+				TraceMsgA("[%d]SubSysId: %x\n, Revision: %x\n,GUID:%s\n, WHQLLevel:%d\n", i,
 					m_AdapterArray[i].SubSysId,
 					m_AdapterArray[i].Revision,
 					StringFromGUIDA(&m_AdapterArray[i].DeviceIdentifier),
@@ -754,8 +757,8 @@ public:
 	D3DPRESENT_PARAMETERS	m_d3dpp;
 	CRITICAL_SECTION		m_csRender;			// 渲染临界区
 	CRITICAL_SECTION		m_csSnapShot;		// 截图临界区
-	CCriticalSectionProxyPtr m_pCriListLine;
-	CCriticalSectionProxyPtr m_pCriMapPolygon;
+	CCriticalSectionAgentPtr m_pCriListLine;
+	CCriticalSectionAgentPtr m_pCriMapPolygon;
 	bool					m_bD3DShared;		// IDirect3D9接口是否为共享 	
 	/*HWND					m_hWnd;*/
 	DWORD					m_dwExStyle;
@@ -805,9 +808,9 @@ public:
 	WNDPROC					m_pOldWndProc;
 	int						m_nDisplayAdapter;
 	static WndSurfaceMap	m_WndSurfaceMap;
-	static CCriticalSectionProxyPtr m_WndSurfaceMapcs;
+	static CCriticalSectionAgentPtr m_WndSurfaceMapcs;
 	static	int				m_nObjectCount;
-	static CCriticalSectionProxyPtr m_csObjectCount;
+	static CCriticalSectionAgentPtr m_csObjectCount;
 	bool					m_bWndSubclass;		// 是否子类化显示窗口,为ture时，则将显示窗口子类化,此时窗口消息会先被CDxSurface::WndProc优先处理,再由窗口函数处理
 	pDirect3DCreate9*		m_pDirect3DCreate9;
 	LPD3DXLINE              m_pD3DXLine = NULL; //Direct3D线对象  
@@ -865,8 +868,8 @@ public:
 		InitializeCriticalSection(&m_csRender);
 		InitializeCriticalSection(&m_csSnapShot);
 		InitializeCriticalSection(&m_csExternDraw);
-		m_pCriListLine = make_shared<CCriticalSectionProxy>();
-		m_pCriMapPolygon = make_shared<CCriticalSectionProxy>();
+		m_pCriListLine = make_shared<CCriticalSectionAgent>();
+		m_pCriMapPolygon = make_shared<CCriticalSectionAgent>();
 		//m_hEventFrameReady	= CreateEvent(NULL,FALSE,FALSE,NULL);
 		//m_hEventFrameCopied = CreateEvent(NULL,FALSE,FALSE, NULL);
 		m_hEventSnapShot	= CreateEvent(NULL,FALSE,FALSE,NULL);
@@ -2646,6 +2649,16 @@ public:
 		if (bZoomWnd)
 			::MoveWindow(hWnd, rtZoom.left, rtZoom.top, RectWidth(rtZoom), RectHeight(rtZoom), false);
 
+		HMONITOR	hCurrentMonitor = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+		//UINT nCurrentAdapter = D3DADAPTER_DEFAULT;
+		for (int  nAdapter = 0; nAdapter < g_pD3D9Helper.m_nAdapterCount; nAdapter ++)
+		{
+			if (m_pDirect3D9Ex->GetAdapterMonitor(nAdapter) == hCurrentMonitor)
+			{
+				TraceMsgA("%s AdapterID = %d.\r\n", __FUNCTION__,nAdapter);
+				m_nDisplayAdapter = nAdapter;
+			}
+		}
 		bool bSucceed = false;
 #ifdef _DEBUG
 		double dfTStart = GetExactTime();		

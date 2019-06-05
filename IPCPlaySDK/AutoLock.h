@@ -107,7 +107,7 @@ public:
 			}
 		}
 	}
-	CAutoLock(CCriticalSectionProxy *pCS, bool bAutoDelete = false, const CHAR *szFile = nullptr, char *szFunction = nullptr, int nLine = 0)
+	CAutoLock(CCriticalSectionAgent *pCS, bool bAutoDelete = false, const CHAR *szFile = nullptr, char *szFunction = nullptr, int nLine = 0)
 	{
 		ZeroMemory(this, sizeof(CAutoLock));
 		assert(pCS != NULL);

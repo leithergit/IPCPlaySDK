@@ -1253,7 +1253,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonRecord()
 
 void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 {
-	ipcplay_GetDisplayAdapterInfo();
+	//ipcplay_GetDisplayAdapterInfo();
 	bool bEnableWnd = true;
 	UINT bIsStreamPlay = IsDlgButtonChecked(IDC_CHECK_STREAMPLAY);
 	if (!m_pPlayContext)

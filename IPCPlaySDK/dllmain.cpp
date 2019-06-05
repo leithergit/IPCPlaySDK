@@ -13,10 +13,10 @@ HMODULE g_hDllModule = nullptr;
 volatile bool g_bThread_ClosePlayer/* = false*/;
 list<IPC_PLAYHANDLE > g_listPlayerAsyncClose;
 list<IPC_PLAYHANDLE> g_listPlayer;
-CCriticalSectionProxy  g_csListPlayertoFree;
+CCriticalSectionAgent  g_csListPlayertoFree;
 
 #ifdef _DEBUG
-CCriticalSectionProxy g_csPlayerHandles;
+CCriticalSectionAgent g_csPlayerHandles;
 UINT	g_nPlayerHandles = 0;
 #endif
 
@@ -24,7 +24,7 @@ double	g_dfProcessLoadTime = 0.0f;
 bool g_bEnableDDraw = false;
 
 extern map<string, DxSurfaceList>g_DxSurfacePool;	// 用于缓存DxSurface对象
-extern CCriticalSectionProxy g_csDxSurfacePool;
+extern CCriticalSectionAgent g_csDxSurfacePool;
 
 UINT __stdcall Thread_Helper(void *);
 BOOL APIENTRY DllMain( HMODULE hModule,
