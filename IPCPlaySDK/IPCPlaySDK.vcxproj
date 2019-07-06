@@ -235,6 +235,9 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\MagoD3D9Sample\DxSurface\DxSurface.h" />
+    <ClInclude Include="..\MagoD3D9Sample\DxSurface\DxTrace.h" />
+    <ClInclude Include="..\MagoD3D9Sample\DxSurface\gpu_memcpy_sse4.h" />
     <ClInclude Include="AudioCodec\g711.h" />
     <ClInclude Include="AudioCodec\g726.h" />
     <ClInclude Include="AudioDecoder.h" />
@@ -277,6 +280,8 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk" /y</Command>
     <ClInclude Include="YUVFrame.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\MagoD3D9Sample\DxSurface\DxSurface.cpp" />
+    <ClCompile Include="..\MagoD3D9Sample\DxSurface\DxTrace.cpp" />
     <ClCompile Include="AudioCodec\g711.cpp" />
     <ClCompile Include="AudioCodec\g726.cpp" />
     <ClCompile Include="Autolock.cpp" />

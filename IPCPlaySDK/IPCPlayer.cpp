@@ -1,6 +1,8 @@
 #include "IPCPlayer.hpp"
 
 extern bool g_bEnableDDraw;
+extern SharedMemory *g_pSharedMemory;
+extern HANDLE g_hHAccelMutexArray[10];
 
 map<string, DxSurfaceList>g_DxSurfacePool;	// 用于缓存DxSurface对象
 CCriticalSectionAgent g_csDxSurfacePool;
@@ -38,6 +40,7 @@ CIPCPlayer::CIPCPlayer()
 	m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
 	m_nDecodeDelay = -1;
 	m_nCoordinate = Coordinte_Wnd;
+	m_hInputFrameEvent = CreateEvent(nullptr, false, false, nullptr);
 }
 
 CIPCPlayer::CIPCPlayer(HWND hWnd, CHAR *szFileName, char *szLogFile)
@@ -96,7 +99,7 @@ CIPCPlayer::CIPCPlayer(HWND hWnd, CHAR *szFileName, char *szLogFile)
 	// #else
 	m_nMaxFrameCache = 100;				// 默认最大视频缓冲数量为100
 	m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
-
+	m_hInputFrameEvent = CreateEvent(nullptr, false, false, nullptr);
 	m_hRenderWnd = hWnd;
 	// #endif
 	if (szFileName)
@@ -312,7 +315,7 @@ CIPCPlayer::CIPCPlayer(HWND hWnd, int nBufferSize, char *szLogFile)
 	m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
 
 	AddRenderWindow(hWnd, nullptr);
-
+	m_hInputFrameEvent = CreateEvent(nullptr, false, false, nullptr);
 	
 	m_bEnableDDraw = g_bEnableDDraw;
 	
@@ -381,6 +384,7 @@ CIPCPlayer::~CIPCPlayer()
 	m_listVideoCache.clear();
 	if (m_pszFileName)
 		delete[]m_pszFileName;
+
 	if (m_hVideoFile)
 		CloseHandle(m_hVideoFile);
 
@@ -399,7 +403,11 @@ CIPCPlayer::~CIPCPlayer()
 		CloseHandle(m_hRenderAsyncEvent);
 		m_hRenderAsyncEvent = nullptr;
 	}
-
+	if (m_hInputFrameEvent)
+	{
+		CloseHandle(m_hInputFrameEvent);
+		m_hInputFrameEvent = nullptr;
+	}
 	if (m_pDDraw)
 	{
 		delete m_pDDraw;
@@ -900,6 +908,59 @@ int CIPCPlayer::AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent
 	}
 
 	return IPC_Succeed;
+}
+
+void CIPCPlayer::TryEnableHAccel(CHAR* szAdapterID, int nBuffer)
+{
+	HMONITOR hMonitor = MonitorFromWindow(m_hRenderWnd, MONITOR_DEFAULTTONEAREST);
+	if (hMonitor)
+	{
+		MONITORINFOEX mi;
+		mi.cbSize = sizeof(MONITORINFOEX);
+		if (GetMonitorInfo(hMonitor, &mi))
+		{
+			for (int i = 0; i < g_pD3D9Helper.m_nAdapterCount; i++)
+			{
+				if (strcmp(g_pD3D9Helper.m_AdapterArray[i].DeviceName, mi.szDevice) == 0)
+				{
+					m_nDisplayAdapter = i;
+					OutputMsg("%s Wnd[%08X] is on Monitor:[%s],it's connected on Adapter[%i]:%s.\n", __FUNCTION__, m_hRenderWnd, mi.szDevice, i, g_pD3D9Helper.m_AdapterArray[i].Description);
+					WCHAR szGuidW[64] = { 0 };
+					CHAR szGuidA[64] = { 0 };
+					StringFromGUID2(g_pD3D9Helper.m_AdapterArray[i].DeviceIdentifier, szGuidW, 64);
+
+					W2AHelper(szGuidW, szGuidA, 64);
+					if (szAdapterID)
+						strcpy_s(szAdapterID, nBuffer, szGuidA);
+					TCHAR szAdapterMutexName[64] = { 0 };					
+					HANDLE hMutexAdapter = nullptr;
+					for (int i = 0; i < g_pSharedMemory->nAdapterCount; i++)
+					{
+						if (_tcscmp(g_pSharedMemory->HAccelArray[i].szAdapterGuid, szAdapterID) == 0)
+						{
+							if (!g_hHAccelMutexArray[i])
+								break;
+							if (WaitForSingleObject(g_hHAccelMutexArray[i], 100) == WAIT_TIMEOUT)
+								break;
+							if (g_pSharedMemory->HAccelArray[i].nOpenCount < g_pSharedMemory->HAccelArray[i].nMaxHaccel)
+							{
+								g_pSharedMemory->HAccelArray[i].nOpenCount++;
+								ReleaseMutex(g_hHAccelMutexArray[i]);
+								OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s is %d.\n", __FUNCTION__, mi.szDevice, g_pD3D9Helper.m_AdapterArray[i].Description, g_pSharedMemory->HAccelArray[i].nOpenCount);
+								break;
+							}
+							else
+							{
+								OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s has reached up limit：%d.\n", __FUNCTION__, mi.szDevice, g_pD3D9Helper.m_AdapterArray[i].Description, g_pSharedMemory->HAccelArray[i].nOpenCount);
+								ReleaseMutex(g_hHAccelMutexArray[i]);
+							}
+						}
+					}
+					break;
+				}
+			}
+		}
+	}
 }
 
 int CIPCPlayer::RemoveRenderWindow(HWND hRenderWnd)
@@ -1452,6 +1513,7 @@ int CIPCPlayer::InputStream(IN byte *pFrameData, IN int nFrameType, IN int nFram
 			return IPC_Error_InsufficentMemory;
 		}
 		m_listVideoCache.push_back(pStream);
+		SetEvent(m_hInputFrameEvent);
 	}
 	break;
 	case IPC_711_ALAW:      // 711 A律编码帧
@@ -1724,6 +1786,7 @@ int  CIPCPlayer::EnableHaccel(IN bool bEnableHaccel )
 			{
 				m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2');
 				m_bEnableHaccel = bEnableHaccel;
+				m_bD3dShared = true;
 			}
 			else
 				return IPC_Error_UnsupportHaccel;
@@ -3858,16 +3921,19 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 			{
 				if (strlen(m_pDxSurface->m_szAdapterID) > 0)
 				{
-					EnterCriticalSection(CIPCPlayer::m_csMapHacceConfig.Get());
-					auto itFind = CIPCPlayer::m_MapHacceConfig.find(m_pDxSurface->m_szAdapterID);
-					if (itFind != CIPCPlayer::m_MapHacceConfig.end())
+					for (int i = 0; i < g_pSharedMemory->nAdapterCount; i++)
 					{
-						itFind->second->nOpenedCount--;
-						//pThis->OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s is %d.\n", __FUNCTION__, mi.szDevice, g_pD39Helper.m_AdapterArray[i].Description, itFind->second.nOpenedCount);
+						if (_tcscmp(g_pSharedMemory->HAccelArray[i].szAdapterGuid, m_pDxSurface->m_szAdapterID) == 0)
+						{
+							if (!g_hHAccelMutexArray[i])
+								break;
+							WaitForSingleObject(g_hHAccelMutexArray[i], INFINITE);
+							if (g_pSharedMemory->HAccelArray[i].nOpenCount >= 0)
+								g_pSharedMemory->HAccelArray[i].nOpenCount--;
+							ReleaseMutex(g_hHAccelMutexArray[i]);
+						}
 					}
-					LeaveCriticalSection(CIPCPlayer::m_csMapHacceConfig.Get());
 				}
-
 			}
 // 			PutDxSurfacePool(m_pDxSurface);
 // 			m_pDxSurface = nullptr;
@@ -4052,28 +4118,38 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 	}
 	SaveRunTime();
 
-	CHAR szAdapterID[64] = { 0 };
-	pThis->TryEnableHAccel(szAdapterID, 64);
+	
+	pThis->OutputMsg("%s Try to InitizlizeDx.\n", __FUNCTION__);
 	if (!pThis->InitizlizeDx())
 	{
 		TraceFunction();
 		assert(false);
 		return 0;
 	}
-	
+	pThis->OutputMsg("%s Try to Test m_pDxSurface.\n", __FUNCTION__);
 	if (!pThis->m_pDxSurface)
 	{
 		TraceFunction();
 		assert(false);
 		return 0;
 	}
-	if (strlen(szAdapterID) > 0 && pThis->m_pDxSurface)
-	{
-		strcpy_s(pThis->m_pDxSurface->m_szAdapterID, 64, szAdapterID);
+	CHAR szAdapterID[64] = { 0 };
+	if (pThis->m_bEnableHaccel)
+	{// 请求硬件?
+		// 尝试硬件
+		pThis->TryEnableHAccel(szAdapterID, 64);
+		if (strlen(szAdapterID) > 0 && pThis->m_pDxSurface)
+		{
+			strcpy_s(pThis->m_pDxSurface->m_szAdapterID, 64, szAdapterID);
+		}
+		else
+		{// 超出硬解设置数量?禁用硬解
+			pThis->m_bEnableHaccel = false;
+			pThis->m_bD3dShared = false;
+		}
 	}
 		
 	shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface, pThis->m_pDDraw);
-
 	SaveRunTime();
 	pThis->m_bD3dShared = pThis->m_bEnableDDraw ? false : pThis->m_bD3dShared;
 	if (pThis->m_bD3dShared)
@@ -4084,8 +4160,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 
 	// 使用单线程解码,多线程解码在某此比较慢的CPU上可能会提高效果，但现在I5 2GHZ以上的CPU上的多线程解码效果并不明显反而会占用更多的内存
 	pDecodec->SetDecodeThreads(1);
-	// 初始化解码器
-	
+	// 初始化解码器	
 	while (pThis->m_bThreadDecodeRun)
 	{// 某此时候可能会因为内存或资源不够导致初始化解码操作性,因此可以延迟一段时间后再次初始化，若多次初始化仍不成功，则需退出线程
 		//DeclareRunTime(5);
@@ -4157,8 +4232,6 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 
 	int nIFrameTime = 0;
 	CStat FrameStat(pThis->m_nObjIndex);		// 解码统计
-	
-
 	int nFramesAfterIFrame = 0;		// 相对I帧的编号,I帧后的第一帧为1，第二帧为2依此类推
 	int nSkipFrames = 0;
 	bool bDecodeSucceed = false;
@@ -4316,18 +4389,23 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		}
 		else
 		{// IPC 码流，则直接播放
-			if (nAvError > 0)
+// 			if (nAvError > 0)
+// 			{
+// 				int nWaitTime = nIPCPlayInterval - (int)(dfDecodeTimeSpan*1000);
+// 				if (nWaitTime > 0)
+// 					WaitForSingleObject(pThis->m_hRenderAsyncEvent, nWaitTime);		// 用于根据帧率来控制播放速度，使画面稳定流畅播放
+// 				if (nVideoCacheSize >= 3)
+// 				{
+// 					if (pRenderTimer->nPeriod != (nIPCPlayInterval / 3))	// 播放间隔降低40%,可以迅速清空积累帧
+// 						pRenderTimer->UpdateInterval((nIPCPlayInterval / 3));
+// 				}
+// 				else if (pRenderTimer->nPeriod != nIPCPlayInterval)
+// 					pRenderTimer->UpdateInterval(nIPCPlayInterval);
+// 			}
+			if (nVideoCacheSize == 0)
 			{
-				int nWaitTime = nIPCPlayInterval - (int)(dfDecodeTimeSpan*1000);
-				if (nWaitTime > 0)
-					WaitForSingleObject(pThis->m_hRenderAsyncEvent, nIPCPlayInterval);		// 用于根据帧率来控制播放速度，使画面稳定流畅播放
-				if (nVideoCacheSize >= 3)
-				{
-					if (pRenderTimer->nPeriod != (nIPCPlayInterval / 3))	// 播放间隔降低40%,可以迅速清空积累帧
-						pRenderTimer->UpdateInterval((nIPCPlayInterval / 3));
-				}
-				else if (pRenderTimer->nPeriod != nIPCPlayInterval)
-					pRenderTimer->UpdateInterval(nIPCPlayInterval);
+				if (WaitForSingleObject(pThis->m_hInputFrameEvent, 25) == WAIT_TIMEOUT)
+					continue;
 			}
 			
 			bool bPopFrame = false;
@@ -4426,12 +4504,12 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 			pThis->RenderFrame(pAvFrame);
 
 #ifdef _DEBUG
-// 			RenderTime.Stat(MMTimeSpan(dwFrameTimeInput));
-// 			if (RenderTime.IsFull())
-// 			{
-// 				RenderTime.OutputStat();
-// 				RenderTime.Reset();
-// 			}
+			RenderTime.Stat(MMTimeSpan(dwFrameTimeInput));
+			if (RenderTime.IsFull())
+			{
+				RenderTime.OutputStat();
+				RenderTime.Reset();
+			}
 			//RenderInterval.Stat(dfDecodeTimeSpan);
 // 			RenderInterval.Stat(TimeSpanEx(dfRenderStartTime));
 // 			if (RenderInterval.IsFull())

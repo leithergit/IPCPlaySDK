@@ -244,17 +244,7 @@ extern HMODULE  g_hDllModule;
 //extern HWND g_hSnapShotWnd;
 
 /// IPCIPCPlay SDK主要功能实现类
-struct HAccelRec
-{
-	HAccelRec()
-	{
-		ZeroMemory(this, sizeof(HAccelRec));
-	}
-	int		nMaxCount;		// 最大允许路数
-	int		nOpenedCount;	// 已经开启路数
-};
 
-typedef shared_ptr<HAccelRec> HAccelRecPtr;
 class CIPCPlayer
 {
 public:
@@ -268,9 +258,6 @@ private:
 	list <RenderUnitPtr>	m_listRenderUnit;
 	list <RenderWndPtr>		m_listRenderWnd;	///< 多窗口显示同一视频图像
 	list<CAVFramePtr>		m_listAVFrame;		///<视频帧缓存，用于异步显示图像
-public:
-	static map<string, HAccelRecPtr>m_MapHacceConfig;	///不同显卡上开启硬解的路数
-	static CCriticalSectionAgent m_csMapHacceConfig;
 private:
 		
 	CCriticalSectionAgent	m_cslistRenderWnd;
@@ -383,6 +370,7 @@ public:		// 实时流播放参数
 	int			m_nProbeOffset ;
 	volatile bool m_bAsyncRender ;
 	HANDLE		m_hRenderAsyncEvent;	///< 异步渲染事件
+	HANDLE		m_hInputFrameEvent;		///< 输入一帧事件
 	
 	time_t		m_tSyncTimeBase;		///< 同步时间轴
 	CIPCPlayer *m_pSyncPlayer;			///< 同步播放对象
@@ -1109,51 +1097,8 @@ public:
 
 	int GetFileHeader();
 	
-	void TryEnableHAccel(CHAR* szAdapterID,int nBuffer)
-	{
-		HMONITOR hMonitor = MonitorFromWindow(m_hRenderWnd, MONITOR_DEFAULTTONEAREST);
-		if (hMonitor)
-		{
-			MONITORINFOEX mi;
-			mi.cbSize = sizeof(MONITORINFOEX);
-			if (GetMonitorInfo(hMonitor, &mi))
-			{
-				for (int i = 0; i < g_pD3D9Helper.m_nAdapterCount; i++)
-				{
-					if (strcmp(g_pD3D9Helper.m_AdapterArray[i].DeviceName, mi.szDevice) == 0)
-					{
-						m_nDisplayAdapter = i;
-						OutputMsg("%s Wnd[%08X] is on Monitor:[%s],it's connected on Adapter[%i]:%s.\n", __FUNCTION__, m_hRenderWnd, mi.szDevice, i, g_pD3D9Helper.m_AdapterArray[i].Description);
-						WCHAR szGuidW[64] = { 0 };
-						CHAR szGuidA[64] = { 0 };
-						StringFromGUID2(g_pD3D9Helper.m_AdapterArray[i].DeviceIdentifier, szGuidW,64);
-						
-						W2AHelper(szGuidW, szGuidA, 64);
-						if (szAdapterID)
-							strcpy_s(szAdapterID, nBuffer, szGuidA);
-						CAutoLock lock(m_csMapHacceConfig.Get());
-						auto itFind = m_MapHacceConfig.find(szGuidA);
-						if (itFind != m_MapHacceConfig.end())
-						{
-							if (itFind->second->nOpenedCount < itFind->second->nMaxCount)
-							{
-								m_bD3dShared = true;
-								m_bEnableHaccel = true;
-								itFind->second->nOpenedCount++;
-								OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s is %d.\n", __FUNCTION__, mi.szDevice, g_pD3D9Helper.m_AdapterArray[i].Description, itFind->second->nOpenedCount);
-							}
-							else
-							{
-								OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s has reached up limit：%d.\n", __FUNCTION__, mi.szDevice, g_pD3D9Helper.m_AdapterArray[i].Description, itFind->second->nMaxCount);
-							}
-						}
-						break;
-					}
-				}
-			}
-		}
+	void TryEnableHAccel(CHAR* szAdapterID, int nBuffer);
 
-	}
 	void FitWindow(bool bFitWindow)
 	{
 		m_bFitWindow = bFitWindow;

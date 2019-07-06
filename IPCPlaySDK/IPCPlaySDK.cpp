@@ -31,12 +31,11 @@ CCriticalSectionAgentPtr CIPCPlayer::m_pCSGlobalCount = make_shared<CCriticalSec
 extern CCriticalSectionAgent g_csPlayerHandles;
 extern UINT	g_nPlayerHandles;
 #endif
+
+extern SharedMemory *g_pSharedMemory;
+
 //shared_ptr<CDSound> CPlayer::m_pDsPlayer = make_shared<CDSound>(nullptr);
 shared_ptr<CSimpleWnd> CIPCPlayer::m_pWndDxInit = make_shared<CSimpleWnd>();	///< 视频显示时，用以初始化DirectX的隐藏窗口对象
-
-map<string, HAccelRecPtr> CIPCPlayer::m_MapHacceConfig;
-CCriticalSectionAgent CIPCPlayer::m_csMapHacceConfig;
-
 
 
 using namespace std;
@@ -1620,4 +1619,16 @@ IPCPLAYSDK_API int ipcplay_GetDisplayAdapterInfo(AdapterInfo *pAdapterBuffer,int
 	}
 	
 	return IPC_Succeed;
+}
+
+IPCPLAYSDK_API int ipcplay_GetHAccelConfig(AdapterHAccel **pAdapterHAccel, int &nAdapterCount)
+{
+	if (g_pSharedMemory)
+	{
+		*pAdapterHAccel = g_pSharedMemory->HAccelArray;
+		nAdapterCount = g_pSharedMemory->nAdapterCount;
+		return IPC_Succeed;
+	}
+	else
+		return IPC_Error_InvalidSharedMemory;
 }

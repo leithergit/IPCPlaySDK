@@ -166,6 +166,7 @@ enum IPCPLAY_Status
 	IPC_Error_MediaFileHeaderError		=(-47),	///< 文件件头有错误
 	IPC_Error_UnsupportedFormat			=(-48),	///< 不支持的图像格式
 	IPC_Error_OpenCodecFailed			=(-49),	///< 分配编码上下文失败
+	IPC_Error_InvalidSharedMemory		=(-50), ///< 尚未创建共享内存
 	IPC_Error_InsufficentMemory			=(-255)	///< 内存不足
 };
 
@@ -179,7 +180,23 @@ enum IPCPLAY_Status
 #define		IPCPLAYER_UNSURPPORTEDSTREAM	4		///< 不支持的视频编码格式
 #define		IPCPLAYER_INVALIDCODER			5		///< 无效的视频编码格式
 
-#define		_Max_RenderWnds					9
+#define		_Max_RenderWnds					4
+
+
+struct AdapterHAccel
+{
+	CHAR	szAdapterGuid[64];
+	int		nMaxHaccel;
+	int		nOpenCount;
+};
+
+
+struct SharedMemory
+{
+	int nAdapterCount;
+	AdapterHAccel	HAccelArray[10];
+};
+
 
 
 /// @brief 播放器即时信息
@@ -948,3 +965,4 @@ IPCPLAYSDK_API int ipcplay_SetDisplayAdapter(IN IPC_PLAYHANDLE hPlayHandle, int 
 #endif
 IPCPLAYSDK_API int ipcplay_GetErrorMessageA(int nErrorCode, LPSTR szMessage, int nBufferSize);
 IPCPLAYSDK_API int ipcplay_GetErrorMessageW(int nErrorCode, LPWSTR szMessage, int nBufferSize);
+IPCPLAYSDK_API int ipcplay_GetHAccelConfig(AdapterHAccel **pAdapterHAccel, int &nAdapterCount);

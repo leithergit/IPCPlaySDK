@@ -76,3 +76,4 @@ EXPORTS
 	ipcplay_GetErrorMessageW
 	ipcplay_SetDisplayAdapter
 	ipcplay_GetDisplayAdapterInfo
+	ipcplay_GetHAccelConfig

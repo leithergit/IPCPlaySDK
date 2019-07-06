@@ -42,9 +42,7 @@ protected:
 	unsigned long m_RemainLen; // 剩余数据长度
 	long  rest ;//未分析数据
 	unsigned long m_preShSeq ;
-	//2010-1-16刘阳修改start
 	bool m_frameNotCon;//帧不连续
-	//2010-1-16刘阳修改end
 protected:
 	static void AudioInfoOpr(DH_FRAME_INFO* frameinfo, const unsigned char& samplespersecond) ;
 };

@@ -64,9 +64,7 @@ int StreamParser::Reset(int level)
 		m_bufptr = m_rawBuf ;
 		m_FrameInfoList.Reset() ;
 		m_preShSeq = 0;
-		//2010-1-18¡ı—Ù–ﬁ∏ƒstart
 		m_frameNotCon = false;
-		//2010-1-18¡ı—Ù–ﬁ∏ƒend
 		if (m_FrameInfo)
 		{
 			m_FrameInfoList.AddToFreeList(m_FrameInfo);
