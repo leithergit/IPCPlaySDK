@@ -195,11 +195,14 @@ struct SharedMemory
 {
 	int nAdapterCount;
 	AdapterHAccel	HAccelArray[10];
+	bool bHAccelPreferred;
 };
 
 
 
 /// @brief 播放器即时信息
+
+#pragma pack(show)
 struct PlayerInfo
 {
 	IPC_CODEC	nVideoCodec;	///< 视频编码格式,@see IPC_CODEC

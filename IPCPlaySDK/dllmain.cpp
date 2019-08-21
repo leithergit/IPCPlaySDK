@@ -22,7 +22,6 @@ UINT	g_nPlayerHandles = 0;
 
 HANDLE		g_hSharedMemory = nullptr;
 
-
 SharedMemory *g_pSharedMemory = nullptr;
 double	g_dfProcessLoadTime = 0.0f;
 bool g_bEnableDDraw = false;
@@ -36,9 +35,9 @@ extern map<string, DxSurfaceList>g_DxSurfacePool;	// 用于缓存DxSurface对象
 extern CCriticalSectionAgent g_csDxSurfacePool;
 HANDLE g_hGlobalMutex = nullptr;
 UINT __stdcall Thread_Helper(void *);
-bool CreateShareMemory();
+DWORD CreateShareMemory();
 void ReleaseShareMemory();
-bool OpenShareMemory();
+DWORD OpenShareMemory();
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
                        LPVOID lpReserved
@@ -58,24 +57,24 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		SECURITY_DESCRIPTOR sd;
 		SECURITY_ATTRIBUTES sa;
 		DWORD dwErrorCode = 0;
-		char szMessage[1024] = { 0 };
 		CHAR szPath[MAX_PATH] = { 0 };
 		TCHAR szAdapterMutexName[64] = { 0 };
 		bool bOpenMutex = false;
 		__try
 		{
-			if (!OpenShareMemory())
+			if ((dwErrorCode = OpenShareMemory())!=0 )
 			{
-				if (!CreateShareMemory())
+				if ((dwErrorCode = CreateShareMemory())!= 0)
 					__leave;
 				if (!::InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION))
 				{
-					TraceMsgA(_T("%s InitializeSecurityDescriptor failed,ErrorCode = %d."), __FUNCTION__, GetLastError());
+					dwErrorCode = GetLastError();
+					TraceMsgA(_T("%s InitializeSecurityDescriptor failed,ErrorCode = %d."), __FUNCTION__, dwErrorCode);
 					__leave;
 				}
 				if (!::SetSecurityDescriptorDacl(&sd, TRUE, NULL, FALSE))
 				{
-					TraceMsgA(_T("%s SetSecurityDescriptorDacl failed,ErrorCode = %d."), __FUNCTION__, GetLastError());
+					TraceMsgA(_T("%s SetSecurityDescriptorDacl failed,ErrorCode = %d."), __FUNCTION__, dwErrorCode);
 					__leave;
 				}
 				sa.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -112,7 +111,10 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 					g_pSharedMemory->HAccelArray[nConfigIndex].nOpenCount = 0;
 					nConfigIndex++;
 				} while (true);
+				
 				g_pSharedMemory->nAdapterCount = nConfigIndex;
+				g_pSharedMemory->bHAccelPreferred = GetPrivateProfileInt("HAccel", "Prefered", 0, szPath);
+				g_bEnableDDraw = GetPrivateProfileInt(_T("RenderOption"), _T("EnableDDraw"), 0, szPath);
 			}
 			else
 			{
@@ -122,9 +124,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 					g_hHAccelMutexArray[i] = OpenMutex(MUTEX_ALL_ACCESS, FALSE, szAdapterMutexName);
 				}
 			}
-			if (GetPrivateProfileInt(_T("RenderOption"), _T("EnableDDraw"), 0, szPath) > 0)
-				g_bEnableDDraw = true;
-
+			
 			g_bThread_ClosePlayer = true;
 			g_hEventThreadExit = CreateEvent(nullptr, true, false, nullptr);
 			UINT nThreadID;
@@ -135,7 +135,15 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		{
 			if (!bResult)
 			{
-				MessageBox(nullptr, szMessage, _T("IPCPlaySDK"), MB_OK | MB_ICONERROR);
+				TCHAR szErrorMessage[1024] = { 0 };
+				FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
+					NULL,
+					dwErrorCode,
+					MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+					(LPSTR)szErrorMessage,
+					1024,
+					NULL);
+				MessageBox(nullptr, szErrorMessage, _T("IPCPlaySDK"), MB_OK | MB_ICONERROR);
 				exit(-1);
 			}
 		}
@@ -243,11 +251,11 @@ UINT __stdcall Thread_Helper(void *)
 /* CreateShareMemory Must called in a system service process			*/
 /* and Transfered a correct entry string
 /************************************************************************/
-bool CreateShareMemory()
+DWORD CreateShareMemory()
 {
 	SECURITY_DESCRIPTOR sd;
 	SECURITY_ATTRIBUTES sa;
-	bool bResult = false;
+	DWORD dwResult = 0;
 	DWORD dwErrorCode = 0;
 	__try
 	{
@@ -255,11 +263,13 @@ bool CreateShareMemory()
 		{
 			if (!::InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION))
 			{
+				dwResult = GetLastError();
 				TraceMsgA(_T("%s InitializeSecurityDescriptor failed,ErrorCode = %d."), __FUNCTION__, GetLastError());
 				__leave;
 			}
 			if (!::SetSecurityDescriptorDacl(&sd, TRUE, NULL, FALSE))
 			{
+				dwResult = GetLastError();
 				TraceMsgA(_T("%s SetSecurityDescriptorDacl failed,ErrorCode = %d."), __FUNCTION__, GetLastError());
 				__leave;
 			}
@@ -273,22 +283,23 @@ bool CreateShareMemory()
 				_SharedMemoryName);
 			if (!g_hSharedMemory)
 			{
+				dwResult = GetLastError();
 				TraceMsgA(_T("%s CreateFileMapping failed,ErrorCode = %d."), __FUNCTION__, GetLastError());
 				__leave;
 			}
 			g_pSharedMemory = (SharedMemory *)MapViewOfFile(g_hSharedMemory, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 			if (!g_pSharedMemory)
 			{
+				dwResult = GetLastError();
 				TraceMsgA(_T("%s MapViewOfFile failed,ErrorCode = %d."), __FUNCTION__, GetLastError());
 				__leave;
 			}
 			
 			ZeroMemory(g_pSharedMemory, sizeof(SharedMemory));
-			bResult = true;
 		}
 		__finally
 		{
-			if (!bResult)
+			if (dwResult)
 			{
 				ReleaseShareMemory();
 			}
@@ -298,7 +309,7 @@ bool CreateShareMemory()
 	{
 		_TraceMsg(_T("%s Excpetion occured."), __FUNCTION__);
 	}
-	return bResult;
+	return dwResult;
 };
 
 
@@ -323,9 +334,9 @@ void ReleaseShareMemory()
 	}
 }
 
-bool OpenShareMemory()
+DWORD OpenShareMemory()
 {
-	bool bResult = false;
+	DWORD dwResult = 0;
 	__try
 	{
 		__try
@@ -334,21 +345,23 @@ bool OpenShareMemory()
 			if (g_hSharedMemory == INVALID_HANDLE_VALUE ||
 				g_hSharedMemory == NULL)
 			{
+				dwResult = GetLastError();
 				TraceMsgA(_T("%s MapViewOfFile Failed,ErrorCode = %d.\r\n"), __FUNCTION__, GetLastError());
 				__leave;
 			}
 			g_pSharedMemory = (SharedMemory *)MapViewOfFile(g_hSharedMemory, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0);
 			if (g_pSharedMemory == NULL)
 			{
+				dwResult = GetLastError();
 				TraceMsgA(_T("%s MapViewOfFile Failed,ErrorCode = %d.\r\n"), __FUNCTION__, GetLastError());
 				__leave;
 			}
-			bResult = true;
+			dwResult = true;
 			_TraceMsg(_T("Open Share memory map Succeed."));
 		}
 		__finally
 		{
-			if (!bResult)
+			if (!dwResult)
 			{
 				ReleaseShareMemory();
 			}
@@ -358,6 +371,6 @@ bool OpenShareMemory()
 	{
 		TraceMsgA(_T("%s Exception occured.\r\n"),__FUNCTION__);
 	}
-	return bResult;
+	return dwResult;
 }
 

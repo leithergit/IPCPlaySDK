@@ -84,17 +84,59 @@ CIPCPlayDemoDlg::CIPCPlayDemoDlg(CWnd* pParent /*=NULL*/)
 	m_nHotkeyID = 0;
 
 	m_hFullScreen = NULL;
-	m_nOriMonitorIndex = 0;	
+	m_nOriMonitorIndex = 0;
 	m_hIOCP = NULL;
 	m_bClickPlayerSlide = false;
-// 	m_pDDraw.reset();;
-// 	m_pYUVImage.reset();
+	// 	m_pDDraw.reset();;
+	// 	m_pYUVImage.reset();
 
 	m_pVideoWndFrame = NULL;
 	m_bRefreshPlayer = true;
 	InitializeCriticalSection(&m_csYUVFrame);
-}
+	/*
+	IPC_CODEC	nVideoCodec;	///< 视频编码格式,@see IPC_CODEC
+	IPC_CODEC	nAudioCodec;	///< 音频编码格式,@see IPC_CODEC
+	USHORT		nVideoWidth;	///< 视频图像宽度
+	USHORT		nVideoHeight;	///< 视频图像高度
+	BOOL		bAudioEnabled;	///< 是否已开启音频
+	UINT		nTotalFrames;	///< 视频总帧数,只有文件播放时才有效
+	time_t		tTotalTime;		///< 文件总时长(单位:毫秒),只有文件播放时才有效
+	UINT		nCurFrameID;	///< 当前播放视频的帧ID,只有文件播放时才有效,nSDKVersion<IPC_IPC_SDK_VERSION_2015_12_16无效
+	time_t		tFirstFrameTime;///< 收到的第一帧的时间(单位:毫秒)
+	time_t		tCurFrameTime;	///< 返回当前播放视频的帧相对起点的时间(单位:毫秒)
+	time_t		tTimeEplased;	///< 已播放时间(单位:毫秒)
+	USHORT		nFPS;			///< 文件或码流中视频的原始帧率
+	USHORT		nPlayFPS;		///< 当前播放的帧率
+	WORD		nCacheSize;		///< 播放缓存
+	WORD		nCacheSize2;	///< 音频缓存
+	float		fPlayRate;		///< 播放速率,只有文件播放时才有效
+	long		nSDKVersion;	///< SDK版本,详细定义参见@see IPC_MEDIAINFO
+	bool		bFilePlayFinished;///< 文件播放完成标志,为true时，播放结束，为false时，则未结束
+	byte		nReserver1[3];
+	UINT		nReserver2[2];
+	*/
+// 	TraceMsgA("offsetof(nVideoCodec) = %d\r\n", offsetof(PlayerInfo, nVideoCodec));
+// 	TraceMsgA("offsetof(nAudioCodec) = %d\r\n", offsetof(PlayerInfo, nAudioCodec));
+// 	TraceMsgA("offsetof(nVideoWidth) = %d\r\n", offsetof(PlayerInfo, nVideoWidth));
+// 	TraceMsgA("offsetof(nVideoHeight) = %d\r\n", offsetof(PlayerInfo, nVideoHeight));
+// 	TraceMsgA("offsetof(bAudioEnabled) = %d\r\n", offsetof(PlayerInfo, bAudioEnabled));
+// 	TraceMsgA("offsetof(nTotalFrames) = %d\r\n", offsetof(PlayerInfo, nTotalFrames));
+// 	TraceMsgA("offsetof(tTotalTime) = %d\r\n", offsetof(PlayerInfo, tTotalTime));
+// 	TraceMsgA("offsetof(nCurFrameID) = %d\r\n", offsetof(PlayerInfo, nCurFrameID));
+// 	TraceMsgA("offsetof(tFirstFrameTime) = %d\r\n", offsetof(PlayerInfo, tFirstFrameTime));
+// 	TraceMsgA("offsetof(tCurFrameTime) = %d\r\n", offsetof(PlayerInfo, tCurFrameTime));
+// 	TraceMsgA("offsetof(tTimeEplased) = %d\r\n", offsetof(PlayerInfo, tTimeEplased));
+// 	TraceMsgA("offsetof(nFPS) = %d\r\n", offsetof(PlayerInfo, nFPS));
+// 	TraceMsgA("offsetof(nPlayFPS) = %d\r\n", offsetof(PlayerInfo, nPlayFPS));
+// 	TraceMsgA("offsetof(nCacheSize) = %d\r\n", offsetof(PlayerInfo, nCacheSize));
+// 	TraceMsgA("offsetof(nCacheSize2) = %d\r\n", offsetof(PlayerInfo, nCacheSize2));
+// 	TraceMsgA("offsetof(fPlayRate) = %d\r\n", offsetof(PlayerInfo, fPlayRate));
+// 	TraceMsgA("offsetof(nSDKVersion) = %d\r\n", offsetof(PlayerInfo, nSDKVersion));
+// 	TraceMsgA("offsetof(bFilePlayFinished) = %d\r\n", offsetof(PlayerInfo, bFilePlayFinished));
+// 	TraceMsgA("offsetof(nReserver1) = %d\r\n", offsetof(PlayerInfo, nReserver1));
+// 	TraceMsgA("offsetof(nReserver2) = %d\r\n", offsetof(PlayerInfo, nReserver2));
 
+}
 void CIPCPlayDemoDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);

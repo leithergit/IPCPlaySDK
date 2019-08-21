@@ -4134,13 +4134,16 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		return 0;
 	}
 	CHAR szAdapterID[64] = { 0 };
-	if (pThis->m_bEnableHaccel)
-	{// 请求硬件?
-		// 尝试硬件
+	if (pThis->m_bEnableHaccel ||
+		g_pSharedMemory->bHAccelPreferred)
+	{
+		// 尝试硬解
 		pThis->TryEnableHAccel(szAdapterID, 64);
 		if (strlen(szAdapterID) > 0 && pThis->m_pDxSurface)
 		{
 			strcpy_s(pThis->m_pDxSurface->m_szAdapterID, 64, szAdapterID);
+			pThis->m_bEnableHaccel = true;
+			pThis->m_bD3dShared = true;
 		}
 		else
 		{// 超出硬解设置数量?禁用硬解
@@ -4148,7 +4151,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 			pThis->m_bD3dShared = false;
 		}
 	}
-		
+			
 	shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface, pThis->m_pDDraw);
 	SaveRunTime();
 	pThis->m_bD3dShared = pThis->m_bEnableDDraw ? false : pThis->m_bD3dShared;

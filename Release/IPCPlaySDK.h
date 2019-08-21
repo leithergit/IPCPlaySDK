@@ -166,6 +166,7 @@ enum IPCPLAY_Status
 	IPC_Error_MediaFileHeaderError		=(-47),	///< 文件件头有错误
 	IPC_Error_UnsupportedFormat			=(-48),	///< 不支持的图像格式
 	IPC_Error_OpenCodecFailed			=(-49),	///< 分配编码上下文失败
+	IPC_Error_InvalidSharedMemory		=(-50), ///< 尚未创建共享内存
 	IPC_Error_InsufficentMemory			=(-255)	///< 内存不足
 };
 
@@ -179,10 +180,29 @@ enum IPCPLAY_Status
 #define		IPCPLAYER_UNSURPPORTEDSTREAM	4		///< 不支持的视频编码格式
 #define		IPCPLAYER_INVALIDCODER			5		///< 无效的视频编码格式
 
-#define		_Max_RenderWnds					9
+#define		_Max_RenderWnds					4
+
+
+struct AdapterHAccel
+{
+	CHAR	szAdapterGuid[64];
+	int		nMaxHaccel;
+	int		nOpenCount;
+};
+
+
+struct SharedMemory
+{
+	int nAdapterCount;
+	AdapterHAccel	HAccelArray[10];
+	bool bHAccelPreferred;
+};
+
 
 
 /// @brief 播放器即时信息
+
+#pragma pack(show)
 struct PlayerInfo
 {
 	IPC_CODEC	nVideoCodec;	///< 视频编码格式,@see IPC_CODEC
@@ -193,6 +213,7 @@ struct PlayerInfo
 	UINT		nTotalFrames;	///< 视频总帧数,只有文件播放时才有效
 	time_t		tTotalTime;		///< 文件总时长(单位:毫秒),只有文件播放时才有效
 	UINT		nCurFrameID;	///< 当前播放视频的帧ID,只有文件播放时才有效,nSDKVersion<IPC_IPC_SDK_VERSION_2015_12_16无效
+	time_t		tFirstFrameTime;///< 收到的第一帧的时间(单位:毫秒)
 	time_t		tCurFrameTime;	///< 返回当前播放视频的帧相对起点的时间(单位:毫秒)
 	time_t		tTimeEplased;	///< 已播放时间(单位:毫秒)
 	USHORT		nFPS;			///< 文件或码流中视频的原始帧率
@@ -233,6 +254,7 @@ struct AdapterInfo
 	DWORD           Revision;
 	GUID            DeviceIdentifier;
 	DWORD           WHQLLevel;
+	//int				nAdapter;			// the adapter NO.
 };
 #pragma pack(pop)
 
@@ -946,3 +968,4 @@ IPCPLAYSDK_API int ipcplay_SetDisplayAdapter(IN IPC_PLAYHANDLE hPlayHandle, int 
 #endif
 IPCPLAYSDK_API int ipcplay_GetErrorMessageA(int nErrorCode, LPSTR szMessage, int nBufferSize);
 IPCPLAYSDK_API int ipcplay_GetErrorMessageW(int nErrorCode, LPWSTR szMessage, int nBufferSize);
+IPCPLAYSDK_API int ipcplay_GetHAccelConfig(AdapterHAccel **pAdapterHAccel, int &nAdapterCount);
