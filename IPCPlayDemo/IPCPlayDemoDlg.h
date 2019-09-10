@@ -233,6 +233,10 @@ public:
 	bool	bHisiliconFrame;
 	
 	IPC_PLAYHANDLE	hPlayer[36];
+	long			nFontHandle[64];
+	int				nFontCount;
+	long			nTextHandle[64];
+	int				nTextCount;
 	IPC_PLAYHANDLE	hPlayerStream;		// Á÷²¥·Å¾ä±ú
 	TimeTrace		*m_pInputStreamTimeTrace ;
 	double			m_dfLastInputstream ;
@@ -1156,4 +1160,7 @@ public:
 
 	afx_msg void OnEnableOpassist();
 	afx_msg void OnBnClickedCheckNodecodedelay();
+	afx_msg void OnBnClickedButtonOsd();
+	afx_msg void OnBnClickedButtonOsd2();
+	afx_msg void OnBnClickedButtonRemoveosd();
 };

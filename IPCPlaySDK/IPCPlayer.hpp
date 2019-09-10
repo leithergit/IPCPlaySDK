@@ -109,7 +109,6 @@ public:
 };
 typedef shared_ptr<CAvFrame> CAVFramePtr;
 
-
 // //调试开关
 // struct _DebugPin
 // {
@@ -1599,5 +1598,62 @@ public:
 		}
 		else
 			return IPC_Error_InvalidParameters;
+	}
+
+	// 创建用于OSD叠加的D3DFont
+	long CreateOSDFontW(LOGFONTW lf, long *nFontHandle)
+	{
+		if (m_pDxSurface)
+		{
+			long nFont = m_pDxSurface->CreateFontW(&lf);
+			if (nFont)
+			{
+				*nFontHandle = nFont;
+				return IPC_Succeed;
+			}
+			else
+				return IPC_Error_InvalidParameters;
+		}
+		else
+			return IPC_Error_DXRenderNotInitialized;
+	};
+
+	long DrawOSDTextW(IN long nFontHandle, IN WCHAR *szText, IN int nLength, IN RECT rtPostion, IN DWORD dwFormat, IN  DWORD nColor, OUT long *nOSDHandle)
+	{
+		if (m_pDxSurface)
+		{
+			long nTextHandle = m_pDxSurface->DrawTextW(nFontHandle,szText,nLength,rtPostion,dwFormat,nColor);
+			if (nTextHandle)
+			{
+				*nOSDHandle = nTextHandle;
+				return IPC_Succeed;
+			}
+			else
+				return IPC_Error_InvalidParameters;
+		}
+		else
+			return IPC_Error_DXRenderNotInitialized;
+	}
+
+	int RmoveOSD(long nFondHandle,long nOSD)
+	{
+		if (m_pDxSurface)
+		{
+			m_pDxSurface->RemoveText(nFondHandle, nOSD);
+			return IPC_Succeed;
+		}
+		else
+			return IPC_Error_DXRenderNotInitialized;
+	}
+
+	int DestroyOSDFont(long nFontHandle)
+	{
+		if (m_pDxSurface)
+		{
+			m_pDxSurface->DestroyFont(nFontHandle);
+			return IPC_Succeed;
+		}
+		else
+			return IPC_Error_DXRenderNotInitialized;
 	}
 };

@@ -32,6 +32,32 @@ extern CCriticalSectionAgent g_csPlayerHandles;
 extern UINT	g_nPlayerHandles;
 #endif
 
+struct ipcplay_Font
+{
+	ipcplay_Font()
+	{
+		nSize = sizeof(ipcplay_Font);
+		hPlayHandle = nullptr;
+		nFontHandle = 0;
+	}
+	UINT nSize;
+	IPC_PLAYHANDLE hPlayHandle;
+	long	nFontHandle;
+};
+
+struct ipcplay_OSD
+{
+	ipcplay_OSD(ipcplay_Font *pFontIn)
+	{
+		nSize = sizeof(ipcplay_Font);
+		pFont = pFontIn;
+		nTextHandle = 0;
+	}
+	UINT nSize;
+	long	nTextHandle;
+	ipcplay_Font *pFont;
+};
+
 extern SharedMemory *g_pSharedMemory;
 
 //shared_ptr<CDSound> CPlayer::m_pDsPlayer = make_shared<CDSound>(nullptr);
@@ -1631,4 +1657,139 @@ IPCPLAYSDK_API int ipcplay_GetHAccelConfig(AdapterHAccel **pAdapterHAccel, int &
 	}
 	else
 		return IPC_Error_InvalidSharedMemory;
+}
+
+
+IPCPLAYSDK_API int ipcplay_CreateOSDFontA(IN IPC_PLAYHANDLE hPlayHandle, IN LOGFONTA lf, OUT long *nFontHandle)
+{
+	if (!hPlayHandle )
+		return IPC_Error_InvalidParameters;
+	
+	LOGFONTW lfw;
+	memcpy(&lfw, &lf, offsetof(LOGFONTA, lfFaceName));
+	MultiByteToWideChar(CP_ACP, 0, lf.lfFaceName, -1, lfw.lfFaceName, LF_FACESIZE);
+	
+	int nResult = 0;
+	long nOSDHandle = 0;
+	if ((nResult = ipcplay_CreateOSDFontW(hPlayHandle, lfw, &nOSDHandle)) == IPC_Succeed)
+	{
+		
+		return IPC_Succeed;
+	}
+	else
+		return nResult;
+}
+IPCPLAYSDK_API int ipcplay_CreateOSDFontW(IN IPC_PLAYHANDLE hPlayHandle, IN LOGFONTW lf, OUT long *nFontHandle)
+{
+	if (!hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	int nResult = 0;
+	long nOSDFont = 0;
+	if (nResult = pPlayer->CreateOSDFontW(lf, &nOSDFont) == IPC_Succeed)
+	{
+		ipcplay_Font *pFont = new ipcplay_Font;
+		pFont->hPlayHandle = hPlayHandle;
+		pFont->nFontHandle = nOSDFont;
+		*nFontHandle = (long)pFont;
+		return IPC_Succeed;
+	}
+	else
+		return nResult;
+}
+
+// 使用OSD字体绘制文本
+IPCPLAYSDK_API int ipcplay_DrawOSDTextA(IN long nFontHandle, IN CHAR *szText, IN int nLength, IN RECT rtPostion, IN DWORD dwFormat, IN  DWORD nColor, OUT long *nOSDHandle)
+{
+	int nNeedBuffSize = ::MultiByteToWideChar(CP_ACP, NULL, szText, -1, NULL, 0);
+	WCHAR *pTextW = new WCHAR[nNeedBuffSize + 1];
+	shared_ptr<WCHAR> TextPtr;
+	MultiByteToWideChar(CP_ACP, 0, szText, -1, pTextW, nNeedBuffSize + 1);
+	return ipcplay_DrawOSDTextW(nFontHandle, pTextW, nNeedBuffSize, rtPostion, dwFormat, nColor,nOSDHandle);
+}
+IPCPLAYSDK_API int ipcplay_DrawOSDTextW(IN long nFontHandle, IN	WCHAR *szText, IN int nLength, IN RECT rtPostion, IN DWORD dwFormat, IN  DWORD nColor, OUT long *nOSDHandle)
+{
+	if (!nFontHandle)
+		return IPC_Error_InvalidParameters;
+	ipcplay_Font* pFont = (ipcplay_Font *)nFontHandle;
+	if (pFont->nSize != sizeof(ipcplay_Font) ||
+		!pFont->hPlayHandle)
+		return IPC_Error_InvalidParameters;
+	CIPCPlayer *pPlayer = (CIPCPlayer *)pFont->hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+		return IPC_Error_InvalidParameters;
+	long nTextHandle = 0;
+	int nResult = 0;
+	if ((nResult = pPlayer->DrawOSDTextW(pFont->nFontHandle, szText, nLength, rtPostion, dwFormat, nColor, &nTextHandle)) == IPC_Succeed)
+	{
+		ipcplay_OSD* pOSD = new ipcplay_OSD(pFont);
+		pOSD->nTextHandle = nTextHandle;
+		*nOSDHandle = (long)pOSD;
+		return IPC_Succeed;
+	}
+	else
+		return nResult;
+}
+
+// 称除文本
+IPCPLAYSDK_API int ipcplay_RmoveOSDText(long nOSDText)
+{
+	if (!nOSDText)
+		return IPC_Error_InvalidParameters;
+	ipcplay_OSD* pOSD = (ipcplay_OSD*)nOSDText;
+	if (!pOSD->nSize || !pOSD->pFont)
+	{
+		assert(false);
+		return IPC_Error_InvalidParameters;
+	}
+	ipcplay_Font *pFont = pOSD->pFont;
+	if (pFont->nSize != sizeof(ipcplay_Font) ||
+		!pFont->hPlayHandle)
+	{
+		assert(false);
+		return IPC_Error_InvalidParameters;
+	}
+	
+	CIPCPlayer *pPlayer = (CIPCPlayer *)pFont->hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+	{
+		assert(false);
+		return IPC_Error_InvalidParameters;
+	}
+
+	int nResult = pPlayer->RmoveOSD((long)pOSD->pFont->nFontHandle, pOSD->nTextHandle);
+	if (nResult == IPC_Succeed)
+		delete pOSD;
+	return nResult;
+}
+
+// 销毁字体
+IPCPLAYSDK_API int ipcplay_DestroyOSDFont(long nFontHandle)
+{
+	if (!nFontHandle)
+	{
+		assert(false);
+		return IPC_Error_InvalidParameters;
+	}
+	ipcplay_Font *pFont = (ipcplay_Font *)nFontHandle;
+	if (pFont->nSize != sizeof(ipcplay_Font) ||
+		!pFont->hPlayHandle)
+	{
+		assert(false);
+		return IPC_Error_InvalidParameters;
+	}
+
+	CIPCPlayer *pPlayer = (CIPCPlayer *)pFont->hPlayHandle;
+	if (pPlayer->nSize != sizeof(CIPCPlayer))
+	{
+		assert(false);
+		return IPC_Error_InvalidParameters;
+	}
+
+	int nResult = pPlayer->DestroyOSDFont(pFont->nFontHandle);
+	if (nResult == IPC_Succeed)
+		delete pFont;
+	return nResult;
 }

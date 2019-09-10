@@ -5,6 +5,7 @@
 #include "gpu_memcpy_sse4.h"
 #include <ppl.h>
 #include <assert.h>
+//#include <VersionHelpers.h>
 //#include <VersionHelpers.h> // Windows SDK 8.1 才有喔
 
 #pragma comment ( lib, "d3d9.lib" )
@@ -197,10 +198,6 @@ CAvRegister CVideoDecoder::AvRegister;
 CVideoDecoder::CVideoDecoder(void)
 {
 	ZeroMemory(&m_dxva, sizeof(m_dxva));
-	OSVERSIONINFOEX osVer;
-	osVer.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);  
-	GetVersionEx((OSVERSIONINFO *)&osVer);
-	dwOvMajorVersion = osVer.dwMajorVersion;
 	InitializeCriticalSection(&m_csDecoder);
 }
 
@@ -273,7 +270,7 @@ STDMETHODIMP CVideoDecoder::FreeD3DResources()
 
 STDMETHODIMP CVideoDecoder::LoadDXVA2Functions()
 {
-	if (dwOvMajorVersion < 6)		// 必须要Windows Vista及以上的操作系统
+	if (!IsWindowsVistaOrGreater())		// 必须要Windows Vista及以上的操作系统
 		return E_FAIL;
 	m_dxva.dxva2lib = ::LoadLibraryA("dxva2.dll");
 	if (m_dxva.dxva2lib == nullptr) 
@@ -345,7 +342,7 @@ HRESULT CVideoDecoder::CreateDXVAVideoService(IDirect3DDeviceManager9 *pManager,
 
 	hr = pManager->GetVideoService(m_hDevice, IID_IDirectXVideoDecoderService, (void**)&pService);
 	if (FAILED(hr)) {
-		DxTraceMsg("%s Acquiring VideoDecoderService failed.\n"__FUNCTION__);
+		DxTraceMsg("%s Acquiring VideoDecoderService failed.\n",__FUNCTION__);
 		goto done;
 	}
 
@@ -452,7 +449,7 @@ done:
  */
 HRESULT CVideoDecoder::InitD3D(UINT &nAdapter/*,HWND hPrensentWnd = nullptr*/)
 {
-	if (dwOvMajorVersion < 6)
+	if (!IsWindowsVistaOrGreater())
 		return E_FAIL;
 
 	m_hD3D9 = LoadLibraryA("d3d9.dll");

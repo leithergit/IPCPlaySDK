@@ -16,7 +16,7 @@
 #define assert	((void)0)
 #endif
 using namespace std;
-using namespace std::tr1;
+//using namespace std::tr1;
 
 #ifndef byte
 #define byte unsigned char

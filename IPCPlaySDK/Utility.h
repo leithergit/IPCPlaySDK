@@ -17,7 +17,7 @@
 //#include <boost/smart_ptr.hpp>
 using namespace std;
 //using namespace boost;
-using namespace std::tr1;
+//using namespace std::tr1;
 
 #define IN
 #define OUT
@@ -467,7 +467,7 @@ INT_PTR MultiByteStrToUnicodeStr(UINT_PTR nCodePage, LPCSTR lpMultiByteStr, LPWS
 #define _AnsiString(UnicodeText,nLength)	(W2AString(UnicodeText,nLength).get())
 #define _UnicodeString(AnsiText,nLength)		(A2WString(AnsiText,nLength).get())
 
-#define stdshared_ptr		std::tr1::shared_ptr
+#define stdshared_ptr		::std::shared_ptr
 
 stdshared_ptr<char> UTF8String(IN LPCWSTR pText,int& OUT nReturnLength);
 stdshared_ptr<char> W2AString(IN LPCWSTR pText,int& OUT nReturnLength);

@@ -194,6 +194,9 @@ BEGIN_MESSAGE_MAP(CIPCPlayDemoDlg, CDialogEx)
 	ON_WM_MOVE()
 	ON_COMMAND(ID_ENABLE_OPASSIST, &CIPCPlayDemoDlg::OnEnableOpassist)
 	ON_BN_CLICKED(IDC_CHECK_NODECODEDELAY, &CIPCPlayDemoDlg::OnBnClickedCheckNodecodedelay)
+	ON_BN_CLICKED(IDC_BUTTON_OSD, &CIPCPlayDemoDlg::OnBnClickedButtonOsd)
+	ON_BN_CLICKED(IDC_BUTTON_OSD2, &CIPCPlayDemoDlg::OnBnClickedButtonOsd2)
+	ON_BN_CLICKED(IDC_BUTTON_REMOVEOSD, &CIPCPlayDemoDlg::OnBnClickedButtonRemoveosd)
 END_MESSAGE_MAP()
 
 
@@ -2908,4 +2911,87 @@ void CIPCPlayDemoDlg::OnEnableOpassist()
 void CIPCPlayDemoDlg::OnBnClickedCheckNodecodedelay()
 {
 	// TODO: Add your control notification handler code here
+}
+
+
+void CIPCPlayDemoDlg::OnBnClickedButtonOsd()
+{
+	// 正在播放中
+	if (m_pPlayContext && m_pPlayContext->hPlayer[0])
+	{
+		IPC_PLAYHANDLE &hHandlePlay = m_pPlayContext->hPlayer[0];
+		CFontDialog FontDlg;
+		LOGFONT lf;
+		ZeroMemory(&lf, sizeof(LOGFONT));
+		if (FontDlg.DoModal() == IDOK)
+		{
+			memcpy(&lf, FontDlg.m_cf.lpLogFont, sizeof(LOGFONT));
+			long hFontHandle = 0;
+			if (ipcplay_CreateOSDFont(hHandlePlay, lf, &hFontHandle) == IPC_Succeed)
+			{
+				m_pPlayContext->nFontHandle[m_pPlayContext->nFontCount++] = hFontHandle;
+				RECT rtPosition = { 0, 0, 1024, 256 };
+				long nTextHandle = 0;
+				COLORREF nColor = FontDlg.GetColor();
+
+				if (ipcplay_DrawOSDText(hFontHandle,			// 字体句柄，一个字体句柄用输出多个叠加文本
+										_T("OSD 字幕测试"),		// 文本内容
+										-1,						// 文本长度，为-1时则自动计算长度
+										rtPosition,				// 文本输出位置
+										DT_LEFT|DT_TOP,				// 输出格式选择
+										IPC_ARGB(0xFF/*字体透明度，0~FF,0xFF为完全不透明*/, GetRValue(nColor), GetGValue(nColor), GetBValue(nColor)), 
+										&nTextHandle) != IPC_Succeed)
+					AfxMessageBox(_T("叠加文字失败"));
+				else
+				{
+					m_pPlayContext->nTextHandle[m_pPlayContext->nTextCount++] = nTextHandle;
+				}
+			}
+			else
+				AfxMessageBox(_T("创建OSD字体失败"));
+		}
+	}
+	else
+		AfxMessageBox(_T("尚未开始播放"));
+}
+
+void CIPCPlayDemoDlg::OnBnClickedButtonRemoveosd()
+{
+	// 移动文本时，可选择只移除文本，但保留字体，以备后后，但这演示时会把字体和文本一同移除
+	// 正在播放中
+	if (m_pPlayContext && m_pPlayContext->hPlayer[0])
+	{
+		int nResult = 0;
+		TCHAR szErrorText[1024] = {0};
+		if (m_pPlayContext->nTextHandle[0])
+		{
+			nResult = ipcplay_RmoveOSDText(m_pPlayContext->nTextHandle[0]);
+			if (nResult != IPC_Succeed)
+			{
+				ipcplay_GetErrorMessage(nResult, szErrorText, 1024);
+				AfxMessageBox(szErrorText);
+				return;
+			}
+			m_pPlayContext->nTextHandle[0] = 0;
+		}
+			
+		if (m_pPlayContext->nFontHandle[0])
+		{
+			nResult = ipcplay_DestroyOSDFont(m_pPlayContext->nFontHandle[0]);
+			if (nResult != IPC_Succeed)
+			{
+				ipcplay_GetErrorMessage(nResult, szErrorText, 1024);
+				AfxMessageBox(szErrorText);
+				return;
+			}
+			m_pPlayContext->nFontHandle[0] = 0;
+		}
+	}
+	else
+		AfxMessageBox(_T("尚未开始播放"));
+}
+
+void CIPCPlayDemoDlg::OnBnClickedButtonOsd2()
+{
+
 }

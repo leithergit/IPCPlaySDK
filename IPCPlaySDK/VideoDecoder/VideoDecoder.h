@@ -8,6 +8,7 @@
 #include "IHWVideo_Typedef.h"
 #include "IHW265Dec_Api.h"
 #include "hi_config.h"
+#include <VersionHelpers.h>
 
 #define _HI_MULTITHREAD
 #ifndef __HisiLicon
@@ -44,8 +45,8 @@ extern "C" {
 
 #ifdef _ENABLE_FFMPEG_STAITC_LIB
 #pragma comment(lib,"libgcc.a")
-#pragma comment(lib,"libmingwex.a")
-#pragma comment(lib,"libcoldname.a")
+//#pragma comment(lib,"libmingwex.a")
+//#pragma comment(lib,"libcoldname.a")
 #pragma comment(lib,"libavcodec.a")
 #pragma comment(lib,"libavformat.a")
 #pragma comment(lib,"libavutil.a")
@@ -543,7 +544,7 @@ public:
 		AVCodec*  pAvCodec = nullptr;
 		if (!m_bProbeSucceed)
 			DestroyDecoder();
-		if (nCodec != AV_CODEC_ID_NONE && nWidth && nHeight)
+		if (nCodec != AV_CODEC_ID_NONE /*&& nWidth && nHeight*/)
 		{
 			pAvCodec = avcodec_find_decoder(nCodec);
 			if (!pAvCodec)
@@ -932,7 +933,7 @@ public:
 	/// @brief 测试指定的编码格式是支持硬解码（在本机）
 	bool CodecIsSupported(AVCodecID nCodec)
 	{
-		if (dwOvMajorVersion < 6)
+		if (!IsWindowsVistaOrGreater())
 			return false;
 		GUID input = GUID_NULL;
 		D3DFORMAT output = D3DFMT_UNKNOWN;		
@@ -1099,7 +1100,6 @@ public:
 		HMODULE dxva2lib;
 		pCreateDeviceManager9 *createDeviceManager;
 	} m_dxva;
-	DWORD					dwOvMajorVersion = 0;
 	HMODULE					m_hD3D9 = nullptr;
 	IDirect3D9Ex            *m_pD3D = nullptr;
 	IDirect3DDevice9Ex      *m_pD3DDev = nullptr;

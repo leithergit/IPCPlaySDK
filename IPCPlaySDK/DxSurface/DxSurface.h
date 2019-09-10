@@ -8,7 +8,7 @@ using namespace std;
 
 #ifdef _STD_SMARTPTR
 #include <memory>
-using namespace std::tr1;
+//using namespace std::tr1;
 #else
 #include <boost/shared_ptr.hpp>
 using namespace boost;
@@ -34,7 +34,7 @@ using namespace boost;
 
 #define Min(x,y)	(x<y?x:y)
 #pragma warning(push)
-#pragma warning(disable:4244)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -44,14 +44,15 @@ extern "C" {
 #include "libavcodec/avcodec.h"
 #include "libswscale/swscale.h"
 #include "libavutil/imgutils.h"
+#include "libavutil/avstring.h"
 //#include "libavutil/pixfmt.h"	
 
 //#define _ENABLE_FFMPEG_STAITC_LIB
 
 #ifdef _ENABLE_FFMPEG_STAITC_LIB
 #pragma comment(lib,"libgcc.a")
-#pragma comment(lib,"libmingwex.a")
-#pragma comment(lib,"libcoldname.a")
+//#pragma comment(lib,"libmingwex.a")
+//#pragma comment(lib,"libcoldname.a")
 #pragma comment(lib,"libavcodec.a")
 #pragma comment(lib,"libavformat.a")
 #pragma comment(lib,"libavutil.a")
@@ -84,6 +85,9 @@ extern "C" {
 #endif
 #pragma warning(pop)
 
+#pragma warning(disable:4244)
+#pragma warning(disable:4838)
+
 //#pragma comment ( lib, "d3d9.lib" )
 //#pragma comment ( lib, "d3dx9.lib" )
 #pragma comment(lib,"winmm.lib")
@@ -91,7 +95,7 @@ extern "C" {
 using namespace  std;
 //#include <boost/smart_ptr.hpp>
 //using namespace boost;
-using namespace  std::tr1;
+//using namespace  std::tr1;
 #ifndef SafeDelete
 #define SafeDelete(p)       { if(p) { delete (p);     (p)=NULL; } }
 #endif
@@ -742,6 +746,38 @@ public:
 		}
 	}
 };
+
+struct OSDInfo
+{
+	OSDInfo(){};
+	OSDInfo(WCHAR *szText, int nLength, RECT rtPostion, DWORD dwFormat, D3DCOLOR nColor)
+	{
+		assert(szText != nullptr);
+		if (nLength <= 0)
+			nLength = wcslen(szText);
+		if ((nLength > 0) && szText)
+		{
+			pszText = new WCHAR[nLength + 1];
+			wcsncpy_s(pszText, nLength + 1, szText, nLength);
+		}
+		nTextLength = nLength;
+		this->rtPostion = rtPostion;
+		this->dwFormat = dwFormat;
+		this->nColor = nColor;
+	}
+	~OSDInfo()
+	{
+		delete[]pszText;
+	}
+	WCHAR *pszText;
+	int nTextLength;
+	RECT rtPostion;
+	DWORD dwFormat;
+	D3DCOLOR nColor;
+};
+
+typedef shared_ptr<OSDInfo> OSDInfoPtr;
+
 // 注意:
 /// @brief IDirect3DSurface9对象封类，用于创建和管理IDirect3DSurface9对象，可以显示多种象素格式的图像
 /// @remark 使用CDxSurface对象显示图象时，必须在创建线程内显示图，否则当发生DirectX设备丢失时，无法重置DirectX的资源
@@ -753,6 +789,8 @@ class CDxSurface
 public:
 	map<long,DxPolygonPtr>	m_mapPolygon;
 	list<D3DLineArrayPtr>	m_listLine;
+	map<long, map<long,OSDInfoPtr>> m_MapOSD;
+	CCriticalSectionAgent   m_csMapOSD;
 	long					m_nVtableAddr;		// 虚函数表地址，该变量地址位置虚函数表之后，仅用于类初始化，请匆移动该变量的位置
 	D3DPRESENT_PARAMETERS	m_d3dpp;
 	CRITICAL_SECTION		m_csRender;			// 渲染临界区
@@ -768,6 +806,7 @@ public:
 	HMENU					m_hMenu;
 	D3DPOOL					m_nCurD3DPool;
 	IDirect3DSurface9		*m_pSurfaceRender/* = NULL*/;
+	//				*m_pD3DXFont = nullptr;
 	IDirect3DSurface9		*m_pSurfaceYUVCache/* = NULL*/;
 	IDirect3DSurface9		*m_pSnapshotSurface;	/* = NULL*/;	//截图专用表面
 	D3DFORMAT				m_nD3DFormat;
@@ -876,6 +915,128 @@ public:
 		SaveRunTime();
 	}
 
+	virtual long CreateFontW(LOGFONTW *pLogFont)
+	{
+		assert(m_pDirect3DDevice != nullptr);
+		D3DXFONT_DESCW FontDesc;
+		FontDesc.Height = pLogFont->lfHeight;
+		FontDesc.CharSet = pLogFont->lfCharSet;
+		FontDesc.Width = pLogFont->lfWidth;
+		FontDesc.Weight = pLogFont->lfWeight;
+		FontDesc.Italic = pLogFont->lfItalic;
+		FontDesc.MipLevels = 1;
+		FontDesc.OutputPrecision = pLogFont->lfOutPrecision;
+		FontDesc.PitchAndFamily = pLogFont->lfPitchAndFamily;
+		FontDesc.Quality = pLogFont->lfQuality;
+		wcscpy_s(FontDesc.FaceName, 32, pLogFont->lfFaceName);
+		ID3DXFont *pFont = nullptr;
+		if (FAILED(D3DXCreateFontIndirectW(m_pDirect3DDevice, &FontDesc, &pFont)))
+		{
+			assert(false);
+			return 0;
+		}
+		map<long,OSDInfoPtr> vec;
+		m_csMapOSD.Lock();
+		m_MapOSD.insert(pair<long, map<long,OSDInfoPtr>>((long)pFont,vec));
+		m_csMapOSD.Unlock();
+		return (long)pFont;
+	}
+	void DestroyFont(long nFont)
+	{
+		if (nFont)
+		{
+			CAutoLock lock(m_csMapOSD.Get());
+			auto itFind = m_MapOSD.find(nFont);
+			if (itFind == m_MapOSD.end())
+				return;
+			m_MapOSD.erase(itFind);
+		}
+	}
+	long DrawTextA(long nFont, CHAR *szText, int nLength, RECT rtPostion, DWORD dwFormat, D3DCOLOR nColor)
+	{
+		assert(nFont != 0);
+		if (!nFont)
+			return 0;
+		if (!szText || !nLength)
+			return 0;
+		int nNeedBuffSize = ::MultiByteToWideChar(CP_ACP, NULL, szText, nLength, NULL, 0);
+		WCHAR *pTextW = new WCHAR[nNeedBuffSize + 1];
+		shared_ptr<WCHAR> TextWPtr(pTextW);
+		::MultiByteToWideChar(CP_ACP, 0, szText, nLength, pTextW, nNeedBuffSize);
+		return DrawTextW(nFont, pTextW, nNeedBuffSize, rtPostion,dwFormat, nColor);
+	}
+
+	long DrawTextW(long nFont,WCHAR *szText, int nLength, RECT rtPostion,DWORD dwFormat, D3DCOLOR nColor)
+	{
+		assert(nFont != 0);
+		if (!nFont)
+			return 0;
+		if (!szText || !nLength)
+			return 0;
+		CAutoLock lock(m_csMapOSD.Get());
+		auto itFind = m_MapOSD.find(nFont);
+		if (itFind == m_MapOSD.end())
+			return 0;
+		OSDInfoPtr OsdPtr = make_shared<OSDInfo>(szText, nLength, rtPostion, dwFormat, nColor);
+		itFind->second.insert(pair<long, OSDInfoPtr>((long)OsdPtr.get(),OsdPtr));
+		return (long)OsdPtr.get();
+	}
+	// nText is a handle ,not a real Text
+	void RemoveText(long nFont,long nText)
+	{
+		assert(nFont != 0);
+		if (!nFont)
+			return ;
+		if (!nText )
+			return ;
+		CAutoLock lock(m_csMapOSD.Get());
+		auto itFind = m_MapOSD.find(nFont);
+		if (itFind == m_MapOSD.end())
+			return;
+		auto itFind2 = itFind->second.find(nText);
+		if (itFind2 == itFind->second.end())
+			return;
+		itFind->second.erase(itFind2);
+	}
+	virtual IDirect3DSurface9* LoadImage(WCHAR *szFileName)
+	{
+		// 以下代码加载背景图片
+		IDirect3DSurface9 *pSurfaceBackImage = nullptr;
+		D3DXIMAGE_INFO ImageInfo;
+		if (szFileName)
+		{
+			HRESULT hr = D3DXGetImageInfoFromFileW(szFileName, &ImageInfo);
+			if (SUCCEEDED(hr))
+			{
+				hr = m_pDirect3DDevice->CreateOffscreenPlainSurface(ImageInfo.Width,
+					ImageInfo.Height,
+					/*ImageInfo.Format*/
+					D3DFMT_X8R8G8B8,
+					m_nCurD3DPool,
+					&pSurfaceBackImage,
+					NULL);
+				if (SUCCEEDED(hr))
+				{
+					hr = D3DXLoadSurfaceFromFileW(
+						pSurfaceBackImage,					//目标表面
+						NULL,								//目标调色板
+						NULL,								//目标矩形,NULL为加载整个表面
+						szFileName,							//文件
+						NULL,								//源矩形,NULL为复制整个图片
+						D3DX_DEFAULT,						//过滤
+						D3DCOLOR_XRGB(0, 0, 0),				//透明色
+						&ImageInfo							//源图像信息
+						);
+					if (SUCCEEDED(hr))
+					{
+						return pSurfaceBackImage;
+					}
+				}
+			}
+		}
+		SafeRelease(pSurfaceBackImage);
+		return nullptr;
+	}
 	int SetDisplayAdapter(int nAdapter = 0)
 	{
 		if (nAdapter >= 0)
@@ -1139,7 +1300,7 @@ public:
 	{
 		m_nCordinateMode = nCoordinate;
 	}
-	virtual bool ProcessExternDraw(HWND hWnd)
+	virtual void ProcessD3DXDraw(HWND hWnd)
 	{
 		if (m_pD3DXLine && hWnd)
 		{
@@ -1147,46 +1308,56 @@ public:
 			GetWindowRect(hWnd, &rtWnd);
 			UINT nWndWidth = RectWidth(rtWnd);
 			UINT nWndHeight = RectHeight(rtWnd);
-			if (nWndWidth == 0 ||
-				nWndHeight == 0)
-				return true;
-
-			CAutoLock lock(m_pCriListLine->Get());
-			if (m_listLine.size())
+			if (nWndWidth > 0 &&
+				nWndHeight > 0)
 			{
-				for (auto it = m_listLine.begin(); it != m_listLine.end(); it++)
+				CAutoLock lock(m_pCriListLine->Get());
+				if (m_listLine.size())
 				{
-					m_pD3DXLine->SetWidth((*it)->fWidth);
-					m_pD3DXLine->SetAntialias(TRUE);
-					D3DXVECTOR2* pLineArray = new D3DXVECTOR2[(*it)->nCount];
-					D3DXVECTOR2* pLineArraySrc = (*it)->pLineArray;
-					if (m_nCordinateMode == Coordinte_Video ||(*it)->bConvert)
+					for (auto it = m_listLine.begin(); it != m_listLine.end(); it++)
 					{
-						for (int nIndex = 0; nIndex < (*it)->nCount; nIndex++)
+						m_pD3DXLine->SetWidth((*it)->fWidth);
+						m_pD3DXLine->SetAntialias(TRUE);
+						D3DXVECTOR2* pLineArray = new D3DXVECTOR2[(*it)->nCount];
+						D3DXVECTOR2* pLineArraySrc = (*it)->pLineArray;
+						if (m_nCordinateMode == Coordinte_Video || (*it)->bConvert)
 						{
-							pLineArray[nIndex].x = pLineArraySrc[nIndex].x;
-							pLineArray[nIndex].y = pLineArraySrc[nIndex].y;
+							for (int nIndex = 0; nIndex < (*it)->nCount; nIndex++)
+							{
+								pLineArray[nIndex].x = pLineArraySrc[nIndex].x;
+								pLineArray[nIndex].y = pLineArraySrc[nIndex].y;
+							}
 						}
-					}
-					else
-					{
-						for (int nIndex = 0; nIndex < (*it)->nCount; nIndex++)
+						else
 						{
-							pLineArraySrc[nIndex].x = pLineArraySrc[nIndex].x*m_nVideoWidth / nWndWidth;
-							pLineArraySrc[nIndex].y = pLineArraySrc[nIndex].y*m_nVideoHeight / nWndHeight;
-							pLineArray[nIndex].x = pLineArraySrc[nIndex].x;
-							pLineArray[nIndex].y = pLineArraySrc[nIndex].y;
+							for (int nIndex = 0; nIndex < (*it)->nCount; nIndex++)
+							{
+								pLineArraySrc[nIndex].x = pLineArraySrc[nIndex].x*m_nVideoWidth / nWndWidth;
+								pLineArraySrc[nIndex].y = pLineArraySrc[nIndex].y*m_nVideoHeight / nWndHeight;
+								pLineArray[nIndex].x = pLineArraySrc[nIndex].x;
+								pLineArray[nIndex].y = pLineArraySrc[nIndex].y;
+							}
+							(*it)->bConvert = true;
 						}
-						(*it)->bConvert = true;
+						m_pD3DXLine->Draw(pLineArray, (*it)->nCount, (*it)->nColor);
+						delete[]pLineArray;
 					}
-					m_pD3DXLine->Draw(pLineArray, (*it)->nCount, (*it)->nColor);
-					delete[]pLineArray;
 				}
 			}
-			return true;
 		}
-		else
-			return false;
+		m_csMapOSD.Lock();
+		for (auto it = m_MapOSD.begin(); it != m_MapOSD.end(); it++)
+		{
+			ID3DXFont *pFont =(ID3DXFont*)it->first;
+			map<long, OSDInfoPtr> &TextMap = it->second;
+			for (auto it2 = TextMap.begin(); it2 != TextMap.end(); it2++)
+			{
+				OSDInfoPtr &TextPtr = it2->second;
+				pFont->DrawTextW(nullptr, TextPtr->pszText, TextPtr->nTextLength, &TextPtr->rtPostion, TextPtr->dwFormat, TextPtr->nColor);
+			}
+		}
+		m_csMapOSD.Unlock();
+		
 	}
 	virtual bool ResetDevice()
 	{
@@ -2136,9 +2307,9 @@ _Failed:
 
 		// 处理外部分绘制接口
 		ExternDrawCall(hWnd, pBackSurface, pRenderRt);
-
 	
 		pBackSurface->Release();
+		
 		m_pDirect3DDevice->EndScene();
 		// Present(RECT* pSourceRect,CONST RECT* pDestRect,HWND hDestWindowOverride,CONST RGNDATA* pDirtyRegion)
 		SaveRunTime();
@@ -2461,7 +2632,7 @@ public:
 		if(!CheckResourceFormat(nUsageTexture/*D3DUSAGE_DEPTHSTENCIL*/,
 			D3DRTYPE_TEXTURE/*D3DRTYPE_SURFACE*/,d3ddm.Format/*D3DFMT_D15S1*/))
 		{
-			DxTraceMsg("%s CheckResourceFormat Texture Resource FMT failed.\n"__FUNCTION__);
+			DxTraceMsg("%s CheckResourceFormat Texture Resource FMT failed.\n",__FUNCTION__);
 			return false;
 		}
 
@@ -2501,6 +2672,7 @@ public:
 	}
 };
 
+#include "d3dfont.h"
 // CDxSurfaceEx类，仅限于Windows Vista及以上操作系统下使用
 // 其性能与稳定性比CDxSurface要强，维护也更方便
 
@@ -2510,7 +2682,6 @@ public:
 	IDirect3D9Ex			*m_pDirect3D9Ex		/* = NULL*/;
 	IDirect3DDevice9Ex		*m_pDirect3DDeviceEx	/*= NULL*/;
 	pDirect3DCreate9Ex*		m_pDirect3DCreate9Ex;
-	
 public:
 // 	CDxSurfaceEx(IDirect3D9Ex *pD3D9Ex)
 // 		//:m_pDirect3D9Ex(NULL)*,
@@ -2549,6 +2720,128 @@ public:
 	}
 #endif
 
+	virtual long CreateFontW(LOGFONTW *pLogFont)
+	{
+		assert(m_pDirect3DDeviceEx!= nullptr);
+		D3DXFONT_DESCW FontDesc;
+		FontDesc.Height = pLogFont->lfHeight;
+		FontDesc.CharSet = pLogFont->lfCharSet;
+		FontDesc.Width = pLogFont->lfWidth;
+		FontDesc.Weight = pLogFont->lfWeight;
+		FontDesc.Italic = pLogFont->lfItalic;
+		FontDesc.MipLevels = 1;
+		FontDesc.OutputPrecision = pLogFont->lfOutPrecision;
+		FontDesc.PitchAndFamily = pLogFont->lfPitchAndFamily;
+		FontDesc.Quality = pLogFont->lfQuality;
+		wcscpy_s(FontDesc.FaceName, 32, pLogFont->lfFaceName);
+		ID3DXFont *pFont = nullptr;
+		if (FAILED(D3DXCreateFontIndirectW(m_pDirect3DDeviceEx, &FontDesc, &pFont)))
+		{
+			assert(false);
+			return 0;
+		}
+		map<long, OSDInfoPtr> vec;
+		m_csMapOSD.Lock();
+		m_MapOSD.insert(pair<long, map<long, OSDInfoPtr>>((long)pFont, vec));
+		m_csMapOSD.Unlock();
+		return (long)pFont;
+	}
+	void DestroyFont(long nFont)
+	{
+		if (nFont)
+		{
+			CAutoLock lock(m_csMapOSD.Get());
+			auto itFind = m_MapOSD.find(nFont);
+			if (itFind == m_MapOSD.end())
+				return;
+			m_MapOSD.erase(itFind);
+		}
+	}
+	long DrawTextA(long nFont, CHAR *szText, int nLength, RECT rtPostion, DWORD dwFormat, D3DCOLOR nColor)
+	{
+		assert(nFont != 0);
+		if (!nFont)
+			return 0;
+		if (!szText || !nLength)
+			return 0;
+		int nNeedBuffSize = ::MultiByteToWideChar(CP_ACP, NULL, szText, nLength, NULL, 0);
+		WCHAR *pTextW = new WCHAR[nNeedBuffSize + 1];
+		shared_ptr<WCHAR> TextWPtr(pTextW);
+		::MultiByteToWideChar(CP_ACP, 0, szText, nLength, pTextW, nNeedBuffSize);
+		return DrawTextW(nFont, pTextW, nNeedBuffSize, rtPostion, dwFormat, nColor);
+	}
+
+	long DrawTextW(long nFont, WCHAR *szText, int nLength, RECT rtPostion, DWORD dwFormat, D3DCOLOR nColor)
+	{
+		assert(nFont != 0);
+		if (!nFont)
+			return 0;
+		if (!szText || !nLength)
+			return 0;
+		CAutoLock lock(m_csMapOSD.Get());
+		auto itFind = m_MapOSD.find(nFont);
+		if (itFind == m_MapOSD.end())
+			return 0;
+		OSDInfoPtr OsdPtr = make_shared<OSDInfo>(szText, nLength, rtPostion, dwFormat, nColor);
+		itFind->second.insert(pair<long, OSDInfoPtr>((long)OsdPtr.get(), OsdPtr));
+		return (long)OsdPtr.get();
+	}
+	// nText is a handle ,not a real Text
+	void RemoveText(long nFont, long nText)
+	{
+		assert(nFont != 0);
+		if (!nFont)
+			return;
+		if (!nText)
+			return;
+		CAutoLock lock(m_csMapOSD.Get());
+		auto itFind = m_MapOSD.find(nFont);
+		if (itFind == m_MapOSD.end())
+			return;
+		auto itFind2 = itFind->second.find(nText);
+		if (itFind2 == itFind->second.end())
+			return;
+		itFind->second.erase(itFind2);
+	}
+	virtual IDirect3DSurface9* LoadImage(WCHAR *szFileName)
+	{
+		// 以下代码加载背景图片
+		IDirect3DSurface9 *pSurfaceBackImage = nullptr;
+		D3DXIMAGE_INFO ImageInfo;
+		if (szFileName)
+		{
+			HRESULT hr = D3DXGetImageInfoFromFileW(szFileName, &ImageInfo);
+			if (SUCCEEDED(hr))
+			{
+				hr = m_pDirect3DDeviceEx->CreateOffscreenPlainSurface(ImageInfo.Width,
+					ImageInfo.Height,
+					/*ImageInfo.Format*/
+					D3DFMT_A8R8G8B8,
+					m_nCurD3DPool,
+					&pSurfaceBackImage,
+					NULL);
+				if (SUCCEEDED(hr))
+				{
+					hr = D3DXLoadSurfaceFromFileW(
+						pSurfaceBackImage,					//目标表面
+						NULL,								//目标调色板
+						NULL,								//目标矩形,NULL为加载整个表面
+						szFileName,							//文件
+						NULL,								//源矩形,NULL为复制整个图片
+						D3DX_DEFAULT,						//过滤
+						D3DCOLOR_ARGB(0,0, 255, 255),		//透明色
+						&ImageInfo							//源图像信息
+						);
+					if (SUCCEEDED(hr))
+					{
+						return pSurfaceBackImage;
+					}
+				}
+			}
+		}
+		SafeRelease(pSurfaceBackImage);
+		return nullptr;
+	}
 	
 	virtual void DxCleanup()
 	{
@@ -2797,6 +3090,7 @@ public:
 // 				break;
 // 			}
 // 		}
+		//OSDInfoPtr pOSD = make_shared<OSDInfo>();
 		if (FAILED(hr = m_pDirect3D9Ex->CreateDeviceEx(m_nDisplayAdapter,
 			D3DDEVTYPE_HAL,
 			m_d3dpp.hDeviceWindow,
@@ -2818,7 +3112,6 @@ public:
 				goto _Failed;
 			}
 		}
-
 		if (!m_bD3DShared)
 		{
 			if (m_pSurfaceRender)
@@ -2834,12 +3127,14 @@ public:
 				goto _Failed;
 			}
 		}
+
 		hr = m_pDirect3DDeviceEx->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_ANISOTROPIC);
 
 		hr = m_pDirect3DDeviceEx->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_ANISOTROPIC);
 
 		hr = m_pDirect3DDeviceEx->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS,TRUE);
 		hr = m_pDirect3DDeviceEx->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+		
 		// 保存参数
 		m_nVideoWidth	 = nVideoWidth;
 		m_nVideoHeight	 = nVideoHeight;
@@ -3452,10 +3747,10 @@ __Failure:
 			//DxTraceMsg("%s line(%d) IDirect3DDevice9Ex::GetBackBuffer failed:hr = %08X.\n",__FUNCTION__,__LINE__,hr);
 			return true;
 		}
-		D3DSURFACE_DESC Desc1,Desc2;
-		pBackSurface->GetDesc(&Desc1);
-		m_pSurfaceRender->GetDesc(&Desc2);
-		RECT dstrt = { 0, 0, Desc1.Width, Desc1.Height };
+		D3DSURFACE_DESC DescDst,DescSrc;
+		pBackSurface->GetDesc(&DescDst);
+		m_pSurfaceRender->GetDesc(&DescSrc);
+		RECT dstrt = { 0, 0, DescDst.Width, DescDst.Height };
 		RECT srcrt = { 0, 0, m_nVideoWidth, m_nVideoHeight };
 // 		RECT dstrt1 = { 0, 0, Desc1.Width/2-1, Desc1.Height };
 // 		RECT dstrt2 = { Desc1.Width / 2, 0, Desc1.Width, Desc1.Height };
@@ -3469,8 +3764,8 @@ __Failure:
 
 		//D3DXLoadSurfaceFromSurface(m_pSurfaceRender,nullptr,nullptr,pDCSurface,nullptr,nullptr,D3DX_FILTER_NONE，0)；
 		hr = m_pDirect3DDeviceEx->StretchRect(m_pSurfaceRender, &srcrt, pBackSurface, &dstrt, D3DTEXF_LINEAR);
-		//hr = m_pDirect3DDeviceEx->StretchRect(m_pSurfaceRender, &srcrt1, pBackSurface, &dstrt1, D3DTEXF_LINEAR);
-		//hr = m_pDirect3DDeviceEx->StretchRect(m_pSurfaceRender, &srcrt2, pBackSurface, &dstrt2, D3DTEXF_LINEAR);
+		
+		
 		//SaveRunTime();
 		// 处理外部分绘制接口
 		ExternDrawCall(hWnd, pBackSurface,pRenderRt);
@@ -3478,7 +3773,7 @@ __Failure:
 		//ExternDrawExCall(hWnd, pRenderRt);
 		//SaveRunTime();
 		
-		ProcessExternDraw(hWnd);
+		ProcessD3DXDraw(hWnd);
 
 		m_pDirect3DDeviceEx->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
 		m_pDirect3DDeviceEx->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
@@ -3491,6 +3786,8 @@ __Failure:
 			m_pDirect3DDeviceEx->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, it->second->nVertexCount, 0, it->second->nTriangleCount);
 		}
 		m_pCriMapPolygon->Unlock();
+	
+
 		m_pDirect3DDeviceEx->EndScene();
 		
 		if (hRenderWnd)

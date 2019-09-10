@@ -49,7 +49,6 @@ MS VC++ 5.0 _MSC_VER = 1100
 #define INOUT
 #endif
 
-
 enum	IPC_ConnectMode
 {
 	IPC_TCP = 0,
@@ -80,14 +79,14 @@ typedef enum SNAPSHOT_FORMAT
 	XIFF_HDR = 7,       //high dynamic range formats
 	XIFF_PFM = 8,       //
 	XIFF_FORCE_DWORD = 0x7fffffff
-};
+}_tagSNAPSHOT_FORMAT;
 
 typedef enum PIXELFMORMAT
 {
 	YV12 = 0,
 	NV12 = 1,
 	R8G8B8 = 2
-};
+}_tagPIXELFMORMAT;
 enum IPC_CALLBACK
 {
 	ExternDcDraw,	/// 外部DC绘制函数，回调定义详见@see ExternDraw
@@ -169,8 +168,6 @@ enum IPCPLAY_Status
 	IPC_Error_InvalidSharedMemory		=(-50), ///< 尚未创建共享内存
 	IPC_Error_InsufficentMemory			=(-255)	///< 内存不足
 };
-
-
 
 #define		WM_IPCPLAYER_MESSAGE			WM_USER + 8192	///< 播放器出错时发出的消息 ,消息的LPARAM字段无意义,wparam字段定义如下：
 #define		IPCPLAYER_NOTRECVIFRAME			0		///< 未收到有效的I帧
@@ -969,3 +966,56 @@ IPCPLAYSDK_API int ipcplay_SetDisplayAdapter(IN IPC_PLAYHANDLE hPlayHandle, int 
 IPCPLAYSDK_API int ipcplay_GetErrorMessageA(int nErrorCode, LPSTR szMessage, int nBufferSize);
 IPCPLAYSDK_API int ipcplay_GetErrorMessageW(int nErrorCode, LPWSTR szMessage, int nBufferSize);
 IPCPLAYSDK_API int ipcplay_GetHAccelConfig(AdapterHAccel **pAdapterHAccel, int &nAdapterCount);
+
+/// @brief			创建OSD字体，一个字体句柄可叠加多个文本
+/// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
+/// @param [in]		lf				LOGFONT	结构变量
+/// @param [out]	nFontHandle		返回字体的句柄
+/// @return 操作成功时，返回线条组的句柄，否则返回0
+IPCPLAYSDK_API int ipcplay_CreateOSDFontA(IN IPC_PLAYHANDLE hPlayHandle, IN LOGFONTA lf, OUT long *nFontHandle);
+IPCPLAYSDK_API int ipcplay_CreateOSDFontW(IN IPC_PLAYHANDLE hPlayHandle, IN LOGFONTW lf, OUT long *nFontHandle);
+
+/// @brief			使用已有的OSDFont句柄，在画面上输出文本
+/// @param [in]		nFontHandle		由ipcplay_CreateOSDFont创建的字体句柄
+/// @param [in]		szText			要输出的文本字符串
+/// @param [in]		nLength			要输出的文本长度，若为-1，即自动计算文本长度
+/// @param [in]		rtPostion		文本输出位置
+/// @param [in]		dwFormat		文本输出的格式
+// 					指定格式化文本的方法。它可以是以下值的任意组合：
+// 					值				含义
+// 					DT_BOTTOM		将文本对齐到矩形的底部。该值必须与DT_SINGLELINE组合。
+// 					DT_CALCRECT		确定矩形的宽度和高度。如果有多行文本，DrawText使用pRect参数指向的矩形的宽度，并扩展矩形的底边以绑定最后一行文本。如果只有一行文本，DrawText会修改矩形的右侧，以便它限定行中的最后一个字符。在任何一种情况下，DrawText都会返回格式化文本的高度，但不会绘制文本。
+// 					DT_CENTER		在矩形水平居中显示文本。
+// 					DT_EXPANDTABS	展开制表符。每个选项卡的默认字符数为8。
+// 					DT_LEFT			将文本对齐到左侧。
+// 					DT_NOCLIP		无绘制剪裁。使用DT_NOCLIP时，DrawText会更快一些。
+// 					DT_RIGHT		将文本对齐到右侧。
+// 					DT_RTLREADING	选择希伯来语或阿拉伯语字体时，以双向文本的从右到左阅读顺序显示文本。所有文本的默认阅读顺序是从左到右。
+// 					DT_SINGLELINE	仅在一行显示文本。回车和换行不会生效。
+// 					DT_TOP			顶部对齐文本。
+// 					DT_VCENTER		垂直居中文本（仅限单行）。
+// 					DT_WORDBREAK	词句离散。如果单词将延伸超过pRect参数指定的矩形边缘，则单词之间的行会自动断开。回车 / 换行顺序也会破坏该行。
+/// @param [in]		nColor			输出文本的颜色，该颜色可用IPC_ARGB生组，具体参数@See IPC_ARGB宏定义
+/// @param [out]	nTextHandle		操作成功时，返回文本的字柄
+/// @return 操作成功时返回IPC_Succeed	否则返回小于0的错误，可使用ipcplay_GetErrorMessage函数获取该错误号的具体含义
+IPCPLAYSDK_API int ipcplay_DrawOSDTextA(IN long nFontHandle, IN CHAR *szText, IN int nLength, IN RECT rtPostion, IN DWORD dwFormat, IN  DWORD nColor , OUT long *nTextHandle);
+IPCPLAYSDK_API int ipcplay_DrawOSDTextW(IN long nFontHandle, IN	WCHAR *szText, IN int nLength, IN RECT rtPostion, IN DWORD dwFormat, IN  DWORD nColor , OUT long *nTextHandle);
+
+#ifdef _UNICODE
+#define ipcplay_CreateOSDFont	ipcplay_CreateOSDFontW
+#define ipcplay_DrawOSDText		ipcplay_DrawOSDTextW
+#else
+#define ipcplay_CreateOSDFont	ipcplay_CreateOSDFontA
+#define ipcplay_DrawOSDText		ipcplay_DrawOSDTextA
+#endif
+
+/// @brief			移动画面上已经输出的文本
+/// @param [in]		nOSDText		由ipcplay_DrawOSD函数返回的文本句柄
+/// @return 操作成功时返回IPC_Succeed	否则返回小于0的错误，可使用ipcplay_GetErrorMessage函数获取该错误号的具体含义
+IPCPLAYSDK_API int ipcplay_RmoveOSDText(long nOSDText);
+
+/// @brief			销毁由ipcplay_CreateOSDFont创建的字体
+/// @param [in]		nFontHandle		由ipcplay_CreateOSDFont函数返回的字体句柄
+/// @return 操作成功时返回IPC_Succeed	否则返回小于0的错误，可使用ipcplay_GetErrorMessage函数获取该错误号的具体含义
+/// @Note			注意销毁字体将会移动使用该字体输出的所有OSD文本
+IPCPLAYSDK_API int ipcplay_DestroyOSDFont(long nFontHandle);

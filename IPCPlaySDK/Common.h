@@ -6,7 +6,7 @@ using namespace std;
 
 #ifdef _STD_SMARTPTR
 #include <memory>
-using namespace std::tr1;
+//using namespace std::tr1;
 #else
 #include <boost/shared_ptr.hpp>
 using namespace boost;
@@ -31,7 +31,7 @@ using namespace boost;
 
 
 using namespace std;
-using namespace std::tr1;
+//using namespace std::tr1;
 #pragma comment(lib,"ws2_32")
 #pragma warning (disable:4018)
 

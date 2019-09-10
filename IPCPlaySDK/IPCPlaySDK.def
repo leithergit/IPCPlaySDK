@@ -77,3 +77,10 @@ EXPORTS
 	ipcplay_SetDisplayAdapter
 	ipcplay_GetDisplayAdapterInfo
 	ipcplay_GetHAccelConfig
+	
+	ipcplay_CreateOSDFontW
+	ipcplay_DrawOSDTextW
+	ipcplay_CreateOSDFontA
+	ipcplay_DrawOSDTextA
+	ipcplay_RmoveOSDText
+	ipcplay_DestroyOSDFont

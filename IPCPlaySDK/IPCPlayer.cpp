@@ -136,17 +136,18 @@ CIPCPlayer::CIPCPlayer(HWND hWnd, CHAR *szFileName, char *szLogFile)
 					m_nVideoFPS = 25;
 					if (!m_pMediaHeader->nVideoWidth || !m_pMediaHeader->nVideoHeight)
 					{
-						m_nVideoCodec = CODEC_UNKNOWN;
+						//m_nVideoCodec = CODEC_UNKNOWN;
 						m_nVideoWidth = 0;
 						m_nVideoHeight = 0;
 					}
 					else
 					{
-						m_nVideoCodec = m_pMediaHeader->nVideoCodec;
-						m_nAudioCodec = m_pMediaHeader->nAudioCodec;
+						
 						m_nVideoWidth = m_pMediaHeader->nVideoWidth;
 						m_nVideoHeight = m_pMediaHeader->nVideoHeight;
 					}
+					m_nVideoCodec = m_pMediaHeader->nVideoCodec;
+					m_nAudioCodec = m_pMediaHeader->nAudioCodec;
 					// 取得第一帧和最后一帧的信息
 					if (GetFrame(&m_FirstFrame, true) != IPC_Succeed ||
 						GetFrame(&m_LastFrame, false) != IPC_Succeed)
@@ -218,13 +219,13 @@ CIPCPlayer::CIPCPlayer(HWND hWnd, CHAR *szFileName, char *szLogFile)
 					{
 						m_nVideoWidth = m_pMediaHeader->nVideoWidth;
 						m_nVideoHeight = m_pMediaHeader->nVideoHeight;
-						if (!m_nVideoWidth || !m_nVideoHeight)
-						{
-							// 								OutputMsg("%s %d(%s):Invalid Mdeia File Header.\n", __FILE__, __LINE__, __FUNCTION__);
-							// 								ClearOnException();
-							// 								throw std::exception("Invalid Mdeia File Header.");
-							m_nVideoCodec = CODEC_UNKNOWN;
-						}
+// 						if (!m_nVideoWidth || !m_nVideoHeight)
+// 						{
+// 							// 								OutputMsg("%s %d(%s):Invalid Mdeia File Header.\n", __FILE__, __LINE__, __FUNCTION__);
+// 							// 								ClearOnException();
+// 							// 								throw std::exception("Invalid Mdeia File Header.");
+// 							m_nVideoCodec = CODEC_UNKNOWN;
+// 						}
 					}
 					if (m_pMediaHeader->nFps == 0)
 						m_nVideoFPS = 25;
@@ -1078,9 +1079,6 @@ int CIPCPlayer::SetStreamHeader(CHAR *szStreamHeader, int nHeaderSize)
 			{
 				m_nVideoWidth = m_pMediaHeader->nVideoWidth;
 				m_nVideoHeight = m_pMediaHeader->nVideoHeight;
-				if (!m_nVideoWidth || !m_nVideoHeight)
-					//return IPC_Error_MediaFileHeaderError;
-					m_nVideoCodec = CODEC_UNKNOWN;
 			}
 			if (m_pMediaHeader->nFps == 0)
 				m_nVideoFPS = 25;
@@ -1318,7 +1316,7 @@ int CIPCPlayer::GetFileHeader()
 		{
 			m_nVideoWidth = m_pMediaHeader->nVideoWidth;
 			m_nVideoHeight = m_pMediaHeader->nVideoHeight;
-			if (!m_nVideoWidth || !m_nVideoHeight)
+			//if (!m_nVideoWidth || !m_nVideoHeight)
 				//return IPC_Error_MediaFileHeaderError;
 				m_nVideoCodec = CODEC_UNKNOWN;
 		}
@@ -4120,19 +4118,23 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 
 	
 	pThis->OutputMsg("%s Try to InitizlizeDx.\n", __FUNCTION__);
-	if (!pThis->InitizlizeDx())
+	if (pThis->m_nVideoWidth && pThis->m_nVideoHeight)
 	{
-		TraceFunction();
-		assert(false);
-		return 0;
+		if (!pThis->InitizlizeDx())
+		{
+			TraceFunction();
+			assert(false);
+			return 0;
+		}
+		pThis->OutputMsg("%s Try to Test m_pDxSurface.\n", __FUNCTION__);
+		if (!pThis->m_pDxSurface)
+		{
+			TraceFunction();
+			assert(false);
+			return 0;
+		}
 	}
-	pThis->OutputMsg("%s Try to Test m_pDxSurface.\n", __FUNCTION__);
-	if (!pThis->m_pDxSurface)
-	{
-		TraceFunction();
-		assert(false);
-		return 0;
-	}
+
 	CHAR szAdapterID[64] = { 0 };
 	if (pThis->m_bEnableHaccel ||
 		g_pSharedMemory->bHAccelPreferred)

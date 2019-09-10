@@ -14,7 +14,7 @@
 
 #include <memory>
 using namespace std;
-using namespace std::tr1;
+//using namespace std::tr1;
 
 #ifdef _DEBUG
 #undef THIS_FILE

@@ -9,3 +9,4 @@ CCriticalSectionAgentPtr CDxSurface::m_WndSurfaceMapcs = shared_ptr<CCriticalSec
 
 int	CDxSurface::m_nObjectCount = 0;
 CCriticalSectionAgentPtr CDxSurface::m_csObjectCount = shared_ptr<CCriticalSectionAgent>(new CCriticalSectionAgent());
+
