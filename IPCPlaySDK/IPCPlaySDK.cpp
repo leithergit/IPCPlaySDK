@@ -27,10 +27,6 @@ int	CIPCPlayer::m_nGloabalCount = 0;
 CCriticalSectionAgentPtr CIPCPlayer::m_pCSGlobalCount = make_shared<CCriticalSectionAgent>();
 #endif
 
-#ifdef _DEBUG
-extern CCriticalSectionAgent g_csPlayerHandles;
-extern UINT	g_nPlayerHandles;
-#endif
 
 struct ipcplay_Font
 {
@@ -88,7 +84,7 @@ struct IPC_StreamHeader
 ///	@return			若操作成功，返回一个IPC_PLAYHANDLE类型的播放句柄，所有后续播
 ///	放函数都要使用些接口，若操作失败则返回NULL,错误原因可参考
 ///	GetLastError的返回值
-IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenFileA(IN HWND hWnd, IN char *szFileName, FilePlayProc pPlayCallBack, void *pUserPtr,char *szLogFile)
+ IPC_PLAYHANDLE	ipcplay_OpenFileA(IN HWND hWnd, IN char *szFileName, FilePlayProc pPlayCallBack, void *pUserPtr,char *szLogFile)
 {
 	if (!szFileName)
 	{
@@ -107,11 +103,6 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenFileA(IN HWND hWnd, IN char *szFileNam
 		if (pPlayer)
 		{
 			pPlayer->SetCallBack(FilePlayer, pPlayCallBack, pUserPtr);
-#if _DEBUG
-			g_csPlayerHandles.Lock();
-			g_nPlayerHandles++;
-			g_csPlayerHandles.Unlock();
-#endif
 			return pPlayer;
 		}
 		else
@@ -134,7 +125,7 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenFileA(IN HWND hWnd, IN char *szFileNam
 ///	@return			若操作成功，返回一个IPC_PLAYHANDLE类型的播放句柄，所有后续播
 ///	放函数都要使用些接口，若操作失败则返回NULL,错误原因可参考
 ///	GetLastError的返回值
-IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenFileW(IN HWND hWnd, IN WCHAR *szFileName, FilePlayProc pPlayCallBack, void *pUserPtr, char *szLogFile)
+ IPC_PLAYHANDLE	ipcplay_OpenFileW(IN HWND hWnd, IN WCHAR *szFileName, FilePlayProc pPlayCallBack, void *pUserPtr, char *szLogFile)
 {
 	if (!szFileName || !PathFileExistsW(szFileName))
 		return nullptr;
@@ -149,7 +140,7 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenFileW(IN HWND hWnd, IN WCHAR *szFileNa
 /// @param [in]		szLogFile		日志文件名,若为null，则不开启日志
 ///	@return			若操作成功，返回一个IPC_PLAYHANDLE类型的播放句柄，所有后续播
 ///	放函数都要使用些接口，若操作失败则返回NULL,错误原因可参考GetLastError的返回值
-IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenRTStream(IN HWND hWnd, IN int nBufferSize , char *szLogFile)
+ IPC_PLAYHANDLE	ipcplay_OpenRTStream(IN HWND hWnd, IN int nBufferSize , char *szLogFile)
 {
 	if ((hWnd && !IsWindow(hWnd))/* || !szStreamHeader || !nHeaderSize*/)
 		return nullptr;
@@ -165,11 +156,7 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenRTStream(IN HWND hWnd, IN int nBufferS
 			return nullptr;
 		if (szLogFile)
 			TraceMsgA("%s %s.\n", __FUNCTION__, szLogFile);
-#if _DEBUG
-		g_csPlayerHandles.Lock();
-		g_nPlayerHandles++;
-		g_csPlayerHandles.Unlock();
-#endif
+
 		return pPlayer;
 	}
 	catch (...)
@@ -185,7 +172,7 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenRTStream(IN HWND hWnd, IN int nBufferS
 /// @param [in]		szLogFile		日志文件名,若为null，则不开启日志
 ///	@return			若操作成功，返回一个IPC_PLAYHANDLE类型的播放句柄，所有后续播
 ///	放函数都要使用些接口，若操作失败则返回NULL,错误原因可参考GetLastError的返回值
-IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenStream(IN HWND hWnd, byte *szStreamHeader, int nHeaderSize, IN int nMaxFramesCache, char *szLogFile)
+ IPC_PLAYHANDLE	ipcplay_OpenStream(IN HWND hWnd, byte *szStreamHeader, int nHeaderSize, IN int nMaxFramesCache, char *szLogFile)
 {
  	if ((hWnd && !IsWindow(hWnd))/* || !szStreamHeader || !nHeaderSize*/)
  		return nullptr;
@@ -205,11 +192,6 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenStream(IN HWND hWnd, byte *szStreamHea
 		int nError = pPlayer->SetStreamHeader((CHAR *)szStreamHeader, nHeaderSize);
 		if (nError == IPC_Succeed)
 		{
-#if _DEBUG
-			g_csPlayerHandles.Lock();
-			g_nPlayerHandles++;
-			g_csPlayerHandles.Unlock();
-#endif
 			return pPlayer;
 		}
 		else
@@ -221,16 +203,12 @@ IPCPLAYSDK_API IPC_PLAYHANDLE	ipcplay_OpenStream(IN HWND hWnd, byte *szStreamHea
 	}
 	else
 	{
-#if _DEBUG
-		g_csPlayerHandles.Lock();
-		g_nPlayerHandles++;
-		g_csPlayerHandles.Unlock();
-#endif
+
 		return pPlayer;
 	}
 }
 
-IPCPLAYSDK_API int	ipcplay_SetStreamHeader(IN IPC_PLAYHANDLE hPlayHandle, byte *szStreamHeader, int nHeaderSize)
+ int	ipcplay_SetStreamHeader(IN IPC_PLAYHANDLE hPlayHandle, byte *szStreamHeader, int nHeaderSize)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -248,9 +226,9 @@ IPCPLAYSDK_API int	ipcplay_SetStreamHeader(IN IPC_PLAYHANDLE hPlayHandle, byte *
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
 /// @remark			关闭播放句柄会导致播放进度完全终止，相关内存全部被释放,要再度播放必须重新打开文件或流数据
-IPCPLAYSDK_API int ipcplay_Close(IN IPC_PLAYHANDLE hPlayHandle, bool bAsyncClose/* = true*/)
+ int ipcplay_Close(IN IPC_PLAYHANDLE hPlayHandle, bool bAsyncClose/* = true*/)
 {
-	TraceFunction();
+	//TraceFunction();
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
 	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
@@ -260,8 +238,8 @@ IPCPLAYSDK_API int ipcplay_Close(IN IPC_PLAYHANDLE hPlayHandle, bool bAsyncClose
 	if (strlen(pPlayer->m_szLogFileName) > 0)
 		TraceMsgA("%s %s.\n", __FUNCTION__, pPlayer->m_szLogFileName);
 	DxTraceMsg("%s Player Object:%d.\n", __FUNCTION__, pPlayer->m_nObjIndex);
-	
 #endif
+
 	if (!pPlayer->StopPlay(25))
 	{
 		DxTraceMsg("%s Async close IPCPlay Object:%8X.\n",__FUNCTION__,pPlayer);
@@ -271,11 +249,7 @@ IPCPLAYSDK_API int ipcplay_Close(IN IPC_PLAYHANDLE hPlayHandle, bool bAsyncClose
 	}
 	else
 	{
-#ifdef _DEBUG
-		g_csPlayerHandles.Lock();
-		g_nPlayerHandles--;
-		g_csPlayerHandles.Unlock();
-#endif
+
 		delete pPlayer;
 	}
 
@@ -287,7 +261,7 @@ IPCPLAYSDK_API int ipcplay_Close(IN IPC_PLAYHANDLE hPlayHandle, bool bAsyncClose
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
 /// @remark			默认情况下，不会开启日志,调用此函数后会开启日志，再次调用时则会关闭日志
-IPCPLAYSDK_API int	EnableLog(IN IPC_PLAYHANDLE hPlayHandle, char *szLogFile)
+ int	EnableLog(IN IPC_PLAYHANDLE hPlayHandle, char *szLogFile)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -298,7 +272,7 @@ IPCPLAYSDK_API int	EnableLog(IN IPC_PLAYHANDLE hPlayHandle, char *szLogFile)
 	return 0;
 }
 
-IPCPLAYSDK_API int ipcplay_SetBorderRect(IN IPC_PLAYHANDLE hPlayHandle,HWND hWnd, LPRECT pRectBorder,bool bPercent)
+ int ipcplay_SetBorderRect(IN IPC_PLAYHANDLE hPlayHandle,HWND hWnd, LPRECT pRectBorder,bool bPercent)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -310,7 +284,7 @@ IPCPLAYSDK_API int ipcplay_SetBorderRect(IN IPC_PLAYHANDLE hPlayHandle,HWND hWnd
 	return pPlayer->SetBorderRect(hWnd, pRectBorder, bPercent);
 }
 
-IPCPLAYSDK_API int ipcplay_RemoveBorderRect(IN IPC_PLAYHANDLE hPlayHandle,HWND hWnd)
+ int ipcplay_RemoveBorderRect(IN IPC_PLAYHANDLE hPlayHandle,HWND hWnd)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -321,7 +295,10 @@ IPCPLAYSDK_API int ipcplay_RemoveBorderRect(IN IPC_PLAYHANDLE hPlayHandle,HWND h
 	return IPC_Succeed;
 }
 
-IPCPLAYSDK_API int ipcplay_AddWindow(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd, LPRECT pRectRender,bool bPercent)
+ int ipcplay_AddWindow(IN IPC_PLAYHANDLE hPlayHandle, 
+									HWND hRenderWnd, 
+									IN LPRECT pRectRender, 
+									IN bool bPercent)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -331,7 +308,7 @@ IPCPLAYSDK_API int ipcplay_AddWindow(IN IPC_PLAYHANDLE hPlayHandle, HWND hRender
 	return pPlayer->AddRenderWindow(hRenderWnd, pRectRender, bPercent);
 }
 
-IPCPLAYSDK_API int ipcplay_RemoveWindow(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd)
+ int ipcplay_RemoveWindow(IN IPC_PLAYHANDLE hPlayHandle, HWND hRenderWnd)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -341,7 +318,7 @@ IPCPLAYSDK_API int ipcplay_RemoveWindow(IN IPC_PLAYHANDLE hPlayHandle, HWND hRen
 	return pPlayer->RemoveRenderWindow(hRenderWnd);
 }
 
-IPCPLAYSDK_API int  ipcplay_GetRenderWindows(IN IPC_PLAYHANDLE hPlayHandle, INOUT HWND* hWndArray, INOUT int& nCount)
+ int  ipcplay_GetRenderWindows(IN IPC_PLAYHANDLE hPlayHandle, INOUT HWND* hWndArray, INOUT int& nCount)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -358,7 +335,7 @@ IPCPLAYSDK_API int  ipcplay_GetRenderWindows(IN IPC_PLAYHANDLE hPlayHandle, INOU
 /// @retval			-1	输入参数无效
 /// @remark			播放流数据时，相应的帧数据其实并未立即播放，而是被放了播放队列中，应该根据ipcplay_     
 ///					的返回值来判断，是否继续播放，若说明队列已满，则应该暂停播放
-IPCPLAYSDK_API int ipcplay_InputStream(IN IPC_PLAYHANDLE hPlayHandle, unsigned char *szFrameData, int nFrameSize)
+ int ipcplay_InputStream(IN IPC_PLAYHANDLE hPlayHandle, unsigned char *szFrameData, int nFrameSize)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -375,7 +352,7 @@ IPCPLAYSDK_API int ipcplay_InputStream(IN IPC_PLAYHANDLE hPlayHandle, unsigned c
 /// @retval			-1	输入参数无效
 /// @remark			播放流数据时，相应的帧数据其实并未立即播放，而是被放了播放队列中，应该根据ipcplay_PlayStream
 ///					的返回值来判断，是否继续播放，若说明队列已满，则应该暂停播放
-IPCPLAYSDK_API int ipcplay_InputIPCStream(IN IPC_PLAYHANDLE hPlayHandle, IN byte *pFrameData, IN int nFrameType, IN int nFrameLength, int nFrameNum, time_t nFrameTime)
+ int ipcplay_InputIPCStream(IN IPC_PLAYHANDLE hPlayHandle, IN byte *pFrameData, IN int nFrameType, IN int nFrameLength, int nFrameNum, time_t nFrameTime)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -401,7 +378,7 @@ IPCPLAYSDK_API int ipcplay_InputIPCStream(IN IPC_PLAYHANDLE hPlayHandle, IN byte
 /// @retval			-1	输入参数无效
 /// @remark			当开启硬解码，而显卡不支持对应的视频编码的解码时，会自动切换到软件解码的状态,可通过
 ///					ipcplay_GetHaccelStatus判断是否已经开启硬解码
-IPCPLAYSDK_API int ipcplay_Start(IN IPC_PLAYHANDLE hPlayHandle, 
+ int ipcplay_Start(IN IPC_PLAYHANDLE hPlayHandle, 
 									IN bool bEnableAudio/* = false*/, 
 									IN bool bFitWindow /*= true*/, 
 									IN bool bEnableHaccel/* = false*/)
@@ -411,7 +388,7 @@ IPCPLAYSDK_API int ipcplay_Start(IN IPC_PLAYHANDLE hPlayHandle,
 	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
 	if (pPlayer->nSize != sizeof(CIPCPlayer))
 		return IPC_Error_InvalidParameters;
-	return pPlayer->StartPlay(bEnableAudio, bEnableHaccel,bFitWindow);
+	return pPlayer->StartPlay(bEnableAudio, bEnableHaccel, bFitWindow);
 }
 
 /// @brief			开始同步播放
@@ -450,7 +427,7 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 ///	-# -1			使用默认延时
 ///	-# 0			无延时
 /// -# n			其它延时
-IPCPLAYSDK_API void ipcplay_SetDecodeDelay(IPC_PLAYHANDLE hPlayHandle, int nDecodeDelay)
+ void ipcplay_SetDecodeDelay(IPC_PLAYHANDLE hPlayHandle, int nDecodeDelay)
 {
 	if (!hPlayHandle)
 		return ;
@@ -463,7 +440,7 @@ IPCPLAYSDK_API void ipcplay_SetDecodeDelay(IPC_PLAYHANDLE hPlayHandle, int nDeco
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @retval			true	播放器正在播放中
 /// @retval			false	插放器已停止播放
-IPCPLAYSDK_API bool ipcplay_IsPlaying(IN IPC_PLAYHANDLE hPlayHandle)
+ bool ipcplay_IsPlaying(IN IPC_PLAYHANDLE hPlayHandle)
 {
 	if (!hPlayHandle)
 		return false;
@@ -477,7 +454,7 @@ IPCPLAYSDK_API bool ipcplay_IsPlaying(IN IPC_PLAYHANDLE hPlayHandle)
 /// @param [in]		hWnd			显示视频的窗口
 /// @param [in]		nWidth			窗口宽度,该参数暂未使用,可设为0
 /// @param [in]		nHeight			窗口高度,该参数暂未使用,可设为0
-IPCPLAYSDK_API int  ipcplay_Reset(IN IPC_PLAYHANDLE hPlayHandle, HWND hWnd, int nWidth , int nHeight)
+ int  ipcplay_Reset(IN IPC_PLAYHANDLE hPlayHandle, HWND hWnd, int nWidth , int nHeight)
 {
 // 	if (!hPlayHandle)
 // 		return IPC_Error_InvalidParameters;
@@ -494,7 +471,7 @@ IPCPLAYSDK_API int  ipcplay_Reset(IN IPC_PLAYHANDLE hPlayHandle, HWND hWnd, int 
 /// @param [in]		bFitWindow		视频是否适应窗口
 /// #- true			视频填满窗口,这样会把图像拉伸,可能会造成图像变形
 /// #- false		只按图像原始比例在窗口中显示,超出比例部分,则以原始背景显示
-IPCPLAYSDK_API int ipcplay_FitWindow(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow )
+ int ipcplay_FitWindow(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow )
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -510,7 +487,7 @@ IPCPLAYSDK_API int ipcplay_FitWindow(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWin
 /// @param [in]		bStopAsync		是否异步关闭
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int ipcplay_Stop(IN IPC_PLAYHANDLE hPlayHandle,bool bStopAsync )
+ int ipcplay_Stop(IN IPC_PLAYHANDLE hPlayHandle,bool bStopAsync )
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -527,7 +504,7 @@ IPCPLAYSDK_API int ipcplay_Stop(IN IPC_PLAYHANDLE hPlayHandle,bool bStopAsync )
 /// @retval			-1	输入参数无效
 /// @remark			这是一个开关函数，若当前句柄已经处于播放状态，首次调用ipcplay_Pause时，会播放进度则会暂停
 ///					再次调用时，则会再度播放
-IPCPLAYSDK_API int ipcplay_Pause(IN IPC_PLAYHANDLE hPlayHandle)
+ int ipcplay_Pause(IN IPC_PLAYHANDLE hPlayHandle)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -542,7 +519,7 @@ IPCPLAYSDK_API int ipcplay_Pause(IN IPC_PLAYHANDLE hPlayHandle)
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int ipcplay_ClearCache(IN IPC_PLAYHANDLE hPlayHandle)
+ int ipcplay_ClearCache(IN IPC_PLAYHANDLE hPlayHandle)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -562,7 +539,7 @@ IPCPLAYSDK_API int ipcplay_ClearCache(IN IPC_PLAYHANDLE hPlayHandle)
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
 /// @remark			开启和关闭硬解码功能必须要ipcplay_Start之前调用才能生效
-IPCPLAYSDK_API int  ipcplay_EnableHaccel(IN IPC_PLAYHANDLE hPlayHandle, IN bool bEnableHaccel/* = false*/)
+ int  ipcplay_EnableHaccel(IN IPC_PLAYHANDLE hPlayHandle, IN bool bEnableHaccel/* = false*/)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -579,7 +556,7 @@ IPCPLAYSDK_API int  ipcplay_EnableHaccel(IN IPC_PLAYHANDLE hPlayHandle, IN bool 
 /// #- false		未开启硬解码功能
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int  ipcplay_GetHaccelStatus(IN IPC_PLAYHANDLE hPlayHandle, OUT bool &bEnableHaccel)
+ int  ipcplay_GetHaccelStatus(IN IPC_PLAYHANDLE hPlayHandle, OUT bool &bEnableHaccel)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -594,7 +571,7 @@ IPCPLAYSDK_API int  ipcplay_GetHaccelStatus(IN IPC_PLAYHANDLE hPlayHandle, OUT b
 /// @param [in]		nCodec		视频编码格式,@see IPC_CODEC
 /// @retval			true		支持指定视频编码的硬解码
 /// @retval			false		不支持指定视频编码的硬解码
-IPCPLAYSDK_API bool  ipcplay_IsSupportHaccel(IN IPC_CODEC nCodec)
+ bool  ipcplay_IsSupportHaccel(IN IPC_CODEC nCodec)
 {
 	return CIPCPlayer::IsSupportHaccel(nCodec);
 }
@@ -604,7 +581,7 @@ IPCPLAYSDK_API bool  ipcplay_IsSupportHaccel(IN IPC_CODEC nCodec)
 /// @param [out]	pFilePlayInfo	文件播放的相关信息，参见@see FilePlayInfo
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int  ipcplay_GetPlayerInfo(IN IPC_PLAYHANDLE hPlayHandle, OUT PlayerInfo *pPlayerInfo)
+ int  ipcplay_GetPlayerInfo(IN IPC_PLAYHANDLE hPlayHandle, OUT PlayerInfo *pPlayerInfo)
 {
 	if (!hPlayHandle || !pPlayerInfo)
 		return IPC_Error_InvalidParameters;
@@ -620,7 +597,7 @@ IPCPLAYSDK_API int  ipcplay_GetPlayerInfo(IN IPC_PLAYHANDLE hPlayHandle, OUT Pla
 /// @param [in]		nFileFormat		保存文件的编码格式,@see SNAPSHOT_FORMAT定义
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int  ipcplay_SnapShotW(IN IPC_PLAYHANDLE hPlayHandle, IN WCHAR *szFileName, IN SNAPSHOT_FORMAT nFileFormat/* = XIFF_JPG*/)
+ int  ipcplay_SnapShotW(IN IPC_PLAYHANDLE hPlayHandle, IN WCHAR *szFileName, IN SNAPSHOT_FORMAT nFileFormat/* = XIFF_JPG*/)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -638,7 +615,7 @@ IPCPLAYSDK_API int  ipcplay_SnapShotW(IN IPC_PLAYHANDLE hPlayHandle, IN WCHAR *s
 /// @param [in]		nFileFormat		保存文件的编码格式,@see SNAPSHOT_FORMAT定义
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int  ipcplay_SnapShotA(IN IPC_PLAYHANDLE hPlayHandle, IN CHAR *szFileName, IN SNAPSHOT_FORMAT nFileFormat/* = XIFF_JPG*/)
+ int  ipcplay_SnapShotA(IN IPC_PLAYHANDLE hPlayHandle, IN CHAR *szFileName, IN SNAPSHOT_FORMAT nFileFormat/* = XIFF_JPG*/)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -653,7 +630,7 @@ IPCPLAYSDK_API int  ipcplay_SnapShotA(IN IPC_PLAYHANDLE hPlayHandle, IN CHAR *sz
 /// @param [in]		nVolume			要设置的音量值，取值范围0~100，为0时，则为静音
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int  ipcplay_SetVolume(IN IPC_PLAYHANDLE hPlayHandle, IN int nVolume)
+ int  ipcplay_SetVolume(IN IPC_PLAYHANDLE hPlayHandle, IN int nVolume)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -669,7 +646,7 @@ IPCPLAYSDK_API int  ipcplay_SetVolume(IN IPC_PLAYHANDLE hPlayHandle, IN int nVol
 /// @param [out]	nVolume			当前的音量值，取值范围0~100，为0时，则为静音
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int  ipcplay_GetVolume(IN IPC_PLAYHANDLE hPlayHandle, OUT int &nVolume)
+ int  ipcplay_GetVolume(IN IPC_PLAYHANDLE hPlayHandle, OUT int &nVolume)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -685,7 +662,7 @@ IPCPLAYSDK_API int  ipcplay_GetVolume(IN IPC_PLAYHANDLE hPlayHandle, OUT int &nV
 /// @param [in]		nPlayRate		当前的播放的倍率,大于1时为加速播放,小于1时为减速播放，不能为0或小于0
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int  ipcplay_SetRate(IN IPC_PLAYHANDLE hPlayHandle, IN float fPlayRate)
+ int  ipcplay_SetRate(IN IPC_PLAYHANDLE hPlayHandle, IN float fPlayRate)
 {
 	if (!hPlayHandle ||fPlayRate <= 0.0f )
 		return IPC_Error_InvalidParameters;
@@ -700,7 +677,7 @@ IPCPLAYSDK_API int  ipcplay_SetRate(IN IPC_PLAYHANDLE hPlayHandle, IN float fPla
 /// @retval			-1	输入参数无效
 /// @retval			-24	播放器未暂停
 /// @remark			该函数仅适用于单帧播放
-IPCPLAYSDK_API int  ipcplay_SeekNextFrame(IN IPC_PLAYHANDLE hPlayHandle)
+ int  ipcplay_SeekNextFrame(IN IPC_PLAYHANDLE hPlayHandle)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -724,7 +701,7 @@ IPCPLAYSDK_API int  ipcplay_SeekNextFrame(IN IPC_PLAYHANDLE hPlayHandle)
 /// @remark			1.若所指定时间点对应帧为非关键帧，帧自动移动到就近的关键帧进行播放
 ///					2.若所指定帧为非关键帧，帧自动移动到就近的关键帧进行播放
 ///					3.只有在播放暂时,bUpdate参数才有效
-IPCPLAYSDK_API int  ipcplay_SeekFrame(IN IPC_PLAYHANDLE hPlayHandle, IN int nFrameID,bool bUpdate)
+ int  ipcplay_SeekFrame(IN IPC_PLAYHANDLE hPlayHandle, IN int nFrameID,bool bUpdate)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -748,7 +725,7 @@ IPCPLAYSDK_API int  ipcplay_SeekFrame(IN IPC_PLAYHANDLE hPlayHandle, IN int nFra
 /// @remark			1.若所指定时间点对应帧为非关键帧，帧自动移动到就近的关键帧进行播放
 ///					2.若所指定帧为非关键帧，帧自动移动到就近的关键帧进行播放
 ///					3.只有在播放暂时,bUpdate参数才有效
-IPCPLAYSDK_API int  ipcplay_SeekTime(IN IPC_PLAYHANDLE hPlayHandle, IN time_t tTimeOffset,bool bUpdate)
+ int  ipcplay_SeekTime(IN IPC_PLAYHANDLE hPlayHandle, IN time_t tTimeOffset,bool bUpdate)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -772,7 +749,7 @@ IPCPLAYSDK_API int  ipcplay_SeekTime(IN IPC_PLAYHANDLE hPlayHandle, IN time_t tT
 ///					2.若所指定帧为非关键帧，帧自动移动到就近的关键帧进行播放
 ///					3.只有在播放暂时,bUpdate参数才有效
 ///					4.用于单帧播放时只能向前移动
-IPCPLAYSDK_API int  ipcplay_AsyncSeekFrame(IN IPC_PLAYHANDLE hPlayHandle, IN time_t tTimeOffset, bool bUpdate)
+ int  ipcplay_AsyncSeekFrame(IN IPC_PLAYHANDLE hPlayHandle, IN time_t tTimeOffset, bool bUpdate)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -789,7 +766,7 @@ IPCPLAYSDK_API int  ipcplay_AsyncSeekFrame(IN IPC_PLAYHANDLE hPlayHandle, IN tim
 /// @param [in]		bEnable		要播放的起始时间(单位:毫秒)
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int  ipcplay_EnablePlayOneFrame(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable)
+ int  ipcplay_EnablePlayOneFrame(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -805,7 +782,7 @@ IPCPLAYSDK_API int  ipcplay_EnablePlayOneFrame(IN IPC_PLAYHANDLE hPlayHandle, bo
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [out]	pFrameBuffer	帧数据缓冲区
 /// @param [out]	nBufferSize		帧缓冲区的大小
-IPCPLAYSDK_API int  ipcplay_GetFrame(IN IPC_PLAYHANDLE hPlayHandle, OUT byte **pFrameBuffer, OUT UINT &nBufferSize)
+ int  ipcplay_GetFrame(IN IPC_PLAYHANDLE hPlayHandle, OUT byte **pFrameBuffer, OUT UINT &nBufferSize)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -825,7 +802,7 @@ IPCPLAYSDK_API int  ipcplay_GetFrame(IN IPC_PLAYHANDLE hPlayHandle, OUT byte **p
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
 /// @remark			若所指定时间点对应帧为非关键帧，帧自动移动到就近的关键帧进行播放
-IPCPLAYSDK_API int  ipcplay_SetMaxFrameSize(IN IPC_PLAYHANDLE hPlayHandle, IN UINT nMaxFrameSize)
+ int  ipcplay_SetMaxFrameSize(IN IPC_PLAYHANDLE hPlayHandle, IN UINT nMaxFrameSize)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -843,7 +820,7 @@ IPCPLAYSDK_API int  ipcplay_SetMaxFrameSize(IN IPC_PLAYHANDLE hPlayHandle, IN UI
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
 /// @remark			若所指定时间点对应帧为非关键帧，帧自动移动到就近的关键帧进行播放
-IPCPLAYSDK_API int  ipcplay_GetMaxFrameSize(IN IPC_PLAYHANDLE hPlayHandle, INOUT UINT &nMaxFrameSize)
+ int  ipcplay_GetMaxFrameSize(IN IPC_PLAYHANDLE hPlayHandle, INOUT UINT &nMaxFrameSize)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -864,7 +841,7 @@ IPCPLAYSDK_API int  ipcplay_GetMaxFrameSize(IN IPC_PLAYHANDLE hPlayHandle, INOUT
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
 /// @remark			该函数仅适用于单帧播放,该函数功能暂未实现
-// IPCIPCPLAYSDK_API int  ipcplay_SeekNextFrame(IN IPC_PLAYHANDLE hPlayHandle)
+// IPC int  ipcplay_SeekNextFrame(IN IPC_PLAYHANDLE hPlayHandle)
 // {
 // 	return IPC_Succeed;
 // }
@@ -876,7 +853,7 @@ IPCPLAYSDK_API int  ipcplay_GetMaxFrameSize(IN IPC_PLAYHANDLE hPlayHandle, INOUT
 /// @param nSampleBit	采样位置
 /// @remark 在播放音频之前，应先设置音频播放参数,SDK内部默认参数nPlayFPS = 50，nSampleFreq = 8000，nSampleBit = 16
 ///         若音频播放参数与SDK内部默认参数一致，可以不用设置这些参数
-IPCPLAYSDK_API int  ipcplay_SetAudioPlayParameters(IN IPC_PLAYHANDLE hPlayHandle, DWORD nPlayFPS /*= 50*/, DWORD nSampleFreq/* = 8000*/, WORD nSampleBit/* = 16*/)
+ int  ipcplay_SetAudioPlayParameters(IN IPC_PLAYHANDLE hPlayHandle, DWORD nPlayFPS /*= 50*/, DWORD nSampleFreq/* = 8000*/, WORD nSampleBit/* = 16*/)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -894,7 +871,7 @@ IPCPLAYSDK_API int  ipcplay_SetAudioPlayParameters(IN IPC_PLAYHANDLE hPlayHandle
 /// -#	false		禁用音频播放
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
-IPCPLAYSDK_API int  ipcplay_EnableAudio(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable/* = true*/)
+ int  ipcplay_EnableAudio(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable/* = true*/)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -909,7 +886,7 @@ IPCPLAYSDK_API int  ipcplay_EnableAudio(IN IPC_PLAYHANDLE hPlayHandle, bool bEna
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
 /// @remark			该功能一般用于播放结束后，刷新窗口，把画面置为黑色
-IPCPLAYSDK_API int  ipcplay_Refresh(IN IPC_PLAYHANDLE hPlayHandle)
+ int  ipcplay_Refresh(IN IPC_PLAYHANDLE hPlayHandle)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -925,7 +902,7 @@ IPCPLAYSDK_API int  ipcplay_Refresh(IN IPC_PLAYHANDLE hPlayHandle)
 /// @param [in]		回调函数的类型 @see IPC_CALLBACK
 /// @param [in]		pUserCallBack	回调函数指针
 /// @param [in]		pUserPtr		用户自定义指针，在调用回调时，将会传回此指针
-IPCPLAYSDK_API int ipcplay_SetCallBack(IN IPC_PLAYHANDLE hPlayHandle, IPC_CALLBACK nCallBackType, IN void *pUserCallBack, IN void *pUserPtr)
+ int ipcplay_SetCallBack(IN IPC_PLAYHANDLE hPlayHandle, IPC_CALLBACK nCallBackType, IN void *pUserCallBack, IN void *pUserPtr)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -939,7 +916,7 @@ IPCPLAYSDK_API int ipcplay_SetCallBack(IN IPC_PLAYHANDLE hPlayHandle, IPC_CALLBA
 /// @brief			设置外部绘制回调接口
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		pUserPtr		用户自定义指针，在调用回调时，将会传回此指针
-IPCPLAYSDK_API int ipcplay_SetExternDrawCallBack(IN IPC_PLAYHANDLE hPlayHandle, IN void *pExternCallBack,IN void *pUserPtr)
+ int ipcplay_SetExternDrawCallBack(IN IPC_PLAYHANDLE hPlayHandle, IN void *pExternCallBack,IN void *pUserPtr)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -952,7 +929,7 @@ IPCPLAYSDK_API int ipcplay_SetExternDrawCallBack(IN IPC_PLAYHANDLE hPlayHandle, 
 /// @brief			设置获取YUV数据回调接口,通过此回调，用户可直接获取解码后的YUV数据
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		pUserPtr		用户自定义指针，在调用回调时，将会传回此指针
-IPCPLAYSDK_API int ipcplay_SetYUVCapture(IN IPC_PLAYHANDLE hPlayHandle, IN void *pCaptureYUV, IN void *pUserPtr)
+ int ipcplay_SetYUVCapture(IN IPC_PLAYHANDLE hPlayHandle, IN void *pCaptureYUV, IN void *pUserPtr)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -965,7 +942,7 @@ IPCPLAYSDK_API int ipcplay_SetYUVCapture(IN IPC_PLAYHANDLE hPlayHandle, IN void 
 /// @brief			设置获取YUV数据回调接口,通过此回调，用户可直接获取解码后的YUV数据
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		pUserPtr		用户自定义指针，在调用回调时，将会传回此指针
-IPCPLAYSDK_API int ipcplay_SetYUVCaptureEx(IN IPC_PLAYHANDLE hPlayHandle, IN void *pCaptureYUVEx, IN void *pUserPtr)
+ int ipcplay_SetYUVCaptureEx(IN IPC_PLAYHANDLE hPlayHandle, IN void *pCaptureYUVEx, IN void *pUserPtr)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -978,7 +955,7 @@ IPCPLAYSDK_API int ipcplay_SetYUVCaptureEx(IN IPC_PLAYHANDLE hPlayHandle, IN voi
 /// @brief			设置IPC私用格式录像，帧解析回调,通过此回，用户可直接获取原始的帧数据
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		pUserPtr		用户自定义指针，在调用回调时，将会传回此指针
-IPCPLAYSDK_API int ipcplay_SetFrameParserCallback(IN IPC_PLAYHANDLE hPlayHandle, IN void *pCaptureFrame, IN void *pUserPtr)
+ int ipcplay_SetFrameParserCallback(IN IPC_PLAYHANDLE hPlayHandle, IN void *pCaptureFrame, IN void *pUserPtr)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -996,7 +973,7 @@ IPCPLAYSDK_API int ipcplay_SetFrameParserCallback(IN IPC_PLAYHANDLE hPlayHandle,
 /// @param [in]		nVideoCodec		视频的编译类型
 /// @param [in]		nFPS			视频的帧率
 /// @remark		    若pMediaHeader为NULL,则pHeaderSize只返回所需缓冲区的长度
-IPCPLAYSDK_API int ipcplay_BuildMediaHeader(INOUT byte *pMediaHeader, INOUT int  *pHeaderSize,IN IPC_CODEC nAudioCodec,IN IPC_CODEC nVideoCodec,USHORT nFPS)
+ int ipcplay_BuildMediaHeader(INOUT byte *pMediaHeader, INOUT int  *pHeaderSize,IN IPC_CODEC nAudioCodec,IN IPC_CODEC nVideoCodec,USHORT nFPS)
 {
 	if (!pHeaderSize)
 		return IPC_Error_InvalidParameters;
@@ -1033,7 +1010,7 @@ IPCPLAYSDK_API int ipcplay_BuildMediaHeader(INOUT byte *pMediaHeader, INOUT int 
 /// @param [in]		pIPCIpcStream	从IPC IPC得到的码流数据
 /// @param [in,out]	nStreamLength	输入时为从IPC IPC得到的码流数据长度，输出时为码流数据去头后的长度,即裸码流的长度
 /// @remark		    若pMediaFrame为NULL,则pFrameSize只返回IPC录像帧长度
-IPCPLAYSDK_API int ipcplay_BuildFrameHeader(OUT byte *pFrameHeader, INOUT int *HeaderSize, IN int nFrameID, IN byte *pIPCIpcStream, IN int &nStreamLength)
+ int ipcplay_BuildFrameHeader(OUT byte *pFrameHeader, INOUT int *HeaderSize, IN int nFrameID, IN byte *pIPCIpcStream, IN int &nStreamLength)
 {
 	if (!pIPCIpcStream || !nStreamLength)
 		return sizeof(IPCFrameHeaderEx);
@@ -1088,7 +1065,7 @@ IPCPLAYSDK_API int ipcplay_BuildFrameHeader(OUT byte *pFrameHeader, INOUT int *H
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		dwTimeout		等待码流的赶时值，单位毫秒
 /// @remark			该函数必须要在ipcplay_Start之前调用，才能生效
-IPCPLAYSDK_API int ipcplay_SetProbeStreamTimeout(IN IPC_PLAYHANDLE hPlayHandle, IN DWORD dwTimeout /*= 3000*/)
+ int ipcplay_SetProbeStreamTimeout(IN IPC_PLAYHANDLE hPlayHandle, IN DWORD dwTimeout /*= 3000*/)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -1104,7 +1081,7 @@ IPCPLAYSDK_API int ipcplay_SetProbeStreamTimeout(IN IPC_PLAYHANDLE hPlayHandle, 
 /// @param [in]		nPixelFMT		要设置的像素格式，详见见@see PIXELFMORMAT
 /// @param [in]		pUserPtr		用户自定义指针，在调用回调时，将会传回此指针
 /// @remark			若要设置外部显示回调，必须把显示格式设置为R8G8B8格式
-IPCPLAYSDK_API int ipcplay_SetPixFormat(IN IPC_PLAYHANDLE hPlayHandle, IN PIXELFMORMAT nPixelFMT)
+ int ipcplay_SetPixFormat(IN IPC_PLAYHANDLE hPlayHandle, IN PIXELFMORMAT nPixelFMT)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -1114,7 +1091,7 @@ IPCPLAYSDK_API int ipcplay_SetPixFormat(IN IPC_PLAYHANDLE hPlayHandle, IN PIXELF
 	return pPlayer->SetPixelFormat(nPixelFMT);
 }
 
-IPCPLAYSDK_API int ipcplay_SetD3dShared(IN IPC_PLAYHANDLE hPlayHandle, IN bool bD3dShared )
+ int ipcplay_SetD3dShared(IN IPC_PLAYHANDLE hPlayHandle, IN bool bD3dShared )
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -1124,22 +1101,22 @@ IPCPLAYSDK_API int ipcplay_SetD3dShared(IN IPC_PLAYHANDLE hPlayHandle, IN bool b
 	pPlayer->SetD3dShared(bD3dShared);
 	return IPC_Succeed;
 }
-IPCPLAYSDK_API void ipcplay_ClearD3DCache()
+ void ipcplay_ClearD3DCache()
 {
 	
 }
 
-IPCPLAYSDK_API void *AllocAvFrame()
+ void *AllocAvFrame()
 {
 	return CIPCPlayer::_AllocAvFrame();
 }
 
-IPCPLAYSDK_API void AvFree(void*p)
+ void AvFree(void*p)
 {
 	CIPCPlayer::_AvFree(p);
 }
 
-// IPCPLAYSDK_API int ipcplay_SuspendDecode(IN IPC_PLAYHANDLE hPlayHandle)
+//  int ipcplay_SuspendDecode(IN IPC_PLAYHANDLE hPlayHandle)
 // {
 // 	if (!hPlayHandle)
 // 		return IPC_Error_InvalidParameters;
@@ -1150,7 +1127,7 @@ IPCPLAYSDK_API void AvFree(void*p)
 // 	return IPC_Succeed;
 // }
 // 
-// IPCPLAYSDK_API int ipcplay_ResumeDecode(IN IPC_PLAYHANDLE hPlayHandle)
+//  int ipcplay_ResumeDecode(IN IPC_PLAYHANDLE hPlayHandle)
 // {
 // 	if (!hPlayHandle)
 // 		return IPC_Error_InvalidParameters;
@@ -1161,7 +1138,7 @@ IPCPLAYSDK_API void AvFree(void*p)
 // 	return IPC_Succeed;
 // }
 
-// IPCPLAYSDK_API int AddRenderWnd(IN IPC_PLAYHANDLE hPlayHandle, IN HWND hRenderWnd)
+//  int AddRenderWnd(IN IPC_PLAYHANDLE hPlayHandle, IN HWND hRenderWnd)
 // {
 // 	if (!hPlayHandle)
 // 		return IPC_Error_InvalidParameters;
@@ -1171,7 +1148,7 @@ IPCPLAYSDK_API void AvFree(void*p)
 // 	return pPlayer->AddRenderWnd(hRenderWnd,nullptr);
 // }
 
-// IPCPLAYSDK_API int RemoveRenderWnd(IN IPC_PLAYHANDLE hPlayHandle, IN HWND hRenderWnd)
+//  int RemoveRenderWnd(IN IPC_PLAYHANDLE hPlayHandle, IN HWND hRenderWnd)
 // {
 // 	if (!hPlayHandle)
 // 		return IPC_Error_InvalidParameters;
@@ -1186,7 +1163,7 @@ IPCPLAYSDK_API void AvFree(void*p)
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		nAngle			要旋转的角度值，详情请见@see RocateAngle
 /// @remark	注意    目前图像旋转功能仅支持软解
-IPCPLAYSDK_API int ipcplay_SetRocateAngle(IN IPC_PLAYHANDLE hPlayHandle, RocateAngle nAngle )
+ int ipcplay_SetRocateAngle(IN IPC_PLAYHANDLE hPlayHandle, RocateAngle nAngle )
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -1207,7 +1184,7 @@ IPCPLAYSDK_API int ipcplay_SetRocateAngle(IN IPC_PLAYHANDLE hPlayHandle, RocateA
 /// @param [in]		nHeight		YUV图像的高度
 /// @param [out]    pRGBBuffer	RGB24图像的缓存
 /// @param [out]	nBufferSize	RGB24图像的缓存的长度
-// IPCPLAYSDK_API int ipcplay_YUV2RGB24(IN IPC_PLAYHANDLE hPlayHandle,
+//  int ipcplay_YUV2RGB24(IN IPC_PLAYHANDLE hPlayHandle,
 // 	const unsigned char* pY,
 //	const unsigned char* pU,
 // 	const unsigned char* pV,
@@ -1235,7 +1212,7 @@ IPCPLAYSDK_API int ipcplay_SetRocateAngle(IN IPC_PLAYHANDLE hPlayHandle, RocateA
 /// @param [in]		nColor			线条的颜色
 /// @return 操作成功时，返回线条组的句柄，否则返回0
 /// @remark	注意    设置好线条坐标后,SDK内部会根据坐标信息绘制线条，一组坐标的线条的颜色是相同的，并且是相连的，若要绘制多条不相连的线条，必须多次调用ipcplay_AddLineArray
-IPCPLAYSDK_API long ipcplay_AddLineArray(IN IPC_PLAYHANDLE hPlayHandle, POINT *pPointArray, int nCount, float fWidth, DWORD nColor)
+ long ipcplay_AddLineArray(IN IPC_PLAYHANDLE hPlayHandle, POINT *pPointArray, int nCount, float fWidth, DWORD nColor)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -1249,7 +1226,7 @@ IPCPLAYSDK_API long ipcplay_AddLineArray(IN IPC_PLAYHANDLE hPlayHandle, POINT *p
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		nLineIndex		由ipcplay_AddLineArray返回的线条句柄
 /// @return 操作成功时返回SDK内存仍在绘制线条组的数量，否则返回-1
-IPCPLAYSDK_API int  ipcplay_RemoveLineArray(IN IPC_PLAYHANDLE hPlayHandle, long nLineIndex)
+ int  ipcplay_RemoveLineArray(IN IPC_PLAYHANDLE hPlayHandle, long nLineIndex)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -1266,7 +1243,7 @@ IPCPLAYSDK_API int  ipcplay_RemoveLineArray(IN IPC_PLAYHANDLE hPlayHandle, long 
 /// @param [in]		szImageFile		背景图片路径，背景图片可以jpg,png或bmp文件
 /// @remark 注意，若之前未调用ipcplay_SetBackgroundImage函数，即使szImageFile为null,SDK仍会启用默认的图像，
 ///                若已经调用过SDK，当szImageFile为null时，则禁用背景图片
-IPCPLAYSDK_API int ipcplay_SetBackgroundImageA(IN IPC_PLAYHANDLE hPlayHandle, LPCSTR szImageFile)
+ int ipcplay_SetBackgroundImageA(IN IPC_PLAYHANDLE hPlayHandle, LPCSTR szImageFile)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -1284,7 +1261,7 @@ IPCPLAYSDK_API int ipcplay_SetBackgroundImageA(IN IPC_PLAYHANDLE hPlayHandle, LP
 /// @param [in]		szImageFile		背景图片路径，背景图片可以jpg,png或bmp文件
 /// @remark 注意，若之前未调用ipcplay_SetBackgroundImage函数，即使szImageFile为null,SDK仍会启用默认的图像，
 ///                若已经调用过SDK，当szImageFile为null时，则禁用背景图片
-IPCPLAYSDK_API int ipcplay_SetBackgroundImageW(IN IPC_PLAYHANDLE hPlayHandle, LPCWSTR szImageFile)
+ int ipcplay_SetBackgroundImageW(IN IPC_PLAYHANDLE hPlayHandle, LPCWSTR szImageFile)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -1298,7 +1275,7 @@ IPCPLAYSDK_API int ipcplay_SetBackgroundImageW(IN IPC_PLAYHANDLE hPlayHandle, LP
 /// @brief			启用DirectDraw作为渲染器,这将禁用D3D渲染,硬解码时无法启用D3D共享模式，这交大副降低硬解码的效率
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		szImageFile		背景图片路径，背景图片可以jpg,png或bmp文件,为null时，则删除背景图片
-IPCPLAYSDK_API int ipcplay_EnableDDraw(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable)
+ int ipcplay_EnableDDraw(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -1311,7 +1288,7 @@ IPCPLAYSDK_API int ipcplay_EnableDDraw(IN IPC_PLAYHANDLE hPlayHandle, bool bEnab
 /// @brief			启用流解析器
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		nCodec			编码格式
-IPCPLAYSDK_API int ipcplay_EnableStreamParser(IN IPC_PLAYHANDLE hPlayHandle, IPC_CODEC nCodec )
+ int ipcplay_EnableStreamParser(IN IPC_PLAYHANDLE hPlayHandle, IPC_CODEC nCodec )
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -1325,7 +1302,7 @@ IPCPLAYSDK_API int ipcplay_EnableStreamParser(IN IPC_PLAYHANDLE hPlayHandle, IPC
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		pData			输入的数据流
 /// @param [in]		nLength			数据流尺寸
-IPCPLAYSDK_API int ipcplay_InputStream2(IN IPC_PLAYHANDLE hPlayHandle, byte *pData, int nLength)
+ int ipcplay_InputStream2(IN IPC_PLAYHANDLE hPlayHandle, byte *pData, int nLength)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -1338,7 +1315,7 @@ IPCPLAYSDK_API int ipcplay_InputStream2(IN IPC_PLAYHANDLE hPlayHandle, byte *pDa
 /// @brief			输入大华视频帧
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		pData			大华视频帧
-IPCPLAYSDK_API int ipcplay_InputDHStream(IN IPC_PLAYHANDLE hPlayHandle, byte *pBuffer,int nLength)
+ int ipcplay_InputDHStream(IN IPC_PLAYHANDLE hPlayHandle, byte *pBuffer,int nLength)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -1355,7 +1332,7 @@ IPCPLAYSDK_API int ipcplay_InputDHStream(IN IPC_PLAYHANDLE hPlayHandle, byte *pB
 /// @param [in]		nColor			多边形的颜色
 /// @return 操作成功时，返回线条组的句柄，否则返回0
 /// @remark	注意    设置好线条坐标后,SDK内部会根据坐标信息绘制线条，一组坐标的线条的颜色是相同的，并且是相连的，若要绘制多条不相连的线条，必须多次调用ipcplay_AddLineArray
-IPCPLAYSDK_API long ipcplay_AddPolygon(IN IPC_PLAYHANDLE hPlayHandle, POINT *pPointArray, int nCount, WORD *pVertexIndex, DWORD nColor)
+ long ipcplay_AddPolygon(IN IPC_PLAYHANDLE hPlayHandle, POINT *pPointArray, int nCount, WORD *pVertexIndex, DWORD nColor)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -1368,7 +1345,7 @@ IPCPLAYSDK_API long ipcplay_AddPolygon(IN IPC_PLAYHANDLE hPlayHandle, POINT *pPo
 /// @brief			移除一个多边形
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		nLineIndex		由ipcplay_AddPolygon返回的多边形句柄
-IPCPLAYSDK_API int ipcplay_RemovePolygon(IN IPC_PLAYHANDLE hPlayHandle, long nLineIndex)
+ int ipcplay_RemovePolygon(IN IPC_PLAYHANDLE hPlayHandle, long nLineIndex)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -1379,7 +1356,7 @@ IPCPLAYSDK_API int ipcplay_RemovePolygon(IN IPC_PLAYHANDLE hPlayHandle, long nLi
 	return IPC_Succeed;
 }
 
-IPCPLAYSDK_API int ipcplay_SetCoordinateMode(IN IPC_PLAYHANDLE hPlayHandle, int nCoordinateMode )
+ int ipcplay_SetCoordinateMode(IN IPC_PLAYHANDLE hPlayHandle, int nCoordinateMode )
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -1398,7 +1375,7 @@ IPCPLAYSDK_API int ipcplay_SetCoordinateMode(IN IPC_PLAYHANDLE hPlayHandle, int 
 /// -#	false		禁用异步渲染
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效		
-IPCPLAYSDK_API int ipcplay_EnableAsyncRender(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable,int nFrameCache)
+ int ipcplay_EnableAsyncRender(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable,int nFrameCache)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -1415,7 +1392,7 @@ IPCPLAYSDK_API int ipcplay_EnableAsyncRender(IN IPC_PLAYHANDLE hPlayHandle, bool
 /// @param [in] nBufferSize 文本缓冲区的容量，最大能容纳的字符数
 /// @retval		0  操作成功
 /// @retval		-1 操作失败，输入了一个未知的错误代码。
-IPCPLAYSDK_API int ipcplay_GetErrorMessageA(int nErrorCode, LPSTR szMessage, int nBufferSize)
+ int ipcplay_GetErrorMessageA(int nErrorCode, LPSTR szMessage, int nBufferSize)
 {
 	WCHAR szMessageW[4096] = { 0 };
 	int nCode = ipcplay_GetErrorMessageW(nErrorCode, szMessageW, 4096);
@@ -1428,7 +1405,7 @@ IPCPLAYSDK_API int ipcplay_GetErrorMessageA(int nErrorCode, LPSTR szMessage, int
 		return nCode;
 }
 
-IPCPLAYSDK_API int ipcplay_GetErrorMessageW(int nErrorCode, LPWSTR szMessage, int nBufferSize)
+ int ipcplay_GetErrorMessageW(int nErrorCode, LPWSTR szMessage, int nBufferSize)
 {
 	IPCPLAY_Status nIPCPlayStatus = (IPCPLAY_Status)nErrorCode;
 	WCHAR *szMessaageW = nullptr;
@@ -1599,7 +1576,7 @@ IPCPLAYSDK_API int ipcplay_GetErrorMessageW(int nErrorCode, LPWSTR szMessage, in
 		return -1;
 }
 
-IPCPLAYSDK_API int ipcplay_SetDisplayAdapter(IN IPC_PLAYHANDLE hPlayHandle, int nAdapterNo)
+ int ipcplay_SetDisplayAdapter(IN IPC_PLAYHANDLE hPlayHandle, int nAdapterNo)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -1618,9 +1595,9 @@ IPCPLAYSDK_API int ipcplay_SetDisplayAdapter(IN IPC_PLAYHANDLE hPlayHandle, int 
 /// @retval			-15	输入缓冲区不足，系统中安装显卡的数量超过nBufferSize指定的数量
 /// @remark	注意    这里获得的显卡数量和系统中实际安装的显卡数量不一定相同，而是所有显卡连接显示器的实际数量,比如系统
 ////				中安装了两块显卡，但每块显卡又各连接了两台显示器，则获得的显卡数量则为4
-IPCPLAYSDK_API int ipcplay_GetDisplayAdapterInfo(AdapterInfo *pAdapterBuffer,int &nBufferSize)
+ int ipcplay_GetDisplayAdapterInfo(AdapterInfo *pAdapterBuffer,int &nBufferSize)
 {
-	TraceFunction();
+	//TraceFunction();
 	int nAdapterCount = g_pD3D9Helper.m_pDirect3D9Ex->GetAdapterCount();
 	if (!pAdapterBuffer)
 	{
@@ -1647,7 +1624,7 @@ IPCPLAYSDK_API int ipcplay_GetDisplayAdapterInfo(AdapterInfo *pAdapterBuffer,int
 	return IPC_Succeed;
 }
 
-IPCPLAYSDK_API int ipcplay_GetHAccelConfig(AdapterHAccel **pAdapterHAccel, int &nAdapterCount)
+ int ipcplay_GetHAccelConfig(AdapterHAccel **pAdapterHAccel, int &nAdapterCount)
 {
 	if (g_pSharedMemory)
 	{
@@ -1660,7 +1637,7 @@ IPCPLAYSDK_API int ipcplay_GetHAccelConfig(AdapterHAccel **pAdapterHAccel, int &
 }
 
 
-IPCPLAYSDK_API int ipcplay_CreateOSDFontA(IN IPC_PLAYHANDLE hPlayHandle, IN LOGFONTA lf, OUT long *nFontHandle)
+ int ipcplay_CreateOSDFontA(IN IPC_PLAYHANDLE hPlayHandle, IN LOGFONTA lf, OUT long *nFontHandle)
 {
 	if (!hPlayHandle )
 		return IPC_Error_InvalidParameters;
@@ -1670,16 +1647,12 @@ IPCPLAYSDK_API int ipcplay_CreateOSDFontA(IN IPC_PLAYHANDLE hPlayHandle, IN LOGF
 	MultiByteToWideChar(CP_ACP, 0, lf.lfFaceName, -1, lfw.lfFaceName, LF_FACESIZE);
 	
 	int nResult = 0;
-	long nOSDHandle = 0;
-	if ((nResult = ipcplay_CreateOSDFontW(hPlayHandle, lfw, &nOSDHandle)) == IPC_Succeed)
-	{
-		
+	if ((nResult = ipcplay_CreateOSDFontW(hPlayHandle, lfw, nFontHandle)) == IPC_Succeed)
 		return IPC_Succeed;
-	}
 	else
 		return nResult;
 }
-IPCPLAYSDK_API int ipcplay_CreateOSDFontW(IN IPC_PLAYHANDLE hPlayHandle, IN LOGFONTW lf, OUT long *nFontHandle)
+ int ipcplay_CreateOSDFontW(IN IPC_PLAYHANDLE hPlayHandle, IN LOGFONTW lf, OUT long *nFontHandle)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -1701,7 +1674,7 @@ IPCPLAYSDK_API int ipcplay_CreateOSDFontW(IN IPC_PLAYHANDLE hPlayHandle, IN LOGF
 }
 
 // 使用OSD字体绘制文本
-IPCPLAYSDK_API int ipcplay_DrawOSDTextA(IN long nFontHandle, IN CHAR *szText, IN int nLength, IN RECT rtPostion, IN DWORD dwFormat, IN  DWORD nColor, OUT long *nOSDHandle)
+ int ipcplay_DrawOSDTextA(IN long nFontHandle, IN CHAR *szText, IN int nLength, IN RECT rtPostion, IN DWORD dwFormat, IN  DWORD nColor, OUT long *nOSDHandle)
 {
 	int nNeedBuffSize = ::MultiByteToWideChar(CP_ACP, NULL, szText, -1, NULL, 0);
 	WCHAR *pTextW = new WCHAR[nNeedBuffSize + 1];
@@ -1709,7 +1682,7 @@ IPCPLAYSDK_API int ipcplay_DrawOSDTextA(IN long nFontHandle, IN CHAR *szText, IN
 	MultiByteToWideChar(CP_ACP, 0, szText, -1, pTextW, nNeedBuffSize + 1);
 	return ipcplay_DrawOSDTextW(nFontHandle, pTextW, nNeedBuffSize, rtPostion, dwFormat, nColor,nOSDHandle);
 }
-IPCPLAYSDK_API int ipcplay_DrawOSDTextW(IN long nFontHandle, IN	WCHAR *szText, IN int nLength, IN RECT rtPostion, IN DWORD dwFormat, IN  DWORD nColor, OUT long *nOSDHandle)
+ int ipcplay_DrawOSDTextW(IN long nFontHandle, IN	WCHAR *szText, IN int nLength, IN RECT rtPostion, IN DWORD dwFormat, IN  DWORD nColor, OUT long *nOSDHandle)
 {
 	if (!nFontHandle)
 		return IPC_Error_InvalidParameters;
@@ -1734,7 +1707,7 @@ IPCPLAYSDK_API int ipcplay_DrawOSDTextW(IN long nFontHandle, IN	WCHAR *szText, I
 }
 
 // 称除文本
-IPCPLAYSDK_API int ipcplay_RmoveOSDText(long nOSDText)
+ int ipcplay_RmoveOSDText(long nOSDText)
 {
 	if (!nOSDText)
 		return IPC_Error_InvalidParameters;
@@ -1766,7 +1739,7 @@ IPCPLAYSDK_API int ipcplay_RmoveOSDText(long nOSDText)
 }
 
 // 销毁字体
-IPCPLAYSDK_API int ipcplay_DestroyOSDFont(long nFontHandle)
+ int ipcplay_DestroyOSDFont(long nFontHandle)
 {
 	if (!nFontHandle)
 	{
@@ -1793,3 +1766,13 @@ IPCPLAYSDK_API int ipcplay_DestroyOSDFont(long nFontHandle)
 		delete pFont;
 	return nResult;
 }
+
+ int ipcplay_SetSwitcherCallBack(IPC_PLAYHANDLE hPlayHandle, WORD nScreenWnd, void *pVideoSwitchCB, void *pUserPtr)
+ {
+	 if (!hPlayHandle)
+		 return IPC_Error_InvalidParameters;
+	 CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
+	 if (pPlayer->nSize != sizeof(CIPCPlayer))
+		 return IPC_Error_InvalidParameters;
+	 return pPlayer->SetSwitcherCallBack(nScreenWnd, pVideoSwitchCB, pUserPtr);
+ }

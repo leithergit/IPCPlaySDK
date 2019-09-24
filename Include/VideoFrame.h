@@ -17,7 +17,7 @@ using namespace boost;
 #include <math.h>
 #include "AutoLock.h"
 #include "Utility.h"
-#include "CriticalSectionProxy.h"
+#include "CriticalSectionAgent.h"
 
 using namespace  std;
 
@@ -145,7 +145,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 private:
-//	static CVideoFrame *m_pCurrentFrame;
+	static CVideoFrame *m_pCurrentFrame;
 	UINT	m_nCols /*= 1*/, m_nRows/* = 1*/;
 	UINT	m_nNewCols,m_nNewRows;
 	vector	<PanelInfoPtr>m_vecPanel;
@@ -414,11 +414,11 @@ public:
 	int GetCols(){ return m_nCols; }
 	bool AdjustPanels(int nRow, int nCols,FrameStyle fs = StyleNormal);
 	bool AdjustPanels(int nCount,FrameStyle fs = StyleNormal);
-/*	static CVideoFrame *GetCurrentFrame()
+	static CVideoFrame *GetCurrentFrame()
 	{
 		return m_pCurrentFrame;
 	};
-	*/
+
 
 	static LRESULT CALLBACK PanelWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
@@ -503,7 +503,7 @@ public:
 		}           
 		break;
 		case 0x020A:
-	//	case 0x020E:                   //0x020A	WM_MOUSEHWHEEL
+		case 0x020E:                   //0x020A	WM_MOUSEHWHEEL
 		{
 			m_csPannelMap->Lock();
 			// 查找窗口对应的父窗口
@@ -550,35 +550,35 @@ public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg LRESULT OnFrameLButtonDBClick(WPARAM W, LPARAM L)
 	{
-		TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
+		//TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
 		GetParent()->PostMessage(WM_FRAME_LBUTTONDBLCLK, W, L);
 		return 0L;
 	}
 
 	afx_msg LRESULT OnFrameRButtonDown(WPARAM W, LPARAM L)
 	{
-		TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
+		//TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
 		GetParent()->PostMessage(WM_FRAME_RBUTTONDOWN, NULL, L);
 		return 0L;
 	}
 
 	afx_msg LRESULT OnFrameMouseMove(WPARAM W, LPARAM L)
 	{
-		TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
+		//TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
 		GetParent()->PostMessage(WM_FRAME_MOUSEMOVE, NULL, L);
 		return 0L;
 	}
 
 	afx_msg LRESULT OnFrameRButtonUP(WPARAM W, LPARAM L)
 	{
-		TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
+		//TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
 		GetParent()->PostMessage(WM_FRAME_RBUTTONUP, NULL, L);
 		return 0L;
 	}
 	
 	afx_msg LRESULT OnFrameLButtonDown(WPARAM W, LPARAM L)      //2018-03-05 
 	{
-		TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
+		//TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
 		GetParent()->PostMessage(WM_FRAME_LBUTTONDOWN, NULL, L);
 		return 0L;
 	}
@@ -598,17 +598,23 @@ public:
 
 	// 新增函数 int GetPanel(POINT pt),以获取所在鼠标位置在所窗格号
 	// CVideoFrame类不再处理鼠标消息，转而由其父窗口处理,父窗口收到鼠标消息后，应使用GetPanel函数判断鼠标坐标是否在Frame窗口内
-	int GetPanel(POINT pt)
+	int GetPanelFromPoint(POINT pt)
 	{
-		return 0;
+		int nIndex = -1;
+		for (auto it = m_vecPanel.begin(); it != m_vecPanel.end(); it++)
+		{
+			if (PtInRect(&(*it)->rect, pt))
+			{
+				nIndex = it - m_vecPanel.begin();
+				break;
+			}
+		}
+		return -1;
 	}
 	// 交换两个窗格的位置
 	// nPanel1,nPanel2为要交换窗格的索位值
 	bool SwapPanel(int nPanel1, int nPanel2);
-// 	HWND GetPanel(POINT pt)
-// 	{
-// 		return NULL;
-// 	}
+
 // 	afx_msg LRESULT OnFrameRButtonDown(WPARAM W, LPARAM L)
 // 	{
 // 		POINT pt;

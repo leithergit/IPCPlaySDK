@@ -1,0 +1,337 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;cxx;c;def</Extensions>
+    </Filter>
+    <Filter Include="Source Files\live555">
+      <UniqueIdentifier>{2eaeac66-32a6-45b8-8d0a-c59de2e28456}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\live555\BasicUsageEnvironment">
+      <UniqueIdentifier>{86559a21-dede-4853-9bdf-0acc82457ec9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\live555\groupsock">
+      <UniqueIdentifier>{29ded9d1-48f8-49d2-b1d3-e0cb5b7404e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\live555\UsageEnvironment">
+      <UniqueIdentifier>{fbdfc6b8-ae90-4014-b159-e04fbf931c4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\live555\platform">
+      <UniqueIdentifier>{44f4000c-400b-456e-8614-606466eb4824}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h</Extensions>
+    </Filter>
+    <Filter Include="Form Files">
+      <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
+      <Extensions>ui</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{D9D6E242-F8AF-46E4-B9FD-80ECBC20BA3E}</UniqueIdentifier>
+      <Extensions>qrc;*</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{71ED8ED8-ACB9-4CE9-BBE1-E00B30144E11}</UniqueIdentifier>
+      <Extensions>moc;h;cpp</Extensions>
+      <SourceControlFiles>False</SourceControlFiles>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="decSPS.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Base64.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="base641.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="BasicUDPSource.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="DigestAuthentication.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="FramedFilter.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="FramedSource.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="H264VideoRTPSource.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="Locale.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="Media.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="MediaSession.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="MediaSink.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="MediaSource.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="MPEGVideoStreamFramer.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="MPEGVideoStreamParser.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="MultiFramedRTPSink.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="MultiFramedRTPSource.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="our_md5.c">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="our_md5hl.c">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="RTCP.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="rtcp_from_spec.c">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="RTPInterface.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="RTPSink.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="RTPSource.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="RTSPClient.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="RTSPCommon.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="StreamParser.cpp">
+      <Filter>Source Files\live555</Filter>
+    </ClCompile>
+    <ClCompile Include="BasicUsageEnvironment\BasicHashTable.cpp">
+      <Filter>Source Files\live555\BasicUsageEnvironment</Filter>
+    </ClCompile>
+    <ClCompile Include="BasicUsageEnvironment\BasicTaskScheduler.cpp">
+      <Filter>Source Files\live555\BasicUsageEnvironment</Filter>
+    </ClCompile>
+    <ClCompile Include="BasicUsageEnvironment\BasicTaskScheduler0.cpp">
+      <Filter>Source Files\live555\BasicUsageEnvironment</Filter>
+    </ClCompile>
+    <ClCompile Include="BasicUsageEnvironment\BasicUsageEnvironment.cpp">
+      <Filter>Source Files\live555\BasicUsageEnvironment</Filter>
+    </ClCompile>
+    <ClCompile Include="BasicUsageEnvironment\BasicUsageEnvironment0.cpp">
+      <Filter>Source Files\live555\BasicUsageEnvironment</Filter>
+    </ClCompile>
+    <ClCompile Include="BasicUsageEnvironment\DelayQueue.cpp">
+      <Filter>Source Files\live555\BasicUsageEnvironment</Filter>
+    </ClCompile>
+    <ClCompile Include="groupsock\GroupEId.cpp">
+      <Filter>Source Files\live555\groupsock</Filter>
+    </ClCompile>
+    <ClCompile Include="groupsock\Groupsock.cpp">
+      <Filter>Source Files\live555\groupsock</Filter>
+    </ClCompile>
+    <ClCompile Include="groupsock\GroupsockHelper.cpp">
+      <Filter>Source Files\live555\groupsock</Filter>
+    </ClCompile>
+    <ClCompile Include="groupsock\inet.c">
+      <Filter>Source Files\live555\groupsock</Filter>
+    </ClCompile>
+    <ClCompile Include="groupsock\NetAddress.cpp">
+      <Filter>Source Files\live555\groupsock</Filter>
+    </ClCompile>
+    <ClCompile Include="groupsock\NetInterface.cpp">
+      <Filter>Source Files\live555\groupsock</Filter>
+    </ClCompile>
+    <ClCompile Include="UsageEnvironment\HashTable.cpp">
+      <Filter>Source Files\live555\UsageEnvironment</Filter>
+    </ClCompile>
+    <ClCompile Include="UsageEnvironment\strDup.cpp">
+      <Filter>Source Files\live555\UsageEnvironment</Filter>
+    </ClCompile>
+    <ClCompile Include="UsageEnvironment\UsageEnvironment.cpp">
+      <Filter>Source Files\live555\UsageEnvironment</Filter>
+    </ClCompile>
+    <ClCompile Include="platform\Thread.cpp">
+      <Filter>Source Files\live555\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="crtspsession.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="crtspsessionprivate.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ourRTSPClient.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rtsp.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Include\TimeUtility.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="decSPS.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Base64.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="base641.h">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicUDPSource.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="DigestAuthentication.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="FramedFilter.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="FramedSource.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="H264VideoRTPSink.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="H264VideoRTPSource.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="H264VideoStreamDiscreteFramer.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="H264VideoStreamFramer.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="Locale.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="Media.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="MediaSession.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="MediaSink.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="MediaSource.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="MPEGVideoStreamFramer.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="MPEGVideoStreamParser.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="MultiFramedRTPSink.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="MultiFramedRTPSource.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="our_md5.h">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="RTCP.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="rtcp_from_spec.h">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="RTPInterface.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="RTPSink.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="RTPSource.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="RTSPClient.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="RTSPCommon.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="StreamParser.hh">
+      <Filter>Source Files\live555</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicUsageEnvironment\BasicHashTable.hh">
+      <Filter>Source Files\live555\BasicUsageEnvironment</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicUsageEnvironment\BasicUsageEnvironment.hh">
+      <Filter>Source Files\live555\BasicUsageEnvironment</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicUsageEnvironment\BasicUsageEnvironment0.hh">
+      <Filter>Source Files\live555\BasicUsageEnvironment</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicUsageEnvironment\DelayQueue.hh">
+      <Filter>Source Files\live555\BasicUsageEnvironment</Filter>
+    </ClInclude>
+    <ClInclude Include="groupsock\GroupEId.hh">
+      <Filter>Source Files\live555\groupsock</Filter>
+    </ClInclude>
+    <ClInclude Include="groupsock\Groupsock.hh">
+      <Filter>Source Files\live555\groupsock</Filter>
+    </ClInclude>
+    <ClInclude Include="groupsock\GroupsockHelper.hh">
+      <Filter>Source Files\live555\groupsock</Filter>
+    </ClInclude>
+    <ClInclude Include="groupsock\NetAddress.hh">
+      <Filter>Source Files\live555\groupsock</Filter>
+    </ClInclude>
+    <ClInclude Include="groupsock\NetInterface.hh">
+      <Filter>Source Files\live555\groupsock</Filter>
+    </ClInclude>
+    <ClInclude Include="UsageEnvironment\HashTable.hh">
+      <Filter>Source Files\live555\UsageEnvironment</Filter>
+    </ClInclude>
+    <ClInclude Include="UsageEnvironment\strDup.hh">
+      <Filter>Source Files\live555\UsageEnvironment</Filter>
+    </ClInclude>
+    <ClInclude Include="UsageEnvironment\UsageEnvironment.hh">
+      <Filter>Source Files\live555\UsageEnvironment</Filter>
+    </ClInclude>
+    <ClInclude Include="platform\Thread.h">
+      <Filter>Source Files\live555\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="crtspsession.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="crtspsessionprivate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ourRTSPClient.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rtsp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\TimeUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RTSP.rc" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="DHParser">
+      <UniqueIdentifier>{9c7a94b6-1b2b-4d22-97f3-c2bb965e3ae1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DAVTool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DAVToolDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DhStreamParser\DhStreamParser.h">
+      <Filter>DHParser</Filter>
+    </ClInclude>
+    <ClInclude Include="DhStreamParser\FrameList.h">
+      <Filter>DHParser</Filter>
+    </ClInclude>
+    <ClInclude Include="DhStreamParser\StreamParser.h">
+      <Filter>DHParser</Filter>
+    </ClInclude>
+    <ClInclude Include="DhStreamParser\svacstream.h">
+      <Filter>DHParser</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DAVTool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DAVToolDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DhStreamParser\DhStreamParser.cpp">
+      <Filter>DHParser</Filter>
+    </ClCompile>
+    <ClCompile Include="DhStreamParser\StreamParser.cpp">
+      <Filter>DHParser</Filter>
+    </ClCompile>
+    <ClCompile Include="DhStreamParser\svacstream.cpp">
+      <Filter>DHParser</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="DAVTool.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\DAVTool.rc2">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\DAVTool.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\media-playback-pause-7.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\media-playback-start-7.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\media-playback-stop-7.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\media-skip-backward-7.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\media-skip-forward-7.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\media-optical-video-new.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+</Project>

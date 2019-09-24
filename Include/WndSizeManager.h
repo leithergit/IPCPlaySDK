@@ -213,18 +213,30 @@ public:
 				{
 					if (nType == SIZE_MAXIMIZED)
 					{
-						//if ((wndPos.nDockType & DockLeft) == DockLeft)
-						//	rt.left = rt.right - (wndPos.rect.right - wndPos.rect.left);
-						//if ((wndPos.nDockType & DockTop) == DockTop)
-						//	rt.top = ;
+						if ((wndPos.nDockType & DockLeft) == DockLeft)
+						{
+							rt.left = rtClientRect.left +  wndPos.DockDistance[DILeft];
+							if ((wndPos.nDockType & DockRight) != DockRight)
+								rt.right = rt.left + wndPos.DockDistance[DIRight];
+						}
+						if ((wndPos.nDockType & DockTop) == DockTop)
+						{
+							rt.top = rtClientRect.top + wndPos.DockDistance[DITop];
+							if ((wndPos.nDockType & DockBottom) != DockBottom)
+								rt.bottom = rt.top + wndPos.DockDistance[DIBottom];
+						}
+							
 						if ((wndPos.nDockType & DockRight) == DockRight)
 						{
 							rt.right = rtClientRect.right - wndPos.DockDistance[DIRight];
-							rt.left = rt.right - (wndPos.rect.right - wndPos.rect.left);
+							if ((wndPos.nDockType & DockLeft) != DockLeft)
+								rt.left = rt.right - RectWidth(wndPos.rect);
 						}
 						if ((wndPos.nDockType & DockBottom) == DockBottom)
 						{
 							rt.bottom = rtClientRect.bottom - wndPos.DockDistance[DIBottom];
+							if ((wndPos.nDockType & DockTop) != DockTop)
+								rt.top = rt.bottom - RectHeight(wndPos.rect);
 						}
 						if ((wndPos.nDockType & DockCenter) == DockCenter)
 						{

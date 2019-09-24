@@ -109,6 +109,7 @@ public:
 };
 typedef shared_ptr<CAvFrame> CAVFramePtr;
 
+typedef shared_ptr<CSwitcherInfo> CSwitcherInfoPtr;
 // //调试开关
 // struct _DebugPin
 // {
@@ -280,6 +281,9 @@ private:
 	int			m_nZeroOffset;
 	bool		m_bEnableDDraw = false;			// 是否启用DDRAW，启用DDRAW将禁用D3D，并且无法启用硬件黄享模式，导致解码效果下降
 	UINT					m_nListAvFrameMaxSize;	///<视频帧缓存最大容量
+	list<CSwitcherInfoPtr> *m_pSwitcherList;		/// 切换器表
+	byte		m_nScreen;
+	byte		m_nWnd;
 	/************************************************************************/
 	//   ********注意 ********                                                               
 	//请匆移动m_nZeroOffset变量定义的位置，因为在构造函数中,为实现快速初始化，需要使用      
@@ -490,7 +494,7 @@ private:
 		//::wvsprintf(szBuffer, pFormat, args);
 		//assert(nBuff >=0);
 //#ifdef _DEBUG
-		OutputDebugStringA(szBuffer);
+		//OutputDebugStringA(szBuffer);
 //#endif
 		if (m_pRunlog)
 			m_pRunlog->Runlog(szBuffer);
@@ -1006,6 +1010,14 @@ public:
 			m_fPlayInterval = nDecodeDelay;
 		}
 	}
+	/// @brief			设置切换回调
+	/// @param [in]		nScreenWnd		由屏号和窗口号组的参数，高位为屏幕号，低为窗口号
+	/// @param [in]		pVideoSwitchCB	切换通知回调，当前播放句柄进入解段阶段，准备呈现面画时会调用这个解口
+	
+	/// @param [in]		pUserPtr		pVideoSwitchCB回调使用的用户接口 
+	/// @remark			1.这个接口可用于作快速切换，当前窗口若正在显示视频时，若要切入下一视频，可设置此回调，在回中止上一次的视频播放。	
+	///					2.屏幕号和窗口号计数从0开始，最多支持16个屏幕(取值0~15)，每人屏幕的窗口数最多256(取值0~255)
+	int SetSwitcherCallBack(WORD nScreenWnd, void *pVideoSwitchCB , void *pUserPtr );
 	/// @brief			开始播放
 	/// @param [in]		bEnaleAudio		是否开启音频播放
 	/// #- true			开启音频播放
@@ -1016,6 +1028,7 @@ public:
 	/// @param [in]		bFitWindow		视频是否适应窗口
 	/// #- true			视频填满窗口,这样会把图像拉伸,可能会造成图像变形
 	/// #- false		只按图像原始比例在窗口中显示,超出比例部分,则以黑色背景显示
+	
 	/// @retval			0	操作成功
 	/// @retval			1	流缓冲区已满
 	/// @retval			-1	输入参数无效
@@ -1656,4 +1669,5 @@ public:
 		else
 			return IPC_Error_DXRenderNotInitialized;
 	}
+	void ProcessSwitchEvent();
 };

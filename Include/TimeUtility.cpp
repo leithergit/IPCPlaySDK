@@ -162,28 +162,28 @@ bool IsLeapYear(UINT nYear)
 UINT64 DateTimeString2UTC(TCHAR *szTime,UINT64 &nTime)
 
 {
-	if (!szTime || _tcslen(szTime)!= 18)
-		return 0;
-	TCHAR szDigit[8];
-	SYSTEMTIME systime;
-	_tcsncpy_s(szDigit,8,szTime,4);
-	systime.wYear = _ttoi(szDigit);
-
-	_tcsncpy_s(szDigit,8,&szTime[5],2);
-	systime.wMonth = _ttoi(szDigit);
-
-	_tcsncpy_s(szDigit,8,&szTime[8],2);
-	systime.wDay = _ttoi(szDigit);
-
-	_tcsncpy_s(szDigit,8,&szTime[11],2);
-	systime.wHour = _ttoi(szDigit);
-
-	_tcsncpy_s(szDigit,8,&szTime[14],2);
-	systime.wMinute = _ttoi(szDigit);
-
-	_tcsncpy_s(szDigit,8,&szTime[17],2);
-	systime.wSecond = _ttoi(szDigit);
-	SystemTime2UTC(&systime,&nTime);
+// 	if (!szTime || _tcslen(szTime)!= 18)
+// 		return 0;
+// 	TCHAR szDigit[8];
+// 	SYSTEMTIME systime;
+// 	_tcsncpy_s(szDigit,8,szTime,4);
+// 	systime.wYear = _ttoi(szDigit);
+// 
+// 	_tcsncpy_s(szDigit,8,&szTime[5],2);
+// 	systime.wMonth = _ttoi(szDigit);
+// 
+// 	_tcsncpy_s(szDigit,8,&szTime[8],2);
+// 	systime.wDay = _ttoi(szDigit);
+// 
+// 	_tcsncpy_s(szDigit,8,&szTime[11],2);
+// 	systime.wHour = _ttoi(szDigit);
+// 
+// 	_tcsncpy_s(szDigit,8,&szTime[14],2);
+// 	systime.wMinute = _ttoi(szDigit);
+// 
+// 	_tcsncpy_s(szDigit,8,&szTime[17],2);
+// 	systime.wSecond = _ttoi(szDigit);
+// 	SystemTime2UTC(&systime,&nTime);
 	return nTime;
 }
 

@@ -79,6 +79,8 @@ struct 	IPC_MEDIAINFO
 	unsigned int	reserved2[3];	///< 保留,必须置0
 };
 
+
+
 /// @brief IPC私有录像帧头
 struct IPCFrameHeader
 {
@@ -93,7 +95,7 @@ struct IPCFrameHeader
 	}
 	long	nLength;				///< 码流数据长度,以字节为单位
 	long	nType;					///< 取值于枚举类型FrameType
-	__int64	nTimestamp;				///< 时间戳,单位微秒
+	time_t	nTimestamp;				///< 时间戳,单位微秒
 	long	nFrameTag;				///< IPC_TAG
 	long	nFrameUTCTime;			///< 收到帧的utc时间
 };

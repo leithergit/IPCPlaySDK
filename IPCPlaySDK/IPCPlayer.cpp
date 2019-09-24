@@ -6,9 +6,22 @@ extern HANDLE g_hHAccelMutexArray[10];
 
 map<string, DxSurfaceList>g_DxSurfacePool;	// 用于缓存DxSurface对象
 CCriticalSectionAgent g_csDxSurfacePool;
+typedef list<CSwitcherInfoPtr> SwitcherPtrList;
+
+SwitcherPtrList g_SwitcherList[16][256];
+
+#ifdef _DEBUG
+extern CCriticalSectionAgent g_csPlayerHandles;
+extern UINT	g_nPlayerHandles;
+#endif
 
 CIPCPlayer::CIPCPlayer()
 {
+#if _DEBUG
+	g_csPlayerHandles.Lock();
+	g_nPlayerHandles++;
+	g_csPlayerHandles.Unlock();
+#endif
 	ZeroMemory(&m_nZeroOffset, sizeof(CIPCPlayer) - offsetof(CIPCPlayer, m_nZeroOffset));
 	/*
 	使用CCriticalSectionAgent类代理，不再直接调用InitializeCriticalSection函数
@@ -45,6 +58,11 @@ CIPCPlayer::CIPCPlayer()
 
 CIPCPlayer::CIPCPlayer(HWND hWnd, CHAR *szFileName, char *szLogFile)
 {
+#if _DEBUG
+	g_csPlayerHandles.Lock();
+	g_nPlayerHandles++;
+	g_csPlayerHandles.Unlock();
+#endif
 	ZeroMemory(&m_nZeroOffset, sizeof(CIPCPlayer) - offsetof(CIPCPlayer, m_nZeroOffset));
 #ifdef _DEBUG
 	m_pCSGlobalCount->Lock();
@@ -266,6 +284,11 @@ CIPCPlayer::CIPCPlayer(HWND hWnd, CHAR *szFileName, char *szLogFile)
 
 CIPCPlayer::CIPCPlayer(HWND hWnd, int nBufferSize, char *szLogFile)
 {
+#if _DEBUG
+	g_csPlayerHandles.Lock();
+	g_nPlayerHandles++;
+	g_csPlayerHandles.Unlock();
+#endif
 	ZeroMemory(&m_nZeroOffset, sizeof(CIPCPlayer) - offsetof(CIPCPlayer, m_nZeroOffset));
 #ifdef _DEBUG
 	m_pCSGlobalCount->Lock();
@@ -332,28 +355,7 @@ CIPCPlayer::~CIPCPlayer()
 	OutputMsg("%s \tReady to Free a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
 #endif
 	//StopPlay(0);
-	/*
-	if (m_hWnd)
-	{
-	if (m_bRefreshWnd)
-	{
-	PAINTSTRUCT ps;
-	HDC hdc;
-	hdc = ::BeginPaint(m_hWnd, &ps);
-	HBRUSH hBrush = (HBRUSH)GetStockObject(NULL_BRUSH);
-	::SetBkColor(hdc, RGB(0, 0, 0));
-	RECT rtWnd;
-	GetWindowRect(m_hWnd, &rtWnd);
-	::ScreenToClient(m_hWnd, (LPPOINT)&rtWnd);
-	::ScreenToClient(m_hWnd, ((LPPOINT)&rtWnd) + 1);
-	if (GetWindowLong(m_hWnd, GWL_EXSTYLE) & WS_EX_LAYOUTRTL)
-	swap(rtWnd.left, rtWnd.right);
 
-	::ExtTextOut(hdc, 0, 0, ETO_OPAQUE, &rtWnd, NULL, 0, NULL);
-	::EndPaint(m_hWnd, &ps);
-	}
-	}
-	*/
 	if (m_pParserBuffer)
 	{
 		//delete[]m_pParserBuffer;
@@ -433,6 +435,9 @@ CIPCPlayer::~CIPCPlayer()
 #ifdef _DEBUG
 	OutputMsg("%s \tFinish Free a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
 	OutputMsg("%s \tObject:%d Exist Time = %u(ms).\n", __FUNCTION__, m_nObjIndex, timeGetTime() - m_nLifeTime);
+	g_csPlayerHandles.Lock();
+	g_nPlayerHandles--;
+	g_csPlayerHandles.Unlock();
 #endif
 }
 
@@ -878,17 +883,18 @@ int CIPCPlayer::AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent
 {
 	if (!hRenderWnd)
 		return IPC_Error_InvalidParameters;
-	// 		if (hRenderWnd == m_hRenderWnd)
-	// 			return IPC_Succeed;
+// 	if (hRenderWnd == m_hRenderWnd)
+// 		return IPC_Succeed;
 	Autolock(&m_cslistRenderWnd);
 	if (!m_hRenderWnd)
 	{
 		m_hRenderWnd = hRenderWnd;
 		//return IPC_Succeed;
 	}
+
 	if (m_bEnableDDraw)
 	{
-		if (m_listRenderUnit.size() >= 4)
+		if (m_listRenderUnit.size() >= 3)
 			return IPC_Error_RenderWndOverflow;
 		auto itFind = find_if(m_listRenderUnit.begin(), m_listRenderUnit.end(), UnitFinder(hRenderWnd));
 		if (itFind != m_listRenderUnit.end())
@@ -898,14 +904,14 @@ int CIPCPlayer::AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent
 	}
 	else
 	{
-		if (m_listRenderWnd.size() >= 4)
+		if (m_listRenderWnd.size() >= 3)
 			return IPC_Error_RenderWndOverflow;
 		auto itFind = find_if(m_listRenderWnd.begin(), m_listRenderWnd.end(), WndFinder(hRenderWnd));
 		if (itFind != m_listRenderWnd.end())
 			return IPC_Succeed;
 
 		m_listRenderWnd.push_back(make_shared<RenderWnd>(hRenderWnd, pRtRender, bPercent));
-		OutputMsg("%s size of m_listRenderWnd = %d.\n", __FUNCTION__,m_listRenderWnd.size());
+		//OutputMsg("%s size of m_listRenderWnd = %d.\n", __FUNCTION__,m_listRenderWnd.size());
 	}
 
 	return IPC_Succeed;
@@ -1124,7 +1130,26 @@ int CIPCPlayer::SetBorderRect(HWND hWnd, LPRECT pRectBorder, bool bPercent )
 	return IPC_Succeed;
 }
 
-int CIPCPlayer::StartPlay(bool bEnaleAudio , bool bEnableHaccel , bool bFitWindow )
+int CIPCPlayer::SetSwitcherCallBack(WORD nScreenWnd, void *pVideoSwitchCB , void *pUserPtr)
+{
+	byte nScreen = HIBYTE(nScreenWnd);
+	if (nScreen > 15)
+		return IPC_Error_InvalidParameters;
+	byte nWnd = LOBYTE(nScreenWnd);
+	if (pVideoSwitchCB &&
+		pUserPtr)
+	{
+		m_pSwitcherList = &g_SwitcherList[nScreen][nWnd];
+		m_pSwitcherList->push_back(make_shared<CSwitcherInfo>(m_hRenderWnd, this, pVideoSwitchCB, pUserPtr));
+		
+		m_nScreen = nScreen;
+		m_nWnd = nWnd;
+		return IPC_Succeed;
+	}
+	else
+		return IPC_Error_InvalidParameters;
+}
+int CIPCPlayer::StartPlay(bool bEnaleAudio , bool bEnableHaccel , bool bFitWindow)
 {
 #ifdef _DEBUG
 	OutputMsg("%s \tObject:%d Time = %d.\n", __FUNCTION__, m_nObjIndex, timeGetTime() - m_nLifeTime);
@@ -1159,6 +1184,7 @@ int CIPCPlayer::StartPlay(bool bEnaleAudio , bool bEnableHaccel , bool bFitWindo
 		m_listAudioCache.clear();
 	}
 
+	
 	AddRenderWindow(m_hRenderWnd, nullptr);
 
 	m_bStopFlag = false;
@@ -1480,7 +1506,7 @@ int CIPCPlayer::InputStream(IN byte *pFrameData, IN int nFrameType, IN int nFram
 	GetExitCodeThread(m_hThreadDecode, &dwThreadCode);
 	if (dwThreadCode != STILL_ACTIVE)		// 线程已退出
 	{
-		TraceMsgA("%s ThreadDecode has exit Abnormally.\n", __FUNCTION__);
+		OutputMsg("%s ThreadDecode has exit Abnormally.\n", __FUNCTION__);
 		return IPC_Error_VideoThreadAbnormalExit;
 	}
 
@@ -1522,7 +1548,7 @@ int CIPCPlayer::InputStream(IN byte *pFrameData, IN int nFrameType, IN int nFram
 		m_nAudioCodec = (IPC_CODEC)nFrameType;
 		// 				if ((timeGetTime() - m_dwInputStream) >= 20000)
 		// 				{
-		// 					TraceMsgA("%s VideoFrames = %d\tAudioFrames = %d.\n", __FUNCTION__, m_nVideoFraems, m_nAudioFrames1);
+		// 					OutputMsg("%s VideoFrames = %d\tAudioFrames = %d.\n", __FUNCTION__, m_nVideoFraems, m_nAudioFrames1);
 		// 					m_dwInputStream = timeGetTime();
 		// 				}
 		if (!m_bEnableAudio)
@@ -1624,7 +1650,7 @@ int CIPCPlayer::InputDHStream(byte *pBuffer, int nLength)
 bool CIPCPlayer::StopPlay(DWORD nTimeout )
 {
 #ifdef _DEBUG
-	TraceFunction();
+	//TraceFunction();
 	OutputMsg("%s \tObject:%d Time = %d.\n", __FUNCTION__, m_nObjIndex, timeGetTime() - m_nLifeTime);
 #endif
 	m_bStopFlag = true;
@@ -1637,6 +1663,20 @@ bool CIPCPlayer::StopPlay(DWORD nTimeout )
 	if (!m_pSyncPlayer)
 		SetEvent(m_hRenderAsyncEvent);
 
+	if (m_pSwitcherList)
+	{
+		if (m_pSwitcherList->size())
+		{
+			CSwitcherInfoPtr pSwitchPtr = m_pSwitcherList->front();
+			if (pSwitchPtr->pPlayerHandle == this)
+			{
+				m_pSwitcherList->front()->Reset();
+				m_pSwitcherList->pop_front();
+			}
+		}
+			
+		m_pSwitcherList = nullptr;
+	}
 	if (m_bEnableAudio)
 	{
 		EnableAudio(false);
@@ -2019,7 +2059,7 @@ int CIPCPlayer::SeekFrame(IN int nFrameID, bool bUpdate )
 	else
 		m_nFrametoRead = nBackWord;
 	m_nCurVideoFrame = m_nFrametoRead;
-	//TraceMsgA("%s Seek to Frame %d\tFrameTime = %I64d\n", __FUNCTION__, m_nFrametoRead, m_pFrameOffsetTable[m_nFrametoRead].tTimeStamp/1000);
+	//OutputMsg("%s Seek to Frame %d\tFrameTime = %I64d\n", __FUNCTION__, m_nFrametoRead, m_pFrameOffsetTable[m_nFrametoRead].tTimeStamp/1000);
 	if (m_hThreadFileParser)
 		SetSeekOffset(m_pFrameOffsetTable[m_nFrametoRead].nOffset);
 	else
@@ -2117,7 +2157,7 @@ int CIPCPlayer::AsyncSeekTime(IN time_t tTimeOffset, bool bUpdate)
 		int nSize1 = m_listAVFrame.size();
 		m_listAVFrame.erase(m_listAVFrame.begin(), itFinder);
 		int nSize2 = m_listAVFrame.size();
-		//TraceMsgA("%s Remove Frames = %d\tTimeOffset = %I64d\tLastFrameTime = %I64d.\n", __FUNCTION__, nSize1 - nSize2,tTimeOffset, tLastFrameTime);
+		//OutputMsg("%s Remove Frames = %d\tTimeOffset = %I64d\tLastFrameTime = %I64d.\n", __FUNCTION__, nSize1 - nSize2,tTimeOffset, tLastFrameTime);
 		return IPC_Succeed;
 	}
 	else
@@ -2171,7 +2211,7 @@ int CIPCPlayer::AsyncSeekTime(IN time_t tTimeOffset, bool bUpdate)
 				int nSize1 = m_listAVFrame.size();
 				m_listAVFrame.erase(m_listAVFrame.begin(), itFinder);
 				int nSize2 = m_listAVFrame.size();
-				//TraceMsgA("%s Remove Frames = %d\tTimeOffset = %I64d\tLastFrameTime = %I64d.\n", __FUNCTION__, nSize1 - nSize2, tTimeOffset, tLastFrameTime);
+				//OutputMsg("%s Remove Frames = %d\tTimeOffset = %I64d\tLastFrameTime = %I64d.\n", __FUNCTION__, nSize1 - nSize2, tTimeOffset, tLastFrameTime);
 				return IPC_Succeed;
 			}
 			else
@@ -2320,7 +2360,7 @@ int CIPCPlayer::SeekNextFrame()
 
 int CIPCPlayer::EnableAudio(bool bEnable )
 {
-	TraceFunction();
+	// TraceFunction();
 	// 		if (m_fPlayRate != 1.0f)
 	// 			return IPC_Error_AudioFailed;
 	if (m_nAudioCodec == CODEC_UNKNOWN)
@@ -2648,7 +2688,7 @@ int CIPCPlayer::GetFileSummary(volatile bool &bWorking)
 					m_csAudioCache.Unlock();
 
 					m_nHeaderFrameID = m_listVideoCache.front()->FrameHeader()->nFrameID;
-					TraceMsgA("HeadFrame ID = %d.\n", m_nHeaderFrameID);
+					OutputMsg("HeadFrame ID = %d.\n", m_nHeaderFrameID);
 					bFirstBlockIsFilled = false;
 				}
 			}
@@ -2694,7 +2734,7 @@ int CIPCPlayer::GetFileSummary(volatile bool &bWorking)
 		// 				m_nSummaryOffset = nFrameOffset;
 		// 				CAutoLock lock(&m_csVideoCache);
 		// 				m_nHeaderFrameID = m_listVideoCache.front()->FrameHeader()->nFrameID;
-		// 				TraceMsgA("VideoCache = %d\tAudioCache = %d.\n", m_listVideoCache.size(), m_listAudioCache.size());
+		// 				OutputMsg("VideoCache = %d\tAudioCache = %d.\n", m_listVideoCache.size(), m_listAudioCache.size());
 		// 				bFirstBlockIsFilled = false;
 		// 			}
 		// 残留数据长为nDataLength
@@ -3371,7 +3411,7 @@ void CIPCPlayer::ProcessYUVCapture(AVFrame *pAvFrame, LONGLONG nTimestamp)
 				memcpy(&m_pYUV[nPictureSize + nUVSize / 2], pAvFrame->data[2], nUVSize / 2);
 				m_pfnCaptureYUV(this, m_pYUV, m_nYUVSize, pAvFrame->linesize[0], pAvFrame->linesize[1], pAvFrame->width, pAvFrame->height, nTimestamp, m_pUserCaptureYUV);
 			}
-			//TraceMsgA("%s m_pfnCaptureYUV = %p", __FUNCTION__, m_pfnCaptureYUV);
+			//OutputMsg("%s m_pfnCaptureYUV = %p", __FUNCTION__, m_pfnCaptureYUV);
 		}
 		m_csCaptureYUV.Unlock();
 	}
@@ -3572,7 +3612,7 @@ UINT __stdcall CIPCPlayer::ThreadPlayAudioGSJ(void *p)
 	pThis->m_csAudioCache.Lock();
 	pThis->m_nAudioCache = pThis->m_listAudioCache.size();
 	pThis->m_csAudioCache.Unlock();
-	TraceMsgA("%s Audio Cache Size = %d.\n", __FUNCTION__, pThis->m_nAudioCache);
+	pThis->OutputMsg("%s Audio Cache Size = %d.\n", __FUNCTION__, pThis->m_nAudioCache);
 	time_t tLastFrameTime = 0;
 	double dfDecodeStart = GetExactTime();
 	DWORD dwOsMajorVersion = GetOsMajorVersion();
@@ -3647,7 +3687,7 @@ UINT __stdcall CIPCPlayer::ThreadPlayAudioGSJ(void *p)
 				//SetEvent(pThis->m_hAudioFrameEvent[nFrameEvent++ % 2]);
 			}
 			else
-				TraceMsgA("%s Audio Decode Failed Is.\n", __FUNCTION__);
+				pThis->OutputMsg("%s Audio Decode Failed Is.\n", __FUNCTION__);
 		}
 		nFramesPlayed++;
 		if (pThis->m_nAudioPlayFPS == 8 && nFramesPlayed <= 8)
@@ -3753,7 +3793,7 @@ UINT __stdcall CIPCPlayer::ThreadPlayAudioIPC(void *p)
 	pThis->m_nAudioCache = pThis->m_listAudioCache.size();
 	pThis->m_csAudioCache.Unlock();
 
-	TraceMsgA("%s Audio Cache Size = %d.\n", __FUNCTION__, pThis->m_nAudioCache);
+	pThis->OutputMsg("%s Audio Cache Size = %d.\n", __FUNCTION__, pThis->m_nAudioCache);
 	time_t tLastFrameTime = 0;
 	double dfDecodeStart = GetExactTime();
 	DWORD dwOsMajorVersion = GetOsMajorVersion();
@@ -3823,7 +3863,7 @@ UINT __stdcall CIPCPlayer::ThreadPlayAudioIPC(void *p)
 				SetEvent(pThis->m_hAudioFrameEvent[nFrameEvent++ % 2]);
 			}
 			else
-				TraceMsgA("%s Audio Decode Failed Is.\n", __FUNCTION__);
+				pThis->OutputMsg("%s Audio Decode Failed Is.\n", __FUNCTION__);
 		}
 		dfPlayTimeSpan = TimeSpanEx(dfPlayTimeSpan);
 		dfLastPlayTime = GetExactTime();
@@ -3900,7 +3940,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 {
 	CIPCPlayer* pThis = (CIPCPlayer *)p;
 #ifdef _DEBUG
-	TraceMsgA("%s Timespan1 of First Frame = %f.\n", __FUNCTION__, TimeSpanEx(pThis->m_dfFirstFrameTime));
+	pThis->OutputMsg("%s Timespan1 of First Frame = %f.\n", __FUNCTION__, TimeSpanEx(pThis->m_dfFirstFrameTime));
 #endif
 	struct DxDeallocator
 	{
@@ -3914,7 +3954,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		}
 		~DxDeallocator()
 		{
-			TraceMsgA("%s pSurface = %08X\tpDDraw = %08X.\n", __FUNCTION__, m_pDxSurface, m_pDDraw);
+			//pThis->OutputMsg("%s pSurface = %08X\tpDDraw = %08X.\n", __FUNCTION__, m_pDxSurface, m_pDDraw);
 			if (m_pDxSurface)
 			{
 				if (strlen(m_pDxSurface->m_szAdapterID) > 0)
@@ -4028,7 +4068,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 				{// 探测码流类型
 					itStart = it;
 					itStart++;
-					TraceMsgA("%s Probestream FrameType = %d\tFrameLength = %d.\n", __FUNCTION__, (*it)->FrameHeader()->nType, (*it)->FrameHeader()->nLength);
+					pThis->OutputMsg("%s Probestream FrameType = %d\tFrameLength = %d.\n", __FUNCTION__, (*it)->FrameHeader()->nType, (*it)->FrameHeader()->nLength);
 					if ((*it)->FrameHeader()->nType == FRAME_GOV)
 					{
 						if (bGovInput)
@@ -4227,7 +4267,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 
 #ifdef _DEBUG
 	pThis->m_csVideoCache.Lock();
-	TraceMsgA("%s Video cache Size = %d .\n", __FUNCTION__, pThis->m_listVideoCache.size());
+	pThis->OutputMsg("%s Video cache Size = %d .\n", __FUNCTION__, pThis->m_listVideoCache.size());
 	pThis->m_csVideoCache.Unlock();
 	pThis->OutputMsg("%s \tObject:%d Start Decoding.\n", __FUNCTION__, pThis->m_nObjIndex);
 #endif
@@ -4246,7 +4286,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 
 	if (pThis->m_dwStartTime)
 	{
-		TraceMsgA("%s %d Render Timespan = %d.\n", __FUNCTION__, __LINE__, timeGetTime() - pThis->m_dwStartTime);
+		pThis->OutputMsg("%s %d Render Timespan = %d.\n", __FUNCTION__, __LINE__, timeGetTime() - pThis->m_dwStartTime);
 		pThis->m_dwStartTime = 0;
 	}
 
@@ -4279,8 +4319,10 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 	CStat TimeDecode("Decode Time", pThis->m_nObjIndex);
 	CStat RenderTime("Frame Render Time", pThis->m_nObjIndex);
 	DWORD dwFrameTimeInput;
-	TraceMsgA("%s Timespan2 of First Frame = %f.\n", __FUNCTION__, TimeSpanEx(pThis->m_dfFirstFrameTime));
+	pThis->OutputMsg("%s Timespan2 of First Frame = %f.\n", __FUNCTION__, TimeSpanEx(pThis->m_dfFirstFrameTime));
 #endif
+	// 准备发送视频替换通知
+	pThis->ProcessSwitchEvent();
 	while (pThis->m_bThreadDecodeRun)
 	{
 		if (!pThis->m_bIpcStream &&
@@ -4341,7 +4383,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 			{
 				FramePtr = pThis->m_listVideoCache.front();
 				pThis->m_listVideoCache.pop_front();
-				//TraceMsgA("%s Pop a Frame ,FrameID = %d\tFrameTimestamp = %d.\n", __FUNCTION__, FramePtr->FrameHeader()->nFrameID, FramePtr->FrameHeader()->nTimestamp);
+				//pThis->OutputMsg("%s Pop a Frame ,FrameID = %d\tFrameTimestamp = %d.\n", __FUNCTION__, FramePtr->FrameHeader()->nFrameID, FramePtr->FrameHeader()->nTimestamp);
 			}
 			pThis->m_nVideoCache = pThis->m_listVideoCache.size();
 			if (!bPopFrame)
@@ -4509,12 +4551,12 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 			pThis->RenderFrame(pAvFrame);
 
 #ifdef _DEBUG
-			RenderTime.Stat(MMTimeSpan(dwFrameTimeInput));
-			if (RenderTime.IsFull())
-			{
-				RenderTime.OutputStat();
-				RenderTime.Reset();
-			}
+// 			RenderTime.Stat(MMTimeSpan(dwFrameTimeInput));
+// 			if (RenderTime.IsFull())
+// 			{
+// 				RenderTime.OutputStat();
+// 				RenderTime.Reset();
+// 			}
 			//RenderInterval.Stat(dfDecodeTimeSpan);
 // 			RenderInterval.Stat(TimeSpanEx(dfRenderStartTime));
 // 			if (RenderInterval.IsFull())
@@ -4549,7 +4591,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		}
 		else
 		{
-			TraceMsgA("%s \tObject:%d Decode Succeed but Not get a picture ,FrameType = %d\tFrameLength %d.\n", __FUNCTION__, pThis->m_nObjIndex, FramePtr->FrameHeader()->nType, FramePtr->FrameHeader()->nLength);
+			pThis->OutputMsg("%s \tObject:%d Decode Succeed but Not get a picture ,FrameType = %d\tFrameLength %d.\n", __FUNCTION__, pThis->m_nObjIndex, FramePtr->FrameHeader()->nType, FramePtr->FrameHeader()->nLength);
 		}
 
 		dfRenderTimeSpan = TimeSpanEx(dfRenderStartTime);
@@ -4557,10 +4599,10 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		dfRenderTime = GetExactTime();
 // 			if ((nTotalDecodeFrames % 100) == 0)
 // 			{
-// 				TraceMsgA("%s nTotalDecodeFrames = %d\tnRenderTimes = %d.\n", __FUNCTION__,nTotalDecodeFrames, nRenderTimes);
+// 				pThis->OutputMsg("%s nTotalDecodeFrames = %d\tnRenderTimes = %d.\n", __FUNCTION__,nTotalDecodeFrames, nRenderTimes);
 // 			}
 	}
-	TraceMsgA("%s Object %d Decode Frames:%d.\n", __FUNCTION__, pThis->m_nObjIndex, nTotalDecodeFrames);
+	pThis->OutputMsg("%s Object %d Decode Frames:%d.\n", __FUNCTION__, pThis->m_nObjIndex, nTotalDecodeFrames);
 	av_frame_unref(pAvFrame);
 	SaveRunTime();
 	pThis->m_pDecoder = nullptr;
@@ -4584,7 +4626,7 @@ UINT __stdcall CIPCPlayer::ThreadAsyncRender(void *p)
 		}
 		~DxDeallocator()
 		{
-			TraceMsgA("%s pSurface = %08X\tpDDraw = %08X.\n", __FUNCTION__, m_pDxSurface, m_pDDraw);
+			//TraceMsgA("%s pSurface = %08X\tpDDraw = %08X.\n", __FUNCTION__, m_pDxSurface, m_pDDraw);
 			Safe_Delete(m_pDxSurface);
 			Safe_Delete(m_pDDraw);
 		}
@@ -4658,7 +4700,7 @@ UINT __stdcall CIPCPlayer::ThreadAsyncRender(void *p)
 		pThis->RenderFrame(pFrame->pFrame);
 		nRenderFrames++;
 		if (nRenderFrames % 25 == 0)
-			TraceMsgA("%s nRenderFrames = %d.\n", __FUNCTION__, nRenderFrames);
+			pThis->OutputMsg("%s nRenderFrames = %d.\n", __FUNCTION__, nRenderFrames);
 		pFrame = nullptr;
 	}
 	return 0;
@@ -4671,9 +4713,9 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 #ifdef _DEBUG
 	pThis->OutputMsg("%s \tObject:%d  m_nLifeTime = %d.\n", __FUNCTION__, pThis->m_nObjIndex, timeGetTime() - pThis->m_nLifeTime);
 	if (pThis->m_pSyncPlayer)
-		TraceMsgA("%s Salve Player Enter ThreadSyncDecode Time:%.3f.\n", __FUNCTION__, GetExactTime());
+		pThis->OutputMsg("%s Salve Player Enter ThreadSyncDecode Time:%.3f.\n", __FUNCTION__, GetExactTime());
 	else
-		TraceMsgA("%s Primary Player Enter ThreadSyncDecode Time:%.3f.\n", __FUNCTION__, GetExactTime());
+		pThis->OutputMsg("%s Primary Player Enter ThreadSyncDecode Time:%.3f.\n", __FUNCTION__, GetExactTime());
 #endif
 	int nAvError = 0;
 	char szAvError[1024] = { 0 };
@@ -4835,7 +4877,7 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 
 	if (pThis->m_dwStartTime)
 	{
-		TraceMsgA("%s %d Render Timespan = %d.\n", __FUNCTION__, __LINE__, timeGetTime() - pThis->m_dwStartTime);
+		pThis->OutputMsg("%s %d Render Timespan = %d.\n", __FUNCTION__, __LINE__, timeGetTime() - pThis->m_dwStartTime);
 		pThis->m_dwStartTime = 0;
 	}
 
@@ -4953,7 +4995,7 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 		if (nAvError < 0)
 		{
 			av_strerror(nAvError, szAvError, 1024);
-			TraceMsgA("%s %s\tFrameSize = %d.\n", __FUNCTION__, szAvError,nFrameSize);
+			pThis->OutputMsg("%s %s\tFrameSize = %d.\n", __FUNCTION__, szAvError,nFrameSize);
 			continue;
 		}
 
@@ -4982,13 +5024,13 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 			pThis->RenderFrame(pAvFrame);
 		if (dfLastRenderTime > 0.0f)
 		{
-			RenderInterval.Stat(TimeSpanEx(dfLastRenderTime));
-			dfLastRenderTime = GetExactTime();
-			if (RenderInterval.IsFull())
-			{
-				RenderInterval.OutputStat();
-				RenderInterval.Reset();
-			}
+// 			RenderInterval.Stat(TimeSpanEx(dfLastRenderTime));
+// 			dfLastRenderTime = GetExactTime();
+// 			if (RenderInterval.IsFull())
+// 			{
+// 				RenderInterval.OutputStat();
+// 				RenderInterval.Reset();
+// 			}
 		}
 		else
 			dfLastRenderTime = GetExactTime();
@@ -5038,3 +5080,12 @@ void CIPCPlayer::EnableReversePlay(bool bFlag)
 	LeaveCriticalSection(m_cslistAVFrame.Get());
 }
 */
+
+void CIPCPlayer::ProcessSwitchEvent()
+{
+	if (m_pSwitcherList)
+	{
+		if (m_pSwitcherList->size() > 1)
+			m_pSwitcherList->pop_front();
+	}
+}

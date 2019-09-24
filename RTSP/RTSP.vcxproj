@@ -1,0 +1,238 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_SVAC|Win32">
+      <Configuration>Release_SVAC</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{D8C44697-88C2-48E3-959D-A838841755B6}</ProjectGuid>
+    <RootNamespace>RTSP</RootNamespace>
+    <Keyword>Qt4VSv1.0</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_SVAC|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release_SVAC|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.30501.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_SVAC|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(Configuration);.\UsageEnvironment;.\BasicUsageEnvironment;.\groupsock;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>UNICODE;WIN32;QT_LARGEFILE_SUPPORT;QT_DLL;QT_NO_DEBUG;NDEBUG;RTSP_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(SolutionDir)\$(Configuration)\$(ProjectName).dll</OutputFile>
+      <AdditionalLibraryDirectories>$(QTDIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <PostBuildEvent>
+      <Command>%40echo copy  $(TargetPath)  $(SolutionDir)$(Configuration)
+copy  "$(TargetPath)"  "$(SolutionDir)$(Configuration)" /y
+%40echo copy $(TargetDir)$(TargetName).pdb  $(SolutionDir)$(Configuration)
+copy "$(TargetDir)$(TargetName).pdb"  "$(SolutionDir)$(Configuration)" /y
+%40echo copy $(TargetDir)$(TargetName).lib  $(SolutionDir)$(Configuration)
+copy "$(TargetDir)$(TargetName).lib"  "$(SolutionDir)$(Configuration)" /y
+</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>.;.\UsageEnvironment;.\BasicUsageEnvironment;.\groupsock;../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>UNICODE;WIN32;QT_LARGEFILE_SUPPORT;QT_DLL;RTSP_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(SolutionDir)$(Configuration)\$(ProjectName)d.dll</OutputFile>
+      <AdditionalLibraryDirectories>$(QTDIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <PostBuildEvent>
+      <Command />
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_SVAC|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(Configuration);.\UsageEnvironment;.\BasicUsageEnvironment;.\groupsock;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SVAC;UNICODE;WIN32;QT_LARGEFILE_SUPPORT;QT_DLL;QT_NO_DEBUG;NDEBUG;RTSP_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>qtmain.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>E:\Program Files\TVWall\bin\SDK\Aquila\$(ProjectName).dll</OutputFile>
+      <AdditionalLibraryDirectories>$(QTDIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Include\TimeUtility.cpp" />
+    <ClCompile Include="Base64.cpp" />
+    <ClCompile Include="base641.cpp" />
+    <ClCompile Include="BasicUDPSource.cpp" />
+    <ClCompile Include="BasicUsageEnvironment\BasicHashTable.cpp" />
+    <ClCompile Include="BasicUsageEnvironment\BasicTaskScheduler.cpp" />
+    <ClCompile Include="BasicUsageEnvironment\BasicTaskScheduler0.cpp" />
+    <ClCompile Include="BasicUsageEnvironment\BasicUsageEnvironment.cpp" />
+    <ClCompile Include="BasicUsageEnvironment\BasicUsageEnvironment0.cpp" />
+    <ClCompile Include="BasicUsageEnvironment\DelayQueue.cpp" />
+    <ClCompile Include="crtspsession.cpp" />
+    <ClCompile Include="crtspsessionprivate.cpp" />
+    <ClCompile Include="decSPS.cpp" />
+    <ClCompile Include="DigestAuthentication.cpp" />
+    <ClCompile Include="FramedFilter.cpp" />
+    <ClCompile Include="FramedSource.cpp" />
+    <ClCompile Include="groupsock\GroupEId.cpp" />
+    <ClCompile Include="groupsock\Groupsock.cpp" />
+    <ClCompile Include="groupsock\GroupsockHelper.cpp" />
+    <ClCompile Include="groupsock\inet.c" />
+    <ClCompile Include="groupsock\NetAddress.cpp" />
+    <ClCompile Include="groupsock\NetInterface.cpp" />
+    <ClCompile Include="H264VideoRTPSource.cpp" />
+    <ClCompile Include="Locale.cpp" />
+    <ClCompile Include="Media.cpp" />
+    <ClCompile Include="MediaSession.cpp" />
+    <ClCompile Include="MediaSink.cpp" />
+    <ClCompile Include="MediaSource.cpp" />
+    <ClCompile Include="MPEGVideoStreamFramer.cpp" />
+    <ClCompile Include="MPEGVideoStreamParser.cpp" />
+    <ClCompile Include="MultiFramedRTPSink.cpp" />
+    <ClCompile Include="MultiFramedRTPSource.cpp" />
+    <ClCompile Include="ourRTSPClient.cpp" />
+    <ClCompile Include="our_md5.c" />
+    <ClCompile Include="our_md5hl.c" />
+    <ClCompile Include="platform\Thread.cpp" />
+    <ClCompile Include="RTCP.cpp" />
+    <ClCompile Include="rtcp_from_spec.c" />
+    <ClCompile Include="RTPInterface.cpp" />
+    <ClCompile Include="RTPSink.cpp" />
+    <ClCompile Include="RTPSource.cpp" />
+    <ClCompile Include="rtsp.cpp" />
+    <ClCompile Include="RTSPClient.cpp" />
+    <ClCompile Include="RTSPCommon.cpp" />
+    <ClCompile Include="StreamParser.cpp" />
+    <ClCompile Include="UsageEnvironment\HashTable.cpp" />
+    <ClCompile Include="UsageEnvironment\strDup.cpp" />
+    <ClCompile Include="UsageEnvironment\UsageEnvironment.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Include\TimeUtility.h" />
+    <ClInclude Include="Base64.hh" />
+    <ClInclude Include="base641.h" />
+    <ClInclude Include="BasicUDPSource.hh" />
+    <ClInclude Include="BasicUsageEnvironment\BasicHashTable.hh" />
+    <ClInclude Include="BasicUsageEnvironment\BasicUsageEnvironment.hh" />
+    <ClInclude Include="BasicUsageEnvironment\BasicUsageEnvironment0.hh" />
+    <ClInclude Include="BasicUsageEnvironment\DelayQueue.hh" />
+    <ClInclude Include="crtspsession.h" />
+    <ClInclude Include="crtspsessionprivate.h" />
+    <ClInclude Include="decSPS.h" />
+    <ClInclude Include="DigestAuthentication.hh" />
+    <ClInclude Include="FramedFilter.hh" />
+    <ClInclude Include="FramedSource.hh" />
+    <ClInclude Include="groupsock\GroupEId.hh" />
+    <ClInclude Include="groupsock\Groupsock.hh" />
+    <ClInclude Include="groupsock\GroupsockHelper.hh" />
+    <ClInclude Include="groupsock\NetAddress.hh" />
+    <ClInclude Include="groupsock\NetInterface.hh" />
+    <ClInclude Include="H264VideoRTPSink.hh" />
+    <ClInclude Include="H264VideoRTPSource.hh" />
+    <ClInclude Include="H264VideoStreamDiscreteFramer.hh" />
+    <ClInclude Include="H264VideoStreamFramer.hh" />
+    <ClInclude Include="Locale.hh" />
+    <ClInclude Include="Media.hh" />
+    <ClInclude Include="MediaSession.hh" />
+    <ClInclude Include="MediaSink.hh" />
+    <ClInclude Include="MediaSource.hh" />
+    <ClInclude Include="MPEGVideoStreamFramer.hh" />
+    <ClInclude Include="MPEGVideoStreamParser.hh" />
+    <ClInclude Include="MultiFramedRTPSink.hh" />
+    <ClInclude Include="MultiFramedRTPSource.hh" />
+    <ClInclude Include="ourRTSPClient.h" />
+    <ClInclude Include="our_md5.h" />
+    <ClInclude Include="platform\Thread.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="RTCP.hh" />
+    <ClInclude Include="rtcp_from_spec.h" />
+    <ClInclude Include="RTPInterface.hh" />
+    <ClInclude Include="RTPSink.hh" />
+    <ClInclude Include="RTPSource.hh" />
+    <ClInclude Include="rtsp.h" />
+    <ClInclude Include="RTSPClient.hh" />
+    <ClInclude Include="RTSPCommon.hh" />
+    <ClInclude Include="StreamParser.hh" />
+    <ClInclude Include="UsageEnvironment\HashTable.hh" />
+    <ClInclude Include="UsageEnvironment\strDup.hh" />
+    <ClInclude Include="UsageEnvironment\UsageEnvironment.hh" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RTSP.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties MocDir=".\GeneratedFiles\$(ConfigurationName)" UicDir=".\GeneratedFiles" RccDir=".\GeneratedFiles" lupdateOptions="" lupdateOnBuild="0" lreleaseOptions="" MocOptions="" QtVersion_x0020_Win32="4.8.3" />
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>

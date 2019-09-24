@@ -15,7 +15,7 @@
 #endif
 
 //using namespace std;
-#ifdef _STD_SMARTPTR
+#ifdef _STL_SMARTPTR
 #include <memory>
 using namespace std::tr1;
 #else
@@ -43,6 +43,9 @@ typedef BOOL (*KernelIoControlProc)(DWORD , LPVOID , DWORD , LPVOID , DWORD , LP
 #define MAKEUINT64(low,high)	((UINT64)(((UINT)(low)) | ((UINT64)((UINT)(high))) << 32))
 
 #define  _TraceMsg TraceMsg
+
+#define RectWidth(rt)	((rt).right - (rt).left)
+#define RectHeight(rt)	((rt).bottom - (rt).top)
 
 #ifdef _UNICODE
 #ifdef _DEBUG
@@ -493,5 +496,5 @@ shared_ptr<char> UTF8StringA_(IN LPCSTR pText);
 TCHAR *GetOsVersion();
 DWORD GetOsMajorVersion();
 
-BOOL ModifyWndStyle(HWND hWnd, int nStyleOffset,   DWORD dwRemove, DWORD dwAdd, UINT nFlags);
+BOOL ModifyWndStyle(HWND hWnd, int nStyleOffset,   long dwRemove, long dwAdd, UINT nFlags);
 BOOL IsCancelDialogMessage(MSG* pMsg);

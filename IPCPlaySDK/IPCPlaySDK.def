@@ -1,86 +1,84 @@
 LIBRARY      "IPCPlaySDK"
 EXPORTS
-	ipcplay_OpenFileA
-	ipcplay_OpenFileW
-	ipcplay_OpenStream
-	ipcplay_OpenRTStream
-	ipcplay_Close
-	EnableLog
-	ipcplay_InputStream
-	ipcplay_InputIPCStream
-	ipcplay_Start
-	ipcplay_Reset
-	ipcplay_Stop
-	ipcplay_Pause
-	ipcplay_EnableHaccel
-	ipcplay_GetHaccelStatus
-	ipcplay_IsSupportHaccel
-	ipcplay_GetPlayerInfo
-	ipcplay_SnapShotA
-	ipcplay_SnapShotW
-	ipcplay_SetVolume
-	ipcplay_GetVolume
-	ipcplay_SetRate
-	ipcplay_SeekNextFrame
-	ipcplay_SeekFrame
-	ipcplay_SeekTime
-	ipcplay_GetFrame
-	ipcplay_SetAudioPlayParameters
-	ipcplay_EnableAudio
-	ipcplay_Refresh
-	ipcplay_SetCallBack
-	ipcplay_SetExternDrawCallBack
-	ipcplay_SetYUVCapture
-	ipcplay_SetYUVCaptureEx
-	ipcplay_SetFrameParserCallback
-	ipcplay_FitWindow
-	ipcplay_BuildMediaHeader
-	ipcplay_BuildFrameHeader
-	ipcplay_GetMaxFrameSize
-	ipcplay_SetMaxFrameSize
-	ipcplay_ClearCache
-	ipcplay_ClearD3DCache
-	ipcplay_SetBorderRect
-	ipcplay_RemoveBorderRect
-	ipcplay_SetProbeStreamTimeout
-	ipcplay_SetPixFormat
-	ipcplay_IsPlaying
-	ipcplay_SetStreamHeader
-	AllocAvFrame
-	AvFree
-	;ipcplay_ResumeDecode
-	;ipcplay_ResumeDecode
-	ipcplay_AddWindow
-	ipcplay_RemoveWindow
-	ipcplay_GetRenderWindows
-	ipcplay_SetD3dShared
-	ipcplay_SetRocateAngle
-	ipcplay_SetDecodeDelay
-	ipcplay_AddLineArray
-	ipcplay_RemoveLineArray
-	ipcplay_SetBackgroundImageA
-	ipcplay_SetBackgroundImageW
-	ipcplay_EnableDDraw
-	;ipcplay_YUV2RGB24
-	ipcplay_EnableStreamParser
-	ipcplay_InputStream2
-	ipcplay_InputDHStream
-	ipcplay_AddPolygon
-	ipcplay_RemovePolygon
-	ipcplay_SetCoordinateMode
-	ipcplay_StartSyncPlay
-	ipcplay_EnableAsyncRender
-	ipcplay_AsyncSeekFrame
-	ipcplay_EnablePlayOneFrame
-	ipcplay_GetErrorMessageA
-	ipcplay_GetErrorMessageW
-	ipcplay_SetDisplayAdapter
-	ipcplay_GetDisplayAdapterInfo
-	ipcplay_GetHAccelConfig
-	
-	ipcplay_CreateOSDFontW
-	ipcplay_DrawOSDTextW
-	ipcplay_CreateOSDFontA
-	ipcplay_DrawOSDTextA
-	ipcplay_RmoveOSDText
-	ipcplay_DestroyOSDFont
+	ipcplay_OpenFileA					@1
+	ipcplay_OpenFileW                   @2
+	ipcplay_OpenStream                  @3
+	ipcplay_OpenRTStream                @4
+	ipcplay_Close                       @5
+	EnableLog                           @6
+	ipcplay_InputStream                 @7
+	ipcplay_InputIPCStream              @8
+	ipcplay_Start                       @9
+	ipcplay_Reset                       @10
+	ipcplay_Stop                        @11
+	ipcplay_Pause                       @12
+	ipcplay_EnableHaccel                @13
+	ipcplay_GetHaccelStatus             @14
+	ipcplay_IsSupportHaccel             @15
+	ipcplay_GetPlayerInfo               @16
+	ipcplay_SnapShotA                   @17
+	ipcplay_SnapShotW                   @18
+	ipcplay_SetVolume                   @19
+	ipcplay_GetVolume                   @20
+	ipcplay_SetRate                     @21
+	ipcplay_SeekNextFrame               @22
+	ipcplay_SeekFrame                   @23
+	ipcplay_SeekTime                    @24
+	ipcplay_GetFrame                    @25
+	ipcplay_SetAudioPlayParameters      @26
+	ipcplay_EnableAudio                 @27
+	ipcplay_Refresh                     @28
+	ipcplay_SetCallBack                 @29
+	ipcplay_SetExternDrawCallBack       @30
+	ipcplay_SetYUVCapture               @31
+	ipcplay_SetYUVCaptureEx             @32
+	ipcplay_SetFrameParserCallback      @33
+	ipcplay_FitWindow                   @34
+	ipcplay_BuildMediaHeader            @35
+	ipcplay_BuildFrameHeader            @36
+	ipcplay_GetMaxFrameSize             @37
+	ipcplay_SetMaxFrameSize             @38
+	ipcplay_ClearCache                  @39
+	ipcplay_ClearD3DCache               @40
+	ipcplay_SetBorderRect               @41
+	ipcplay_RemoveBorderRect            @42
+	ipcplay_SetProbeStreamTimeout       @43
+	ipcplay_SetPixFormat                @44
+	ipcplay_IsPlaying                   @45
+	ipcplay_SetStreamHeader             @46
+	AllocAvFrame                        @47
+	AvFree                              @48
+	ipcplay_AddWindow                   @49
+	ipcplay_RemoveWindow                @50
+	ipcplay_GetRenderWindows            @51
+	ipcplay_SetD3dShared                @52
+	ipcplay_SetRocateAngle              @53
+	ipcplay_SetDecodeDelay              @54
+	ipcplay_AddLineArray                @55
+	ipcplay_RemoveLineArray             @56
+	ipcplay_SetBackgroundImageA         @57
+	ipcplay_SetBackgroundImageW         @58
+	ipcplay_EnableDDraw                 @59
+	ipcplay_EnableStreamParser          @60
+	ipcplay_InputStream2                @61
+	ipcplay_InputDHStream               @62
+	ipcplay_AddPolygon                  @63
+	ipcplay_RemovePolygon               @64
+	ipcplay_SetCoordinateMode           @65
+	ipcplay_StartSyncPlay               @66
+	ipcplay_EnableAsyncRender           @67
+	ipcplay_AsyncSeekFrame              @68
+	ipcplay_EnablePlayOneFrame          @69
+	ipcplay_GetErrorMessageA            @70
+	ipcplay_GetErrorMessageW            @71
+	ipcplay_SetDisplayAdapter           @72
+	ipcplay_GetDisplayAdapterInfo       @73
+	ipcplay_GetHAccelConfig             @74
+	ipcplay_CreateOSDFontW              @75
+	ipcplay_CreateOSDFontA              @76
+	ipcplay_DrawOSDTextW	            @77
+	ipcplay_DrawOSDTextA                @78
+	ipcplay_RmoveOSDText                @79
+	ipcplay_DestroyOSDFont              @80
+	ipcplay_SetSwitcherCallBack			@81
+                                       

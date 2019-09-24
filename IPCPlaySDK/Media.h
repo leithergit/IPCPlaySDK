@@ -79,6 +79,8 @@ struct 	IPC_MEDIAINFO
 	unsigned int	reserved2[3];	///< ±£Áô,±ØÐëÖÃ0
 };
 
+
+
 /// @brief IPCË½ÓÐÂ¼ÏñÖ¡Í·
 struct IPCFrameHeader
 {

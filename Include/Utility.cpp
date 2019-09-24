@@ -2826,11 +2826,11 @@ DWORD GetOsMajorVersion()
 	return osVer.dwMajorVersion;
 }
 
-BOOL ModifyWndStyle(HWND hWnd, int nStyleOffset,   DWORD dwRemove, DWORD dwAdd, UINT nFlags)
+BOOL ModifyWndStyle(HWND hWnd, int nStyleOffset,   long dwRemove, long dwAdd, UINT nFlags)
 {
 	assert(hWnd != NULL);
-	DWORD dwStyle = ::GetWindowLong(hWnd, nStyleOffset);
-	DWORD dwNewStyle = (dwStyle & ~dwRemove) | dwAdd;
+	long dwStyle = ::GetWindowLong(hWnd, nStyleOffset);
+	long dwNewStyle = (dwStyle & ~dwRemove) | dwAdd;
 	if (dwStyle == dwNewStyle)
 		return FALSE;
 

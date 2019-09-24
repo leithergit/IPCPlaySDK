@@ -2,9 +2,10 @@
 //
 
 #include "stdafx.h"
-#include <windowsx.h>
+
 #include "PlayDemoWin32.h"
 #include "SocketClient.h"
+#include <windowsx.h>
 #include <MMSystem.h>
 #include <memory>
 #include <Shlwapi.h>
@@ -12,14 +13,15 @@
 #include <CommDlg.h>
 #include <string>
 #include <vector>
+#pragma comment(lib,"Winmm.lib")
+#pragma comment(lib,"Shlwapi.lib")
+#pragma comment(lib,"comctl32.lib")
 #include "../IPCPlaySDK/Utility.h"
 #include "../IPCPlaySDK/IPCPlaySDK.h"
 #include "../ipcnetsdk/ipcnetsdk.h"
 #pragma  comment(lib,"../ipcnetsdk/ipcnetsdk.lib")
 #pragma comment(lib, "../debug/IPCPlaySDK.lib")
-#pragma comment(lib,"Winmm.lib")
-#pragma comment(lib,"Shlwapi.lib")
-#pragma comment(lib,"comctl32.lib")
+
 using namespace std;
 using namespace std::tr1;
 #define MAX_LOADSTRING 100
@@ -106,96 +108,14 @@ public:
 		hPlayer = hPlayerIn;
 		bThreadRecvIPCStream = false;
 	}
-	bool GetStreamInfo(int nStream,IPC_MEDIAINFO *pMediaHeader,int &nError)
-	{
-		if (!pMediaHeader)
-			return false;
 
-		app_net_tcp_enc_info_t stResult = { 0 };
-		app_net_tcp_com_schn_t req = { 0 };
-		req.chn = 0;
-		req.schn = nStream;
-
-		for (int k = 0; k < 3; k++)
-		{
-			int nReBytes = 0;
-			nError = IPC2_NET_GetDevConfig(hUser, IPC_DEV_CMD_STREAM_VIDEO_ENC_GET, &req, sizeof(app_net_tcp_com_schn_t), &stResult, sizeof(app_net_tcp_enc_info_t), &nReBytes);
-			if (RET_SUCCESS == nError)
-			{
-				enum APP_NET_TCP_COM_VIDEO_MODE
-				{
-					APP_NET_TCP_COM_VIDEO_MODE_352_288 = 0,
-					APP_NET_TCP_COM_VIDEO_MODE_704_576,
-					APP_NET_TCP_COM_VIDEO_MODE_1280_720,
-					APP_NET_TCP_COM_VIDEO_MODE_1920_1080,
-					APP_NET_TCP_COM_VIDEO_MODE_1280_960,
-					APP_NET_TCP_COM_VIDEO_MODE_1024_768,
-					APP_NET_TCP_COM_VIDEO_MODE_176_144 = 0xFF,
-					APP_NET_TCP_COM_VIDEO_MODE_MAX,
-				}; //视频编码尺寸。
-				pMediaHeader->nVideoCodec = (IPC_CODEC)stResult.enc_type;
-				switch (stResult.fmt.enc_mode)
-				{
-				case APP_NET_TCP_COM_VIDEO_MODE_352_288:
-				{
-					pMediaHeader->nVideoWidth = 352;
-					pMediaHeader->nVideoHeight = 288;
-					break;
-				}
-				case	APP_NET_TCP_COM_VIDEO_MODE_704_576:
-				{
-					pMediaHeader->nVideoWidth = 704;
-					pMediaHeader->nVideoHeight = 576;
-					break;
-				}
-				case	APP_NET_TCP_COM_VIDEO_MODE_1280_720:
-				{
-					pMediaHeader->nVideoWidth = 1280;
-					pMediaHeader->nVideoHeight = 720;
-					break;
-				}
-				case	APP_NET_TCP_COM_VIDEO_MODE_1920_1080:
-				{
-					pMediaHeader->nVideoWidth = 1920;
-					pMediaHeader->nVideoHeight = 1080;
-					break;
-				}
-				case	APP_NET_TCP_COM_VIDEO_MODE_1280_960:
-				{
-					pMediaHeader->nVideoWidth = 1280;
-					pMediaHeader->nVideoHeight = 960;
-					break;
-				}
-				case	APP_NET_TCP_COM_VIDEO_MODE_1024_768:
-				{
-					pMediaHeader->nVideoWidth = 1024;
-					pMediaHeader->nVideoHeight = 768;
-					break;
-				}
-				case	APP_NET_TCP_COM_VIDEO_MODE_176_144:
-				{
-					pMediaHeader->nVideoWidth = 176;
-					pMediaHeader->nVideoHeight = 144;
-					break;
-				}
-				break;
-				default:
-				{
-					return false;
-					break;
-				}
-				}
-				break;
-			}
-		}
-		return true;
-	}
+	
 	~PlayerContext()
 	{
 		
 		if (hStream != -1)
 		{
-			IPC2_NET_StopRealPlay(hStream);
+			
 			hStream = -1;
 		}
 		if (hPlayer)
@@ -212,7 +132,7 @@ public:
 		
 		if (hUser != -1)
 		{
-			IPC2_NET_Logout(hUser);
+			
 			hUser = -1;
 		}
 	}
@@ -248,15 +168,6 @@ DWORD GetExStyle(HWND hWnd)
 DWORD GetStyle(HWND hWnd) 
 {
 	return (DWORD)GetWindowLong(hWnd, GWL_STYLE);
-}
-int RectWidth(RECT & rt)
-{
-	return (rt.right - rt.left);
-}
-
-int RectHeight(RECT &rt)
-{
-	return (rt.bottom - rt.top);
 }
 
 void CenterWindow(HWND hAlternateOwner)
@@ -323,93 +234,6 @@ void CenterWindow(HWND hAlternateOwner)
 }
 #define WSA_VERSION MAKEWORD(2,0)
 
-// long __stdcall OnReConnect(WPARAM W,LPARAM L)
-// {
-// 	PlayerContext *pContext = (PlayerContext *)W;
-// 	if (pContext->OpenVideoStream(pContext->nVideoStreams))
-// 	{
-// 		CSocketClient::TraceMsgA("%s 重连码流成功.", __FUNCTION__);
-// 	}
-// 	else
-// 		CSocketClient::TraceMsgA("%s 重连码流失败.", __FUNCTION__);
-// 	return 0;
-// }
-
-BOOL ReOpenStream(int nIndex , int nStream,HWND hWnd)
-{
-	char szText[128] = { 0 };
-	if (m_pPlayContext[nIndex])
-	{
-		int nError = 0;
-		IPC2_NET_StopRealPlay(m_pPlayContext[nIndex]->hStream);
-		if (m_pPlayContext[nIndex]->hPlayer)
-		{
-			ipcplay_Close(m_pPlayContext[nIndex]->hPlayer);
-			m_pPlayContext[nIndex]->hPlayer = NULL;
-			m_pPlayContext[nIndex]->hStream = -1;
-		}
-		//Sleep(100);
-		int nRetry = 0;
-		REAL_HANDLE hStream = -1;
-		while (hStream == -1)
-		{
-			hStream = IPC2_NET_StartRealPlay(m_pPlayContext[nIndex]->hUser,
-				0,
-				nStream,
-				IPC_TCP,
-				0,
-				NULL,
-				(fnIPCCallback_RealAVData_T)StreamCallBack,
-				(void *)m_pPlayContext[nIndex].get(),
-				&nError);
-			nRetry++;
-			if (nRetry >= 3)
-				break;
-			Sleep(500);
-		}
-		
-		if (hStream == -1)
-		{
-			sprintf(szText, "连接码流失败[%d].", nIndex);
-			ListBox_InsertString(g_hListMessage,0, szText);
-			return FALSE;
-		}
-		m_pPlayContext[nIndex]->hStream = hStream;
-		m_pPlayContext[nIndex]->dwLastStreamTime = timeGetTime();
-		m_pPlayContext[nIndex]->nReOpenStream++;
-				
-		IPC_MEDIAINFO MediaHeader;
-		MediaHeader.nVideoCodec = CODEC_H264;
-		if (nStream == 0)
-		{
-			MediaHeader.nVideoWidth = 1280;
-			MediaHeader.nVideoHeight = 720;
-			TraceMsgA("%s 切换至主码流.\n", __FUNCTION__);
-		}
-		else
-		{
-			MediaHeader.nVideoWidth = 352;
-			MediaHeader.nVideoHeight = 288;
-			TraceMsgA("%s 切换至副码流.\n", __FUNCTION__);
-		}
-		HWND hVideo = GetDlgItem(hWnd, IDC_VIDEO_FRAME1 + nIndex);
-		sprintf(szText, "dvoipcplaysdk_%s", g_vIPCamera[nIndex].c_str());
-		//m_pPlayContext[nIndex]->hPlayer = ipcplay_OpenStream(NULL, (byte *)&MediaHeader, sizeof(MediaHeader), 128, "dvoipcplaysdk");
-		m_pPlayContext[nIndex]->hPlayer = ipcplay_OpenStream(hVideo, (byte *)&MediaHeader, sizeof(MediaHeader), 128, szText);
-		if (!m_pPlayContext[nIndex]->hPlayer)
-		{
-			sprintf(szText, "%s 打开流播放句柄失败[%d].",__FUNCTION__, nIndex);
-			ListBox_InsertString(g_hListMessage,0, szText);
-			return false;
-		}
-		m_pPlayContext[nIndex]->dwLastStreamTime = timeGetTime();
-		ipcplay_Refresh(m_pPlayContext[nIndex]->hPlayer);
-		ipcplay_Start(m_pPlayContext[nIndex]->hPlayer, false, true);
-		return TRUE;
-	}
-	else
-		return FALSE;
-}
 
 BOOL SnapShot(int nIndex,HWND hDlg)
 {
@@ -526,7 +350,6 @@ void OnButtonConnect(HWND hDlg)
 	CHAR szIPAddress[32] = { 0 };
 	GetDlgItemText(hDlg,IDC_EDIT_ACCOUNT, szAccount, 32);
 	GetDlgItemText(hDlg, IDC_EDIT_ACCOUNT, szPassowd, 32);
-	IPC2_NET_Init(true);
 	int nStream = SendDlgItemMessage(hDlg, IDC_COMBO_STREAM, CB_GETCURSEL,0,0);
 	for (int i = 0; i < g_vIPCamera.size();i ++)
 		if (m_pPlayContext[i])
@@ -537,7 +360,7 @@ void OnButtonConnect(HWND hDlg)
 	USER_HANDLE hUser = -1;
 	for (int i = 0; i < g_vIPCamera.size(); i++)
 	{
-		hUser = IPC2_NET_Login(g_vIPCamera[i].c_str(), 6001, szAccount, szPassowd, &LoginInfo, &nError, 5000);
+		/*hUser = IPC2_NET_Login(g_vIPCamera[i].c_str(), 6001, szAccount, szPassowd, &LoginInfo, &nError, 5000);*/
 		if (hUser != -1)
 		{
 			m_pPlayContext[i] = shared_ptr<PlayerContext>(new PlayerContext (-1, -1, NULL, 1));
@@ -570,7 +393,6 @@ void OnButtonDisConnect(HWND hDlg)
 	EnableDlgItem(hDlg, IDC_EDIT_PASSWORD, true);
 	EnableDlgItem(hDlg, IDC_IPADDRESS, true);
 	EnableDlgItem(hDlg, IDC_COMBO_STREAM, true);
-	IPC2_NET_Release();
 }
 
 void OnButtonSwitchStream(HWND hDlg)
@@ -597,11 +419,7 @@ void OnButtonSwitchStream(HWND hDlg)
 			nStream = 0;
 		else				// 主码流切换到副码流	
 			nStream = 1;
-		if (!ReOpenStream(g_nSnapIndex, nStream, hDlg))
-		{
-			EnableWindow(GetDlgItem(hDlg, IDC_BUTTON_SNAPSHOT), TRUE);
-			return ;
-		}
+		
 		//Sleep(2000);
 		//EventDelay(NULL, 2000);
 		if (SnapShot(g_nSnapIndex, hDlg))
@@ -614,7 +432,7 @@ void OnButtonSwitchStream(HWND hDlg)
 		else				// 主码流切换到副码流	
 			nStream = 1;
 		//Sleep(100);
-		ReOpenStream(g_nSnapIndex, nStream, hDlg);
+		
 		EnableWindow(GetDlgItem(hDlg, IDC_BUTTON_SNAPSHOT), TRUE);
 		g_nSnapIndex++;
 		g_nSnapIndex = g_nSnapIndex%g_vIPCamera.size();
@@ -691,7 +509,7 @@ void OnButtonPlayStream(HWND hDlg)
 				REAL_HANDLE hStreamHandle = IPC2_NET_StartRealPlay(m_pPlayContext[i]->hUser,
 					0,
 					nStream,
-					IPC_TCP,
+					0,
 					0,
 					NULL,
 					(fnIPCCallback_RealAVData_T)StreamCallBack,
@@ -840,6 +658,7 @@ void OnButtonPlayFile(HWND hDlg)
 	int nResult = DialogBox(hInst, MAKEINTRESOURCE(IDD_FILEPLAY), NULL, (DLGPROC)FilePlayDialogProc);
 	ShowWindow(hDlg,SW_SHOW);
 }
+
 LRESULT OnCommand(HWND hDlg, UINT nID, HWND hWndCtrl, UINT nCodeNotify)
 {
 	switch (nID)

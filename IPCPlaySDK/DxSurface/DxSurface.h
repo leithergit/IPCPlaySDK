@@ -949,6 +949,8 @@ public:
 			auto itFind = m_MapOSD.find(nFont);
 			if (itFind == m_MapOSD.end())
 				return;
+			ID3DXFont *pFont = (ID3DXFont *)nFont;
+			SafeRelease(pFont);
 			m_MapOSD.erase(itFind);
 		}
 	}
@@ -1058,6 +1060,15 @@ public:
 	{
 		TraceFunction();
 		//DetachWnd();
+		m_csMapOSD.Lock();
+		for (auto it = m_MapOSD.begin(); it != m_MapOSD.end();)
+		{
+			ID3DXFont *pFont = (ID3DXFont *)it->first;
+			it->second.clear();
+			SafeRelease(pFont);
+			it = m_MapOSD.erase(it);
+		}
+		m_csMapOSD.Unlock();
 		DxCleanup();
 //		SafeRelease(m_pDirect3D9);
 // 		if (m_hD3D9)
@@ -1619,7 +1630,7 @@ public:
 				 BOOL bIsWindowed = TRUE,
 				 D3DFORMAT nD3DFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'))
 	{
-		TraceFunction();
+		//TraceFunction();
 		assert(hWnd != NULL);
 		assert(IsWindow(hWnd));
 		assert(nVideoWidth != 0 || nVideoHeight != 0);
@@ -2672,7 +2683,7 @@ public:
 	}
 };
 
-#include "d3dfont.h"
+//#include "d3dfont.h"
 // CDxSurfaceEx类，仅限于Windows Vista及以上操作系统下使用
 // 其性能与稳定性比CDxSurface要强，维护也更方便
 
@@ -2755,6 +2766,8 @@ public:
 			if (itFind == m_MapOSD.end())
 				return;
 			m_MapOSD.erase(itFind);
+			ID3DXFont *pFont = (ID3DXFont *)nFont;
+			SafeRelease(pFont);
 		}
 	}
 	long DrawTextA(long nFont, CHAR *szText, int nLength, RECT rtPostion, DWORD dwFormat, D3DCOLOR nColor)
@@ -2852,6 +2865,15 @@ public:
 	}
 	~CDxSurfaceEx()
 	{
+		m_csMapOSD.Lock();
+		for (auto it = m_MapOSD.begin(); it != m_MapOSD.end();)
+		{
+			ID3DXFont *pFont = (ID3DXFont *)it->first;
+			it->second.clear();
+			SafeRelease(pFont);
+			it = m_MapOSD.erase(it);
+		}
+		m_csMapOSD.Unlock();
 		DxCleanup();
 //		SafeRelease(m_pDirect3D9Ex);
 // 		if (m_hD3D9)
@@ -2904,7 +2926,7 @@ public:
 		BOOL bIsWindowed = TRUE,
 		D3DFORMAT nD3DFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'))
 	{
-		TraceFunction();
+		//TraceFunction();
 		assert(hWnd != NULL);
 		assert(IsWindow(hWnd));
 		assert(nVideoWidth != 0 || nVideoHeight != 0);
