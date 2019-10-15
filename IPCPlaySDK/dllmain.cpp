@@ -125,14 +125,14 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 				}
 			}
 			
-			g_bThread_ClosePlayer = true;
-			g_hEventThreadExit = CreateEvent(nullptr, true, false, nullptr);
-			UINT nThreadID;
-			g_hThread_ClosePlayer = (HANDLE)_beginthreadex(nullptr, 0, Thread_Helper, nullptr, 0, &nThreadID);
 			bResult = true;
 		}
 		__finally
 		{
+			g_bThread_ClosePlayer = true;
+			g_hEventThreadExit = CreateEvent(nullptr, true, false, nullptr);
+			UINT nThreadID;
+			g_hThread_ClosePlayer = (HANDLE)_beginthreadex(nullptr, 0, Thread_Helper, nullptr, 0, &nThreadID);
 			if (!bResult)
 			{
 				TCHAR szErrorMessage[1024] = { 0 };
@@ -143,8 +143,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 					(LPSTR)szErrorMessage,
 					1024,
 					NULL);
-				MessageBox(nullptr, szErrorMessage, _T("IPCPlaySDK"), MB_OK | MB_ICONERROR);
-				exit(-1);
+				TraceMsgA("%s ERROR:%s", __FUNCTION__, szErrorMessage);
+				//MessageBox(nullptr, szErrorMessage, _T("IPCPlaySDK"), MB_OK | MB_ICONERROR);
+				//exit(-1);
 			}
 		}
 	}

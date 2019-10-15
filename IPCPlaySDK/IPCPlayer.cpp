@@ -119,6 +119,7 @@ CIPCPlayer::CIPCPlayer(HWND hWnd, CHAR *szFileName, char *szLogFile)
 	m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
 	m_hInputFrameEvent = CreateEvent(nullptr, false, false, nullptr);
 	m_hRenderWnd = hWnd;
+	m_nDecodeDelay = -1;
 	// #endif
 	if (szFileName)
 	{
@@ -917,8 +918,10 @@ int CIPCPlayer::AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent
 	return IPC_Succeed;
 }
 
-void CIPCPlayer::TryEnableHAccel(CHAR* szAdapterID, int nBuffer)
+void CIPCPlayer::TryEnableHAccelOnAdapter(CHAR* szAdapterID, int nBuffer)
 {
+	if (!g_pSharedMemory)
+		return;
 	HMONITOR hMonitor = MonitorFromWindow(m_hRenderWnd, MONITOR_DEFAULTTONEAREST);
 	if (hMonitor)
 	{
@@ -2604,7 +2607,7 @@ int CIPCPlayer::GetFileSummary(volatile bool &bWorking)
 	//#ifdef _DEBUG
 	double dfTimeStart = GetExactTime();
 	//#endif
-	DWORD nBufferSize = 1024 * 1024 * 16;
+	DWORD nBufferSize = 1024 * 1024 * 2;
 
 	// 不再分析文件，因为StartPlay已经作过分析的确认
 	DWORD nOffset = sizeof(IPC_MEDIAINFO);
@@ -2667,8 +2670,9 @@ int CIPCPlayer::GetFileSummary(volatile bool &bWorking)
 		{
 			if (!ParserFrame(&pFrameBuffer, nDataLength, &Parser))
 				break;
+			//TraceMsgA("%s FrameID = %d ,Size = %d.\n", __FUNCTION__, Parser.pHeaderEx->nFrameID,Parser.nFrameSize);
 			nAllFrames++;
-			nLength1 = 16 * 1024 * 1024 - (pFrameBuffer - pBuffer);
+			nLength1 = nBufferSize * 1024 * 1024 - (pFrameBuffer - pBuffer);
 			if (nLength1 != nDataLength)
 			{
 				int nBreak = 3;
@@ -2976,7 +2980,7 @@ UINT __stdcall CIPCPlayer::ThreadFileParser(void *p)
 			}
 			else
 			{
-				nInputResult = pThis->InputStream((byte *)Parser.pHeader, Parser.nFrameSize);
+				nInputResult = pThis->InputStream((byte *)Parser.pHeader, Parser.nFrameSize,0);
 				switch (nInputResult)
 				{
 				case IPC_Succeed:
@@ -4177,10 +4181,11 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 
 	CHAR szAdapterID[64] = { 0 };
 	if (pThis->m_bEnableHaccel ||
-		g_pSharedMemory->bHAccelPreferred)
+		(g_pSharedMemory &&
+		g_pSharedMemory->bHAccelPreferred))
 	{
 		// 尝试硬解
-		pThis->TryEnableHAccel(szAdapterID, 64);
+		pThis->TryEnableHAccelOnAdapter(szAdapterID, 64);
 		if (strlen(szAdapterID) > 0 && pThis->m_pDxSurface)
 		{
 			strcpy_s(pThis->m_pDxSurface->m_szAdapterID, 64, szAdapterID);
@@ -4397,6 +4402,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 			pAvPacket->size = FramePtr->FrameHeader()->nLength;
 			pThis->m_tLastFrameTime = FramePtr->FrameHeader()->nTimestamp;
 			av_frame_unref(pAvFrame);
+			int nFrameID = FramePtr->FrameHeader()->nFrameID;
 #ifdef _DEBUG
 			dfDecodeTimeSpan = TimeSpanEx(FramePtr->dfInputTime);
 #endif
@@ -4407,6 +4413,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 			if (nAvError < 0)
 			{
 				av_strerror(nAvError, szAvError, 1024);
+				pThis->OutputMsg("%s Frame :%d Decode Error:%s.\n", __FUNCTION__, FramePtr->FrameHeader()->nFrameID, szAvError);
 				//dfDecodeStartTime = GetExactTime();
 				continue;
 			}

@@ -493,9 +493,9 @@ private:
 		nBuff = _vsnprintf(szBuffer, __countof(szBuffer), pFormat, args);
 		//::wvsprintf(szBuffer, pFormat, args);
 		//assert(nBuff >=0);
-//#ifdef _DEBUG
-		//OutputDebugStringA(szBuffer);
-//#endif
+#ifdef _DEBUG
+		OutputDebugStringA(szBuffer);
+#endif
 		if (m_pRunlog)
 			m_pRunlog->Runlog(szBuffer);
 		va_end(args);
@@ -1109,7 +1109,8 @@ public:
 
 	int GetFileHeader();
 	
-	void TryEnableHAccel(CHAR* szAdapterID, int nBuffer);
+	// 尝试在当前显卡上进行硬解码，若开启成功则szAdapterID返回显卡的GUID，若szAdapterID返回空，则开启失败
+	void TryEnableHAccelOnAdapter(CHAR* szAdapterID, int nBuffer);
 
 	void FitWindow(bool bFitWindow)
 	{

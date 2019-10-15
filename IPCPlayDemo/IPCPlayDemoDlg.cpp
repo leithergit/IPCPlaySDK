@@ -1306,7 +1306,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 		// sws_setColorspaceDetails()设置图像参数
 		TCHAR szText[1024] = { 0 };		
 		int nFreePanel = 0;		
-		DWORD dwFlags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
+		DWORD dwFlags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT|OFN_HIDEREADONLY | OFN_FILEMUSTEXIST;
 		TCHAR  szFilter[] = _T("录像视频文件 (*.mp4)|*.mp4|H.264录像文件(*.H264)|*.H264|H.265录像文件(*.H265)|*.H265|All Files (*.*)|*.*||");
 		TCHAR szExportLog[MAX_PATH] = { 0 };
 		CTime tNow = CTime::GetCurrentTime();		
