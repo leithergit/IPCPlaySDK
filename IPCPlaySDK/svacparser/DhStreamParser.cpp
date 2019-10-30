@@ -66,7 +66,6 @@ int DhStreamParser::InputData(unsigned char *pData, unsigned long nDataLength)
 
 	int ret = 0;
 
-#ifdef WIN32
 	__try
 	{
 		ret = m_streamParser->ParseData(pData, nDataLength) ;
@@ -75,33 +74,7 @@ int DhStreamParser::InputData(unsigned char *pData, unsigned long nDataLength)
 	{
 		ret = -1;
 	}
-#else
 
-	int savesigs;
-	jmp_buf env;
-	stack_t ss;
-	struct sigaction act={0};
-
-	act.sa_sigaction = sig_handler;
-	act.sa_flags = SA_ONSTACK | SA_SIGINFO;
-	
-	if (sigaction(SIGFPE, &act, NULL) != 0) return -1;
-	int a,b;
-	try
-	{
-		if (sigsetjmp(env, savesigs) !=0) 
-		{
-			throw "fault thrown in user context(as opposed to signal contxt!";
-		}
-		m_streamParser->ParseData(pData, nDataLength) ;
-	}
-	catch (const char* msg)
-	{
-		printf("%s", msg);
-		ret = -1;
-	}
-	
-#endif
 	
 	return ret;
 }

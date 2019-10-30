@@ -20,7 +20,6 @@ using namespace boost;
 #include "fullscreen.h"
 #include "SocketClient.h"
 //#include "DirectDraw.h"
-#include "../ipcnetsdk/ipcMsgHead.h"
 #include "./DisplayYUV/YuvFrame.h"
 #include "DialogDisplayRGB24.h"
 //#include "TransparentDlg.h"
@@ -29,17 +28,17 @@ using namespace std;
 
 struct MSG_HEAD
 {
-	U8  Magic1[4];  // 	四字节 固定内容（0xF5，0x5A，0xA5，0x5F）
-	U32	Pktlen;		//	类型U32 数据包总长度。
-	U16	Version;	//  类型U16 协议版本号，高8位为主版本号，低8位为子版本号。
-	U16	Hwtype;		//	类型U16 硬件类型(保留)
-	U32	Sn;		    //  类型U32 帧序列号(保留)
-	U16	CmdType;	//	类型U16 表示命令类型
-	U16 CmdSubType;	//	类型U16 表示命令子类型
-	U16 DataType;	//  类型U16 数据包类型1：命令包，2：视频包，3：音频包
-	U16 Rev1;		//	类型U16 保留字段
-	U32 Rev2;		//	类型U32 保留字段
-	U32 Rev3;		//	类型U32 保留字段
+	byte  Magic1[4];  // 	四字节 固定内容（0xF5，0x5A，0xA5，0x5F）
+	UINT32	Pktlen;		//	类型U32 数据包总长度。
+	UINT16	Version;	//  类型U16 协议版本号，高8位为主版本号，低8位为子版本号。
+	UINT16	Hwtype;		//	类型U16 硬件类型(保留)
+	UINT32	Sn;		    //  类型U32 帧序列号(保留)
+	UINT16	CmdType;	//	类型U16 表示命令类型
+	UINT16 CmdSubType;	//	类型U16 表示命令子类型
+	UINT16 DataType;	//  类型U16 数据包类型1：命令包，2：视频包，3：音频包
+	UINT16 Rev1;		//	类型U16 保留字段
+	UINT32 Rev2;		//	类型U32 保留字段
+	UINT32 Rev3;		//	类型U32 保留字段
 };
 
 #define _MaxTimeCount	125
@@ -228,7 +227,6 @@ struct PlayerContext
 {
 public:
 	StreamInfo*	pStreamInfo;
-	USER_HANDLE hUser;
 	int nPlayerCount;
 	bool	bHisiliconFrame;
 	
@@ -240,11 +238,7 @@ public:
 	IPC_PLAYHANDLE	hPlayerStream;		// 流播放句柄
 	TimeTrace		*m_pInputStreamTimeTrace ;
 	double			m_dfLastInputstream ;
-	REAL_HANDLE hStream;
 	CSocketClient *pClient;
-	volatile bool bThreadRecvIPCStream/* = false*/;
-	HANDLE hThreadRecvStream/* = NULL*/;
-	fnDVOCallback_RealAVData_T pStreamCallBack/* = NULL*/;
 	shared_ptr<byte>pYuvBuffer /*= NULL*/;
 	int nYuvBufferSize/* = 0*/;
 	DWORD		nVideoFrames/* = 0*/;
@@ -273,15 +267,10 @@ public:
 
 	CRITICAL_SECTION csRecFile;
 public:
-	PlayerContext(USER_HANDLE hUserIn,
-		REAL_HANDLE hStreamIn = -1,
-		IPC_PLAYHANDLE hPlayerIn = NULL,int nCount = 1)
+	PlayerContext()
 	{
 		ZeroMemory(this, sizeof(PlayerContext));
 		pStreamInfo = new StreamInfo();
-		bThreadRecvIPCStream = false;
-		hThreadRecvStream = NULL;
-		pStreamCallBack = NULL;
 		pYuvBuffer.reset();
 		nYuvBufferSize = 0;
 		nVideoFrames = 0;
@@ -290,10 +279,8 @@ public:
 		dfTimeRecv2 = 0.0f;
 
 		nTimeCount = 0;
-		hUser = hUserIn;
-		hStream = hStreamIn;
-		nPlayerCount = nCount;
-		hPlayer[0] = hPlayerIn;
+		nPlayerCount = 0;
+		ZeroMemory(hPlayer, sizeof(hPlayer));
 		nAudioCodec = IPC_711_ALAW;
 		InitializeCriticalSection(&csRecFile);
 		m_pInputStreamTimeTrace = new TimeTrace("StreamCallBack", __FUNCTION__);
@@ -301,12 +288,7 @@ public:
 	}
 	~PlayerContext()
 	{
-		StopRecord();
-		if (hStream != -1)
-		{
-			DVO2_NET_StopRealPlay(hStream);
-			hStream = -1;
-		}
+		
 		TraceMsgA("%s Now() = %.5f.\n", __FUNCTION__, GetExactTime());
 		for (int i = 0; i < nPlayerCount;i ++)
 		if (hPlayer[i])
@@ -322,11 +304,7 @@ public:
 			delete pClient;
 			pClient = NULL;
 		}
-		if (hUser != -1)
-		{
-			DVO2_NET_Logout(hUser);
-			hUser = -1;
-		}
+		
 		if (pStreamInfo)
 			delete pStreamInfo;
 
@@ -334,115 +312,6 @@ public:
 			delete m_pInputStreamTimeTrace;
 		
 		DeleteCriticalSection(&csRecFile);
-	}
-	void StartRecv(fnDVOCallback_RealAVData_T pCallBack)
-	{
-		bThreadRecvIPCStream = true;
-		pStreamCallBack = pCallBack;
-		hThreadRecvStream = CreateThread(NULL, 0, ThreadRecvIPCStream, this, 0, NULL);
-	}
-	void StopRecv()
-	{
-		if (hThreadRecvStream)
-		{
-			bThreadRecvIPCStream = false;
-			WaitForSingleObject(hThreadRecvStream, INFINITE);
-			CloseHandle(hThreadRecvStream);
-			hThreadRecvStream = NULL;
-		}
-	}
-	
-
-	static	DWORD WINAPI ThreadRecvIPCStream(void *p)
-	{
-		PlayerContext *pThis = (PlayerContext *)p;
-		if (!pThis->pClient)
-			return 0;
-		CSocketClient *pClient = pThis->pClient;
-		MSG_HEAD MsgHeader;
-		DWORD nBytesRecved = 0;
-		int nBufferSize = 64 * 1024;
-		int nDataLength = 0;
-		byte *pBuffer = new byte[nBufferSize];
-
-		while (pThis->bThreadRecvIPCStream)
-		{
-			ZeroMemory(&MsgHeader, sizeof(MSG_HEAD));
-			nBytesRecved = 0;
-			if (pClient->Recv((char *)&MsgHeader, sizeof(MSG_HEAD), nBytesRecved) == 0 &&
-				nBytesRecved == sizeof(MSG_HEAD))
-			{
-				int nPackLen = ntohl(MsgHeader.Pktlen) - sizeof(MSG_HEAD);
-				if (nBufferSize < nPackLen)
-				{
-					delete[]pBuffer;
-					while (nBufferSize < nPackLen)
-						nBufferSize *= 2;
-					pBuffer = new byte[nBufferSize];
-				}
-				nDataLength = 0;
-				while (nDataLength < nPackLen)
-				{
-					if (!pClient->Recv((char *)&pBuffer[nDataLength], nPackLen - nDataLength, nBytesRecved) == 0)
-						break;
-					nDataLength += nBytesRecved;
-				}
-				app_net_tcp_enc_stream_head_t *pStreamHeader = (app_net_tcp_enc_stream_head_t *)pBuffer;
-				pStreamHeader->chn = ntohl(pStreamHeader->chn);
-				pStreamHeader->stream = ntohl(pStreamHeader->stream);
-				pStreamHeader->frame_type = ntohl(pStreamHeader->frame_type);
-				pStreamHeader->frame_num = ntohl(pStreamHeader->frame_num);
-				pStreamHeader->sec = ntohl(pStreamHeader->sec);
-				pStreamHeader->usec = ntohl(pStreamHeader->usec);
-
-				pThis->pStreamCallBack(-1, -1, 0, (char *)pBuffer, nPackLen, pThis);
-				ZeroMemory(pBuffer, nBufferSize);
-			}
-			Sleep(10);
-		}
-		if (pBuffer)
-			delete[]pBuffer;
-		return 0;
-	}
-	void StartRecord()
-	{
-		try
-		{
-			if (_tcslen(szRecFilePath) == 0)
-				return;
-			CAutoLock lock(&csRecFile);
-			pRecFile = new CFile(szRecFilePath, CFile::modeCreate | CFile::modeWrite);
-			tRecStartTime = time(NULL);
-		}
-		catch (/*std::exception* e*/CException *e)
-		{
-			TCHAR szError[256] = { 0 };
-			e->GetErrorMessage(szError, 256);
-			_tprintf(_T("%s %d Exception:%s.\n"), __FILE__, __LINE__, szError/*e->what()*/);
-			e->Delete();
-		}
-	}
-
-	void StopRecord()
-	{
-		if (!pRecFile)
-			return;
-		try
-		{
-			CAutoLock lock(&csRecFile);
-			delete pRecFile;
-			pRecFile = NULL;
-			ZeroMemory(szRecFilePath, sizeof(szRecFilePath));
-			tRecStartTime = 0;
-		}
-		catch (/*std::exception* e*/CException *e)
-		{
-			TCHAR szError[256] = { 0 };
-			e->GetErrorMessage(szError, 256);
-			_tprintf(_T("%s %d Exception:%s.\n"), __FILE__, __LINE__, szError/*e->what()*/);
-			e->Delete();
-			pRecFile = NULL;
-		}
 	}
 };
 
@@ -672,8 +541,8 @@ public:
 	afx_msg void OnBnClickedButtonPlayfile();
 	list<shared_ptr<PlayerContext>>m_listPlayer;
 	// 相机实时码流捕捉回调函数
-	static void  __stdcall StreamCallBack(IN USER_HANDLE  lUserID,
-		IN REAL_HANDLE lStreamHandle,
+	static void  __stdcall StreamCallBack(/*IN USER_HANDLE  lUserID,*/
+		/*IN REAL_HANDLE lStreamHandle,*/
 		IN int         nErrorType,
 		IN const char* pBuffer,
 		IN int         nDataLen,

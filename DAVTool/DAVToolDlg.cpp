@@ -146,6 +146,8 @@ BEGIN_MESSAGE_MAP(CDAVToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_BROWSE, &CDAVToolDlg::OnBnClickedButtonBrowse)
 	ON_BN_CLICKED(IDC_BACKWORD, &CDAVToolDlg::OnBnClickedBackword)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_FILE, &CDAVToolDlg::OnNMDblclkListFile)
+	ON_BN_CLICKED(IDC_PLAY, &CDAVToolDlg::OnBnClickedPlay)
+	ON_BN_CLICKED(IDC_PAUSE, &CDAVToolDlg::OnBnClickedPause)
 END_MESSAGE_MAP()
 
 
@@ -292,4 +294,16 @@ void CDAVToolDlg::OnNMDblclkListFile(NMHDR *pNMHDR, LRESULT *pResult)
 	m_nCurSelected = pNMItemActivate->iItem;
 
 	*pResult = 0;
+}
+
+
+void CDAVToolDlg::OnBnClickedPlay()
+{
+	// TODO: Add your control notification handler code here
+}
+
+
+void CDAVToolDlg::OnBnClickedPause()
+{
+	// TODO: Add your control notification handler code here
 }

@@ -6,7 +6,6 @@
 #include "IPCPlayDemo.h"
 #include "IPCPlayDemoDlg.h"
 #include "afxdialogex.h"
-#include "ipcMsgHead.h"
 #include <MMSystem.h>
 #pragma comment(lib,"winmm.lib")
 
@@ -838,21 +837,10 @@ void CIPCPlayDemoDlg::OnBnClickedButtonConnect()
 		AfxMessageBox(_T("请输入一个有效的相机IP"), MB_OK | MB_ICONSTOP);
 		return;
 	}
-	m_pPlayContext =make_shared<PlayerContext>(-1, -1, (IPC_PLAYHANDLE *)NULL, _Row*_Col);
+	m_pPlayContext =make_shared<PlayerContext>();
 	
 	m_pPlayContext->pThis = this;
 	bool bSucceed = false;
-	app_net_tcp_sys_logo_info_t LoginInfo;
-	USER_HANDLE hUser = DVO2_NET_Login(szIPAddress, 6001, szAccount, szPassowd, &LoginInfo, &nError, 5000);
-	if (hUser != -1)
-	{
-		if (ComboBox_FindString(::GetDlgItem(m_hWnd, IDC_IPADDRESS), 0, szIPAddress) == CB_ERR)
-			ComboBox_AddString(::GetDlgItem(m_hWnd, IDC_IPADDRESS), szIPAddress);
-		m_pPlayContext->hUser = hUser;
-		bSucceed = true;
-
-	}
-		
 
 	if (bSucceed)
 	{
@@ -994,223 +982,7 @@ void __stdcall CIPCPlayDemoDlg::ExternDCDraw(HWND hWnd, HDC hDc, RECT rt, void *
 
 void CIPCPlayDemoDlg::OnBnClickedButtonPlaystream()
 {
-	if (m_pPlayContext)
-	{
-		IPC_MEDIAINFO MediaHeader;
-		bool bEnableAudio = (bool)IsDlgButtonChecked(IDC_CHECK_DISABLEAUDIO);
-		bool bFitWindow = (bool)IsDlgButtonChecked(IDC_CHECK_FITWINDOW);
-		bool bEnableLog = (bool)IsDlgButtonChecked(IDC_CHECK_ENABLELOG);
-		bool bEnableHaccel = (bool)IsDlgButtonChecked(IDC_CHECK_ENABLEHACCEL);
-		bool bEnableProbeStream = (bool)IsDlgButtonChecked(IDC_CHECK_PROBESTREAM);
-		m_pPlayContext->bHisiliconFrame = (bool)IsDlgButtonChecked(IDC_CHECK_HISILICON);
-		int nVolume = SendDlgItemMessage(IDC_SLIDER_VOLUME, TBM_GETPOS);
-		m_nRow = GetDlgItemInt(IDC_EDIT_ROW);
-		m_nCol = GetDlgItemInt(IDC_EDIT_COL);
-		if (m_pVideoWndFrame->GetRows() != m_nRow ||
-			m_pVideoWndFrame->GetCols() != m_nCol)
-		{
-			if (m_nRow*m_nCol <= 36)
-			{
-				m_pVideoWndFrame->AdjustPanels(m_nRow, m_nCol);
-				m_pPlayContext->nPlayerCount = m_nRow*m_nCol;
-			}
-			else
-			{
-				m_pVideoWndFrame->AdjustPanels(36);
-				m_pPlayContext->nPlayerCount = 36;
-			}
-		}
-		m_pPlayContext->nPlayerCount = m_nCol*m_nRow;
-		bool bEnableWnd = false;
-		int nStream = 0;
-		CWaitCursor Wait;
-				
-		if (m_pPlayContext->hStream == -1)
-		{
-			nStream = SendDlgItemMessage(IDC_COMBO_STREAM, CB_GETCURSEL);
-			int nError = 0;
-			REAL_HANDLE hStreamHandle = DVO2_NET_StartRealPlay(m_pPlayContext->hUser,
-				0,
-				nStream,
-				0,
-				0,
-				NULL,
-				(fnDVOCallback_RealAVData_T)StreamCallBack,
-				(void *)m_pPlayContext.get(),
-				&nError);
-			if (hStreamHandle == -1)
-			{
-				m_wndStatus.SetWindowText(_T("连接码流失败"));
-				m_wndStatus.SetAlarmGllitery();
-				return;
-			}
-
-			m_pPlayContext->hStream = hStreamHandle;
-			m_pPlayContext->pThis = this;
-			EnableDlgItem(IDC_COMBO_STREAM, false);
-		}
-		if (IsDlgButtonChecked(IDC_CHECK_ONLYSTREAM) != BST_CHECKED)
-		if (!m_pPlayContext->hPlayer[0])
-		{
-			int nFreePanel = 0;
-			app_net_tcp_enc_info_t stResult = { 0 };
-			app_net_tcp_com_schn_t req = { 0 };
-			req.chn = 0;
-			req.schn = nStream;
-
-//				for (int k = 0; k < 3; k++)
-// 				{
-// 					int nReBytes = 0;
-// 					int  nRet = IPC2_NET_GetDevConfig(m_pPlayContext->hUser, IPC_DEV_CMD_STREAM_VIDEO_ENC_GET, &req, sizeof(app_net_tcp_com_schn_t), &stResult, sizeof(app_net_tcp_enc_info_t), &nReBytes);
-// 					if (RET_SUCCESS == nRet)
-// 					{
-// 						enum APP_NET_TCP_COM_VIDEO_MODE
-// 						{
-// 							APP_NET_TCP_COM_VIDEO_MODE_352_288 = 0,
-// 							APP_NET_TCP_COM_VIDEO_MODE_704_576,
-// 							APP_NET_TCP_COM_VIDEO_MODE_1280_720,
-// 							APP_NET_TCP_COM_VIDEO_MODE_1920_1080,
-// 							APP_NET_TCP_COM_VIDEO_MODE_1280_960,
-// 							APP_NET_TCP_COM_VIDEO_MODE_1024_768,
-// 							APP_NET_TCP_COM_VIDEO_MODE_176_144 = 0xFF,
-// 							APP_NET_TCP_COM_VIDEO_MODE_MAX,
-// 						}; //视频编码尺寸。
-// 						if (stResult.enc_type != 3)
-// 							MediaHeader.nVideoCodec = (IPC_CODEC)stResult.enc_type;
-// 						else
-// 							MediaHeader.nVideoCodec = CODEC_H265;
-// 						switch (stResult.fmt.enc_mode)
-// 						{
-// 						case APP_NET_TCP_COM_VIDEO_MODE_352_288:
-// 						{
-// 							MediaHeader.nVideoWidth = 352;
-// 							MediaHeader.nVideoHeight = 288;
-// 							break;
-// 						}
-// 						case	APP_NET_TCP_COM_VIDEO_MODE_704_576:
-// 						{
-// 							MediaHeader.nVideoWidth = 704;
-// 							MediaHeader.nVideoHeight = 576;
-// 							break;
-// 						}
-// 						case	APP_NET_TCP_COM_VIDEO_MODE_1280_720:
-// 						{
-// 							MediaHeader.nVideoWidth = 1280;
-// 							MediaHeader.nVideoHeight = 720;
-// 							break;
-// 						}
-// 						case	APP_NET_TCP_COM_VIDEO_MODE_1920_1080:
-// 						{
-// 							MediaHeader.nVideoWidth = 1920;
-// 							MediaHeader.nVideoHeight = 1080;
-// 							break;
-// 						}
-// 						case	APP_NET_TCP_COM_VIDEO_MODE_1280_960:
-// 						{
-// 							MediaHeader.nVideoWidth = 1280;
-// 							MediaHeader.nVideoHeight = 960;
-// 							break;
-// 						}
-// 						case	APP_NET_TCP_COM_VIDEO_MODE_1024_768:
-// 						{
-// 							MediaHeader.nVideoWidth = 1024;
-// 							MediaHeader.nVideoHeight = 768;
-// 							break;
-// 						}
-// 						case	APP_NET_TCP_COM_VIDEO_MODE_176_144:
-// 						{
-// 							MediaHeader.nVideoWidth = 176;
-// 							MediaHeader.nVideoHeight = 144;
-// 							break;
-// 						}
-// 						break;
-// 						default:
-// 						{
-// 							AfxMessageBox("无效的视频尺寸信息", MB_OK | MB_ICONSTOP);
-// 							return;
-// 							break;
-// 						}
-// 						}
-// 						break;
-// 					}
-// 				}
-			for (int i = 0; i < m_pPlayContext->nPlayerCount; i++)
-				//int i = 0;
-			{
-				m_pPlayContext->hWndView = m_pVideoWndFrame->GetPanelWnd(i);
-				if (!bEnableProbeStream)
-				{
-// 						MediaHeader.nVideoCodec = CODEC_H265;
-// 						MediaHeader.nAudioCodec = CODEC_G711U;
-					m_pPlayContext->hPlayer[i] = ipcplay_OpenStream(m_pVideoWndFrame->GetPanelWnd(i), (byte *)&MediaHeader, sizeof(MediaHeader), 100, bEnableLog ? "dvoipcplaysdk" : NULL);
-				}
-				else
-					m_pPlayContext->hPlayer[i] = ipcplay_OpenStream(m_pVideoWndFrame->GetPanelWnd(i), NULL, 0, 100, bEnableLog ? "dvoipcplaysdk" : NULL);
-// 				if (IsDlgButtonChecked(IDC_CHECK_EXTERNDRAW) == BST_CHECKED)
-// 				{
-// 					ipcplay_SetPixFormat(m_pPlayContext->hPlayer[0], R8G8B8);
-// 					ipcplay_SetExternDrawCallBack(m_pPlayContext->hPlayer[0], ExternDCDraw, this);
-// 				}
-				m_pVideoWndFrame->SetPanelParam(i, m_pPlayContext.get());
-				if (!m_pPlayContext->hPlayer[i])
-				{
-					m_wndStatus.SetWindowText(_T("打开流播放句柄失败"));
-					m_wndStatus.SetAlarmGllitery();
-					return;
-				}
-				ipcplay_Refresh(m_pPlayContext->hPlayer[i]);
-				if (i == 0)
-					bEnableAudio = true;
-				else
-					bEnableAudio = false;
-				ipcplay_Start(m_pPlayContext->hPlayer[i], bEnableAudio, bFitWindow,bEnableHaccel);
-				ipcplay_SetVolume(m_pPlayContext->hPlayer[i], nVolume);
-			}
-			m_dfLastUpdate = GetExactTime();
-			SetDlgItemText(IDC_BUTTON_PLAYSTREAM, _T("停止播放"));
-
-			EnableDlgItems(m_hWnd, true, 6,
-				IDC_SLIDER_SATURATION,
-				IDC_SLIDER_BRIGHTNESS,
-				IDC_SLIDER_CONTRAST,
-				IDC_SLIDER_CHROMA,
-				IDC_SLIDER_ZOOMSCALE,
-				IDC_SLIDER_VOLUME);
-			EnableDlgItem(IDC_SLIDER_PLAYER, false);
-			EnableDlgItem(IDC_EDIT_ROW, false);
-			EnableDlgItem(IDC_EDIT_COL, false);
-		}
-		else
-		{
-			if (!m_pPlayContext->pRecFile)		// 若正在录像，则不应断开码流
-			{
-				DVO2_NET_StopRealPlay(m_pPlayContext->hStream);
-				m_pPlayContext->hStream = -1;
-				EnableDlgItem(IDC_COMBO_STREAM, true);
-			}
-			for (int i = 0; i < m_pPlayContext->nPlayerCount; i++)
-				if (m_pPlayContext->hPlayer[i])
-				{
-					ipcplay_Stop(m_pPlayContext->hPlayer[i]);
-					//ipcplay_Refresh(m_pPlayContext->hPlayer);
-					ipcplay_Close(m_pPlayContext->hPlayer[i]);
-					m_pPlayContext->hPlayer[i] = NULL;
-				}
-			SetDlgItemText(IDC_BUTTON_PLAYSTREAM, _T("播放码流"));
-			EnableDlgItems(m_hWnd, false, 6,
-				IDC_SLIDER_SATURATION,
-				IDC_SLIDER_BRIGHTNESS,
-				IDC_SLIDER_CONTRAST,
-				IDC_SLIDER_CHROMA,
-				IDC_SLIDER_ZOOMSCALE,
-				IDC_SLIDER_VOLUME);
-			EnableDlgItem(IDC_SLIDER_PLAYER, false);
-			EnableDlgItem(IDC_EDIT_ROW, true);
-			EnableDlgItem(IDC_EDIT_COL, true);
-			m_dfLastUpdate = 0.0f;
-		}
-		
-	}
+	
 }
 
 static TCHAR *szCodecString[] =
@@ -1230,69 +1002,69 @@ static TCHAR *szCodecString[] =
 
 void CIPCPlayDemoDlg::OnBnClickedButtonRecord()
 {
-	if (m_pPlayContext)
-	{
-		CWaitCursor Wait;		
-		if (!m_pPlayContext->pRecFile)
-		{
-			int nStream = SendDlgItemMessage(IDC_COMBO_STREAM, CB_GETCURSEL);
-			if (m_pPlayContext->hStream == -1)
-			{
-				int nError = 0;
-				REAL_HANDLE hStreamHandle = DVO2_NET_StartRealPlay(m_pPlayContext->hUser,
-					0,
-					nStream,
-					0,
-					0,
-					NULL,
-					(fnDVOCallback_RealAVData_T)StreamCallBack,
-					(void *)m_pPlayContext.get(),
-					&nError);
-				if (hStreamHandle == -1)
-				{
-					m_wndStatus.SetWindowText(_T("连接码流失败,无法录像"));
-					m_wndStatus.SetAlarmGllitery();
-					return;
-				}
-				m_pPlayContext->hStream = hStreamHandle;
-				m_pPlayContext->pThis = this;
-				EnableDlgItem(IDC_COMBO_STREAM, false);
-			}
-
-			m_pPlayContext->bRecvIFrame = false;
-			m_pPlayContext->nVideoFrameID = 0;
-			m_pPlayContext->nAudioFrameID = 0;
-			TCHAR szPath[MAX_PATH] = { 0 };
-			TCHAR szFileDir[MAX_PATH] = { 0 };
-			if (!PathFileExists(m_szRecordPath))
-				GetAppPath(szFileDir, MAX_PATH);
-			else
-				_tcscpy_s(szFileDir, MAX_PATH, m_szRecordPath);
-
-			CTime tNow = CTime::GetCurrentTime();
-			_stprintf_s(m_pPlayContext->szRecFilePath,
-				_T("%s\\IPC_%s_CH%d_%s.MP4"),
-				szFileDir,
-				m_pPlayContext->szIpAddress,
-				nStream,
-				tNow.Format(_T("%y%m%d%H%M%S")));
-			m_pPlayContext->StartRecord();
-			SetDlgItemText(IDC_BUTTON_RECORD, _T("停止录像"));
-		}
-		else
-		{
-			m_pPlayContext->StopRecord();
-			if (!m_pPlayContext->hPlayer[0] && m_pPlayContext->hStream != -1)
-			{// 未播放码流,并且码流有效,则要断开码流
-				DVO2_NET_StopRealPlay(m_pPlayContext->hStream);
-				m_pPlayContext->hStream = -1;
-				EnableDlgItem(IDC_COMBO_STREAM, true);
-			}
-			TraceMsgA("%s LastVideoFrameID = %d\tLastAudioFrameID = %d.\n", __FUNCTION__, m_pPlayContext->nVideoFrameID, m_pPlayContext->nAudioFrameID);
-			TraceMsgA("%s VideoFrameCount = %d\tAudioFrameCount = %d.\n", __FUNCTION__, m_pPlayContext->pStreamInfo->nVideoFrameCount, m_pPlayContext->pStreamInfo->nAudioFrameCount );
-			SetDlgItemText(IDC_BUTTON_RECORD, _T("开始录像"));
-		}
-	}
+// 	if (m_pPlayContext)
+// 	{
+// 		CWaitCursor Wait;		
+// 		if (!m_pPlayContext->pRecFile)
+// 		{
+// 			int nStream = SendDlgItemMessage(IDC_COMBO_STREAM, CB_GETCURSEL);
+// 			if (m_pPlayContext->hStream == -1)
+// 			{
+// 				int nError = 0;
+// 				REAL_HANDLE hStreamHandle = DVO2_NET_StartRealPlay(m_pPlayContext->hUser,
+// 					0,
+// 					nStream,
+// 					0,
+// 					0,
+// 					NULL,
+// 					(fnDVOCallback_RealAVData_T)StreamCallBack,
+// 					(void *)m_pPlayContext.get(),
+// 					&nError);
+// 				if (hStreamHandle == -1)
+// 				{
+// 					m_wndStatus.SetWindowText(_T("连接码流失败,无法录像"));
+// 					m_wndStatus.SetAlarmGllitery();
+// 					return;
+// 				}
+// 				m_pPlayContext->hStream = hStreamHandle;
+// 				m_pPlayContext->pThis = this;
+// 				EnableDlgItem(IDC_COMBO_STREAM, false);
+// 			}
+// 
+// 			m_pPlayContext->bRecvIFrame = false;
+// 			m_pPlayContext->nVideoFrameID = 0;
+// 			m_pPlayContext->nAudioFrameID = 0;
+// 			TCHAR szPath[MAX_PATH] = { 0 };
+// 			TCHAR szFileDir[MAX_PATH] = { 0 };
+// 			if (!PathFileExists(m_szRecordPath))
+// 				GetAppPath(szFileDir, MAX_PATH);
+// 			else
+// 				_tcscpy_s(szFileDir, MAX_PATH, m_szRecordPath);
+// 
+// 			CTime tNow = CTime::GetCurrentTime();
+// 			_stprintf_s(m_pPlayContext->szRecFilePath,
+// 				_T("%s\\IPC_%s_CH%d_%s.MP4"),
+// 				szFileDir,
+// 				m_pPlayContext->szIpAddress,
+// 				nStream,
+// 				tNow.Format(_T("%y%m%d%H%M%S")));
+// 			m_pPlayContext->StartRecord();
+// 			SetDlgItemText(IDC_BUTTON_RECORD, _T("停止录像"));
+// 		}
+// 		else
+// 		{
+// 			m_pPlayContext->StopRecord();
+// 			if (!m_pPlayContext->hPlayer[0] && m_pPlayContext->hStream != -1)
+// 			{// 未播放码流,并且码流有效,则要断开码流
+// 				DVO2_NET_StopRealPlay(m_pPlayContext->hStream);
+// 				m_pPlayContext->hStream = -1;
+// 				EnableDlgItem(IDC_COMBO_STREAM, true);
+// 			}
+// 			TraceMsgA("%s LastVideoFrameID = %d\tLastAudioFrameID = %d.\n", __FUNCTION__, m_pPlayContext->nVideoFrameID, m_pPlayContext->nAudioFrameID);
+// 			TraceMsgA("%s VideoFrameCount = %d\tAudioFrameCount = %d.\n", __FUNCTION__, m_pPlayContext->pStreamInfo->nVideoFrameCount, m_pPlayContext->pStreamInfo->nAudioFrameCount );
+// 			SetDlgItemText(IDC_BUTTON_RECORD, _T("开始录像"));
+// 		}
+// 	}
 }
 
 
@@ -1334,7 +1106,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 				fpMedia.Close();
 				
 				SetDlgItemText(IDC_EDIT_FILEPATH, strFilePath);
-				m_pPlayContext =make_shared<PlayerContext>(-1);
+				m_pPlayContext =make_shared<PlayerContext>();
 				m_pPlayContext->hWndView = m_pVideoWndFrame->GetPanelWnd(nFreePanel);
 				m_pVideoWndFrame->SetPanelParam(nFreePanel, m_pPlayContext.get());
 				
@@ -1573,35 +1345,6 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 					IDC_SLIDER_PLAYER);
 }
 
-bool IsIPCVideoFrame(app_net_tcp_enc_stream_head_t *pStreamHeader)
-{
-	switch (pStreamHeader->frame_type)
-	{
-	case 0:
-	case IPC_IDR_FRAME:
-	case IPC_I_FRAME:	
-	case IPC_P_FRAME:
-	case IPC_B_FRAME:
-		return true;
-	default:
-		return false;
-	}
-}
-
-bool IsIPCAudioFrame(app_net_tcp_enc_stream_head_t *pStreamHeader)
-{
-	switch (pStreamHeader->frame_type)
-	{
-	case IPC_711_ALAW:      // 711 A律编码帧
-	case IPC_711_ULAW:      // 711 U律编码帧
-	case IPC_726:           // 726编码帧
-	case IPC_AAC:           // AAC编码帧
-		return true;
-	default:
-		return false;
-	}
-}
-
 void CIPCPlayDemoDlg::PlayerCallBack(IPC_PLAYHANDLE hPlayHandle, void *pUserPtr)
 {
 	PlayerContext *pContext = (PlayerContext *)pUserPtr;
@@ -1621,206 +1364,6 @@ void CIPCPlayDemoDlg::PlayerCallBack(IPC_PLAYHANDLE hPlayHandle, void *pUserPtr)
 		}
 	}
 
-}
-void CIPCPlayDemoDlg::StreamCallBack(IN USER_HANDLE  lUserID,
-	IN REAL_HANDLE lStreamHandle,
-	IN int         nErrorType,
-	IN const char* pBuffer,
-	IN int         nDataLen,
-	IN void*       pUser)
-{
-	if (!pUser)
-		return;
-	PlayerContext *pContext = (PlayerContext *)pUser;
-	app_net_tcp_enc_stream_head_t *pStreamHeader = (app_net_tcp_enc_stream_head_t *)pBuffer;
-	int nSizeofHeader = sizeof(app_net_tcp_enc_stream_head_t);
-	byte *pFrameData = (byte *)(pStreamHeader)+nSizeofHeader;
-	int nFrameLength = nDataLen - sizeof(app_net_tcp_enc_stream_head_t);	
-	time_t tSec = pStreamHeader->sec;
-	time_t tFrame = tSec * 1000 * 1000 + pStreamHeader->usec;
-	SYSTEMTIME sysFrame;
-	UTC2SystemTime((UINT64 *)&tSec, &sysFrame);
-	
-	if (pContext->bHisiliconFrame)
-	{
-		if (pStreamHeader->frame_type == 0)
-			pStreamHeader->frame_type = IPC_IDR_FRAME;
-		else if (pStreamHeader->frame_type == 1)
-			pStreamHeader->frame_type = IPC_P_FRAME;
-		//TraceMsgA("FrameType = %d\tFrameLength = %d.\n", pStreamHeader->frame_type, nFrameLength);
-	}
-	switch (pStreamHeader->frame_type)
-	{
-	case 0:
-	case IPC_IDR_FRAME:
-	case IPC_I_FRAME:
-	{
-		if (pContext->bHisiliconFrame)
-			pStreamHeader->frame_type += 1;
-		if (!pContext->bRecvIFrame)
-		{
-			pContext->nVideoFrameID = 1;
-			pContext->nAudioFrameID = 1;
-			pContext->bRecvIFrame = true;
-			pContext->dfTimeRecv1 = GetExactTime();
-			pContext->dfTimeRecv2 = GetExactTime();
-		}
-		else
-			pContext->nVideoFrameID++;
-		pContext->pStreamInfo->PushFrameInfo(nFrameLength);
-		pContext->pStreamInfo->nVideoFrameCount++;
-		pContext->pStreamInfo->nVideoBytes += nFrameLength;
-		pContext->pStreamInfo->nFrameID = pStreamHeader->frame_num;
-		pContext->pStreamInfo->tLastTime = (time_t)(GetExactTime() * 1000);
-
-		int nFrameTimeSpan = (tFrame - pContext->tLastFrame) / 1000;
-		pContext->tLastFrame = tFrame;
-		if (nFrameTimeSpan)
-			pContext->nFPS = 1000 / nFrameTimeSpan;
-		break;
-	}
-	case IPC_P_FRAME:
-	case IPC_B_FRAME:
-	{
-		// 这里只对视频帧计算帧ID
-		if (pContext->bRecvIFrame)
-			pContext->nVideoFrameID ++;	
-
-		pContext->pStreamInfo->PushFrameInfo(nFrameLength);
-		pContext->pStreamInfo->nVideoFrameCount++;
-		pContext->pStreamInfo->nVideoBytes += nFrameLength;
-		pContext->pStreamInfo->nFrameID = pStreamHeader->frame_num;
-		pContext->pStreamInfo->tLastTime = (time_t)(GetExactTime() * 1000);
-
-		int nFrameTimeSpan = (tFrame - pContext->tLastFrame)/1000;
-		pContext->tLastFrame = tFrame;
-		if (nFrameTimeSpan)
-			pContext->nFPS = 1000 / nFrameTimeSpan;
-		break;
-	}
-	case IPC_711_ALAW:      // 711 A律编码帧
-	case IPC_711_ULAW:      // 711 U律编码帧
-	case IPC_726:           // 726编码帧
-	case IPC_AAC:           // AAC编码帧
-		if (pContext->bRecvIFrame)		
-			pContext->nAudioFrameID++;
-		pContext->nAudioCodec = pStreamHeader->frame_type;
-		pContext->pStreamInfo->nAudioFrameCount++;
-		//pStreamHeader->frame_type = IPC_711_ALAW;
-		break;
-	default:
-		//TraceMsgA("%s Audio Frame Length = %d.\n", __FUNCTION__, nFrameLength);
-		break;
-	}
-	switch (pStreamHeader->frame_type)
-	{
-	case 0:
-	case IPC_IDR_FRAME:
-	case IPC_I_FRAME:
-	case IPC_P_FRAME:
-	case IPC_B_FRAME:
-	{
-		if (pContext->m_dfLastInputstream != 0.0f)
-		{
-			pContext->m_pInputStreamTimeTrace->SaveTime(TimeSpanEx(pContext->m_dfLastInputstream));
-			if (pContext->m_pInputStreamTimeTrace->nTimeCount >= 100)
-				pContext->m_pInputStreamTimeTrace->OutputTime(0.04f);
-			
-		}
-		pContext->m_dfLastInputstream = GetExactTime();
-		pContext->nVideoFrames++;
-		if (pContext->bRecvIFrame)
-		{
-// 			SYSTEMTIME sysTime,sysTimeRef;
-// 			GetSystemTime(&sysTime);
-// 
-// 			unsigned long long tNow,tNow2;
-// 			unsigned long long tRef;
-// 			SystemTime2UTC(&sysTime, &tNow);
-// 			if (pContext->nTimeCount == 0)
-// 				pContext->nFirstID = pStreamHeader->frame_num;
-// 			tNow2 = time(0);
-// 			tNow = (tNow + 8*3600) * 1000 * 1000 + (double)sysTime.wMilliseconds * 1000;
-// 			
-// 			pContext->nTimeStamp[pContext->nTimeCount++] = (tNow -tFrame )/ 1000;
-// 			if (pContext->nTimeCount >= 100)
-// 			{
-// 				UINT64 nSum = 0;
-// 				TraceMsgA("%s Play Delay(%d):\n", __FUNCTION__, pContext->nFirstID);
-// 				for (int i = 0; i < pContext->nTimeCount; i++)
-// 				{
-// 					TraceMsgA("%d\t", (pContext->nTimeStamp[i]) );
-// 					nSum += ((pContext->nTimeStamp[i]) );
-// 
-// 					if ((i + 1) % 20 == 0)
-// 						TraceMsgA("\n");
-// 				}
-// 				TraceMsgA("%s Avg Delay = %d.\n", __FUNCTION__, nSum / 100);
-// 				pContext->nTimeCount = 0;
-// 			}
-		}
-	}
-	break;
-	default:
-		break;
-	}
-	
-	if (TimeSpanEx(pContext->dfTimeRecv1) >20.0f)
-	{
-		TraceMsgA("%s Time = %.3f\tVideoFrames = %d\tAutioFrames = %d.\n", __FUNCTION__, TimeSpanEx(pContext->dfTimeRecv2), pContext->nVideoFrameID, pContext->nAudioFrameID);
-		pContext->dfTimeRecv1 = GetExactTime();
-	}
-	SYSTEMTIME sysTime;
-	GetSystemTime(&sysTime);
-	unsigned long long tNow;
-	SystemTime2UTC(&sysTime, &tNow);
-	tNow = tNow * 1000 * 1000 + (double)sysTime.wMilliseconds * 1000;
-	for (int i = 0; i < pContext->nPlayerCount;i ++)
-	 	if (pContext->hPlayer[i])
-			ipcplay_InputIPCStream(pContext->hPlayer[i], pFrameData, pStreamHeader->frame_type, nFrameLength, pStreamHeader->frame_num, tNow);
-
-	// 写入录像数据
-	if (pContext->pRecFile && pContext->bRecvIFrame)
-	{
-		byte szHeader[64] = { 0 };
-		int nHeadersize = 64;
-		if (!pContext->bWriteMediaHeader)
-		{
-			if (ipcplay_BuildMediaHeader(szHeader, &nHeadersize, (IPC_CODEC)pContext->nAudioCodec) == IPC_Succeed)
-			{
-				pContext->pRecFile->SeekToBegin();
-				pContext->pRecFile->Write(szHeader, nHeadersize);
-				pContext->pRecFile->SeekToEnd();
-				pContext->bWriteMediaHeader = true;
-			}
-		}
-		if (pContext->bWriteMediaHeader)
-		{
-			int nSizetoSave = nDataLen;
-			if (IsIPCVideoFrame(pStreamHeader))
-				if (ipcplay_BuildFrameHeader(szHeader, &nHeadersize, pContext->nVideoFrameID, (byte *)pBuffer, nSizetoSave) == IPC_Succeed)
-				{
-					pContext->pRecFile->Write(szHeader, nHeadersize);
-					pContext->pRecFile->Write(&pBuffer[nDataLen - nSizetoSave], nSizetoSave);
-				}
-			if (IsIPCAudioFrame(pStreamHeader))
-				if (ipcplay_BuildFrameHeader(szHeader, &nHeadersize, pContext->nAudioFrameID, (byte *)pBuffer, nSizetoSave) == IPC_Succeed)
-				{
-					pContext->pRecFile->Write(szHeader, nHeadersize);
-					pContext->pRecFile->Write(&pBuffer[nDataLen - nSizetoSave], nSizetoSave);
-				}
-		}
-	}
-	if (pContext->pThis )
-	{
-		CIPCPlayDemoDlg *pDlg = (CIPCPlayDemoDlg *)pContext->pThis;
-		if (!pDlg->m_bRefreshPlayer)
-			return;
-		if (TimeSpanEx(pDlg->m_dfLastUpdate) < 0.200f)
-			return;
-		pDlg->m_dfLastUpdate = GetExactTime();
-		pDlg->PostMessage(WM_UPDATE_STREAMINFO);
-	}
 }
 
 LRESULT CIPCPlayDemoDlg::OnUpdatePlayInfo(WPARAM w, LPARAM l)

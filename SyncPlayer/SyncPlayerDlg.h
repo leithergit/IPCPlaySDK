@@ -18,13 +18,15 @@ struct ThreadParam
 struct FrameTime
 {
 	bool bIFrame;
+	long nFrameSize;
 	TCHAR szTextIFrame[16];
 	time_t tFrameTime;
 	TCHAR szTextFrameTime[32];
-	FrameTime(time_t timeInput,bool bKeyFrame = false)
+	FrameTime(time_t timeInput,int nsize,bool bKeyFrame = false)
 	{
 		ZeroMemory(this, sizeof(FrameTime));
 		bIFrame = bKeyFrame;
+		nFrameSize = nsize;
 		tFrameTime = timeInput;
 	}
 };

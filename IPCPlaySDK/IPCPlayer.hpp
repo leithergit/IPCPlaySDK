@@ -190,6 +190,7 @@ struct StreamProbe
 
 struct  CItemStatus;
 typedef shared_ptr<CItemStatus> CItemStatusPtr;
+typedef list<CSwitcherInfoPtr> SwitcherPtrList;
 struct  CItemStatus
 {
 	bool bUsed;
@@ -258,6 +259,7 @@ private:
 	list <RenderUnitPtr>	m_listRenderUnit;
 	list <RenderWndPtr>		m_listRenderWnd;	///< 多窗口显示同一视频图像
 	list<CAVFramePtr>		m_listAVFrame;		///<视频帧缓存，用于异步显示图像
+	map<WORD, SwitcherPtrList*> m_MapSwitcher;
 private:
 		
 	CCriticalSectionAgent	m_cslistRenderWnd;
@@ -281,9 +283,8 @@ private:
 	int			m_nZeroOffset;
 	bool		m_bEnableDDraw = false;			// 是否启用DDRAW，启用DDRAW将禁用D3D，并且无法启用硬件黄享模式，导致解码效果下降
 	UINT					m_nListAvFrameMaxSize;	///<视频帧缓存最大容量
-	list<CSwitcherInfoPtr> *m_pSwitcherList;		/// 切换器表
-	byte		m_nScreen;
-	byte		m_nWnd;
+/*	list<CSwitcherInfoPtr> *m_pSwitcherList;		/// 切换器表*/
+
 	/************************************************************************/
 	//   ********注意 ********                                                               
 	//请匆移动m_nZeroOffset变量定义的位置，因为在构造函数中,为实现快速初始化，需要使用      
@@ -588,7 +589,10 @@ private:
 				Autolock(&m_cslistRenderWnd);
 				if (m_listRenderWnd.size() <= 0)
 					return;
-				
+				// 准备发送视频替换通知				
+				ProcessSwitchEvent();
+				if (m_listRenderWnd.size() <= 0)
+					return;
 				for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
 				{
 					if ((*it)->pRtBorder)
@@ -612,6 +616,7 @@ private:
 						rtBorder.right = FFALIGN(rtBorder.right, 4);
 						rtBorder.top = FFALIGN(rtBorder.top, 4);
 						rtBorder.bottom = FFALIGN(rtBorder.bottom, 4);
+
 						m_pDxSurface->Present((*it)->hRenderWnd, &rtBorder);
 					}
 					else
@@ -732,7 +737,8 @@ private:
 					CopyRect(&rtBorder, m_pBorderRect.get());
 					m_pDxSurface->Render(pAvFrame,m_nRocateAngle);
 					Autolock(&m_cslistRenderWnd);
-					m_pDxSurface->Present(m_hRenderWnd, &rtBorder, &rtRender);
+					//m_pDxSurface->Present(m_hRenderWnd, &rtBorder, &rtRender);
+					ProcessSwitchEvent();
 					if (m_listRenderWnd.size() > 0)
 					{
 						for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
@@ -743,7 +749,8 @@ private:
 				{
 					m_pDxSurface->Render(pAvFrame, m_nRocateAngle);
 					Autolock(&m_cslistRenderWnd);
-					m_pDxSurface->Present(m_hRenderWnd, nullptr, &rtRender);
+					//m_pDxSurface->Present(m_hRenderWnd, nullptr, &rtRender);
+					ProcessSwitchEvent();
 					if (m_listRenderWnd.size() > 0)
 					{
 						for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
@@ -1017,7 +1024,7 @@ public:
 	/// @param [in]		pUserPtr		pVideoSwitchCB回调使用的用户接口 
 	/// @remark			1.这个接口可用于作快速切换，当前窗口若正在显示视频时，若要切入下一视频，可设置此回调，在回中止上一次的视频播放。	
 	///					2.屏幕号和窗口号计数从0开始，最多支持16个屏幕(取值0~15)，每人屏幕的窗口数最多256(取值0~255)
-	int SetSwitcherCallBack(WORD nScreenWnd, void *pVideoSwitchCB , void *pUserPtr );
+	int SetSwitcherCallBack(WORD nScreenWnd, HWND hWnd, void *pVideoSwitchCB, void *pUserPtr);
 	/// @brief			开始播放
 	/// @param [in]		bEnaleAudio		是否开启音频播放
 	/// #- true			开启音频播放

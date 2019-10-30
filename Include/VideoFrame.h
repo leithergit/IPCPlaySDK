@@ -1,5 +1,4 @@
 #pragma once
-
 #include <assert.h>
 #include <vector>
 #include <map>
@@ -13,11 +12,13 @@ using namespace std::tr1;
 #include <boost/shared_ptr.hpp>
 using namespace boost;
 #endif
-
+#include <afx.h>
+#include <afxwin.h>
 #include <math.h>
 #include "AutoLock.h"
 #include "Utility.h"
 #include "CriticalSectionAgent.h"
+
 
 using namespace  std;
 
@@ -358,8 +359,7 @@ public:
 
 	inline bool SetPanelParam(int nIndex, void *pParam)
 	{
-		CAutoLock lock(m_csvecPanel->Get());
-		TraceMsg(_T("%s nIndex = %d pParam = %08X.\n"), __FUNCTIONW__, nIndex,pParam);
+		TraceMsg(_T("%s nIndex = %d.\n"), __FUNCTIONW__, nIndex);
 		if (nIndex < m_vecPanel.size())
 		{
 			m_vecPanel[nIndex]->pCustumData = pParam;
@@ -371,14 +371,12 @@ public:
 
 	bool SetPanelParam(int nRow, int nCol, void *pParam)
 	{
-		CAutoLock lock(m_csvecPanel->Get());
 		TraceMsg(_T("%s nRow = %d\tnCol = %d.\n"), __FUNCTIONW__, nRow, nCol);
 		return SetPanelParam(nRow*m_nCols + nCol, pParam);
 	}
 	
 	inline void *GetPanelParam(int nIndex)
 	{
-		CAutoLock lock(m_csvecPanel->Get());
 		if (m_vecPanel.size() > 0 && nIndex < m_vecPanel.size())
 			return m_vecPanel[nIndex]->pCustumData;
 		else
@@ -422,9 +420,6 @@ public:
 
 	static LRESULT CALLBACK PanelWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
-		
-		//TraceMsgW(L"PanelWndProc,messageid=%02X\n",message);
-		
 		switch (message)
 		{
 		case WM_KEYDOWN:
@@ -441,18 +436,11 @@ public:
 			}
 			break;	
 		}
-
-		case WM_RBUTTONDOWN:                  //0x0204:
-		{									
-		}
-		break;
-		case WM_RBUTTONUP:                    //0x0205
-		{
-		}
-		break;
 		case WM_LBUTTONDOWN:                  //0x0201
 		case WM_LBUTTONUP:                    //0x0202
 		case WM_LBUTTONDBLCLK:                //0x0203，双击事件
+		case WM_RBUTTONDOWN:                  //0x0204:
+		case WM_RBUTTONUP:                    //0x0205
 		case WM_RBUTTONDBLCLK:                //0x0206
 		case WM_MBUTTONDOWN:                  //0x0207
 		case WM_MBUTTONUP:                    //0x0208
@@ -469,7 +457,6 @@ public:
 				"WM_MBUTTONDOWN",                //  0x0207
 				"WM_MBUTTONUP",                  //  0x0208
 				"WM_MBUTTONDBLCLK"				 //  0x0209
-				"WM_MOUSEHWHEEL"
 			};
 			static UINT MessageArray[] =
 			{
@@ -483,7 +470,6 @@ public:
 				WM_MBUTTONDOWN,
 				WM_MBUTTONUP,
 				WM_MBUTTONDBLCLK,
-				WM_MOUSEHWHEEL
 			};
 			POINT pt;
 			pt.x = LOWORD(lParam);
@@ -502,7 +488,6 @@ public:
 			m_csPannelMap->Unlock();
 		}           
 		break;
-		case 0x020A:
 		case 0x020E:                   //0x020A	WM_MOUSEHWHEEL
 		{
 			m_csPannelMap->Lock();
@@ -512,10 +497,7 @@ public:
 				IsWindow(it->second))
 			{
 				TraceMsgA("%s PostMessage hWnd(%08X) WM_FRAME_MOUSEWHEEL.\n", __FUNCTION__, it->second);
-			//	::PostMessage(it->second, WM_FRAME_MOUSEWHEEL, (WPARAM)hWnd, lParam);  //delete 2018-07-17 zjf 
-				short zDelta = (short)GET_WHEEL_DELTA_WPARAM(wParam);
-				//TraceMsgW(L"WM_FRAME_MOUSEWHEEL=%hd\n", zDelta);
-				::PostMessage(it->second, WM_FRAME_MOUSEWHEEL, wParam, lParam);
+				::PostMessage(it->second, WM_FRAME_MOUSEWHEEL, (WPARAM)hWnd, lParam);
 			}
 
 			m_csPannelMap->Unlock();
@@ -550,35 +532,35 @@ public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg LRESULT OnFrameLButtonDBClick(WPARAM W, LPARAM L)
 	{
-		//TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
+		TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
 		GetParent()->PostMessage(WM_FRAME_LBUTTONDBLCLK, W, L);
 		return 0L;
 	}
 
 	afx_msg LRESULT OnFrameRButtonDown(WPARAM W, LPARAM L)
 	{
-		//TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
+		TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
 		GetParent()->PostMessage(WM_FRAME_RBUTTONDOWN, NULL, L);
 		return 0L;
 	}
 
 	afx_msg LRESULT OnFrameMouseMove(WPARAM W, LPARAM L)
 	{
-		//TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
+		TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
 		GetParent()->PostMessage(WM_FRAME_MOUSEMOVE, NULL, L);
 		return 0L;
 	}
 
 	afx_msg LRESULT OnFrameRButtonUP(WPARAM W, LPARAM L)
 	{
-		//TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
+		TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
 		GetParent()->PostMessage(WM_FRAME_RBUTTONUP, NULL, L);
 		return 0L;
 	}
 	
 	afx_msg LRESULT OnFrameLButtonDown(WPARAM W, LPARAM L)      //2018-03-05 
 	{
-		//TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
+		TraceMsgA("%s PostMessage ParentWnd(%08X).\n", __FUNCTION__, GetParent()->GetSafeHwnd());
 		GetParent()->PostMessage(WM_FRAME_LBUTTONDOWN, NULL, L);
 		return 0L;
 	}
@@ -596,7 +578,7 @@ public:
 	//			false为还原窗口，此时窗格占还原为原始位置和尺寸
 	bool ZoomPanel(int nRow, int nCol, bool bFlag);
 
-	// 新增函数 int GetPanel(POINT pt),以获取所在鼠标位置在所窗格号
+	// 新增函数 int GetPanelFromPoint(POINT pt),以获取所在鼠标位置在所窗格号
 	// CVideoFrame类不再处理鼠标消息，转而由其父窗口处理,父窗口收到鼠标消息后，应使用GetPanel函数判断鼠标坐标是否在Frame窗口内
 	int GetPanelFromPoint(POINT pt)
 	{
@@ -614,7 +596,10 @@ public:
 	// 交换两个窗格的位置
 	// nPanel1,nPanel2为要交换窗格的索位值
 	bool SwapPanel(int nPanel1, int nPanel2);
-
+// 	HWND GetPanel(POINT pt)
+// 	{
+// 		return NULL;
+// 	}
 // 	afx_msg LRESULT OnFrameRButtonDown(WPARAM W, LPARAM L)
 // 	{
 // 		POINT pt;

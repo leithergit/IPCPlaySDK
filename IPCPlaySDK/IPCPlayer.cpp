@@ -6,9 +6,7 @@ extern HANDLE g_hHAccelMutexArray[10];
 
 map<string, DxSurfaceList>g_DxSurfacePool;	// 用于缓存DxSurface对象
 CCriticalSectionAgent g_csDxSurfacePool;
-typedef list<CSwitcherInfoPtr> SwitcherPtrList;
-
-SwitcherPtrList g_SwitcherList[16][256];
+SwitcherPtrList g_SwitcherList[16][64];
 
 #ifdef _DEBUG
 extern CCriticalSectionAgent g_csPlayerHandles;
@@ -890,7 +888,6 @@ int CIPCPlayer::AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent
 	if (!m_hRenderWnd)
 	{
 		m_hRenderWnd = hRenderWnd;
-		//return IPC_Succeed;
 	}
 
 	if (m_bEnableDDraw)
@@ -905,14 +902,14 @@ int CIPCPlayer::AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent
 	}
 	else
 	{
-		if (m_listRenderWnd.size() >= 3)
+		if (m_listRenderWnd.size() >= 4)
 			return IPC_Error_RenderWndOverflow;
 		auto itFind = find_if(m_listRenderWnd.begin(), m_listRenderWnd.end(), WndFinder(hRenderWnd));
 		if (itFind != m_listRenderWnd.end())
 			return IPC_Succeed;
 
 		m_listRenderWnd.push_back(make_shared<RenderWnd>(hRenderWnd, pRtRender, bPercent));
-		//OutputMsg("%s size of m_listRenderWnd = %d.\n", __FUNCTION__,m_listRenderWnd.size());
+		OutputMsg("%s size of m_listRenderWnd = %d.\n", __FUNCTION__,m_listRenderWnd.size());
 	}
 
 	return IPC_Succeed;
@@ -987,7 +984,7 @@ int CIPCPlayer::RemoveRenderWindow(HWND hRenderWnd)
 		if (itFind != m_listRenderUnit.end())
 		{
 			m_listRenderUnit.erase(itFind);
-			InvalidateRect(hRenderWnd, nullptr, true);
+			//InvalidateRect(hRenderWnd, nullptr, true);
 		}
 		if (hRenderWnd == m_hRenderWnd)
 		{
@@ -1004,7 +1001,7 @@ int CIPCPlayer::RemoveRenderWindow(HWND hRenderWnd)
 		if (itFind != m_listRenderWnd.end())
 		{
 			m_listRenderWnd.erase(itFind);
-			InvalidateRect(hRenderWnd, nullptr, true);
+			//InvalidateRect(hRenderWnd, nullptr, true);
 		}
 		if (hRenderWnd == m_hRenderWnd)
 		{
@@ -1133,20 +1130,25 @@ int CIPCPlayer::SetBorderRect(HWND hWnd, LPRECT pRectBorder, bool bPercent )
 	return IPC_Succeed;
 }
 
-int CIPCPlayer::SetSwitcherCallBack(WORD nScreenWnd, void *pVideoSwitchCB , void *pUserPtr)
+int CIPCPlayer::SetSwitcherCallBack(WORD nScreenWnd, HWND hWnd,void *pVideoSwitchCB , void *pUserPtr)
 {
 	byte nScreen = HIBYTE(nScreenWnd);
-	if (nScreen > 15)
-		return IPC_Error_InvalidParameters;
 	byte nWnd = LOBYTE(nScreenWnd);
+	if (nScreen > 15 || nWnd>64)
+		return IPC_Error_InvalidParameters;
+	
 	if (pVideoSwitchCB &&
 		pUserPtr)
 	{
-		m_pSwitcherList = &g_SwitcherList[nScreen][nWnd];
-		m_pSwitcherList->push_back(make_shared<CSwitcherInfo>(m_hRenderWnd, this, pVideoSwitchCB, pUserPtr));
-		
-		m_nScreen = nScreen;
-		m_nWnd = nWnd;
+		TraceMsgA("%s Screen:%d\tWnd:%d\tm_hRenderWnd = %08X\n", __FUNCTION__, nScreen, nWnd, m_hRenderWnd);
+		SwitcherPtrList* pSwitcherList = &g_SwitcherList[nScreen][nWnd];
+		pSwitcherList->push_back(make_shared<CSwitcherInfo>(hWnd, this, pVideoSwitchCB, pUserPtr));
+		auto itFind = m_MapSwitcher.find(nScreenWnd);
+		if (itFind == m_MapSwitcher.end())
+		{
+			m_MapSwitcher.insert(pair<WORD,SwitcherPtrList*>(nScreenWnd, pSwitcherList));
+		}
+
 		return IPC_Succeed;
 	}
 	else
@@ -1650,12 +1652,13 @@ int CIPCPlayer::InputDHStream(byte *pBuffer, int nLength)
 	} while (true);
 	return IPC_Succeed;
 }
-bool CIPCPlayer::StopPlay(DWORD nTimeout )
+bool CIPCPlayer::StopPlay(DWORD nTimeout)
 {
 #ifdef _DEBUG
 	//TraceFunction();
 	OutputMsg("%s \tObject:%d Time = %d.\n", __FUNCTION__, m_nObjIndex, timeGetTime() - m_nLifeTime);
 #endif
+	TraceMsgA("%s\n", __FUNCTION__);
 	m_bStopFlag = true;
 	m_bThreadParserRun = false;
 	m_bThreadDecodeRun = false;
@@ -1666,32 +1669,29 @@ bool CIPCPlayer::StopPlay(DWORD nTimeout )
 	if (!m_pSyncPlayer)
 		SetEvent(m_hRenderAsyncEvent);
 
-	if (m_pSwitcherList)
+	for (auto it = m_MapSwitcher.begin(); it != m_MapSwitcher.end();it ++)
 	{
-		if (m_pSwitcherList->size())
+		if (it->second->size())
 		{
-			CSwitcherInfoPtr pSwitchPtr = m_pSwitcherList->front();
+			CSwitcherInfoPtr pSwitchPtr = it->second->front();
 			if (pSwitchPtr->pPlayerHandle == this)
 			{
-				m_pSwitcherList->front()->Reset();
-				m_pSwitcherList->pop_front();
+				pSwitchPtr->Reset();
+				it->second->pop_front();
 			}
 		}
-			
-		m_pSwitcherList = nullptr;
 	}
 	if (m_bEnableAudio)
 	{
 		EnableAudio(false);
 	}
+	
 	m_cslistRenderWnd.Lock();
 	m_hRenderWnd = nullptr;
 	for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end();)
-	{
-		InvalidateRect((*it)->hRenderWnd, nullptr, true);
 		it = m_listRenderWnd.erase(it);
-	}
 	m_cslistRenderWnd.Unlock();
+	
 	m_bPause = false;
 	DWORD dwThreadExitCode = 0;
 	if (m_hThreadFileParser)
@@ -2437,16 +2437,11 @@ int CIPCPlayer::EnableAudio(bool bEnable )
 
 void CIPCPlayer::Refresh()
 {
-	if (m_hRenderWnd)
+	Autolock(&m_cslistRenderWnd);				
+	if (m_listRenderWnd.size() > 0)
 	{
-		::InvalidateRect(m_hRenderWnd, nullptr, true);
-		Autolock(&m_cslistRenderWnd);
-		//m_pDxSurface->Present(m_hRenderWnd);					
-		if (m_listRenderWnd.size() > 0)
-		{
-			for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
-				::InvalidateRect((*it)->hRenderWnd, nullptr, true);
-		}
+		for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
+			::InvalidateRect((*it)->hRenderWnd, nullptr, true);
 	}
 }
 
@@ -4326,8 +4321,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 	DWORD dwFrameTimeInput;
 	pThis->OutputMsg("%s Timespan2 of First Frame = %f.\n", __FUNCTION__, TimeSpanEx(pThis->m_dfFirstFrameTime));
 #endif
-	// 准备发送视频替换通知
-	pThis->ProcessSwitchEvent();
+	
 	while (pThis->m_bThreadDecodeRun)
 	{
 		if (!pThis->m_bIpcStream &&
@@ -5090,9 +5084,9 @@ void CIPCPlayer::EnableReversePlay(bool bFlag)
 
 void CIPCPlayer::ProcessSwitchEvent()
 {
-	if (m_pSwitcherList)
+	for (auto it = m_MapSwitcher.begin(); it != m_MapSwitcher.end();it ++)
+	if (it->second->size() > 1)
 	{
-		if (m_pSwitcherList->size() > 1)
-			m_pSwitcherList->pop_front();
+		it->second->pop_front();
 	}
 }

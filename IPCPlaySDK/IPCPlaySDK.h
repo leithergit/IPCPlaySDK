@@ -1052,7 +1052,7 @@ extern "C" {
  /// @param [in]		pUserPtr		pVideoSwitchCB回调使用的用户接口 
  /// @remark			1.这个接口可用于作快速切换，当前窗口若正在显示视频时，若要切入下一视频，可设置此回调，在回中止上一次的视频播放。	
  ///					2.屏幕号和窗口号计数从0开始，最多支持16个屏幕(取值0~15)，每人屏幕的窗口数最多256(取值0~255)
- int ipcplay_SetSwitcherCallBack(IPC_PLAYHANDLE hPlayHandle, WORD nScreenWnd, void *pVideoSwitchCB, void *pUserPtr);
+ int ipcplay_SetSwitcherCallBack(IPC_PLAYHANDLE hPlayHandle, WORD nScreenWnd, HWND hWnd, void *pVideoSwitchCB, void *pUserPtr);
 
 #ifdef __cplusplus
 }

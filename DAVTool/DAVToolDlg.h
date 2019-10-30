@@ -69,4 +69,6 @@ public:
 	IPC_PLAYHANDLE	m_hPlayHandle = nullptr;
 	afx_msg void OnNMDblclkListFile(NMHDR *pNMHDR, LRESULT *pResult);
 	
+	afx_msg void OnBnClickedPlay();
+	afx_msg void OnBnClickedPause();
 };

@@ -47,47 +47,34 @@ void CFrameView::OnLvnGetdispinfoList1(NMHDR *pNMHDR, LRESULT *pResult)
 	static TCHAR szText[32];
 	if (pItem->mask & LVIF_TEXT)
 	{
+		if (((CSyncPlayerDlg *)theApp.m_pMainWnd)->vecFrameTime[0].size() < k)
+				return;
 		switch (pItem->iSubItem)
 		{
 		case 0:
 		{
-			_stprintf_s(szText, 32, _T("%d"), k);
-			pItem->pszText = szText;
+			_stprintf_s(pItem->pszText, pItem->cchTextMax, _T("%d"), k);
 		}
 		break;
 		case 1:
 		{
 			if (((CSyncPlayerDlg *)theApp.m_pMainWnd)->vecFrameTime[0][k]->bIFrame)
-				_tcscpy_s(((CSyncPlayerDlg *)theApp.m_pMainWnd)->vecFrameTime[0][k]->szTextIFrame, 16, _T("true"));
-			pItem->pszText = ((CSyncPlayerDlg *)theApp.m_pMainWnd)->vecFrameTime[0][k]->szTextIFrame;
+				_tcscpy_s(pItem->pszText, pItem->cchTextMax, _T("true"));
 		}
 			
 			break;
 		case 2:
 		{
-			_stprintf_s(((CSyncPlayerDlg *)theApp.m_pMainWnd)->vecFrameTime[0][k]->szTextFrameTime, 32, _T("%I64d"), ((CSyncPlayerDlg *)theApp.m_pMainWnd)->vecFrameTime[0][k]->tFrameTime);
-			pItem->pszText = ((CSyncPlayerDlg *)theApp.m_pMainWnd)->vecFrameTime[0][k]->szTextFrameTime;
+			_stprintf_s(pItem->pszText, pItem->cchTextMax, _T("%I64d"), ((CSyncPlayerDlg *)theApp.m_pMainWnd)->vecFrameTime[0][k]->tFrameTime);
 		}
 		break;
 		case 3:
 		{
-			if (((CSyncPlayerDlg *)theApp.m_pMainWnd)->vecFrameTime[1].size() < k)
-				return;
-			if (((CSyncPlayerDlg *)theApp.m_pMainWnd)->vecFrameTime[1][k]->bIFrame)
-				_tcscpy_s(((CSyncPlayerDlg *)theApp.m_pMainWnd)->vecFrameTime[1][k]->szTextIFrame, 16, _T("true"));
-			pItem->pszText = ((CSyncPlayerDlg *)theApp.m_pMainWnd)->vecFrameTime[1][k]->szTextIFrame;
+			_stprintf_s(pItem->pszText, pItem->cchTextMax, _T("%d"), ((CSyncPlayerDlg *)theApp.m_pMainWnd)->vecFrameTime[0][k]->nFrameSize);
 		}
 
 		break;
-		case 4:
-		{
-			if (((CSyncPlayerDlg *)theApp.m_pMainWnd)->vecFrameTime[1].size() < k)
-				return;
-			
-			_stprintf_s(((CSyncPlayerDlg *)theApp.m_pMainWnd)->vecFrameTime[1][k]->szTextFrameTime, 32, _T("%I64d"), ((CSyncPlayerDlg *)theApp.m_pMainWnd)->vecFrameTime[1][k]->tFrameTime);
-			pItem->pszText = ((CSyncPlayerDlg *)theApp.m_pMainWnd)->vecFrameTime[1][k]->szTextFrameTime;
-		}
-		break;
+
 		default:
 			break;
 		}
@@ -106,9 +93,9 @@ BOOL CFrameView::OnInitDialog()
 	m_ctlFrameList.InsertColumn(nCols++, _T("序号"), LVCFMT_LEFT, 60);
 	m_ctlFrameList.InsertColumn(nCols++, _T("帧1"), LVCFMT_LEFT, 120);
 	m_ctlFrameList.InsertColumn(nCols++, _T("帧1时间"), LVCFMT_LEFT, 120);
-	m_ctlFrameList.InsertColumn(nCols++, _T("帧2"), LVCFMT_LEFT, 120);
-	m_ctlFrameList.InsertColumn(nCols++, _T("帧2时间"), LVCFMT_LEFT, 120);
-	m_ctlFrameList.InsertColumn(nCols++, _T("时间差"), LVCFMT_LEFT, 120);
+	m_ctlFrameList.InsertColumn(nCols++, _T("帧长"), LVCFMT_LEFT, 120);
+// 	m_ctlFrameList.InsertColumn(nCols++, _T("帧2时间"), LVCFMT_LEFT, 120);
+// 	m_ctlFrameList.InsertColumn(nCols++, _T("时间差"), LVCFMT_LEFT, 120);
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
 }

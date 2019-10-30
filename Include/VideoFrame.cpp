@@ -1,20 +1,16 @@
 // VideoFrame.cpp : implementation file
 //
 
-#include "stdafx.h"
+//#include "stdafx.h"
 #include "VideoFrame.h"
 #include <algorithm>
-// #include "..\MgMonitor\MgMonitorDlg.h"
-// #include "..\MgMonitor\Resource.h"
-//#include "..\MgMonitor\Redraw.h"
-//#include "..\interface\CImgButton.h"
 
 // CVideoFrame
 
 IMPLEMENT_DYNAMIC(CVideoFrame, CWnd)
 
 map<HWND, HWND>CVideoFrame::m_PanelMap;
-CCriticalSectionProxyPtr CVideoFrame::m_csPannelMap = make_shared<CCriticalSectionAgent>();
+CCriticalSectionProxyPtr CVideoFrame::m_csPannelMap = make_shared<CCriticalSectionProxy>();
 CVideoFrame *CVideoFrame::m_pCurrentFrame = nullptr;
 
 //int PanelInfo::nPanelCount = 0;
@@ -46,13 +42,13 @@ CVideoFrame::CVideoFrame()
 	m_pLastSelectRect =  nullptr;
 	m_nCurPanel = -1;
 	m_nFrameStyle = StyleNormal;
-	m_csvecPanel = make_shared<CCriticalSectionAgent>();
-	m_cslistRecyclePanel = make_shared<CCriticalSectionAgent>();
+	m_csvecPanel = make_shared<CCriticalSectionProxy>();
+	m_cslistRecyclePanel = make_shared<CCriticalSectionProxy>();
 }
 
 CVideoFrame::~CVideoFrame()
 {
-	TraceMsgW(L"%s\n", _UnicodeString(__FUNCTION__,CP_ACP));
+	TraceMsgW(L"~%s\n", _UnicodeString(__FUNCTION__,CP_ACP));
 
 	m_vecPanel.clear();
 
@@ -663,6 +659,7 @@ BOOL CVideoFrame::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 
 BOOL CVideoFrame::PreTranslateMessage(MSG* pMsg)
 {
+	TraceMsg(_T("%s.\n"), __FUNCTIONW__);
 	static CHAR* szMouseMessage[] = {
 							"WM_MOUSEMOVE",                  //  0x0200
 							"WM_LBUTTONDOWN",                //  0x0201
@@ -674,7 +671,6 @@ BOOL CVideoFrame::PreTranslateMessage(MSG* pMsg)
 							"WM_MBUTTONDOWN",                //  0x0207
 							"WM_MBUTTONUP",                  //  0x0208
 							"WM_MBUTTONDBLCLK"				//  0x0209
-							"WM_WM_MOUSEHWHEEL"
 							};
 	static CHAR* szFrameMessage[] = {
 		"WM_FRAME_FRAME_MOUSEMOVE",            //  0x0200
@@ -687,39 +683,11 @@ BOOL CVideoFrame::PreTranslateMessage(MSG* pMsg)
 		"WM_FRAME_MBUTTONDOWN",                //  0x0207
 		"WM_FRAME_MBUTTONUP",                  //  0x0208
 		"WM_FRAME_MBUTTONDBLCLK"				//  0x0209
-		"WM_FRAME_MOUSEWHEEL"
 	
 	};
-
-	
-
-
-
-	if (pMsg->message == WM_FRAME_MOUSEWHEEL)
-	{
-		HWND hParentWnd = GetParent()->GetSafeHwnd();
-		if (hParentWnd)
-		{	//	::SendMessage(hParentWnd, WM_FRAME_MOUSEWHEEL, pMsg->wParam, pMsg->lParam); // delete 2018-07-16 zjf
-			//::SendMessage(hParentWnd, WM_FRAME_MOUSEWHEEL, GET_WHEEL_DELTA_WPARAM(pMsg->wParam), pMsg->lParam);
-			//short zDelta = (short)HIDWORD(pMsg->wParam);
-			//TraceMsgW(L"WM_FRAME_MOUSEWHEEL=%hd\n",zDelta);
-
-			short zDelta = (short)GET_WHEEL_DELTA_WPARAM(pMsg->wParam);
-			TraceMsgW(L"WM_FRAME_MOUSEWHEEL=%hd\n", zDelta);
-
-
-			::SendMessage(hParentWnd, WM_FRAME_MOUSEWHEEL, pMsg->wParam, pMsg->lParam);
-			
-		}
-		return TRUE;
-	}
-	else
-
 	switch (pMsg->message)
 	{
-	
-
-    	case WM_LBUTTONDOWN:                  //0x0201
+		case WM_LBUTTONDOWN:                  //0x0201
 		case WM_LBUTTONUP:                    //0x0202
 		case WM_LBUTTONDBLCLK:                //0x0203£¬Ë«»÷ÊÂ¼þ
 		case WM_RBUTTONDOWN:                  //0x0204
@@ -734,17 +702,17 @@ BOOL CVideoFrame::PreTranslateMessage(MSG* pMsg)
 			pt.y = GET_Y_LPARAM(pMsg->lParam);
 			POINT ptClient = pMsg->pt;
 			ScreenToClient(&ptClient);
-// 			TraceMsgA("%s Message %s Panel_point(%d,%d),Screen_point(%d,%d),Frame_point(%d,%d)\n", 
-// 						__FUNCTION__, 
-// 						szMouseMessage[pMsg->message - WM_MOUSEMOVE], 
-// 						pt.x, pt.y, 
-// 						pMsg->pt.x, pMsg->pt.y, 
-// 						ptClient.x, ptClient.y);
+			TraceMsgA("%s Message %s Panel_point(%d,%d),Screen_point(%d,%d),Frame_point(%d,%d)\n", 
+						__FUNCTION__, 
+						szMouseMessage[pMsg->message - WM_MOUSEMOVE], 
+						pt.x, pt.y, 
+						pMsg->pt.x, pMsg->pt.y, 
+						ptClient.x, ptClient.y);
 			auto it = find_if(m_vecPanel.begin(), m_vecPanel.end(), PanelFinder(ptClient));
 			if (it != m_vecPanel.end())
 			{
 				m_nCurPanel = it - m_vecPanel.begin();
-				TraceMsgA("%s m_nCurPanel = %d.\n",__FUNCTION__, m_nCurPanel);
+				//TraceMsgA("%s m_nCurPanel = %d.\n",__FUNCTION__, m_nCurPanel);
 				if (!m_pCurSelectRect)
 				{
 					m_pLastSelectRect = nullptr;
@@ -792,17 +760,17 @@ BOOL CVideoFrame::PreTranslateMessage(MSG* pMsg)
 			pt.y = GET_Y_LPARAM(pMsg->lParam);
 			POINT ptClient = pMsg->pt;
 			ScreenToClient(&ptClient);
-// 			TraceMsgA("%s Message %s Panel_point(%d,%d),Screen_point(%d,%d),Frame_point(%d,%d)\n",
-// 					__FUNCTION__,
-// 					szMouseMessage[pMsg->message - WM_MOUSEMOVE],
-// 					pt.x, pt.y,
-// 					pMsg->pt.x, pMsg->pt.y,
-// 					ptClient.x, ptClient.y);
+			TraceMsgA("%s Message %s Panel_point(%d,%d),Screen_point(%d,%d),Frame_point(%d,%d)\n",
+					__FUNCTION__,
+					szMouseMessage[pMsg->message - WM_MOUSEMOVE],
+					pt.x, pt.y,
+					pMsg->pt.x, pMsg->pt.y,
+					ptClient.x, ptClient.y);
 			auto it = find_if(m_vecPanel.begin(), m_vecPanel.end(), PanelFinder(ptClient));
 			if (it != m_vecPanel.end())
 			{
 				m_nCurPanel = it - m_vecPanel.begin();
-				TraceMsgA("%s m_nCurPanel = %d.\n", __FUNCTION__,m_nCurPanel);
+				//TraceMsgA("%s m_nCurPanel = %d.\n", __FUNCTION__,m_nCurPanel);
 				if (!m_pCurSelectRect)
 				{
 					m_pLastSelectRect = nullptr;
@@ -843,8 +811,6 @@ BOOL CVideoFrame::PreTranslateMessage(MSG* pMsg)
 		
 		case WM_MOUSEMOVE:
 		{
-
-
 			POINT pt;
 			pt.x = GET_X_LPARAM(pMsg->lParam);
 			pt.y = GET_Y_LPARAM(pMsg->lParam);
@@ -954,7 +920,7 @@ bool CVideoFrame::ZoomPanel(int nIndex, bool bFlag)
 			else
 				return false;
 		}
-		else if (AdjustPanels(m_nPanelCountSaved, m_nStyleSaved))
+		if (AdjustPanels(m_nPanelCountSaved, m_nStyleSaved))
 		{
 			m_nPanelCountSaved = 0;
 			m_nStyleSaved = FrameStyle::StyleNormal;

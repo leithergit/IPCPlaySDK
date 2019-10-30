@@ -17,7 +17,7 @@ public:
 	IPC_PLAYHANDLE  m_hPlayer = nullptr;
 	HWND m_hWndView = nullptr;
 	RECT m_rtBorder;
-	protected:
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV Ö§³Ö
 
 

@@ -51,8 +51,6 @@ BOOL CIPCPlayDemoApp::InitInstance()
 	InitCommonControlsEx(&InitCtrls);
 
 	CWinApp::InitInstance();
-	DVO2_NET_Init(true);
-
 	AfxEnableControlContainer();
 
 	// 创建 shell 管理器，以防对话框包含
@@ -105,7 +103,5 @@ BOOL CIPCPlayDemoApp::InitInstance()
 
 int CIPCPlayDemoApp::ExitInstance()
 {
-	DVO2_NET_Release();
-
 	return CWinApp::ExitInstance();
 }

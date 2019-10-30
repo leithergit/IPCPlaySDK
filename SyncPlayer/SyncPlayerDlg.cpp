@@ -457,11 +457,11 @@ UINT CSyncPlayerDlg::ReadFileRun(UINT nIndex)
 							nFrameInterval = 1000 / pFrame->nFrameRate;
 						else
 							nFrameInterval = 40;
-// 						if (pFrame->nSubType == DH_FRAME_TYPE_VIDEO_I_FRAME)
-// 						{
-// 							tFrameTimeStamp = tTimeStamp1st;
-// 							bKeyFrame = true;
-// 						}
+						if (pFrame->nSubType == DH_FRAME_TYPE_VIDEO_I_FRAME)
+						{
+							tFrameTimeStamp = tTimeStamp1st;
+							bKeyFrame = true;
+						}
 // 							
 // 						else
 						tTimeStamp1st += nFrameInterval;
@@ -471,10 +471,10 @@ UINT CSyncPlayerDlg::ReadFileRun(UINT nIndex)
 						if (nIndex != 0)
 						{
 							if ((tFirstFrameTime != 0) && (tTimeStamp1st >= tFirstFrameTime))
-								vecFrameTime[nIndex].push_back(make_shared<FrameTime>(tTimeStamp1st, bKeyFrame));
+								vecFrameTime[nIndex].push_back(make_shared<FrameTime>(tTimeStamp1st,pFrame->nLength, bKeyFrame));
 						}
 						else
-							vecFrameTime[nIndex].push_back(make_shared<FrameTime>(tTimeStamp1st, bKeyFrame));
+							vecFrameTime[nIndex].push_back(make_shared<FrameTime>(tTimeStamp1st,pFrame->nLength, bKeyFrame));
 							
 						if (bKeyFrame && m_pFrameView)
 						{

@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include <stdio.h>
 #include "CriticalSectionProxy.h"
+#include <MMSystem.h>
 #ifdef Release_D
 #undef assert
 #define assert	((void)0)

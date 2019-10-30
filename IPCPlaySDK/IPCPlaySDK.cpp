@@ -1767,12 +1767,12 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return nResult;
 }
 
- int ipcplay_SetSwitcherCallBack(IPC_PLAYHANDLE hPlayHandle, WORD nScreenWnd, void *pVideoSwitchCB, void *pUserPtr)
+ int ipcplay_SetSwitcherCallBack(IPC_PLAYHANDLE hPlayHandle, WORD nScreenWnd,HWND hWnd, void *pVideoSwitchCB, void *pUserPtr)
  {
 	 if (!hPlayHandle)
 		 return IPC_Error_InvalidParameters;
 	 CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
 	 if (pPlayer->nSize != sizeof(CIPCPlayer))
 		 return IPC_Error_InvalidParameters;
-	 return pPlayer->SetSwitcherCallBack(nScreenWnd, pVideoSwitchCB, pUserPtr);
+	 return pPlayer->SetSwitcherCallBack(nScreenWnd,hWnd, pVideoSwitchCB, pUserPtr);
  }
