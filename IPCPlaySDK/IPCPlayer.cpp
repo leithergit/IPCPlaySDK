@@ -1155,13 +1155,13 @@ int CIPCPlayer::SetSwitcherCallBack(WORD nScreenWnd, HWND hWnd,void *pVideoSwitc
 		pSwitcherListAgent->cs.Lock();
 		pSwitcherListAgent->list.push_back(make_shared<CSwitcherInfo>(hWnd, this, pVideoSwitchCB, pUserPtr));
 		pSwitcherListAgent->cs.Unlock();
-		m_csMapSwitcher.Lock();
+		//m_csMapSwitcher.Lock();
 		auto itFind = m_MapSwitcher.find(nScreenWnd);
 		if (itFind == m_MapSwitcher.end())
 		{
 			m_MapSwitcher.insert(pair<WORD,SwitcherPtrListAgent*>(nScreenWnd, pSwitcherListAgent));
 		}
-		m_csMapSwitcher.Unlock();
+		//m_csMapSwitcher.Unlock();
 
 		return IPC_Succeed;
 	}
@@ -1684,7 +1684,7 @@ bool CIPCPlayer::StopPlay(DWORD nTimeout)
 	if (!m_pSyncPlayer)
 		SetEvent(m_hRenderAsyncEvent);
 
-	m_csMapSwitcher.Lock();
+	//m_csMapSwitcher.Lock();
 	for (auto it = m_MapSwitcher.begin(); it != m_MapSwitcher.end();it ++)
 	{
 		it->second->cs.Lock();
@@ -1699,7 +1699,7 @@ bool CIPCPlayer::StopPlay(DWORD nTimeout)
 		}
 		it->second->cs.Unlock();
 	}
-	m_csMapSwitcher.Unlock();
+	//m_csMapSwitcher.Unlock();
 	if (m_bEnableAudio)
 	{
 		EnableAudio(false);
@@ -5514,7 +5514,7 @@ void CIPCPlayer::EnableReversePlay(bool bFlag)
 
 void CIPCPlayer::ProcessSwitchEvent()
 {
-	m_csMapSwitcher.Lock();
+	//m_csMapSwitcher.Lock();
 	for (auto it = m_MapSwitcher.begin(); it != m_MapSwitcher.end(); it++)
 	{
 		it->second->cs.Lock();
@@ -5524,5 +5524,5 @@ void CIPCPlayer::ProcessSwitchEvent()
 		}
 		it->second->cs.Unlock();
 	}
-	m_csMapSwitcher.Unlock();
+	//m_csMapSwitcher.Unlock();
 }

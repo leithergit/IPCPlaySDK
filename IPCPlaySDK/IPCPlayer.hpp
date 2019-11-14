@@ -593,13 +593,11 @@ private:
 			if (m_pDxSurface)
 			{
 				m_pDxSurface->Render(pAvFrame, m_nRocateAngle);
+				// 准备发送视频替换通知
+				ProcessSwitchEvent();
 				Autolock(&m_cslistRenderWnd);
 				if (m_listRenderWnd.size() <= 0)
-					return;
-				// 准备发送视频替换通知				
-				ProcessSwitchEvent();
-				if (m_listRenderWnd.size() <= 0)
-					return;
+					return;				
 				for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
 				{
 					if ((*it)->pRtBorder)
@@ -743,9 +741,8 @@ private:
 				{
 					CopyRect(&rtBorder, m_pBorderRect.get());
 					m_pDxSurface->Render(pAvFrame,m_nRocateAngle);
-					Autolock(&m_cslistRenderWnd);
-					//m_pDxSurface->Present(m_hRenderWnd, &rtBorder, &rtRender);
 					ProcessSwitchEvent();
+					Autolock(&m_cslistRenderWnd);
 					if (m_listRenderWnd.size() > 0)
 					{
 						for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
@@ -755,9 +752,10 @@ private:
 				else
 				{
 					m_pDxSurface->Render(pAvFrame, m_nRocateAngle);
+					ProcessSwitchEvent();
 					Autolock(&m_cslistRenderWnd);
 					//m_pDxSurface->Present(m_hRenderWnd, nullptr, &rtRender);
-					ProcessSwitchEvent();
+					
 					if (m_listRenderWnd.size() > 0)
 					{
 						for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
