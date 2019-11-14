@@ -1,0 +1,14 @@
+prefix=/d/Git/IPCPlaySDK.git/ffmpeg/static.20190821/debug
+exec_prefix=${prefix}
+libdir=/d/Git/IPCPlaySDK.git/ffmpeg/static.20190821/debug/lib
+includedir=/d/Git/IPCPlaySDK.git/ffmpeg/static.20190821/debug/include
+
+Name: libswscale
+Description: FFmpeg image rescaling library
+Version: 5.4.100
+Requires: libavutil >= 56.26.100
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lswscale 
+Libs.private: 
+Cflags: -I${includedir}

@@ -1,0 +1,14 @@
+prefix=/d/Git/IPCPlaySDK.git/ffmpeg/static.20190821/release
+exec_prefix=${prefix}
+libdir=/d/Git/IPCPlaySDK.git/ffmpeg/static.20190821/release/lib
+includedir=/d/Git/IPCPlaySDK.git/ffmpeg/static.20190821/release/include
+
+Name: libswresample
+Description: FFmpeg audio resampling library
+Version: 3.4.100
+Requires: libavutil >= 56.26.100
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lswresample 
+Libs.private: 
+Cflags: -I${includedir}

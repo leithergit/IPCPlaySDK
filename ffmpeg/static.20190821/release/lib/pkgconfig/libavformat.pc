@@ -1,0 +1,14 @@
+prefix=/d/Git/IPCPlaySDK.git/ffmpeg/static.20190821/release
+exec_prefix=${prefix}
+libdir=/d/Git/IPCPlaySDK.git/ffmpeg/static.20190821/release/lib
+includedir=/d/Git/IPCPlaySDK.git/ffmpeg/static.20190821/release/include
+
+Name: libavformat
+Description: FFmpeg container format library
+Version: 58.26.101
+Requires: libavcodec >= 58.47.102, libavutil >= 56.26.100
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavformat ws2_32.lib
+Libs.private: 
+Cflags: -I${includedir}

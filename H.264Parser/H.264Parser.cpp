@@ -28,7 +28,7 @@ byte *pFileBuffer = new byte[256 * 1024];
 int	  nBufferSize = 256 * 1024;
 int	  nDataLength = 0;
 int KMP_StrFind(BYTE *szSource, int nSourceLength, BYTE *szKey, int nKeyLength);
-
+bool h264_decode_sps(BYTE * buf, unsigned int nLen, int &width, int &height, int &fps);
 
 /*
 * h264_sps_parser.h
@@ -94,15 +94,14 @@ static const uint8_t ff_zigzag_scan[16 + 1] = {
 	1 + 2 * 4, 0 + 3 * 4, 1 + 3 * 4, 2 + 2 * 4,
 	3 + 1 * 4, 3 + 2 * 4, 2 + 3 * 4, 3 + 3 * 4,
 };
-typedef struct
+struct nal_bitstream
 {
 	const uint8_t *data;
 	const uint8_t *end;
 	int head;
 	uint64_t cache;
-} nal_bitstream;
-static void
-nal_bs_init(nal_bitstream *bs, const uint8_t *data, size_t size)
+} ;
+static void nal_bs_init(nal_bitstream *bs, const uint8_t *data, size_t size)
 {
 	bs->data = data;
 	bs->end = data + size;
@@ -111,8 +110,7 @@ nal_bs_init(nal_bitstream *bs, const uint8_t *data, size_t size)
 	//  emulation prevention bytes
 	bs->cache = 0xffffffff;
 }
-static uint64_t
-nal_bs_read(nal_bitstream *bs, int n)
+static uint64_t nal_bs_read(nal_bitstream *bs, int n)
 {
 	uint64_t res = 0;
 	int shift;
@@ -159,14 +157,12 @@ nal_bs_read(nal_bitstream *bs, int n)
 
 	return res;
 }
-static bool
-nal_bs_eos(nal_bitstream *bs)
+static bool nal_bs_eos(nal_bitstream *bs)
 {
 	return (bs->data >= bs->end) && (bs->head == 0);
 }
 // read unsigned Exp-Golomb code
-static int64_t
-nal_bs_read_ue(nal_bitstream *bs)
+static int64_t nal_bs_read_ue(nal_bitstream *bs)
 {
 	int i = 0;
 
@@ -176,8 +172,7 @@ nal_bs_read_ue(nal_bitstream *bs)
 	return ((1 << i) - 1 + nal_bs_read(bs, i));
 }
 //解码有符号的指数哥伦布编码
-static int64_t
-nal_bs_read_se(nal_bitstream *bs)
+static int64_t nal_bs_read_se(nal_bitstream *bs)
 {
 	int64_t ueVal = nal_bs_read_ue(bs);
 	double k = ueVal;
@@ -188,7 +183,7 @@ nal_bs_read_se(nal_bitstream *bs)
 	}
 	return nValue;
 }
-typedef struct
+struct sps_info_struct
 {
 	uint64_t profile_idc;
 	uint64_t level_idc;
@@ -220,7 +215,7 @@ typedef struct
 	uint64_t frame_crop_right_offset;
 	uint64_t frame_crop_top_offset;
 	uint64_t frame_crop_bottom_offset;
-} sps_info_struct;
+} ;
 static void decode_scaling_list(nal_bitstream *bs, uint8_t *factors, int size,
 	const uint8_t *jvt_list,
 	const uint8_t *fallback_list)
@@ -272,7 +267,7 @@ static void decode_scaling_matrices(nal_bitstream *bs, sps_info_struct *sps,
 		}
 	}
 }
-static void parseh264_sps(sps_info_struct* sps_info, uint8_t* sps_data, uint32_t sps_size)
+static void Parserh264_sps(sps_info_struct* sps_info, uint8_t* sps_data, uint32_t sps_size)
 {
 	if (sps_info == NULL)
 		return;
@@ -361,14 +356,47 @@ static void parseh264_sps(sps_info_struct* sps_info, uint8_t* sps_data, uint32_t
 		sps_info->frame_crop_bottom_offset = nal_bs_read_ue(&bs);
 	}
 }
-static void get_resolution_from_sps(uint8_t* sps, uint32_t sps_size, uint32_t* width, uint32_t* height)
+static void get_resolution_from_sps(uint8_t* sps, uint32_t sps_size, uint32_t* width, uint32_t* height/*,uint32_t *fps*/)
 {
 	sps_info_struct sps_info = { 0 };
 
-	parseh264_sps(&sps_info, sps, sps_size);
+	Parserh264_sps(&sps_info, sps, sps_size);
 
-	*width = (sps_info.pic_width_in_mbs_minus1 + 1) * 16 - sps_info.frame_crop_left_offset * 2 - sps_info.frame_crop_right_offset * 2;
-	*height = ((2 - sps_info.frame_mbs_only_flag) * (sps_info.pic_height_in_map_units_minus1 + 1) * 16) - sps_info.frame_crop_top_offset * 2 - sps_info.frame_crop_bottom_offset * 2;
+	// 宽高计算公式
+	*width = (sps_info.pic_width_in_mbs_minus1 + 1) * 16;
+	*height = (2 - sps_info.frame_mbs_only_flag)* (sps_info.pic_height_in_map_units_minus1 + 1) * 16;
+
+	if (sps_info.frame_cropping_flag)
+	{
+		unsigned int crop_unit_x;
+		unsigned int crop_unit_y;
+		if (0 == sps_info.chroma_format_idc) // monochrome
+		{
+			crop_unit_x = 1;
+			crop_unit_y = 2 - sps_info.frame_mbs_only_flag;
+		}
+		else if (1 == sps_info.chroma_format_idc) // 4:2:0
+		{
+			crop_unit_x = 2;
+			crop_unit_y = 2 * (2 - sps_info.frame_mbs_only_flag);
+		}
+		else if (2 == sps_info.chroma_format_idc) // 4:2:2
+		{
+			crop_unit_x = 2;
+			crop_unit_y = 2 - sps_info.frame_mbs_only_flag;
+		}
+		else // 3 == sps.chroma_format_idc   // 4:4:4
+		{
+			crop_unit_x = 1;
+			crop_unit_y = 2 - sps_info.frame_mbs_only_flag;
+		}
+
+		*width -= crop_unit_x * (sps_info.frame_crop_left_offset + sps_info.frame_crop_right_offset);
+		*height -= crop_unit_y * (sps_info.frame_crop_top_offset + sps_info.frame_crop_bottom_offset);
+	}
+
+// 	*width = (sps_info.pic_width_in_mbs_minus1 + 1) * 16 - sps_info.frame_crop_left_offset * 2 - sps_info.frame_crop_right_offset * 2;
+// 	*height = ((2 - sps_info.frame_mbs_only_flag) * (sps_info.pic_height_in_map_units_minus1 + 1) * 16) - sps_info.frame_crop_top_offset * 2 - sps_info.frame_crop_bottom_offset * 2;
 
 }
 
@@ -605,7 +633,8 @@ UINT __stdcall  split_frame_proc(void* arg)
 						memcpy(g_arg.dst + idx, g_arg.sps, g_arg.sps_len);
 						idx += g_arg.sps_len;
 						printf("sps len: %d\n", g_arg.sps_len);
-						uint32_t nWidth, nHeight;
+						uint32_t nWidth, nHeight,nfps;
+						//h264_decode_sps(g_arg.sps, g_arg.sps_len, nWidth, nHeight, nfps);
 						get_resolution_from_sps(g_arg.sps, g_arg.sps_len, &nWidth, &nHeight);
 						memcpy(g_arg.dst + idx, g_arg.pps, g_arg.pps_len);
 						idx += g_arg.pps_len;
@@ -712,6 +741,262 @@ int FrameCB(int stream, char *frame, unsigned long len, int key, double pts)
 		);
 	return 0;
 }
+char *szDestFile = nullptr;
+bool bThreadRun = false;
+HANDLE hThreadRun = nullptr;
+#include <time.h>
+
+struct DHFrame
+{
+	int 	nCodeType;
+	byte 	nFrameRate;
+	int 	nFrameSeq;
+	WORD 	nWidth;
+	WORD	nHeight;
+	time_t 	tTimeStamp;
+	int 	nFrameSize;
+	byte 	nExtNum;
+	bool	bKeyFrame;
+	WORD 	nExtType;
+	WORD 	nExtLen;
+	byte	nSecond;
+	byte 	nMinute;
+	byte 	nHour;
+	byte 	nDay;
+	byte 	nMonth;
+	WORD	nYear;
+	byte 	*pHeader;
+	byte	*pContent;
+	DHFrame()
+	{
+		ZeroMemory(this, sizeof(DHFrame));
+	}
+	~DHFrame()
+	{
+		if (pContent)
+		{
+			delete[]pContent;
+			pContent = nullptr;
+		}
+	}
+};
+
+#define _MaxBuffSize	(512*1024)
+
+class CDHStreamParser
+{
+	byte *pBuffer;
+	int		nBufferSize;
+	int		nDataLength;
+	CRITICAL_SECTION csBuffer;
+	int		nSequence;
+	time_t	tLastFrameTime;
+	int		nFrameInterval;
+	DHFrame* pSaveFrame;	// 上次解析未使用的帧
+	CDHStreamParser()
+	{
+	}
+public:
+	CDHStreamParser(byte *pData, int nDataLen)
+	{
+		ZeroMemory(this, sizeof(CDHStreamParser));
+		::InitializeCriticalSection(&csBuffer);
+		nBufferSize = 65535;
+		while (nBufferSize < nDataLength)
+			nBufferSize *= 2;
+		pBuffer = new byte[nBufferSize];
+		memcpy(pBuffer, pData, nDataLen);
+		nDataLength = nDataLen;
+		nFrameInterval = 40;
+	}
+	~CDHStreamParser()
+	{
+		::EnterCriticalSection(&csBuffer);
+		if (pBuffer)
+			delete[] pBuffer;
+		if (pSaveFrame)
+			delete pSaveFrame;
+		nDataLength = 0;
+		nBufferSize = 0;
+		pBuffer = nullptr;
+		::LeaveCriticalSection(&csBuffer);
+		::DeleteCriticalSection(&csBuffer);
+	}
+	// 存入临时帧
+	bool SaveFrame(DHFrame *pDHFrame)
+	{
+		if (pSaveFrame || !pDHFrame)
+			return false;
+		pSaveFrame = pDHFrame;
+		return true;
+	}
+	// 取出临时帧
+	DHFrame *GetSavedFrame()
+	{
+		if (!pSaveFrame)
+			return nullptr;
+		DHFrame *pTempFrame = pSaveFrame;
+		pSaveFrame = nullptr;
+		return pTempFrame;
+	}
+	int InputStream(byte *pData, int nInputLen)
+	{
+		if ((nDataLength + nInputLen) < nBufferSize)
+		{
+			memcpy_s(&pBuffer[nDataLength], nBufferSize - nDataLength, pData, nInputLen);
+			nDataLength += nInputLen;
+		}
+		else
+		{
+			if (nBufferSize * 2 > _MaxBuffSize)
+				return -11;
+			//MemMerge((char **)&pBuffer, nDataLength, nBufferSize, (char *)pData, nInputLen);
+			return 0;
+		}
+		return 0;
+	}
+	DHFrame *ParserFrame()
+	{
+		int nFrameSize = 0;
+		int nExtLen = 0;
+		static const byte 	szFlag[3] = { 0x00, 0x00, 0x01 };
+		static const byte 	I_FRAME_FLAG = 0xED;
+		static const byte 	P_FRAME_C_FLAG = 0xEC;
+		static const byte 	P_FRAME_A_FLAG = 0xEA;
+		int nOffset = KMP_StrFind(pBuffer, nDataLength, (byte *)szFlag, 3);
+		if (nOffset < 0)
+			return nullptr;
+		byte *pData = pBuffer + nOffset;
+		if (pData[3] != I_FRAME_FLAG &&
+			pData[3] != P_FRAME_A_FLAG &&
+			pData[3] != P_FRAME_C_FLAG)
+			return nullptr;
+
+
+		int extNum = pData[18];
+		unsigned char* extptr = pData + 16;
+		nExtLen = 0;
+		while (extNum > 0)
+		{
+			int exttype = extptr[0] | extptr[1] << 8;
+			int extlen = 4 + extptr[2] | extptr[3] << 8;//2字节类型，2字节长度
+			nExtLen += extlen;
+			if (nDataLength < 20 + nExtLen)
+				return nullptr;
+			extptr += extlen;
+			extNum--;
+		}
+		// pFrame->nFrameSize = pData[23] << 24 | pData[22] << 16 | pData[21] << 8 | pData[20];
+		nFrameSize = pData[23] << 24 | pData[22] << 16 | pData[21] << 8 | pData[20];
+		//pFrame->nFrameSize = pFrame->nFrameSize + 24 + pFrame->nExtLen;
+		if (nDataLength < (nFrameSize + 24))
+			return nullptr;
+
+		DHFrame *pFrame = new DHFrame;
+		if (!pFrame)
+			return nullptr;
+		pFrame->nFrameSize = nFrameSize;
+		pFrame->nExtLen = nExtLen;
+
+#ifndef _DEBUG
+		pFrame->pContent = new byte[pFrame->nFrameSize];
+#else
+		pFrame->pContent = new byte[pFrame->nFrameSize + 24];
+#endif
+		if (!pFrame->pContent)
+		{
+			delete pFrame;
+			return nullptr;
+		}
+
+		pFrame->nCodeType = pData[4];
+		pFrame->nFrameRate = pData[6];
+		pFrame->nFrameSeq = nSequence++;
+		pFrame->nWidth = pData[8] | pData[9] << 8;
+		pFrame->nHeight = pData[10] | pData[11] << 8;
+		long nDT = pData[12] | pData[13] << 8 | pData[14] << 16 | pData[15] << 24;
+		pFrame->nSecond = nDT & 0x3f;
+		pFrame->nMinute = (nDT >> 6) & 0x3f;
+		pFrame->nHour = (nDT >> 12) & 0x1f;
+		pFrame->nDay = (nDT >> 17) & 0x1f;
+		pFrame->nMonth = (nDT >> 22) & 0x1f;
+		pFrame->nYear = 2000 + (nDT >> 26);
+
+		tm tmp_time;
+		tmp_time.tm_hour = pFrame->nHour;
+		tmp_time.tm_min = pFrame->nMinute;
+		tmp_time.tm_sec = pFrame->nSecond;
+		tmp_time.tm_mday = pFrame->nDay;
+		tmp_time.tm_mon = pFrame->nMonth - 1;
+		tmp_time.tm_year = pFrame->nYear - 1900;
+		pFrame->tTimeStamp = mktime(&tmp_time);
+		if (pFrame->nFrameRate)
+			nFrameInterval = 1000 / pFrame->nFrameRate;
+		else
+			nFrameInterval = 40;
+
+		// 以I帧为基准，重新规整每一帧的播放时间
+		if (pData[3] == I_FRAME_FLAG)
+		{
+			pFrame->bKeyFrame = true;
+			tLastFrameTime = pFrame->tTimeStamp * 1000;
+		}
+		else
+		{
+			tLastFrameTime += 40;
+		}
+
+		pFrame->tTimeStamp = tLastFrameTime;
+
+#ifdef _DEBUG
+		ZeroMemory(pFrame->pContent, pFrame->nFrameSize + 16);
+#endif
+		memcpy_s(pFrame->pContent, pFrame->nFrameSize + 24, pData, pFrame->nFrameSize + 24);
+		memmove(pBuffer, pData + pFrame->nFrameSize, nDataLength - (pFrame->nFrameSize + 24));
+		ZeroMemory(&pBuffer[nDataLength], nBufferSize - nDataLength);
+		nDataLength -= (pFrame->nFrameSize + 24);
+		return pFrame;
+	}
+};
+UINT __stdcall DHFileParserRun(void *)
+{
+	byte	*pBuffer = new byte[256 * 1024];
+	UINT	nBufferSize = 256 * 1024;
+	DWORD	nDataLen = 0;
+	FILE	*fp = nullptr;
+	fp = fopen(szDestFile, "rb");
+	if (!fp)
+	{
+		printf("Failed in Open file %s.", szDestFile);
+		return 1;
+	}
+	int nResult = fread(pBuffer, nBufferSize, 1, fp);
+	CDHStreamParser parser(pBuffer, nBufferSize);
+	DHFrame *pDHFrame = nullptr;
+	while (bThreadRun)
+	{
+		pDHFrame = parser.ParserFrame();
+		while (pDHFrame)
+		{
+			pDHFrame = parser.ParserFrame();
+
+		}
+
+		int nResult = fread(pBuffer, nBufferSize, 1, fp);
+		if (nResult)
+			parser.InputStream(pBuffer, nBufferSize);
+		else
+			break;
+	}
+	if (pDHFrame)
+		delete pDHFrame;
+	if (pBuffer)
+		delete[]pBuffer;
+	if (fp)
+		fclose(fp);
+	return 0;
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	if (argc < 2)
@@ -724,9 +1009,10 @@ int _tmain(int argc, _TCHAR* argv[])
 		printf("Can't find file %s.\r\n", argv[1]);
 		return 2;
 	}
+	szDestFile = argv[1];
 	split_frame_init(argv[1], FrameCB);
 	system("pause");
-	split_frame_exit();
+	//split_frame_exit();
 	
 	return 0;
 }
@@ -800,4 +1086,244 @@ int KMP_StrFind(BYTE *szSource, int nSourceLength, BYTE *szKey, int nKeyLength)
 	}
 	else
 		return -1;
+}
+
+
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include <math.h>
+
+typedef  unsigned int UINT;
+typedef  unsigned char BYTE;
+typedef  unsigned long DWORD;
+
+UINT Ue(BYTE *pBuff, UINT nLen, UINT &nStartBit)
+{
+	//计算0bit的个数
+	UINT nZeroNum = 0;
+	while (nStartBit < nLen * 8)
+	{
+		if (pBuff[nStartBit / 8] & (0x80 >> (nStartBit % 8))) //&:按位与，%取余
+		{
+			break;
+		}
+		nZeroNum++;
+		nStartBit++;
+	}
+	nStartBit++;
+
+
+	//计算结果
+	DWORD dwRet = 0;
+	for (UINT i = 0; i<nZeroNum; i++)
+	{
+		dwRet <<= 1;
+		if (pBuff[nStartBit / 8] & (0x80 >> (nStartBit % 8)))
+		{
+			dwRet += 1;
+		}
+		nStartBit++;
+	}
+	return (1 << nZeroNum) - 1 + dwRet;
+}
+
+
+int Se(BYTE *pBuff, UINT nLen, UINT &nStartBit)
+{
+	int UeVal = Ue(pBuff, nLen, nStartBit);
+	double k = UeVal;
+	int nValue = ceil(k / 2);//ceil函数：ceil函数的作用是求不小于给定实数的最小整数。ceil(2)=ceil(1.2)=cei(1.5)=2.00
+	if (UeVal % 2 == 0)
+		nValue = -nValue;
+	return nValue;
+}
+
+
+DWORD u(UINT BitCount, BYTE * buf, UINT &nStartBit)
+{
+	DWORD dwRet = 0;
+	for (UINT i = 0; i<BitCount; i++)
+	{
+		dwRet <<= 1;
+		if (buf[nStartBit / 8] & (0x80 >> (nStartBit % 8)))
+		{
+			dwRet += 1;
+		}
+		nStartBit++;
+	}
+	return dwRet;
+}
+
+/**
+* H264的NAL起始码防竞争机制
+*
+* @param buf SPS数据内容
+*
+* @无返回值
+*/
+void de_emulation_prevention(BYTE* buf, unsigned int* buf_size)
+{
+	int i = 0, j = 0;
+	BYTE* tmp_ptr = NULL;
+	unsigned int tmp_buf_size = 0;
+	int val = 0;
+
+	tmp_ptr = buf;
+	tmp_buf_size = *buf_size;
+	for (i = 0; i<(tmp_buf_size - 2); i++)
+	{
+		//check for 0x000003
+		val = (tmp_ptr[i] ^ 0x00) + (tmp_ptr[i + 1] ^ 0x00) + (tmp_ptr[i + 2] ^ 0x03);
+		if (val == 0)
+		{
+			//kick out 0x03
+			for (j = i + 2; j<tmp_buf_size - 1; j++)
+				tmp_ptr[j] = tmp_ptr[j + 1];
+
+			//and so we should devrease bufsize
+			(*buf_size)--;
+		}
+	}
+}
+
+/**
+* 解码SPS,获取视频图像宽、高和帧率信息
+*
+* @param buf SPS数据内容
+* @param nLen SPS数据的长度
+* @param width 图像宽度
+* @param height 图像高度
+* @成功则返回true , 失败则返回false
+*/
+bool h264_decode_sps(BYTE * buf, unsigned int nLen, int &width, int &height, int &fps)
+{
+	UINT StartBit = 0;
+	fps = 0;
+	de_emulation_prevention(buf, &nLen);
+
+	int forbidden_zero_bit = u(1, buf, StartBit);
+	int nal_ref_idc = u(2, buf, StartBit);
+	int nal_unit_type = u(5, buf, StartBit);
+	if (nal_unit_type == 7)
+	{
+		int profile_idc = u(8, buf, StartBit);
+		int constraint_set0_flag = u(1, buf, StartBit);//(buf[1] & 0x80)>>7;
+		int constraint_set1_flag = u(1, buf, StartBit);//(buf[1] & 0x40)>>6;
+		int constraint_set2_flag = u(1, buf, StartBit);//(buf[1] & 0x20)>>5;
+		int constraint_set3_flag = u(1, buf, StartBit);//(buf[1] & 0x10)>>4;
+		int reserved_zero_4bits = u(4, buf, StartBit);
+		int level_idc = u(8, buf, StartBit);
+
+		int seq_parameter_set_id = Ue(buf, nLen, StartBit);
+
+		if (profile_idc == 100 || profile_idc == 110 ||
+			profile_idc == 122 || profile_idc == 144)
+		{
+			int chroma_format_idc = Ue(buf, nLen, StartBit);
+			if (chroma_format_idc == 3)
+				int residual_colour_transform_flag = u(1, buf, StartBit);
+			int bit_depth_luma_minus8 = Ue(buf, nLen, StartBit);
+			int bit_depth_chroma_minus8 = Ue(buf, nLen, StartBit);
+			int qpprime_y_zero_transform_bypass_flag = u(1, buf, StartBit);
+			int seq_scaling_matrix_present_flag = u(1, buf, StartBit);
+
+			int seq_scaling_list_present_flag[8];
+			if (seq_scaling_matrix_present_flag)
+			{
+				for (int i = 0; i < 8; i++) {
+					seq_scaling_list_present_flag[i] = u(1, buf, StartBit);
+				}
+			}
+		}
+		int log2_max_frame_num_minus4 = Ue(buf, nLen, StartBit);
+		int pic_order_cnt_type = Ue(buf, nLen, StartBit);
+		if (pic_order_cnt_type == 0)
+			int log2_max_pic_order_cnt_lsb_minus4 = Ue(buf, nLen, StartBit);
+		else if (pic_order_cnt_type == 1)
+		{
+			int delta_pic_order_always_zero_flag = u(1, buf, StartBit);
+			int offset_for_non_ref_pic = Se(buf, nLen, StartBit);
+			int offset_for_top_to_bottom_field = Se(buf, nLen, StartBit);
+			int num_ref_frames_in_pic_order_cnt_cycle = Ue(buf, nLen, StartBit);
+
+			int *offset_for_ref_frame = new int[num_ref_frames_in_pic_order_cnt_cycle];
+			for (int i = 0; i < num_ref_frames_in_pic_order_cnt_cycle; i++)
+				offset_for_ref_frame[i] = Se(buf, nLen, StartBit);
+			delete[] offset_for_ref_frame;
+		}
+		int num_ref_frames = Ue(buf, nLen, StartBit);
+		int gaps_in_frame_num_value_allowed_flag = u(1, buf, StartBit);
+		int pic_width_in_mbs_minus1 = Ue(buf, nLen, StartBit);
+		int pic_height_in_map_units_minus1 = Ue(buf, nLen, StartBit);
+
+		width = (pic_width_in_mbs_minus1 + 1) * 16;
+		height = (pic_height_in_map_units_minus1 + 1) * 16;
+
+		int frame_mbs_only_flag = u(1, buf, StartBit);
+		if (!frame_mbs_only_flag)
+			int mb_adaptive_frame_field_flag = u(1, buf, StartBit);
+
+		int direct_8x8_inference_flag = u(1, buf, StartBit);
+		int frame_cropping_flag = u(1, buf, StartBit);
+		if (frame_cropping_flag)
+		{
+			int frame_crop_left_offset = Ue(buf, nLen, StartBit);
+			int frame_crop_right_offset = Ue(buf, nLen, StartBit);
+			int frame_crop_top_offset = Ue(buf, nLen, StartBit);
+			int frame_crop_bottom_offset = Ue(buf, nLen, StartBit);
+		}
+		int vui_parameter_present_flag = u(1, buf, StartBit);
+		if (vui_parameter_present_flag)
+		{
+			int aspect_ratio_info_present_flag = u(1, buf, StartBit);
+			if (aspect_ratio_info_present_flag)
+			{
+				int aspect_ratio_idc = u(8, buf, StartBit);
+				if (aspect_ratio_idc == 255)
+				{
+					int sar_width = u(16, buf, StartBit);
+					int sar_height = u(16, buf, StartBit);
+				}
+			}
+			int overscan_info_present_flag = u(1, buf, StartBit);
+			if (overscan_info_present_flag)
+				int overscan_appropriate_flagu = u(1, buf, StartBit);
+			int video_signal_type_present_flag = u(1, buf, StartBit);
+			if (video_signal_type_present_flag)
+			{
+				int video_format = u(3, buf, StartBit);
+				int video_full_range_flag = u(1, buf, StartBit);
+				int colour_description_present_flag = u(1, buf, StartBit);
+				if (colour_description_present_flag)
+				{
+					int colour_primaries = u(8, buf, StartBit);
+					int transfer_characteristics = u(8, buf, StartBit);
+					int matrix_coefficients = u(8, buf, StartBit);
+				}
+			}
+			int chroma_loc_info_present_flag = u(1, buf, StartBit);
+			if (chroma_loc_info_present_flag)
+			{
+				int chroma_sample_loc_type_top_field = Ue(buf, nLen, StartBit);
+				int chroma_sample_loc_type_bottom_field = Ue(buf, nLen, StartBit);
+			}
+			int timing_info_present_flag = u(1, buf, StartBit);
+
+			if (timing_info_present_flag)
+			{
+				int num_units_in_tick = u(32, buf, StartBit);
+				int time_scale = u(32, buf, StartBit);
+				fps = time_scale / num_units_in_tick;
+				int fixed_frame_rate_flag = u(1, buf, StartBit);
+				if (fixed_frame_rate_flag)
+				{
+					fps = fps / 2;
+				}
+			}
+		}
+		return true;
+	}
+	else
+		return false;
 }

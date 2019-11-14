@@ -1,0 +1,14 @@
+prefix=/d/Git/IPCPlaySDK.git/ffmpeg/static.20190821/release
+exec_prefix=${prefix}
+libdir=/d/Git/IPCPlaySDK.git/ffmpeg/static.20190821/release/lib
+includedir=/d/Git/IPCPlaySDK.git/ffmpeg/static.20190821/release/include
+
+Name: libavcodec
+Description: FFmpeg codec library
+Version: 58.47.102
+Requires: libavutil >= 56.26.100
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavcodec ole32.lib user32.lib
+Libs.private: 
+Cflags: -I${includedir}

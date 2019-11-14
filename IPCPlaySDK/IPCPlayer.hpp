@@ -191,6 +191,11 @@ struct StreamProbe
 struct  CItemStatus;
 typedef shared_ptr<CItemStatus> CItemStatusPtr;
 typedef list<CSwitcherInfoPtr> SwitcherPtrList;
+struct SwitcherPtrListAgent
+{
+	SwitcherPtrList list;
+	CCriticalSectionAgent cs;
+};
 struct  CItemStatus
 {
 	bool bUsed;
@@ -259,7 +264,8 @@ private:
 	list <RenderUnitPtr>	m_listRenderUnit;
 	list <RenderWndPtr>		m_listRenderWnd;	///< 多窗口显示同一视频图像
 	list<CAVFramePtr>		m_listAVFrame;		///<视频帧缓存，用于异步显示图像
-	map<WORD, SwitcherPtrList*> m_MapSwitcher;
+
+	map<WORD, SwitcherPtrListAgent*> m_MapSwitcher;
 private:
 		
 	CCriticalSectionAgent	m_cslistRenderWnd;
@@ -276,6 +282,7 @@ private:
 	CCriticalSectionAgent	m_csCaptureRGB;
 	CCriticalSectionAgent	m_cslistAVFrame;	// 异步渲染帧缓存锁
 	CCriticalSectionAgent	m_csTimebase;
+	CCriticalSectionAgent	m_csMapSwitcher;
 	//////////////////////////////////////////////////////////////////////////
 	/// 注意：所有CCriticalSectionProxy类的对象和模板类的对象都必须定义在m_nZeroOffset
 	/// 成员变量之前，否则可能会出访问错误
@@ -1522,6 +1529,7 @@ public:
 	
 	static UINT __stdcall ThreadDecode(void *p);
 	
+	static UINT __stdcall ThreadDecodeCache(void *p);
 	static UINT __stdcall ThreadPlayAudioGSJ(void *p);
 
 	static UINT __stdcall ThreadPlayAudioIPC(void *p);

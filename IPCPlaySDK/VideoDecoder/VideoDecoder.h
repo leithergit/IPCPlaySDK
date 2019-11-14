@@ -727,6 +727,7 @@ private:
 		m_pAVCodec = nullptr;
 		if (m_pAVCtx)
 		{
+			DxTraceMsg("%s Shutting down ffmpeg...\n", __FUNCTION__);
 			if (m_pAVCtx->hwaccel_context)
 			{
 				av_free(m_pAVCtx->hwaccel_context);
@@ -796,8 +797,11 @@ private:
 	int DestroyHisiliconDecoder()
 	{
 		if (m_hDecoder265)
+		{
+			DxTraceMsg("%s Shutting down HisiliconDecoder...\n", __FUNCTION__);
 			IHW265D_Delete(m_hDecoder265);
-		m_hDecoder265 = nullptr;
+			m_hDecoder265 = nullptr;
+		}
 		return 0;
 	}
 public:
@@ -899,7 +903,6 @@ public:
 	/// @brief Ïú»Ù½âÂëÆ÷
 	STDMETHODIMP DestroyDecoder()
 	{
-		DxTraceMsg("%s Shutting down ffmpeg...\n", __FUNCTION__);
 		if (m_nManufacturer == FFMPEG)
 			DestroyFFmpegDecoder();
 		else if (m_nManufacturer == HISILICON)

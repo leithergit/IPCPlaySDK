@@ -20,36 +20,6 @@
 ///
 #define _OuputLockTime
 #define _LockOverTime	100
-struct MYCRITICAL_SECTION :public CRITICAL_SECTION
-{
-	MYCRITICAL_SECTION()
-	{
-		ZeroMemory(this, sizeof(MYCRITICAL_SECTION));
-		InitializeCriticalSection(&cs);
-	}
-	~MYCRITICAL_SECTION()
-	{
-		DeleteCriticalSection(&cs);
-	}
-	DWORD	dwLockTime;
-	int		nLine;
-	CHAR	szFile[1024];
-	char	szFunction[256];
-	CRITICAL_SECTION cs;
-};
-void MyInitializeCriticalSection(MYCRITICAL_SECTION *);
-BOOL MyTryEnterCriticalSection(MYCRITICAL_SECTION *, const CHAR *szFile = nullptr,char *szFunction =  nullptr, int nLine = 0);
-void MyEnterCriticalSection(MYCRITICAL_SECTION *, const CHAR *szFile = nullptr, char *szFunction = nullptr, int nLine = 0);
-void MyLeaveCriticalSection(MYCRITICAL_SECTION *);
-void MyDeleteCriticalSection(MYCRITICAL_SECTION *);
-
-// #define _MyTryEnterCriticalSection(cs)	MyTryEnterCriticalSection(cs,__FILE__,__FUNCTION__,__LINE__)
-// #define _MyEnterCriticalSection(cs)		MyEnterCriticalSection(cs,__FILE__,__FUNCTION__,__LINE__)
-// #define _MyLeaveCriticalSection			MyLeaveCriticalSection
-
-#define _MyTryEnterCriticalSection		TryEnterCriticalSection
-#define _MyEnterCriticalSection			EnterCriticalSection
-#define _MyLeaveCriticalSection			LeaveCriticalSection
 
 #define Autolock(cs)	CAutoLock lock(cs,false,__FILE__,__FUNCTION__,__LINE__);
 #define Autolock1(cs)	CAutoLock lock1(cs,false,__FILE__,__FUNCTION__,__LINE__);
