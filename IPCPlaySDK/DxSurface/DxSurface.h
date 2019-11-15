@@ -3148,6 +3148,14 @@ public:
 				DxTraceMsg("%s CreateOffscreenPlainSurface Failed.\thr=%x.\n", __FUNCTION__, hr);
 				goto _Failed;
 			}
+#ifdef _DEBUG
+			if (m_pSurfaceRender)
+			{
+				D3DSURFACE_DESC desc;
+				m_pSurfaceRender->GetDesc(&desc);
+				DxTraceMsg("%s Surface Width = %d\tHeight = %d.\n", __FUNCTION__, desc.Width, desc.Height);
+			}
+#endif
 		}
 
 		hr = m_pDirect3DDeviceEx->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_ANISOTROPIC);
@@ -3539,7 +3547,6 @@ _Failed:
 					assert(Desc.Width == pAvFrame->width);
 					assert(Desc.Height == pAvFrame->height);
 				}
-				
 				
 				//SaveRunTime();
 				if ((pAvFrame->format == AV_PIX_FMT_YUV420P ||

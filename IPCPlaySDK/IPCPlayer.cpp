@@ -925,59 +925,72 @@ int CIPCPlayer::AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent
 	return IPC_Succeed;
 }
 
-void CIPCPlayer::TryEnableHAccelOnAdapter(CHAR* szAdapterID, int nBuffer)
+bool CIPCPlayer::TryEnableHAccelOnAdapter(CHAR* szAdapterID, int nBuffer)
 {
+	if (!szAdapterID || nBuffer < 40)
+		return false;
 	if (!g_pSharedMemory)
-		return;
+		return false;
+	// 取得窗口所在的显示器句柄
 	HMONITOR hMonitor = MonitorFromWindow(m_hRenderWnd, MONITOR_DEFAULTTONEAREST);
-	if (hMonitor)
+	if (!hMonitor)
+		return false;
+	
+	MONITORINFOEX mi;
+	mi.cbSize = sizeof(MONITORINFOEX);
+	if (!GetMonitorInfo(hMonitor, &mi))
+		return false;
+	
+	for (int i = 0; i < g_pD3D9Helper.m_nAdapterCount; i++)
 	{
-		MONITORINFOEX mi;
-		mi.cbSize = sizeof(MONITORINFOEX);
-		if (GetMonitorInfo(hMonitor, &mi))
-		{
-			for (int i = 0; i < g_pD3D9Helper.m_nAdapterCount; i++)
+		if (strcmp(g_pD3D9Helper.m_AdapterArray[i].DeviceName, mi.szDevice) == 0)
+		{// 找到显示器所在的显未
+			m_nDisplayAdapter = i;
+			OutputMsg("%s Wnd[%08X] is on Monitor:[%s],it's connected on Adapter[%i]:%s.\n", 
+					__FUNCTION__, 
+					m_hRenderWnd, 
+					mi.szDevice, i, 
+					g_pD3D9Helper.m_AdapterArray[i].Description);
+			WCHAR szGuidW[64] = { 0 };
+			CHAR szGuidA[64] = { 0 };
+			StringFromGUID2(g_pD3D9Helper.m_AdapterArray[i].DeviceIdentifier, szGuidW, 64);
+			W2AHelper(szGuidW, szGuidA, 64);
+			strcpy_s(szAdapterID, nBuffer, szGuidA);			
+			TCHAR szAdapterMutexName[64] = { 0 };
+			HANDLE hMutexAdapter = nullptr;
+			for (int i = 0; i < g_pSharedMemory->nAdapterCount; i++)
 			{
-				if (strcmp(g_pD3D9Helper.m_AdapterArray[i].DeviceName, mi.szDevice) == 0)
-				{
-					m_nDisplayAdapter = i;
-					OutputMsg("%s Wnd[%08X] is on Monitor:[%s],it's connected on Adapter[%i]:%s.\n", __FUNCTION__, m_hRenderWnd, mi.szDevice, i, g_pD3D9Helper.m_AdapterArray[i].Description);
-					WCHAR szGuidW[64] = { 0 };
-					CHAR szGuidA[64] = { 0 };
-					StringFromGUID2(g_pD3D9Helper.m_AdapterArray[i].DeviceIdentifier, szGuidW, 64);
-
-					W2AHelper(szGuidW, szGuidA, 64);
-					if (szAdapterID)
-						strcpy_s(szAdapterID, nBuffer, szGuidA);
-					TCHAR szAdapterMutexName[64] = { 0 };					
-					HANDLE hMutexAdapter = nullptr;
-					for (int i = 0; i < g_pSharedMemory->nAdapterCount; i++)
-					{
-						if (_tcscmp(g_pSharedMemory->HAccelArray[i].szAdapterGuid, szAdapterID) == 0)
-						{
-							if (!g_hHAccelMutexArray[i])
-								break;
-							if (WaitForSingleObject(g_hHAccelMutexArray[i], 100) == WAIT_TIMEOUT)
-								break;
-							if (g_pSharedMemory->HAccelArray[i].nOpenCount < g_pSharedMemory->HAccelArray[i].nMaxHaccel)
-							{
-								g_pSharedMemory->HAccelArray[i].nOpenCount++;
-								ReleaseMutex(g_hHAccelMutexArray[i]);
-								OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s is %d.\n", __FUNCTION__, mi.szDevice, g_pD3D9Helper.m_AdapterArray[i].Description, g_pSharedMemory->HAccelArray[i].nOpenCount);
-								break;
-							}
-							else
-							{
-								OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s has reached up limit：%d.\n", __FUNCTION__, mi.szDevice, g_pD3D9Helper.m_AdapterArray[i].Description, g_pSharedMemory->HAccelArray[i].nOpenCount);
-								ReleaseMutex(g_hHAccelMutexArray[i]);
-							}
-						}
-					}
+				if (strcmp(g_pSharedMemory->HAccelArray[i].szAdapterGuid, szAdapterID) != 0)
 					break;
+				if (!g_hHAccelMutexArray[i])
+					break;
+				if (WaitForSingleObject(g_hHAccelMutexArray[i], 100) == WAIT_TIMEOUT)
+					break;
+				if (g_pSharedMemory->HAccelArray[i].nOpenCount < g_pSharedMemory->HAccelArray[i].nMaxHaccel)
+				{
+					g_pSharedMemory->HAccelArray[i].nOpenCount++;
+					ReleaseMutex(g_hHAccelMutexArray[i]);
+					OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s is %d.\n", 
+						__FUNCTION__, 
+						mi.szDevice, 
+						g_pD3D9Helper.m_AdapterArray[i].Description, 
+						g_pSharedMemory->HAccelArray[i].nOpenCount);
+					return true;
+				}
+				else
+				{
+					ReleaseMutex(g_hHAccelMutexArray[i]);
+					OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s has reached up limit：%d.\n", 
+						__FUNCTION__, 
+						mi.szDevice, 
+						g_pD3D9Helper.m_AdapterArray[i].Description, 
+						g_pSharedMemory->HAccelArray[i].nOpenCount);
+					return false;
 				}
 			}
 		}
 	}
+	return false;
 }
 
 int CIPCPlayer::RemoveRenderWindow(HWND hRenderWnd)
@@ -3985,7 +3998,15 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 								break;
 							WaitForSingleObject(g_hHAccelMutexArray[i], INFINITE);
 							if (g_pSharedMemory->HAccelArray[i].nOpenCount > 0)
+							{
 								g_pSharedMemory->HAccelArray[i].nOpenCount--;
+							}
+#ifdef _DEBUG
+							else
+							{
+								assert(false);
+							}
+#endif
 							ReleaseMutex(g_hHAccelMutexArray[i]);
 						}
 					}
@@ -4174,36 +4195,14 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		return 0;
 	}
 	SaveRunTime();
-
-	
-	pThis->OutputMsg("%s Try to InitizlizeDx.\n", __FUNCTION__);
-	if (pThis->m_nVideoWidth && pThis->m_nVideoHeight)
-	{
-		if (!pThis->InitizlizeDx())
-		{
-			TraceFunction();
-			assert(false);
-			return 0;
-		}
-		pThis->OutputMsg("%s Try to Test m_pDxSurface.\n", __FUNCTION__);
-		if (!pThis->m_pDxSurface)
-		{
-			TraceFunction();
-			assert(false);
-			return 0;
-		}
-	}
-
 	CHAR szAdapterID[64] = { 0 };
 	if (pThis->m_bEnableHaccel ||
 		(g_pSharedMemory &&
 		g_pSharedMemory->bHAccelPreferred))
 	{
-		// 尝试硬解
-		pThis->TryEnableHAccelOnAdapter(szAdapterID, 64);
-		if (strlen(szAdapterID) > 0 && pThis->m_pDxSurface)
+		// 尝试打开硬解设置
+		if (pThis->TryEnableHAccelOnAdapter(szAdapterID, 64))
 		{
-			strcpy_s(pThis->m_pDxSurface->m_szAdapterID, 64, szAdapterID);
 			pThis->m_bEnableHaccel = true;
 			pThis->m_bD3dShared = true;
 		}
@@ -4211,6 +4210,23 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		{// 超出硬解设置数量?禁用硬解
 			pThis->m_bEnableHaccel = false;
 			pThis->m_bD3dShared = false;
+		}
+	}
+
+	pThis->OutputMsg("%s Try to InitizlizeDx.\n", __FUNCTION__);
+	if (pThis->m_nVideoWidth && pThis->m_nVideoHeight)
+	{
+		if (!pThis->InitizlizeDx())
+		{
+			assert(false);
+			return 0;
+		}
+		if (pThis->m_bEnableHaccel && strlen(szAdapterID))
+			strcpy_s(pThis->m_pDxSurface->m_szAdapterID, 64, szAdapterID);
+		if (!pThis->m_pDxSurface)
+		{
+			assert(false);
+			return 0;
 		}
 	}
 			
@@ -4767,8 +4783,8 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 		g_pSharedMemory->bHAccelPreferred))
 	{
 		// 尝试硬解
-		pThis->TryEnableHAccelOnAdapter(szAdapterID, 64);
-		if (strlen(szAdapterID) > 0 && pThis->m_pDxSurface)
+		if (pThis->m_pDxSurface &&
+			pThis->TryEnableHAccelOnAdapter(szAdapterID, 64))
 		{
 			strcpy_s(pThis->m_pDxSurface->m_szAdapterID, 64, szAdapterID);
 			pThis->m_bEnableHaccel = true;

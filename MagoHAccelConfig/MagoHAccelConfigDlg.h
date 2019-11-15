@@ -39,4 +39,5 @@ public:
 	CGlliteryStatic m_ctlStatus;
 	afx_msg void OnBnClickedCheckRefresh();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	void RefreshHACCel(bool bUpdateMaxHAccel = false);
 };

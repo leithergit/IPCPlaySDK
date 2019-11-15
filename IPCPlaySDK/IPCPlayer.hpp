@@ -1122,7 +1122,7 @@ public:
 	int GetFileHeader();
 	
 	// 尝试在当前显卡上进行硬解码，若开启成功则szAdapterID返回显卡的GUID，若szAdapterID返回空，则开启失败
-	void TryEnableHAccelOnAdapter(CHAR* szAdapterID, int nBuffer);
+	bool TryEnableHAccelOnAdapter(CHAR* szAdapterID, int nBuffer);
 
 	void FitWindow(bool bFitWindow)
 	{

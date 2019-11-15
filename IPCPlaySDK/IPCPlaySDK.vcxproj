@@ -104,19 +104,8 @@
       <ForceSymbolReferences>%(ForceSymbolReferences)</ForceSymbolReferences>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(TargetPath)  "E:\MaiGao\AS300\AS300ClientSDK_2018.07.26_V2.0.0.0-alpha_r9839\bin" /y
-copy $(TargetDir)$(TargetName).lib "E:\MaiGao\AS300\AS300ClientSDK_2018.07.26_V2.0.0.0-alpha_r9839\lib" /y
-copy $(ProjectDir)ipcplaysdk.h "E:\MaiGao\AS300\AS300ClientSDK_2018.07.26_V2.0.0.0-alpha_r9839\include" /y
-
-echo Copy Files to  "D:\Git\AVPlayerActiveX"
-copy $(TargetDir)$(TargetName).lib "D:\Git\AVPlayerActiveX\Debug" /y
-copy $(TargetPath) "D:\Git\AVPlayerActiveX\Debug\" /y
-copy $(ProjectDir)ipcplaysdk.h "D:\Git\AVPlayerActiveX\Debug" /y
-
-echo Copy Files to  "E:\SVN.NET\PlayRTSP.net"
-copy $(TargetPath) "E:\SVN.NET\PlayRTSP.net\Debug\" /y
-copy $(TargetDir)$(TargetName).lib "E:\SVN.NET\PlayRTSP.net\IPCPlaySDK" /y
-copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\PlayRTSP.net\IPCPlaySDK" /y</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug.shared|Win32'">
@@ -182,16 +171,8 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk" /y</Command>
       <ForceSymbolReferences>__tcmalloc;%(ForceSymbolReferences)</ForceSymbolReferences>
     </Link>
     <PostBuildEvent>
-      <Command>@echo off
-@echo copy $(TargetPath)  E:\SVN.NET\PlayRTSP\Release
-copy $(TargetPath)  E:\SVN.NET\PlayRTSP\Release /y
-@echo copy $(TargetDir)$(TargetName).lib E:\SVN.NET\PlayRTSP\Release
-copy $(TargetDir)$(TargetName).lib E:\SVN.NET\PlayRTSP\Release /y
-
-copy $(TargetDir)$(TargetName).lib "E:\SVN.NET\AVPlayer\ipcplaysdk" /y
-copy $(TargetPath) "E:\SVN.NET\AVPlayer\Release" /y
-@ECHO copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk"
-copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk" /y</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release.Shared|Win32'">

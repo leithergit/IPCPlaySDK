@@ -90,7 +90,13 @@ END_MESSAGE_MAP()
 
 
 // CMagoHAccelConfigDlg message handlers
-
+void WaitForAttach(bool bWait = true)
+{
+	while (bWait)
+	{
+		Sleep(50);
+	}
+}
 BOOL CMagoHAccelConfigDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
@@ -196,10 +202,40 @@ BOOL CMagoHAccelConfigDlg::OnInitDialog()
 	}
 	
 	m_listAdapter.SetRedraw(TRUE);
-
+	//WaitForAttach(true);
+	RefreshHACCel(true);
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
+void CMagoHAccelConfigDlg::RefreshHACCel(bool bUpdateMaxHAccel)
+{
+	AdapterHAccel *pHAConfig;
+	int nAdapterCount2 = 0;
+	ipcplay_GetHAccelConfig(&pHAConfig, nAdapterCount2);
+	int nItemCount = m_listAdapter.GetItemCount();
+	char szGuid[10][64] = { 0 };
+	for (int nItem = 0; nItem < nItemCount; nItem++)
+		m_listAdapter.GetItemText(nItem, Item_Guid, szGuid[nItem], 64);
+
+	TCHAR szItemText[128] = { 0 };
+	for (int nAdapter = 0; nAdapter < nAdapterCount2; nAdapter++)
+	{
+		for (int nItem = 0; nItem < nItemCount; nItem++)
+		{
+			if (strcmp(pHAConfig[nAdapter].szAdapterGuid, szGuid[nItem]) == 0)
+			{
+				if (bUpdateMaxHAccel)
+				{	
+					_stprintf_s(szItemText, 128, _T("%d"), pHAConfig[nAdapter].nMaxHaccel);
+					m_listAdapter.SetItemText(nItem, Item_MaxHAccel, szItemText);
+				}
+				_stprintf_s(szItemText, 128, _T("%d"), pHAConfig[nAdapter].nOpenCount);
+				m_listAdapter.SetItemText(nItem, Item_HaccelUsed, szItemText);
+				break;
+			}
+		}
+	}
+}
 void CMagoHAccelConfigDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
 	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
@@ -362,27 +398,8 @@ void CMagoHAccelConfigDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	if (nIDEvent == 1024)
 	{
-		AdapterHAccel *pHAConfig;
-		int nAdapterCount2 = 0;
-		ipcplay_GetHAccelConfig(&pHAConfig, nAdapterCount2);
-		int nItemCount = m_listAdapter.GetItemCount();
-		char szGuid[10][64] = { 0 };
-		for (int nItem = 0; nItem < nItemCount; nItem++)
-			m_listAdapter.GetItemText(nItem, Item_Guid, szGuid[nItem],64);
-
-		TCHAR szItemText[128] = { 0 };
-		for (int nAdapter = 0; nAdapter < nAdapterCount2; nAdapter++)
-		{
-			for (int nItem = 0; nItem < nItemCount; nItem++)
-			{
-				if (strcmp(pHAConfig[nAdapter].szAdapterGuid, szGuid[nItem]) == 0)
-				{
-					_stprintf_s(szItemText, 128,_T("%d"), pHAConfig[nAdapter].nOpenCount);
-					m_listAdapter.SetItemText(nItem,Item_HaccelUsed, szItemText);
-					break;
-				}
-			}
-		}
+		RefreshHACCel();
 	}
 	CDialogEx::OnTimer(nIDEvent);
 }
+
