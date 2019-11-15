@@ -979,6 +979,7 @@ bool CIPCPlayer::TryEnableHAccelOnAdapter(CHAR* szAdapterID, int nBuffer)
 				}
 				else
 				{
+					ZeroMemory(szAdapterID, nBuffer);
 					ReleaseMutex(g_hHAccelMutexArray[i]);
 					OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s has reached up limit£º%d.\n", 
 						__FUNCTION__, 
