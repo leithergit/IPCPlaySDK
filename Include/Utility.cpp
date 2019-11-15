@@ -381,7 +381,7 @@ void TraceLongStringW(LPCWSTR pFormat,byte *szString ,int nStringLength,...)
 }
 
 
-//去掉字符串的空格符和制表符
+//去掉字符串的前后的空格符和制表符
 void TrimSpaceA(char *ptr)
 {
 	if (ptr == NULL )
@@ -408,7 +408,7 @@ void TrimSpaceA(char *ptr)
 		ZeroMemory(&ptr[end],begin);
 	}
 }
-//去掉字符串的空格符和制表符
+//去掉字符串前后的空格符和制表符
 void TrimSpaceW(WCHAR *ptr)
 {
 	if (ptr == NULL )

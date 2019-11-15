@@ -64,11 +64,65 @@ END_MESSAGE_MAP()
 // CMagoHAccelConfigDlg dialog
 
 
+char* TrimRight(char *szString)
+{
+	char* psz = szString;
+	char* pszLast = NULL;
+	while (*psz != 0)
+	{
+		if (*psz==0x20 || *psz=='\t')
+		{
+			if (pszLast == NULL)
+				pszLast = psz;
+		}
+		else
+		{
+			pszLast = NULL;
+		}
+		psz++;
+	}
+
+	if (pszLast != NULL)
+	{
+		int iLast = int(pszLast - szString);
+		szString[iLast] ='\0';
+	}
+	return szString;
+}
+
+// Remove all leading whitespace
+char *TrimLeft(char *szString)
+{
+	char* psz = szString;
+	while (*psz == 0x20 || *psz == '\t')
+	{
+		psz++;
+	}
+	return psz;
+}
+
+// Remove all leading and trailing whitespace
+char* Trim(char *szString)
+{
+	return TrimRight(TrimLeft(szString));
+}
 
 CMagoHAccelConfigDlg::CMagoHAccelConfigDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CMagoHAccelConfigDlg::IDD, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	
+// 	CString strTest = "    Test    ";
+// 	strTest.TrimLeft();
+// 	strTest = "    Test    ";
+// 	strTest.TrimRight();
+	char *szTest = "    Test    ";
+	
+	char szStr[32] = { 0 };
+	strcpy_s(szStr, 32,szTest);
+	szStr[5] = '*';
+	char *pTrim = Trim(szStr);
+	TraceMsgA(szTest);
 }
 
 void CMagoHAccelConfigDlg::DoDataExchange(CDataExchange* pDX)

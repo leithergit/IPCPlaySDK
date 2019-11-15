@@ -960,7 +960,7 @@ bool CIPCPlayer::TryEnableHAccelOnAdapter(CHAR* szAdapterID, int nBuffer)
 			HANDLE hMutexAdapter = nullptr;
 			for (int i = 0; i < g_pSharedMemory->nAdapterCount; i++)
 			{
-				if (strcmp(g_pSharedMemory->HAccelArray[i].szAdapterGuid, szAdapterID) != 0)
+				if (strstr(g_pSharedMemory->HAccelArray[i].szAdapterGuid,szAdapterID) != nullptr)
 					break;
 				if (!g_hHAccelMutexArray[i])
 					break;

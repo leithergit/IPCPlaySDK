@@ -21,7 +21,6 @@ UINT	g_nPlayerHandles = 0;
 #endif
 
 HANDLE		g_hSharedMemory = nullptr;
-
 SharedMemory *g_pSharedMemory = nullptr;
 double	g_dfProcessLoadTime = 0.0f;
 bool g_bEnableDDraw = false;
@@ -38,6 +37,48 @@ UINT __stdcall Thread_Helper(void *);
 DWORD CreateShareMemory();
 void ReleaseShareMemory();
 DWORD OpenShareMemory();
+char* TrimRight(char *szString)
+{
+	char* psz = szString;
+	char* pszLast = NULL;
+	while (*psz != 0)
+	{
+		if (*psz == 0x20 || *psz == '\t')
+		{
+			if (pszLast == NULL)
+				pszLast = psz;
+		}
+		else
+		{
+			pszLast = NULL;
+		}
+		psz++;
+	}
+
+	if (pszLast != NULL)
+	{
+		int iLast = int(pszLast - szString);
+		szString[iLast] = '\0';
+	}
+	return szString;
+}
+
+// Remove all leading whitespace
+char *TrimLeft(char *szString)
+{
+	char* psz = szString;
+	while (*psz == 0x20 || *psz == '\t')
+	{
+		psz++;
+	}
+	return psz;
+}
+
+// Remove all leading and trailing whitespace
+char* Trim(char *szString)
+{
+	return TrimRight(TrimLeft(szString));
+}
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
                        LPVOID lpReserved
@@ -103,10 +144,11 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 						break;
 
 					sscanf_s(szValue, "%d,%[^;]", &nMaxHaccelCount, szGUID, _countof(szGUID));
-					TraceMsgA("AdapterID = %s,HAccelCount = %d.\n", szGUID, nMaxHaccelCount);
-					_stprintf_s(szAdapterMutexName, 64, _T("Global\\%s"), szGUID);
+					char *pGuid = Trim(szGUID);
+					TraceMsgA("AdapterID = \"%s\",HAccelCount = %d.\n", pGuid, nMaxHaccelCount);
+					_stprintf_s(szAdapterMutexName, 64, _T("Global\\%s"), pGuid);
 					g_hHAccelMutexArray[nConfigIndex] = CreateMutex(&sa, FALSE, szAdapterMutexName);
-					_tcscpy_s(g_pSharedMemory->HAccelArray[nConfigIndex].szAdapterGuid, 64, szGUID);
+					_tcscpy_s(g_pSharedMemory->HAccelArray[nConfigIndex].szAdapterGuid, 64, pGuid);
 					g_pSharedMemory->HAccelArray[nConfigIndex].nMaxHaccel = nMaxHaccelCount;
 					g_pSharedMemory->HAccelArray[nConfigIndex].nOpenCount = 0;
 					nConfigIndex++;
