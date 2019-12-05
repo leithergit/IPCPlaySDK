@@ -4040,13 +4040,13 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 	while (pThis->m_bThreadDecodeRun)
 	{
 		Autolock(&pThis->m_csVideoCache);
-// 		if ((timeGetTime() - tFirst) > 5000)
-// 		{// 等待超时
-// 			//assert(false);
-// 			pThis->OutputMsg("%s Warning!!!Wait for frame timeout(5s),times %d.\n", __FUNCTION__,++nTimeoutCount);
-// 			break;
-// 		}
-		if (pThis->m_listVideoCache.size() < 10)
+		if ((timeGetTime() - tFirst) > 5000)
+		{// 等待超时
+			//assert(false);
+			pThis->OutputMsg("%s Warning!!!Wait for frame timeout(5s),times %d.\n", __FUNCTION__,++nTimeoutCount);
+			break;
+		}
+		if (pThis->m_listVideoCache.size() < 1)
 		{
 			lock.Unlock();
 			Sleep(20);
@@ -4439,7 +4439,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 			dfDecodeTimeSpan = TimeSpanEx(FramePtr->dfInputTime);
 #endif
 			nAvError = pDecodec->Decode(pAvFrame, nGot_picture, pAvPacket);
-
+			av_log(nullptr, 1, "avError = %d.\n", nAvError);
 			nTotalDecodeFrames++;
 			av_packet_unref(pAvPacket);
 			if (nAvError < 0)

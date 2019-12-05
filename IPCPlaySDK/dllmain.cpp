@@ -214,13 +214,17 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 
 		CloseHandle(g_hEventThreadExit);
 		g_hEventThreadExit = nullptr;
-		for (int i = 0; i < g_pSharedMemory->nAdapterCount; i++)
+		if (g_pSharedMemory)
 		{
-			ReleaseMutex(g_hHAccelMutexArray[i]);
-			CloseHandle(g_hHAccelMutexArray[i]);
-			g_hHAccelMutexArray[i] = nullptr;
+			for (int i = 0; i < g_pSharedMemory->nAdapterCount; i++)
+			{
+				ReleaseMutex(g_hHAccelMutexArray[i]);
+				CloseHandle(g_hHAccelMutexArray[i]);
+				g_hHAccelMutexArray[i] = nullptr;
+			}
+			ReleaseShareMemory();
 		}
-		ReleaseShareMemory();
+
 	}
 		break;
 	}
