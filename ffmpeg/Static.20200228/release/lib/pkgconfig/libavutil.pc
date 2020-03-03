@@ -1,0 +1,14 @@
+prefix=/D/Git/IPCPlaySDK.1.0.6.8/ffmpeg/Static.20191205/release
+exec_prefix=${prefix}
+libdir=/D/Git/IPCPlaySDK.1.0.6.8/ffmpeg/Static.20191205/release/lib
+includedir=/D/Git/IPCPlaySDK.1.0.6.8/ffmpeg/Static.20191205/release/include
+
+Name: libavutil
+Description: FFmpeg utility library
+Version: 56.42.100
+Requires: 
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavutil user32.lib bcrypt.lib
+Libs.private: 
+Cflags: -I${includedir}

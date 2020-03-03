@@ -36,8 +36,7 @@ enum FrameStyle
 };
 #define		_GRID_LINE_WIDTH	1
 // CVideoFrame
-#define RectWidth(rt)	(rt.right - rt.left)
-#define RectHeight(rt)	(rt.bottom - rt.top)
+
 
 // #define WM_SELWINDOW_LBUTTON        WM_USER+4300   //单击左键选中窗口消息
 // #define WM_SELWINDOW_LBUTTONUP      WM_USER+4301   //单击左键鼠标松开消息

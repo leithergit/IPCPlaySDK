@@ -52,8 +52,6 @@
     <ClCompile Include="svacparser\svacstream.cpp">
       <Filter>savcSteamparser</Filter>
     </ClCompile>
-    <ClCompile Include="..\MagoD3D9Sample\DxSurface\DxSurface.cpp" />
-    <ClCompile Include="..\MagoD3D9Sample\DxSurface\DxTrace.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AudioCodec\g726.h">
@@ -173,8 +171,6 @@
     <ClInclude Include="svacparser\svacstream.h">
       <Filter>savcSteamparser</Filter>
     </ClInclude>
-    <ClInclude Include="..\MagoD3D9Sample\DxSurface\DxSurface.h" />
-    <ClInclude Include="..\MagoD3D9Sample\DxSurface\DxTrace.h" />
     <ClInclude Include="..\MagoD3D9Sample\DxSurface\gpu_memcpy_sse4.h" />
     <ClInclude Include="AudioDecoder.h">
       <Filter>Audio</Filter>
