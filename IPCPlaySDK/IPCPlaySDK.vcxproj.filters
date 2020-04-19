@@ -84,9 +84,6 @@
     <ClInclude Include="VideoDecoder\VideoDecoder.h">
       <Filter>VideoDecoder</Filter>
     </ClInclude>
-    <ClInclude Include="VideoDecoder\moreuuids.h">
-      <Filter>VideoDecoder</Filter>
-    </ClInclude>
     <ClInclude Include="AutoLock.h">
       <Filter>Header Files</Filter>
     </ClInclude>

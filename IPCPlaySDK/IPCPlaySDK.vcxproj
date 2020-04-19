@@ -89,14 +89,14 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;IPCPLAYSDK_EXPORTS;_ENABLE_FFMPEG_STAITC_LIB;_XKEYCHECK_H;_CRT_SECURE_NO_WARNINGS;_LineTime_;D3D_DEBUG_INFO;_TraceFunction;_STD_SMARTPTR;avpriv_strdod=strtod;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\Win10 SDK Includes;..\ffmpeg\Static.20191205\debug\include;..\faad2-2.7\include;..\DirectX9.0 SDK\Include;.\svacparser;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Win10 SDK Includes;..\ffmpeg\Static.20200419\include;..\faad2-2.7\include;..\DirectX9.0 SDK\Include;.\svacparser;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\ffmpeg\Static.20191205\debug\lib;..\DirectX9.0 SDK\Lib\x86;..\faad2-2.7\include;.\TCmalloc;..\GCC.9.10;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\ffmpeg\Static.20200419\debug\lib;..\DirectX9.0 SDK\Lib\x86;..\faad2-2.7\include;.\TCmalloc;..\GCC.9.10;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMTD.lib LIBCMT.lib</IgnoreSpecificDefaultLibraries>
       <AdditionalOptions>/NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:libcmtd.lib %(AdditionalOptions)</AdditionalOptions>
       <ModuleDefinitionFile>IPCPlaySDK.def</ModuleDefinitionFile>
@@ -154,7 +154,7 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk" /y</Command>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;IPCPLAYSDK_EXPORTS;_ENABLE_FFMPEG_STAITC_LIB;_XKEYCHECK_H;_CRT_SECURE_NO_WARNINGS;_STD_SMARTPTR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\Win10 SDK Includes;..\ffmpeg\Static.20191205\release\include;..\faad2-2.7\include;..\DirectX9.0 SDK\Include;.\svacparser;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Win10 SDK Includes;..\ffmpeg\Static.20200419\include;..\faad2-2.7\include;..\DirectX9.0 SDK\Include;.\svacparser;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
@@ -162,7 +162,7 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk" /y</Command>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <AdditionalLibraryDirectories>..\ffmpeg\Static.20191205\Release\lib;..\GCC.9.10;..\DirectX9.0 SDK\Lib\x86;..\faad2-2.7\include;.\TCmalloc;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\ffmpeg\Static.20200419\lib;..\GCC.9.10;..\DirectX9.0 SDK\Lib\x86;..\faad2-2.7\include;.\TCmalloc;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <ModuleDefinitionFile>IPCPlaySDK.def</ModuleDefinitionFile>
@@ -254,7 +254,6 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk" /y</Command>
     <ClInclude Include="VideoDecoder\hi_config.h" />
     <ClInclude Include="VideoDecoder\IHW265Dec_Api.h" />
     <ClInclude Include="VideoDecoder\IHWVideo_Typedef.h" />
-    <ClInclude Include="VideoDecoder\moreuuids.h" />
     <ClInclude Include="VideoDecoder\VideoDecoder.h" />
     <ClInclude Include="YUVFrame.h" />
   </ItemGroup>
