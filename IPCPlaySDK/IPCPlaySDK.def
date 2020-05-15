@@ -81,4 +81,7 @@ EXPORTS
 	ipcplay_RmoveOSDText                @79
 	ipcplay_DestroyOSDFont              @80
 	ipcplay_SetSwitcherCallBack			@81
+	ipcplay_SetAdapterHAccelW			@82
+	ipcplay_SetAdapterHAccelA			@83
+	ipcplay_EnableHAccelPrefered		@84
                                        

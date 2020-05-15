@@ -568,7 +568,7 @@ private:
 	{
 		if (!m_hRenderWnd)
 			return;
-		Autolock(m_cslistRenderWnd.Get());
+		AutoLock(m_cslistRenderWnd.Get());
 		if (m_bEnableDDraw)
 		{
 			if (m_listRenderUnit.size() <= 0 || m_bStopFlag)
@@ -577,7 +577,7 @@ private:
 		else  if (m_listRenderWnd.size() <= 0 || m_bStopFlag)
 			return;
 		
-		lock.Unlock();
+		Lock.Unlock();
 		if (pAvFrame->width != m_nVideoWidth ||
 			pAvFrame->height != m_nVideoHeight)
 		{
@@ -595,7 +595,7 @@ private:
 				m_pDxSurface->Render(pAvFrame, m_nRocateAngle);
 				// 准备发送视频替换通知
 				ProcessSwitchEvent();
-				Autolock(&m_cslistRenderWnd);
+				LineLockAgent(m_cslistRenderWnd);
 				if (m_listRenderWnd.size() <= 0)
 					return;				
 				for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
@@ -670,7 +670,7 @@ private:
 				}
 				// RECT rtBorder;
 				//m_pDDraw->Draw(*m_pYUVImage, &rtBorder, nullptr, true);
-				Autolock(&m_csListRenderUnit);
+				LineLockAgent(m_csListRenderUnit);
 				for (auto it = m_listRenderUnit.begin(); it != m_listRenderUnit.end() && !m_bStopFlag; it++)
 				{
 					if ((*it)->pRtBorder)
@@ -742,7 +742,7 @@ private:
 					CopyRect(&rtBorder, m_pBorderRect.get());
 					m_pDxSurface->Render(pAvFrame,m_nRocateAngle);
 					ProcessSwitchEvent();
-					Autolock(&m_cslistRenderWnd);
+					LineLockAgent(m_cslistRenderWnd);
 					if (m_listRenderWnd.size() > 0)
 					{
 						for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
@@ -753,7 +753,7 @@ private:
 				{
 					m_pDxSurface->Render(pAvFrame, m_nRocateAngle);
 					ProcessSwitchEvent();
-					Autolock(&m_cslistRenderWnd);
+					LineLockAgent(m_cslistRenderWnd);
 					//m_pDxSurface->Present(m_hRenderWnd, nullptr, &rtRender);
 					
 					if (m_listRenderWnd.size() > 0)
@@ -772,16 +772,16 @@ private:
 				m_pYUVImage->dwLineSize[1] = pAvFrame->linesize[1];
 				m_pYUVImage->dwLineSize[2] = pAvFrame->linesize[2];
 				RECT rtBorder;
-				Autolock(&m_csBorderRect);
+				AutoLock(&m_csBorderRect);
 				if (m_pBorderRect)
 				{
 					CopyRect(&rtBorder, m_pBorderRect.get());
-					lock.Unlock();
+					Lock.Unlock();
 					m_pDDraw->Draw(*m_pYUVImage, &rtBorder, &rtRender, true);
 				}
 				else
 				{
-					lock.Unlock();
+					Lock.Unlock();
 					m_pDDraw->Draw(*m_pYUVImage,nullptr, &rtRender, true);
 				}	
 			}
@@ -1004,7 +1004,7 @@ public:
 
 	void RemoveBorderRect(HWND hWnd)
 	{
-		Autolock(&m_cslistRenderWnd);
+		LineLockAgent(m_cslistRenderWnd);
 		auto itFind = find_if(m_listRenderWnd.begin(), m_listRenderWnd.end(), WndFinder(hWnd));
 		if (itFind != m_listRenderWnd.end())
 			(*itFind)->SetBorder(nullptr);

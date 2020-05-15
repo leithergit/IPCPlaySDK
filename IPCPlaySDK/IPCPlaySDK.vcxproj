@@ -260,7 +260,7 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk" /y</Command>
   <ItemGroup>
     <ClCompile Include="AudioCodec\g711.cpp" />
     <ClCompile Include="AudioCodec\g726.cpp" />
-    <ClCompile Include="Autolock.cpp" />
+    <ClCompile Include="AutoLineLock.cpp" />
     <ClCompile Include="decSPS.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>

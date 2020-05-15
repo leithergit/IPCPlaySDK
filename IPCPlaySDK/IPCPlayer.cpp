@@ -2,7 +2,7 @@
 
 extern bool g_bEnableDDraw;
 extern SharedMemory *g_pSharedMemory;
-extern HANDLE g_hHAccelMutexArray[10];
+//extern HANDLE g_hHAccelMutexArray[10];
 
 map<string, DxSurfaceList>g_DxSurfacePool;	// 用于缓存DxSurface对象
 CCriticalSectionAgent g_csDxSurfacePool;
@@ -794,7 +794,7 @@ bool CIPCPlayer::InitizlizeDx(AVFrame *pAvFrame )
 				m_pYUVImage->dwLineSize[2] = m_nVideoWidth >> 1;
 				m_pDDraw->SetExternDraw(m_pDCCallBack, m_pDCCallBackParam);
 			}
-			Autolock(&m_csListRenderUnit);
+			LineLockAgent(m_csListRenderUnit);
 			for (auto it = m_listRenderUnit.begin(); it != m_listRenderUnit.end(); it++)
 				(*it)->ReInitialize(m_nVideoWidth, m_nVideoHeight);
 		}
@@ -894,7 +894,7 @@ int CIPCPlayer::AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent
 		return IPC_Error_InvalidParameters;
 // 	if (hRenderWnd == m_hRenderWnd)
 // 		return IPC_Succeed;
-	Autolock(&m_cslistRenderWnd);
+	LineLockAgent(m_cslistRenderWnd);
 	if (!m_hRenderWnd)
 	{
 		m_hRenderWnd = hRenderWnd;
@@ -952,24 +952,24 @@ bool CIPCPlayer::TryEnableHAccelOnAdapter(CHAR* szAdapterID, int nBuffer)
 					mi.szDevice, i, 
 					g_pD3D9Helper.m_AdapterArray[i].Description);
 			WCHAR szGuidW[64] = { 0 };
-			CHAR szGuidA[64] = { 0 };
-			StringFromGUID2(g_pD3D9Helper.m_AdapterArray[i].DeviceIdentifier, szGuidW, 64);
-			W2AHelper(szGuidW, szGuidA, 64);
-			strcpy_s(szAdapterID, nBuffer, szGuidA);			
-			TCHAR szAdapterMutexName[64] = { 0 };
+			
+			StringFromGUID2(g_pD3D9Helper.m_AdapterArray[i].DeviceIdentifier, szGuidW, 64);		
+			WCHAR szAdapterMutexName[64] = { 0 };
 			HANDLE hMutexAdapter = nullptr;
 			for (int i = 0; i < g_pSharedMemory->nAdapterCount; i++)
 			{
-				if (strcmp(g_pSharedMemory->HAccelArray[i].szAdapterGuid,szAdapterID) != 0)
+				if (!g_pSharedMemory->HAccelArray[i].hMutex)
 					break;
-				if (!g_hHAccelMutexArray[i])
+
+				if (wcscmp(g_pSharedMemory->HAccelArray[i].szAdapterGuid, szGuidW) != 0)
 					break;
-				if (WaitForSingleObject(g_hHAccelMutexArray[i], 100) == WAIT_TIMEOUT)
+				
+				if (WaitForSingleObject(g_pSharedMemory->HAccelArray[i].hMutex, 100) == WAIT_TIMEOUT)
 					break;
 				if (g_pSharedMemory->HAccelArray[i].nOpenCount < g_pSharedMemory->HAccelArray[i].nMaxHaccel)
 				{
 					g_pSharedMemory->HAccelArray[i].nOpenCount++;
-					ReleaseMutex(g_hHAccelMutexArray[i]);
+					ReleaseMutex(g_pSharedMemory->HAccelArray[i].hMutex);
 					OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s is %d.\n", 
 						__FUNCTION__, 
 						mi.szDevice, 
@@ -980,7 +980,7 @@ bool CIPCPlayer::TryEnableHAccelOnAdapter(CHAR* szAdapterID, int nBuffer)
 				else
 				{
 					ZeroMemory(szAdapterID, nBuffer);
-					ReleaseMutex(g_hHAccelMutexArray[i]);
+					ReleaseMutex(g_pSharedMemory->HAccelArray[i].hMutex);
 					OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s has reached up limit：%d.\n", 
 						__FUNCTION__, 
 						mi.szDevice, 
@@ -999,7 +999,7 @@ int CIPCPlayer::RemoveRenderWindow(HWND hRenderWnd)
 	if (!hRenderWnd)
 		return IPC_Error_InvalidParameters;
 
-	Autolock(&m_cslistRenderWnd);
+	LineLockAgent(m_cslistRenderWnd);
 	if (m_listRenderWnd.size() < 1)
 		return IPC_Succeed;
 	if (m_bEnableDDraw)
@@ -1037,8 +1037,7 @@ int CIPCPlayer::RemoveRenderWindow(HWND hRenderWnd)
 		OutputMsg("%s size of m_listRenderWnd = %d.\n", __FUNCTION__,m_listRenderWnd.size());
 		return IPC_Succeed;
 	}
-
-
+	
 	return IPC_Succeed;
 }
 
@@ -1047,7 +1046,7 @@ int CIPCPlayer::GetRenderWindows(HWND* hWndArray, int &nSize)
 {
 	if (!hWndArray && !nSize)
 		return IPC_Error_InvalidParameters;
-	Autolock(&m_cslistRenderWnd);
+	LineLockAgent(m_cslistRenderWnd);
 	if (!hWndArray)
 	{
 		nSize = m_listRenderWnd.size();
@@ -1147,7 +1146,7 @@ int CIPCPlayer::SetBorderRect(HWND hWnd, LPRECT pRectBorder, bool bPercent )
 			return IPC_Error_InvalidParameters;
 	}
 
-	Autolock(&m_cslistRenderWnd);
+	LineLockAgent(m_cslistRenderWnd);
 	auto itFind = find_if(m_listRenderWnd.begin(), m_listRenderWnd.end(), WndFinder(hWnd));
 	if (itFind != m_listRenderWnd.end())
 		(*itFind)->SetBorder(pRectBorder, bPercent);
@@ -1217,8 +1216,12 @@ int CIPCPlayer::StartPlay(bool bEnaleAudio , bool bEnableHaccel , bool bFitWindo
 		m_listAudioCache.clear();
 	}
 
-	
-	AddRenderWindow(m_hRenderWnd, nullptr);
+	if (m_hRenderWnd)
+		AddRenderWindow(m_hRenderWnd, nullptr);
+	else
+	{
+		OutputMsg("%s Warning!Render Windows is null!\n", __FUNCTION__);
+	}
 
 	m_bStopFlag = false;
 	// 启动流播放线程
@@ -2181,7 +2184,7 @@ int CIPCPlayer::AsyncSeekTime(IN time_t tTimeOffset, bool bUpdate)
 	if (!InitizlizeDx())
 		return IPC_Error_DxError;
 	
-	Autolock(m_cslistAVFrame.Get());
+	LineLockAgent(m_cslistAVFrame);
 	if (m_listAVFrame.size() < 1)
 		return IPC_Error_InvalidTimeOffset;
 	auto itFinder = find_if(m_listAVFrame.begin(), m_listAVFrame.end(), FrameFinder(tTimeOffset));
@@ -2383,7 +2386,7 @@ int CIPCPlayer::SeekNextFrame()
 
 			m_tCurFrameTimeStamp = m_pFrameOffsetTable[m_nCurVideoFrame].tTimeStamp;
 			m_nCurVideoFrame++;
-			Autolock(&m_csFilePlayCallBack);
+			LineLockAgent(m_csFilePlayCallBack);
 			if (m_pFilePlayCallBack)
 				m_pFilePlayCallBack(this, m_pUserFilePlayer);
 		}
@@ -2470,7 +2473,7 @@ int CIPCPlayer::EnableAudio(bool bEnable )
 
 void CIPCPlayer::Refresh()
 {
-	Autolock(&m_cslistRenderWnd);				
+	LineLockAgent(m_cslistRenderWnd);				
 	if (m_listRenderWnd.size() > 0)
 	{
 		for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
@@ -2584,21 +2587,21 @@ int CIPCPlayer::SetCallBack(IPC_CALLBACK nCallBackType, IN void *pUserCallBack, 
 		break;
 	case YUVCapture:
 	{
-		Autolock(&m_csCaptureYUV);
+		LineLockAgent(m_csCaptureYUV);
 		m_pfnCaptureYUV = (CaptureYUV)pUserCallBack;
 		m_pUserCaptureYUV = pUserPtr;
 	}
 	break;
 	case YUVCaptureEx:
 	{
-		Autolock(&m_csCaptureYUVEx)
-			m_pfnCaptureYUVEx = (CaptureYUVEx)pUserCallBack;
+		LineLockAgent(m_csCaptureYUVEx);
+		m_pfnCaptureYUVEx = (CaptureYUVEx)pUserCallBack;
 		m_pUserCaptureYUVEx = pUserPtr;
 	}
 	break;
 	case YUVFilter:
 	{
-		Autolock(&m_csYUVFilter);
+		LineLockAgent(m_csYUVFilter);
 		m_pfnYUVFilter = (CaptureYUVEx)pUserCallBack;
 		m_pUserYUVFilter = pUserPtr;
 	}
@@ -2611,14 +2614,14 @@ int CIPCPlayer::SetCallBack(IPC_CALLBACK nCallBackType, IN void *pUserCallBack, 
 	break;
 	case FilePlayer:
 	{
-		Autolock(&m_csFilePlayCallBack);
+		AutoLock(&m_csFilePlayCallBack);
 		m_pFilePlayCallBack = (FilePlayProc)pUserCallBack;
 		m_pUserFilePlayer = pUserPtr;
 	}
 	break;
 	case RGBCapture:
 	{
-		Autolock(&m_csCaptureRGB);
+		AutoLock(&m_csCaptureRGB);
 		m_pUserCaptureRGB = (CaptureRGB)pUserCallBack;
 		m_pUserCaptureRGB = pUserPtr;
 	}
@@ -2893,6 +2896,7 @@ UINT __stdcall CIPCPlayer::ThreadFileParser(void *p)
 	IPCFrameHeaderEx HeaderEx;
 	int nInputResult = 0;
 	bool bFileEnd = false;
+
 	while (pThis->m_bThreadParserRun)
 	{
 		if (pThis->m_bPause)
@@ -3991,13 +3995,15 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 			{
 				if (strlen(m_pDxSurface->m_szAdapterID) > 0)
 				{
+					WCHAR szGUIDW[64] = { 0 };
+					A2WHelper(m_pDxSurface->m_szAdapterID, szGUIDW, 64);
 					for (int i = 0; i < g_pSharedMemory->nAdapterCount; i++)
 					{
-						if (_tcscmp(g_pSharedMemory->HAccelArray[i].szAdapterGuid, m_pDxSurface->m_szAdapterID) == 0)
+						if (wcscmp(g_pSharedMemory->HAccelArray[i].szAdapterGuid, szGUIDW) == 0)
 						{
-							if (!g_hHAccelMutexArray[i])
+							if (!g_pSharedMemory->HAccelArray[i].hMutex)
 								break;
-							WaitForSingleObject(g_hHAccelMutexArray[i], INFINITE);
+							WaitForSingleObject(g_pSharedMemory->HAccelArray[i].hMutex, INFINITE);
 							if (g_pSharedMemory->HAccelArray[i].nOpenCount > 0)
 							{
 								g_pSharedMemory->HAccelArray[i].nOpenCount--;
@@ -4008,7 +4014,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 								assert(false);
 							}
 #endif
-							ReleaseMutex(g_hHAccelMutexArray[i]);
+							ReleaseMutex(g_pSharedMemory->HAccelArray[i].hMutex);
 						}
 					}
 				}
@@ -4039,7 +4045,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 	int nTimeoutCount = 0;
 	while (pThis->m_bThreadDecodeRun)
 	{
-		Autolock(&pThis->m_csVideoCache);
+		AutoLock(pThis->m_csVideoCache.Get());
 		if ((timeGetTime() - tFirst) > 5000)
 		{// 等待超时
 			//assert(false);
@@ -4048,7 +4054,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		}
 		if (pThis->m_listVideoCache.size() < 1)
 		{
-			lock.Unlock();
+			Lock.Unlock();
 			Sleep(20);
 			continue;
 		}
@@ -4500,7 +4506,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 // 			}
 		
 			bool bPopFrame = false;
-			Autolock(&pThis->m_csVideoCache);
+			AutoLock(pThis->m_csVideoCache.Get());
 			if (pThis->m_listVideoCache.size() > 0)
 			{
 				FramePtr = pThis->m_listVideoCache.front();
@@ -4508,7 +4514,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 				bPopFrame = true;
 				nVideoCacheSize = pThis->m_listVideoCache.size();
 			}
-			lock.Unlock();
+			Lock.Unlock();
 			if (!bPopFrame)
 			{
 				Sleep(10);
@@ -4628,7 +4634,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 			}
 			pThis->ProcessSnapshotRequire(pAvFrame);
 			pThis->ProcessYUVCapture(pAvFrame, (LONGLONG)pThis->m_nCurVideoFrame);
-			Autolock(&pThis->m_csFilePlayCallBack);
+			LineLockAgent(pThis->m_csFilePlayCallBack);
 			if (pThis->m_pFilePlayCallBack)
 				pThis->m_pFilePlayCallBack(pThis, pThis->m_pUserFilePlayer);
 		}
@@ -4677,16 +4683,18 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 			{
 				if (strlen(m_pDxSurface->m_szAdapterID) > 0)
 				{
+					WCHAR szGUIDW[64] = { 0 };
+					A2WHelper(m_pDxSurface->m_szAdapterID, szGUIDW, 64);
 					for (int i = 0; i < g_pSharedMemory->nAdapterCount; i++)
 					{
-						if (_tcscmp(g_pSharedMemory->HAccelArray[i].szAdapterGuid, m_pDxSurface->m_szAdapterID) == 0)
+						if (wcscmp(g_pSharedMemory->HAccelArray[i].szAdapterGuid, szGUIDW) == 0)
 						{
-							if (!g_hHAccelMutexArray[i])
+							if (!g_pSharedMemory->HAccelArray[i].hMutex)
 								break;
-							WaitForSingleObject(g_hHAccelMutexArray[i], INFINITE);
+							WaitForSingleObject(g_pSharedMemory->HAccelArray[i].hMutex, INFINITE);
 							if (g_pSharedMemory->HAccelArray[i].nOpenCount > 0)
 								g_pSharedMemory->HAccelArray[i].nOpenCount--;
-							ReleaseMutex(g_hHAccelMutexArray[i]);
+							ReleaseMutex(g_pSharedMemory->HAccelArray[i].hMutex);
 						}
 					}
 				}
@@ -4712,10 +4720,10 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 	int nTimeoutCount = 0;
 	while (pThis->m_bThreadDecodeRun)
 	{
-		Autolock(&pThis->m_csVideoCache);
+		AutoLock(pThis->m_csVideoCache.Get());
 		if (pThis->m_listVideoCache.size() < 5)
 		{
-			lock.Unlock();
+			Lock.Unlock();
 			Sleep(20);
 			continue;
 		}
@@ -4980,7 +4988,7 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 #endif
 		
 		bool bPopFrame = false;
-		Autolock(&pThis->m_csVideoCache);
+		AutoLock(pThis->m_csVideoCache.Get());
 		if (pThis->m_listVideoCache.size() > 0)
 		{
 			FramePtr = pThis->m_listVideoCache.front();
@@ -4990,7 +4998,7 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 		}
 		else
 		{
-			lock.Unlock();
+			Lock.Unlock();
 			if (WaitForSingleObject(pThis->m_hInputFrameEvent, 20) == WAIT_TIMEOUT)
 				continue;
 		}
@@ -5036,7 +5044,7 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 			
 			pThis->ProcessSnapshotRequire(pAvFrame);
 			pThis->ProcessYUVCapture(pAvFrame, (LONGLONG)pThis->m_nCurVideoFrame);
-			Autolock(&pThis->m_csFilePlayCallBack);
+			AutoLock(&pThis->m_csFilePlayCallBack);
 			if (pThis->m_pFilePlayCallBack)
 				pThis->m_pFilePlayCallBack(pThis, pThis->m_pUserFilePlayer);
 		}

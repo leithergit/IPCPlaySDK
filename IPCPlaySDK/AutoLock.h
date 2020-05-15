@@ -50,12 +50,16 @@ void MyDeleteCriticalSection(MYCRITICAL_SECTION *);
 #define _MyEnterCriticalSection			EnterCriticalSection
 #define _MyLeaveCriticalSection			LeaveCriticalSection
 
-#define Autolock(cs)	CAutoLock lock(cs,false,__FILE__,__FUNCTION__,__LINE__);
-#define Autolock1(cs)	CAutoLock lock1(cs,false,__FILE__,__FUNCTION__,__LINE__);
-#define Autolock2(cs)	CAutoLock lock2(cs,false,__FILE__,__FUNCTION__,__LINE__);
-#define Autolock3(cs)	CAutoLock lock3(cs,false,__FILE__,__FUNCTION__,__LINE__);
-#define Autolock4(cs)	CAutoLock lock4(cs,false,__FILE__,__FUNCTION__,__LINE__);
-#define Autolock5(cs)	CAutoLock lock5(cs,false,__FILE__,__FUNCTION__,__LINE__);
+
+#define defA(B,C) B##C
+#define defLineVar(B,C) defA(B,C)
+
+#define LineLock(cs)			CAutoLock defLineVar(lock,__LINE__)(cs,false,__FILE__,__FUNCTION__,__LINE__);
+
+#define AutoLock(cs)			CAutoLock Lock(cs,false,__FILE__,__FUNCTION__,__LINE__);
+
+#define LineLockAgent(CSAgent)  CAutoLock  defLineVar(Lock,__LINE__)(CSAgent.Get(),false,__FILE__,__FUNCTION__,__LINE__);
+
 
 class CAutoLock
 {

@@ -1,6 +1,6 @@
 #pragma once
 #include "common.h"
-#include "AutoLock.h"
+#include "AutoLineLock.h"
 using namespace std;
 using namespace std::tr1;
 #include <time.h>

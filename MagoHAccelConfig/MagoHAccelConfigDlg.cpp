@@ -203,7 +203,7 @@ BOOL CMagoHAccelConfigDlg::OnInitDialog()
 	int nAdapterCount = 64;
 	ipcplay_GetDisplayAdapterInfo(AdapterArray, nAdapterCount);
 	TCHAR szItemText[64] = { 0 };
-	map<string, int> mapAdapter;
+	map<wstring, int> mapAdapter;
 	
 	m_listAdapter.SetRedraw(FALSE);
 	AdapterHAccel *pHAConfig;
@@ -213,30 +213,29 @@ BOOL CMagoHAccelConfigDlg::OnInitDialog()
 	{
 		WCHAR szGuidW[64] = { 0 };
 		StringFromGUID2(AdapterArray[i].DeviceIdentifier, szGuidW, 64);
-		CHAR szGuidA[64] = { 0 };
-		W2AHelper(szGuidW, szGuidA, 64);
+	
 		if (mapAdapter.size() > 0)
 		{
-			auto itFind = mapAdapter.find(szGuidA);
+			auto itFind = mapAdapter.find(szGuidW);
 			if (itFind != mapAdapter.end())
 				continue;
 			else
-				mapAdapter.insert(pair<string, int>(szGuidA, 1));
+				mapAdapter.insert(pair<wstring, int>(szGuidW, 1));
 		}
 		else
-			mapAdapter.insert(pair<string, int>(szGuidA, 1));
+			mapAdapter.insert(pair<wstring, int>(szGuidW, 1));
 		int nItem = mapAdapter.size() -1;
 		_stprintf_s(szItemText, 64, _T("%d"), i +1);
 		m_listAdapter.InsertItem(i, szItemText);
 		int nSubitem = 1;
 		m_listAdapter.SetItemText(i, nSubitem++, (LPCTSTR)AdapterArray[i].Description);
-		m_listAdapter.SetItemText(i, nSubitem++, (LPCTSTR)szGuidA);
+		m_listAdapter.SetItemText(i, nSubitem++, (LPCTSTR)_AnsiString(szGuidW,CP_ACP));
 		//m_listAdapter.SetItemText(i, nSubitem++, (LPCTSTR)AdapterArray[i].DeviceName);
 		//m_listAdapter.SetItemText(i, nSubitem++, (LPCTSTR)_T("0"));
 		int nMaxHaccel = 0;
 		for (int nIndex = 0; nIndex < nAdapterCount2; nIndex++)
 		{
-			if (strcmp(pHAConfig[nIndex].szAdapterGuid, szGuidA) == 0)
+			if (wcscmp(pHAConfig[nIndex].szAdapterGuid, szGuidW) == 0)
 			{
 				nMaxHaccel = pHAConfig[nIndex].nMaxHaccel;
 				break;
@@ -276,7 +275,7 @@ void CMagoHAccelConfigDlg::RefreshHACCel(bool bUpdateMaxHAccel)
 	{
 		for (int nItem = 0; nItem < nItemCount; nItem++)
 		{
-			if (strcmp(pHAConfig[nAdapter].szAdapterGuid, szGuid[nItem]) == 0)
+			if (wcscmp(pHAConfig[nAdapter].szAdapterGuid, _UnicodeString(szGuid[nItem],CP_ACP)) == 0)
 			{
 				if (bUpdateMaxHAccel)
 				{	

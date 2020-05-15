@@ -36,6 +36,6 @@ using namespace std;
 #pragma warning (disable:4018)
 
 #define _IPCPlaySDKMutex	_T("Global\\{7E046525-8DEA-4263-957A-AD6C6FCEE19B}")
-#define _SharedMemoryName	_T("Global\\{1BE0CD67-A6F9-4BE1-AD95-0784BED9F73C}")
+#define _IPCPlayerSharedMemory	_T("Global\\{1BE0CD67-A6F9-4BE1-AD95-0784BED9F73C}")
 
 

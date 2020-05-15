@@ -70,7 +70,6 @@ extern "C" {
 }
 #endif
 #pragma warning(pop)
-
 #pragma warning(push)
 #pragma warning(disable:4244)
 #ifdef __cplusplus
@@ -84,7 +83,6 @@ extern "C" {
 }
 #endif
 #pragma warning(pop)
-
 #pragma warning(disable:4244)
 #pragma warning(disable:4838)
 
@@ -143,7 +141,6 @@ struct LineArrayFinder
 	}
 };
 
-
 #define WM_RENDERFRAME		WM_USER + 1024		// 帧渲染消息	WPARAM为CDxSurface指针,LPARAM为一个指向DxSurfaceRenderInfo结构的指针,
 #define	WM_INITDXSURFACE	WM_USER + 1025		// DXSurface初始化消息	WPARAM为CDxSurface指针，LPARAM为DxSurfaceInitInfo结构的指针
 struct DxSurfaceInitInfo
@@ -192,7 +189,7 @@ enum GraphicQulityParameter
 #define TraceTimeout		2
 #if defined(_DEBUG) && defined(_TraceFunction)
 
-#define TraceFunction()	CTraceFunction Tx(__FUNCTION__);
+#define TraceFunction()			CTraceFunction Tx(__FUNCTION__);
 #define TraceFunction1(szText)	CTraceFunction Tx(__FUNCTION__,true,szText);
 #else 
 #define TraceFunction()	
@@ -697,39 +694,65 @@ public:
 	{
 		if (m_pDirect3D9Ex)
 		{
-			//CRunlog AdaperLog(_T("Adapter"));
-			m_nAdapterCount = m_pDirect3D9Ex->GetAdapterCount();
-			TraceMsgA(_T("%s AdapterCount = %d.\r\n"),__FUNCTION__, m_nAdapterCount);
-			
-			for (DWORD i = 0; i < m_nAdapterCount; i++)
+			D3DADAPTER_IDENTIFIER9 D3DAdapter;	
+			int nD3dAdapterCount = m_pDirect3D9Ex->GetAdapterCount();
+			m_nAdapterCount = 0;
+			TraceMsgA(_T("%s AdapterCount = %d.\r\n"), __FUNCTION__, nD3dAdapterCount);
+			// LUID AdapterLUIDArray[10] = { 0 };
+			// GUID AdapterGUIDArray[10] = { 0 };
+			for (DWORD i = 0; i < nD3dAdapterCount; i++)
 			{
-				if (m_pDirect3D9Ex->GetAdapterIdentifier(i/*D3DADAPTER_DEFAULT*/, 0, (D3DADAPTER_IDENTIFIER9 *)&m_AdapterArray[i]) != D3D_OK)
+				ZeroMemory(&D3DAdapter, sizeof(D3DAdapter));
+				if (m_pDirect3D9Ex->GetAdapterIdentifier(i/*D3DADAPTER_DEFAULT*/, 
+														 0/*Reserved for future use*/, 
+														 (D3DADAPTER_IDENTIFIER9 *)&D3DAdapter) != D3D_OK)
 					return false;
 				LUID luid;
 				HRESULT hr = m_pDirect3D9Ex->GetAdapterLUID(i, &luid);
-					
-				memcpy(&m_AdapterArray[i], &m_AdapterArray[i], sizeof(D3DADAPTER_IDENTIFIER9));
+				bool bFound = false;
+				/*for (int k = 0; k < m_nAdapterCount; k++)
+				{
+					if (memcmp(&AdapterLUIDArray[k], &luid, sizeof(LUID)) == 0)
+					{
+						bFound = true;
+						break;
+					}
+				}*/
+				for (int k = 0; k < m_nAdapterCount; k++)
+				{
+					if (memcmp(&m_AdapterArray[k].DeviceIdentifier, &D3DAdapter.DeviceIdentifier, sizeof(GUID)) == 0)
+					{
+						bFound = true;
+						break;
+					}
+				}
+				if (bFound)
+					continue;
+				//memcpy(&AdapterLUIDArray[m_nAdapterCount], &luid, sizeof(sizeof(LUID)));
+				//memcpy(&AdapterGUIDArray[m_nAdapterCount], &D3DAdapter.DeviceIdentifier, sizeof(GUID));
+				memcpy(&m_AdapterArray[m_nAdapterCount], &D3DAdapter, sizeof(D3DADAPTER_IDENTIFIER9));
+				TraceMsgA("[%d]Driver: %s.\n", m_nAdapterCount, D3DAdapter.Driver);
+				TraceMsgA("[%d]Description: %s\n", m_nAdapterCount, D3DAdapter.Description);
+				TraceMsgA("[%d]Device Name: %s\n", m_nAdapterCount, D3DAdapter.DeviceName);
+				TraceMsgA("[%d]Vendor id:%4x\n", m_nAdapterCount, D3DAdapter.VendorId);
+				TraceMsgA("[%d]Device id: %4x\n", m_nAdapterCount, D3DAdapter.DeviceId);
+				TraceMsgA("[%d]Product: %x\n", m_nAdapterCount, HIWORD(D3DAdapter.DriverVersion.HighPart));
+				TraceMsgA("[%d]Version:%x\n", m_nAdapterCount, LOWORD(D3DAdapter.DriverVersion.HighPart));
+				TraceMsgA("[%d]SubVersion: %x\n", m_nAdapterCount, HIWORD(D3DAdapter.DriverVersion.LowPart));
+				TraceMsgA("[%d]Build: %x %d.%d.%d.%d\n", m_nAdapterCount, LOWORD(D3DAdapter.DriverVersion.LowPart),
+					HIWORD(D3DAdapter.DriverVersion.HighPart),
+					LOWORD(D3DAdapter.DriverVersion.HighPart),
+					HIWORD(D3DAdapter.DriverVersion.LowPart),
+					LOWORD(D3DAdapter.DriverVersion.LowPart));
 				
-				TraceMsgA("[%d]Driver: %s.\n", i, m_AdapterArray[i].Driver);
-				TraceMsgA("[%d]Description: %s\n", i, m_AdapterArray[i].Description);
-				TraceMsgA("[%d]Device Name: %s\n", i, m_AdapterArray[i].DeviceName);
-				TraceMsgA("[%d]Vendor id:%4x\n", i, m_AdapterArray[i].VendorId);
-				TraceMsgA("[%d]Device id: %4x\n", i, m_AdapterArray[i].DeviceId);
-				TraceMsgA("[%d]Product: %x\n", i, HIWORD(m_AdapterArray[i].DriverVersion.HighPart));
-				TraceMsgA("[%d]Version:%x\n", i, LOWORD(m_AdapterArray[i].DriverVersion.HighPart));
-				TraceMsgA("[%d]SubVersion: %x\n", i, HIWORD(m_AdapterArray[i].DriverVersion.LowPart));
-				TraceMsgA("[%d]Build: %x %d.%d.%d.%d\n", i, LOWORD(m_AdapterArray[i].DriverVersion.LowPart),
-					HIWORD(m_AdapterArray[i].DriverVersion.HighPart),
-					LOWORD(m_AdapterArray[i].DriverVersion.HighPart),
-					HIWORD(m_AdapterArray[i].DriverVersion.LowPart),
-					LOWORD(m_AdapterArray[i].DriverVersion.LowPart));
-				
-				TraceMsgA("[%d]SubSysId: %x\n, Revision: %x\n,GUID:%s\n, WHQLLevel:%d\n", i,
-					m_AdapterArray[i].SubSysId,
-					m_AdapterArray[i].Revision,
-					StringFromGUIDA(&m_AdapterArray[i].DeviceIdentifier),
-					m_AdapterArray[i].WHQLLevel);
+				TraceMsgA("[%d]SubSysId: %x\n, Revision: %x\n,GUID:%s\n, WHQLLevel:%d\n", m_nAdapterCount,
+					D3DAdapter.SubSysId,
+					D3DAdapter.Revision,
+					StringFromGUIDA(&D3DAdapter.DeviceIdentifier),
+					D3DAdapter.WHQLLevel);
+				m_nAdapterCount++;
 			}
+			TraceMsgA("%s m_nAdapterCount = %d.\n",__FUNCTION__, m_nAdapterCount);
 			return true;
 		}
 		else
@@ -3113,6 +3136,7 @@ public:
 // 			}
 // 		}
 		//OSDInfoPtr pOSD = make_shared<OSDInfo>();
+		TraceMsgA("%s m_nDisplayAdapter = %d.\n",__FUNCTION__, m_nDisplayAdapter);
 		if (FAILED(hr = m_pDirect3D9Ex->CreateDeviceEx(m_nDisplayAdapter,
 			D3DDEVTYPE_HAL,
 			m_d3dpp.hDeviceWindow,

@@ -37,6 +37,10 @@ public:
 	{
 		return &m_cs;
 	}
+	operator CRITICAL_SECTION* ()
+	{
+		return &m_cs;
+	}
 
 protected:
 	CRITICAL_SECTION	m_cs;

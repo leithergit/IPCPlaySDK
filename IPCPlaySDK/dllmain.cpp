@@ -29,7 +29,7 @@ bool g_bEnableDDraw = false;
 // int		g_nGlobalAdapterCount = 0;
 //#pragma data_seg()
 /*#pragma comment(linker,"/SECTION:Shared,RWS")*/
-HANDLE  g_hHAccelMutexArray[10] = { 0 };
+// HANDLE  g_hHAccelMutexArray[10] = { 0 };
 extern map<string, DxSurfaceList>g_DxSurfacePool;	// 用于缓存DxSurface对象
 extern CCriticalSectionAgent g_csDxSurfacePool;
 HANDLE g_hGlobalMutex = nullptr;
@@ -99,10 +99,11 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		SECURITY_ATTRIBUTES sa;
 		DWORD dwErrorCode = 0;
 		CHAR szPath[MAX_PATH] = { 0 };
-		TCHAR szAdapterMutexName[64] = { 0 };
+		WCHAR szAdapterMutexName[64] = { 0 };
 		bool bOpenMutex = false;
 		__try
 		{
+			g_pD3D9Helper.UpdateAdapterInfo();
 			if ((dwErrorCode = OpenShareMemory())!=0 )
 			{
 				if ((dwErrorCode = CreateShareMemory())!= 0)
@@ -123,47 +124,62 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 				sa.lpSecurityDescriptor = &sd;
 				CHAR szTempPath[MAX_PATH] = { 0 };
 				// 取得解码库加载路径
-				GetModuleFileNameA(hModule, szTempPath, MAX_PATH);
+				/*GetModuleFileNameA(hModule, szTempPath, MAX_PATH);
 				int nPos = StrReserverFind(szTempPath, '\\');
 				strncpy_s(szPath, MAX_PATH, szTempPath, nPos);
-				strcat_s(szPath, MAX_PATH, "\\RenderOption.ini");
+				strcat_s(szPath, MAX_PATH, "\\RenderOption.ini");*/
 				CHAR szValue[256] = { 0 };
 				CHAR szKeyName[64] = { 0 };
-				CHAR szGUID[64] = { 0 };
+				WCHAR szGUID[64] = { 0 };
 				int nIndex = 1;
 				int nConfigIndex = 0;
-				do
+				char szAdapterArray[10][64] = { 0 };
+				if (g_pD3D9Helper.m_nAdapterCount > 0)
 				{
-					/* Ini Sample:
-					[HAccel]
-					Adapter1 = 3, {D7B78E66-5A5B-11CF-7767-4070BDC2DA35}
-					*/
-					int nMaxHaccelCount = 0;
-					sprintf_s(szKeyName, 64, "Adapter%d", nIndex++);
-					if (GetPrivateProfileStringA("HAccel", szKeyName, nullptr, szValue, 256, szPath) <= 0)
-						break;
-
-					sscanf_s(szValue, "%d,%[^;]", &nMaxHaccelCount, szGUID, _countof(szGUID));
-					char *pGuid = Trim(szGUID);
-					TraceMsgA("AdapterID = \"%s\",HAccelCount = %d.\n", pGuid, nMaxHaccelCount);
-					_stprintf_s(szAdapterMutexName, 64, _T("Global\\%s"), pGuid);
-					g_hHAccelMutexArray[nConfigIndex] = CreateMutex(&sa, FALSE, szAdapterMutexName);
-					_tcscpy_s(g_pSharedMemory->HAccelArray[nConfigIndex].szAdapterGuid, 64, pGuid);
-					g_pSharedMemory->HAccelArray[nConfigIndex].nMaxHaccel = nMaxHaccelCount;
-					g_pSharedMemory->HAccelArray[nConfigIndex].nOpenCount = 0;
-					nConfigIndex++;
-				} while (true);
+					for (int nIndex = 0; nIndex < g_pD3D9Helper.m_nAdapterCount; nIndex++)
+					{
+						StringFromGUID2(g_pD3D9Helper.m_AdapterArray[nIndex].DeviceIdentifier, szGUID, 64);
+						//CHAR szGuidA[64] = { 0 };
+						//W2AHelper(szGuidW, szGuidA, 64);
+						swprintf_s(szAdapterMutexName, 64, L"Global\\%s", szGUID);
+						g_pSharedMemory->HAccelArray[nConfigIndex].hMutex = CreateMutexW(&sa, FALSE, szAdapterMutexName);;
+						wcscpy_s(g_pSharedMemory->HAccelArray[nConfigIndex].szAdapterGuid, 64, szGUID);
+						g_pSharedMemory->HAccelArray[nConfigIndex].nMaxHaccel = 0;
+						g_pSharedMemory->HAccelArray[nConfigIndex].nOpenCount = 0;
+					}
+				}
+				//do
+				//{
+				//	/* Ini Sample:
+				//	[HAccel]
+				//	Adapter1 = 3, {D7B78E66-5A5B-11CF-7767-4070BDC2DA35}
+				//	*/
+				//	int nMaxHaccelCount = 0;
+				//	sprintf_s(szKeyName, 64, "Adapter%d", nIndex++);
+				//	if (GetPrivateProfileStringA("HAccel", szKeyName, nullptr, szValue, 256, szPath) <= 0)
+				//		break;
+				//	sscanf_s(szValue, "%d,%[^;]", &nMaxHaccelCount, szGUID, _countof(szGUID));
+				//	char *pGuid = Trim(szGUID);
+				//	TraceMsgA("AdapterID = \"%s\",HAccelCount = %d.\n", pGuid, nMaxHaccelCount);
+				//	_stprintf_s(szAdapterMutexName, 64, _T("Global\\%s"), pGuid);
+				//	g_pSharedMemory->HAccelArray[nConfigIndex].hMutex == CreateMutex(&sa, FALSE, szAdapterMutexName);;
+				//	_tcscpy_s(g_pSharedMemory->HAccelArray[nConfigIndex].szAdapterGuid, 64, pGuid);
+				//	g_pSharedMemory->HAccelArray[nConfigIndex].nMaxHaccel = nMaxHaccelCount;
+				//	g_pSharedMemory->HAccelArray[nConfigIndex].nOpenCount = 0;
+				//	
+				//	nConfigIndex++;
+				//} while (true);
 				
-				g_pSharedMemory->nAdapterCount = nConfigIndex;
-				g_pSharedMemory->bHAccelPreferred = GetPrivateProfileInt("HAccel", "Prefered", 0, szPath);
-				g_bEnableDDraw = GetPrivateProfileInt(_T("RenderOption"), _T("EnableDDraw"), 0, szPath);
+				g_pSharedMemory->nAdapterCount = g_pD3D9Helper.m_nAdapterCount;
+				g_pSharedMemory->bHAccelPreferred = false;
+				g_bEnableDDraw = false;
 			}
 			else
 			{
 				for (int i = 0; i < g_pSharedMemory->nAdapterCount; i++)
 				{
-					_stprintf_s(szAdapterMutexName, 64, _T("Global\\%s"), g_pSharedMemory->HAccelArray[i].szAdapterGuid);
-					g_hHAccelMutexArray[i] = OpenMutex(MUTEX_ALL_ACCESS, FALSE, szAdapterMutexName);
+					swprintf_s(szAdapterMutexName, 64, L"Global\\%s", g_pSharedMemory->HAccelArray[i].szAdapterGuid);
+					g_pSharedMemory->HAccelArray[i].hMutex = OpenMutexW(MUTEX_ALL_ACCESS, FALSE, szAdapterMutexName);
 				}
 			}
 			
@@ -218,9 +234,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		{
 			for (int i = 0; i < g_pSharedMemory->nAdapterCount; i++)
 			{
-				ReleaseMutex(g_hHAccelMutexArray[i]);
-				CloseHandle(g_hHAccelMutexArray[i]);
-				g_hHAccelMutexArray[i] = nullptr;
+				ReleaseMutex(g_pSharedMemory->HAccelArray[i].hMutex);
+				CloseHandle(g_pSharedMemory->HAccelArray[i].hMutex);
+				g_pSharedMemory->HAccelArray[i].hMutex = nullptr;
 			}
 			ReleaseShareMemory();
 		}
@@ -327,7 +343,7 @@ DWORD CreateShareMemory()
 				PAGE_READWRITE | SEC_COMMIT,
 				0,
 				sizeof(SharedMemory),
-				_SharedMemoryName);
+				_IPCPlayerSharedMemory);
 			if (!g_hSharedMemory)
 			{
 				dwResult = GetLastError();
@@ -388,7 +404,7 @@ DWORD OpenShareMemory()
 	{
 		__try
 		{
-			g_hSharedMemory = OpenFileMapping(FILE_MAP_ALL_ACCESS, 0, _SharedMemoryName);
+			g_hSharedMemory = OpenFileMapping(FILE_MAP_ALL_ACCESS, 0, _IPCPlayerSharedMemory);
 			if (g_hSharedMemory == INVALID_HANDLE_VALUE ||
 				g_hSharedMemory == NULL)
 			{

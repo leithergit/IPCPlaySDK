@@ -20,14 +20,14 @@ struct  CTraceAlignMalloc
 
 	void * AlignMalloc(int nSize,int nAlignment)
 	{
-		Autolock(&cs);
+		AutoLock(&cs);
 		nCount++;
 		return _aligned_malloc(nSize, nAlignment);
 	}
 
 	void AlignFree(void *p)
 	{
-		Autolock(&cs);
+		AutoLock(&cs);
 		nCount--;
 		_aligned_free(p);
 	}

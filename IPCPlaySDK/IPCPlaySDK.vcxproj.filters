@@ -31,9 +31,6 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Autolock.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="IPCPlaySDK.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -51,6 +48,9 @@
     </ClCompile>
     <ClCompile Include="svacparser\svacstream.cpp">
       <Filter>savcSteamparser</Filter>
+    </ClCompile>
+    <ClCompile Include="AutoLineLock.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -83,9 +83,6 @@
     </ClInclude>
     <ClInclude Include="VideoDecoder\VideoDecoder.h">
       <Filter>VideoDecoder</Filter>
-    </ClInclude>
-    <ClInclude Include="AutoLock.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DirectDraw.h">
       <Filter>Header Files</Filter>
@@ -171,6 +168,9 @@
     <ClInclude Include="..\MagoD3D9Sample\DxSurface\gpu_memcpy_sse4.h" />
     <ClInclude Include="AudioDecoder.h">
       <Filter>Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="AutoLock.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

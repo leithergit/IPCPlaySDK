@@ -2,7 +2,7 @@
 #include <dsound.h>
 #include <memory>
 #include <list>
-#include "autolock.h"
+#include "AutoLock.h"
 using namespace std;
 using namespace std::tr1;
 //#include <boost/smart_ptr.hpp>

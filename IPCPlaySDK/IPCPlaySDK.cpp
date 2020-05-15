@@ -1558,11 +1558,19 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 			szMessaageW = L"Stream Parser Not Started.";
 			break;
 		case IPC_Error_DXRenderNotInitialized:
-			szMessaageW = L"DirectX Render Not Initialized";
+			szMessaageW = L"DirectX Render Not Initialized.";
 			break;
 		case IPC_Error_NotAsyncPlayer:
-			szMessaageW = L"Not a AsyncPlayer";
+			szMessaageW = L"Not a AsyncPlayer.";
 			break;
+		case IPC_Error_InvalidSharedMemory:		// = (-50), ///< 尚未创建共享内存
+			szMessaageW = L"Invliad shared Memory.";
+			break;
+		case IPC_Error_LibUninitialized:		// = (-51), ///< 动态库尚未加载或初始初始化
+			szMessaageW = L"The lib is not load or Initialized.";
+			break;
+		case IPC_Error_InvalidVideoAdapterGUID:
+			szMessaageW = L"Invliad Video adatper GUID or There no Adapter matched with the input GUID.";
 		case IPC_Error_InsufficentMemory:
 			szMessaageW = L"Insufficent Memory";
 			break;
@@ -1775,4 +1783,50 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	 if (pPlayer->nSize != sizeof(CIPCPlayer))
 		 return IPC_Error_InvalidParameters;
 	 return pPlayer->SetSwitcherCallBack(nScreenWnd,hWnd, pVideoSwitchCB, pUserPtr);
+ }
+
+ int ipcplay_SetAdapterHAccelW(WCHAR *szAdapterID, int nMaxHAccel)
+ {
+	 if (!szAdapterID || nMaxHAccel < 0)
+		 return IPC_Error_InvalidParameters;
+	 if (!g_pSharedMemory || g_pSharedMemory->nAdapterCount <= 0 )
+		 return IPC_Error_LibUninitialized;
+	
+	for (int i = 0; i < g_pSharedMemory->nAdapterCount; i++)
+	{
+		if (!g_pSharedMemory->HAccelArray[i].hMutex)
+			break;
+
+		if (wcscmp(g_pSharedMemory->HAccelArray[i].szAdapterGuid, szAdapterID) != 0)
+			break;
+
+		if (WaitForSingleObject(g_pSharedMemory->HAccelArray[i].hMutex, 1000) == WAIT_TIMEOUT)
+			break;
+		g_pSharedMemory->HAccelArray[i].nMaxHaccel = nMaxHAccel;		
+		ReleaseMutex(g_pSharedMemory->HAccelArray[i].hMutex);
+		return IPC_Succeed;
+	}
+	return IPC_Error_InvalidVideoAdapterGUID;
+ }
+
+ int ipcplay_SetAdapterHAccelA(CHAR *szAdapterID, int nMaxHAccel)
+ {
+	 if (!szAdapterID || nMaxHAccel < 0)
+		 return IPC_Error_InvalidParameters;
+
+	 if (!g_pSharedMemory || g_pSharedMemory->nAdapterCount <= 0)
+		 return IPC_Error_LibUninitialized;
+
+	 WCHAR szAdapterIDW[64] = { 0 };
+	 A2WHelper(szAdapterID, szAdapterIDW, 64);
+	 return ipcplay_SetAdapterHAccelW(szAdapterIDW, nMaxHAccel);
+ }
+
+
+ int ipcplay_EnableHAccelPrefered(bool bEnale)
+ {
+	 if (!g_pSharedMemory || g_pSharedMemory->nAdapterCount <= 0)
+		 return IPC_Error_LibUninitialized;
+	 g_pSharedMemory->bHAccelPreferred = bEnale;
+	 return IPC_Succeed;
  }
