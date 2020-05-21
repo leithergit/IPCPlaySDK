@@ -334,7 +334,7 @@ private:
 	shared_ptr<CDSound> m_pDsPlayer;///< DirectSound播放对象指针
 	//shared_ptr<CDSound> m_pDsPlayer;	///< DirectSound播放对象指针
 	CDSoundBuffer* m_pDsBuffer;
-	Coordinte		m_nCoordinate = Coordinte_Wnd;
+	Coordinte		m_nCoordinate = Coordinte_Video;
 	DxSurfaceInitInfo	m_DxInitInfo;
 	CDxSurfaceEx* m_pDxSurface;			///< Direct3d Surface封装类,用于显示视频
 	
@@ -1391,7 +1391,7 @@ public:
 
 	int RemovePolygon(long nIndex);
 
-	int SetCoordinateMode(int nMode = 1)
+	int SetCoordinateMode(int nMode = 0)
 	{
 		m_nCoordinate = (Coordinte)nMode;
 		return IPC_Succeed;

@@ -818,8 +818,8 @@ public:
 	D3DPRESENT_PARAMETERS	m_d3dpp;
 	CRITICAL_SECTION		m_csRender;			// 渲染临界区
 	CRITICAL_SECTION		m_csSnapShot;		// 截图临界区
-	CCriticalSectionAgentPtr m_pCriListLine;
-	CCriticalSectionAgentPtr m_pCriMapPolygon;
+	CCriticalSectionAgentPtr m_pCsListLine;
+	CCriticalSectionAgentPtr m_pCsMapPolygon;
 	bool					m_bD3DShared;		// IDirect3D9接口是否为共享 	
 	/*HWND					m_hWnd;*/
 	DWORD					m_dwExStyle;
@@ -838,7 +838,7 @@ public:
 	UINT					m_nWndWidth;
 	UINT					m_nWndHeight;
 	bool					m_bInitialized;	
-	Coordinte				m_nCordinateMode = Coordinte_Wnd;
+	Coordinte				m_nCordinateMode = Coordinte_Video;
 	shared_ptr<PixelConvert>m_pPixelConvert;
 	HANDLE					m_hYUVCacheReady;
 	IDirect3D9				*m_pDirect3D9		/* = NULL*/;
@@ -876,7 +876,7 @@ public:
 	bool					m_bWndSubclass;		// 是否子类化显示窗口,为ture时，则将显示窗口子类化,此时窗口消息会先被CDxSurface::WndProc优先处理,再由窗口函数处理
 	pDirect3DCreate9*		m_pDirect3DCreate9;
 	LPD3DXLINE              m_pD3DXLine = NULL; //Direct3D线对象  
-	D3DXVECTOR2*            m_pLineArray = NULL; //线段顶点 
+	//D3DXVECTOR2*            m_pLineArray = NULL; //线段顶点 
 	CHAR					m_szAdapterID[64];	///< 显卡的GUID
 public:
 		
@@ -926,12 +926,12 @@ public:
 		}
 
 		SaveRunTime();
-		m_nCordinateMode = Coordinte_Wnd;
+		m_nCordinateMode = Coordinte_Video;
 		InitializeCriticalSection(&m_csRender);
 		InitializeCriticalSection(&m_csSnapShot);
 		InitializeCriticalSection(&m_csExternDraw);
-		m_pCriListLine = make_shared<CCriticalSectionAgent>();
-		m_pCriMapPolygon = make_shared<CCriticalSectionAgent>();
+		m_pCsListLine = make_shared<CCriticalSectionAgent>();
+		m_pCsMapPolygon = make_shared<CCriticalSectionAgent>();
 		//m_hEventFrameReady	= CreateEvent(NULL,FALSE,FALSE,NULL);
 		//m_hEventFrameCopied = CreateEvent(NULL,FALSE,FALSE, NULL);
 		m_hEventSnapShot	= CreateEvent(NULL,FALSE,FALSE,NULL);
@@ -1092,6 +1092,11 @@ public:
 			it = m_MapOSD.erase(it);
 		}
 		m_csMapOSD.Unlock();
+		
+		m_pCsListLine->Lock();
+		m_listLine.clear();
+		m_pCsListLine->Unlock();
+		SafeRelease(m_pD3DXLine);
 		DxCleanup();
 //		SafeRelease(m_pDirect3D9);
 // 		if (m_hD3D9)
@@ -1269,9 +1274,9 @@ public:
 		SafeDeleteArray(pIndexArray);
 		if (bSucceed)
 		{
-			m_pCriMapPolygon->Lock();
+			m_pCsMapPolygon->Lock();
 			m_mapPolygon.insert(pair<long, DxPolygonPtr >((long)pDxPolygon.get(), pDxPolygon));
-			m_pCriMapPolygon->Unlock();
+			m_pCsMapPolygon->Unlock();
 			return (long)pDxPolygon.get();
 		}
 		else
@@ -1300,28 +1305,28 @@ public:
 			pLineArray->pLineArray[i].x = (float)pPointArray[i].x;
 			pLineArray->pLineArray[i].y = (float)pPointArray[i].y;
 		}
-		m_pCriListLine->Lock();
+		m_pCsListLine->Lock();
 		m_listLine.push_back(pLineArray);
-		m_pCriListLine->Unlock();
+		m_pCsListLine->Unlock();
 		return (long)pLineArray.get();
 	}
 	// 删除多边形
 	void RemovePolygon(long nPolygonIndex)
 	{
-		m_pCriMapPolygon->Lock();
+		m_pCsMapPolygon->Lock();
 		auto itFind = m_mapPolygon.find(nPolygonIndex);
 		if (itFind != m_mapPolygon.end())
 		{
 			m_mapPolygon.erase(itFind);
 		}
-		m_pCriMapPolygon->Unlock();
+		m_pCsMapPolygon->Unlock();
 	}
 
 	// 删除线段
 	// nArrayIndex为AddD3DLineArray返回的索引值
 	int  RemoveD3DLineArray(long nArrayIndex)
 	{
-		CAutoLock lock(m_pCriListLine->Get());
+		CAutoLock lock(m_pCsListLine->Get());
 		auto it = find_if(m_listLine.begin(), m_listLine.end(),LineArrayFinder(nArrayIndex));
 		if (it != m_listLine.end())
 		{
@@ -1345,7 +1350,7 @@ public:
 			if (nWndWidth > 0 &&
 				nWndHeight > 0)
 			{
-				CAutoLock lock(m_pCriListLine->Get());
+				CAutoLock lock(m_pCsListLine->Get());
 				if (m_listLine.size())
 				{
 					for (auto it = m_listLine.begin(); it != m_listLine.end(); it++)
@@ -2737,7 +2742,7 @@ public:
 	{
 		DeclareRunTime(5);
 
-		m_nCordinateMode = Coordinte_Wnd;
+		m_nCordinateMode = Coordinte_Video;
 		// 释放由基类创建的Direct3D9对象
 		//SafeRelease(m_pDirect3D9);
 		m_pDirect3DCreate9Ex = g_pD3D9Helper.m_pDirect3DCreate9Ex;	
@@ -2888,7 +2893,7 @@ public:
 	}
 	~CDxSurfaceEx()
 	{
-		m_csMapOSD.Lock();
+		/*m_csMapOSD.Lock();
 		for (auto it = m_MapOSD.begin(); it != m_MapOSD.end();)
 		{
 			ID3DXFont *pFont = (ID3DXFont *)it->first;
@@ -2896,7 +2901,7 @@ public:
 			SafeRelease(pFont);
 			it = m_MapOSD.erase(it);
 		}
-		m_csMapOSD.Unlock();
+		m_csMapOSD.Unlock();*/
 		DxCleanup();
 //		SafeRelease(m_pDirect3D9Ex);
 // 		if (m_hD3D9)
@@ -3738,9 +3743,9 @@ __Failure:
 		SafeDeleteArray(pIndexArray);
 		if (bSucceed)
 		{
-			m_pCriMapPolygon->Lock();
+			m_pCsMapPolygon->Lock();
 			m_mapPolygon.insert(pair<long, DxPolygonPtr >((long)pDxPolygon.get(), pDxPolygon));
-			m_pCriMapPolygon->Unlock();
+			m_pCsMapPolygon->Unlock();
 			return (long)pDxPolygon.get();
 		}
 		else
@@ -3770,9 +3775,9 @@ __Failure:
 			pLineArray->pLineArray[i].x = (float)pPointArray[i].x;
 			pLineArray->pLineArray[i].y = (float)pPointArray[i].y;
 		}
-		m_pCriListLine->Lock();
+		m_pCsListLine->Lock();
 		m_listLine.push_back(pLineArray);
-		m_pCriListLine->Unlock();
+		m_pCsListLine->Unlock();
 		return (long)pLineArray.get();
 	}
 
@@ -3830,7 +3835,7 @@ __Failure:
 
 		m_pDirect3DDeviceEx->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
 		m_pDirect3DDeviceEx->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
-		m_pCriMapPolygon->Lock();
+		m_pCsMapPolygon->Lock();
 		for (auto it = m_mapPolygon.begin(); it != m_mapPolygon.end();it ++)
 		{
 			m_pDirect3DDeviceEx->SetStreamSource(0, it->second->VertexBuff, 0, sizeof(PolygonVertex));
@@ -3838,7 +3843,7 @@ __Failure:
 			m_pDirect3DDeviceEx->SetIndices(it->second->IndexBuff);
 			m_pDirect3DDeviceEx->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, it->second->nVertexCount, 0, it->second->nTriangleCount);
 		}
-		m_pCriMapPolygon->Unlock();
+		m_pCsMapPolygon->Unlock();
 	
 
 		m_pDirect3DDeviceEx->EndScene();

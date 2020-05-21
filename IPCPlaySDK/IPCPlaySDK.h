@@ -209,7 +209,8 @@ struct PlayerInfo
 	float		fPlayRate;		///< 播放速率,只有文件播放时才有效
 	long		nSDKVersion;	///< SDK版本,详细定义参见@see IPC_MEDIAINFO
 	bool		bFilePlayFinished;///< 文件播放完成标志,为true时，播放结束，为false时，则未结束	
-	byte		nReserver1[3];
+	bool		bD3DReady;		///< D3D对象是否已经成功初始化
+	WORD		nReserver1;
 	UINT		nReserver2[2];
 };
 ///	@def	IPC_PLAYHANDLE

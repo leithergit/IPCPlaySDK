@@ -153,6 +153,8 @@ enum IPCPLAY_Status
 	IPC_Error_UnsupportedFormat			=(-48),	///< 不支持的图像格式
 	IPC_Error_OpenCodecFailed			=(-49),	///< 分配编码上下文失败
 	IPC_Error_InvalidSharedMemory		=(-50), ///< 尚未创建共享内存
+	IPC_Error_LibUninitialized			=(-51), ///< 动态库尚未加载或初始初始化
+	IPC_Error_InvalidVideoAdapterGUID	=(-52), ///< 无效的显卡GUID机或本机没有与之对应的显卡
 	IPC_Error_InsufficentMemory			=(-255)	///< 内存不足
 };
 
@@ -169,9 +171,10 @@ enum IPCPLAY_Status
 
 struct AdapterHAccel
 {
-	CHAR	szAdapterGuid[64];
+	WCHAR	szAdapterGuid[64];
 	int		nMaxHaccel;
 	int		nOpenCount;
+	HANDLE  hMutex;
 };
 
 
@@ -206,7 +209,8 @@ struct PlayerInfo
 	float		fPlayRate;		///< 播放速率,只有文件播放时才有效
 	long		nSDKVersion;	///< SDK版本,详细定义参见@see IPC_MEDIAINFO
 	bool		bFilePlayFinished;///< 文件播放完成标志,为true时，播放结束，为false时，则未结束	
-	byte		nReserver1[3];
+	bool		bD3DReady;		///< D3D对象是否已经成功初始化
+	WORD		nReserver1;
 	UINT		nReserver2[2];
 };
 ///	@def	IPC_PLAYHANDLE
@@ -337,7 +341,11 @@ struct CSwitcherInfo
 	}
 	void Reset()
 	{
-		ZeroMemory(&hWnd, sizeof(CSwitcherInfo) - offsetof(CSwitcherInfo, hWnd));
+		//ZeroMemory(&hWnd, sizeof(CSwitcherInfo) - offsetof(CSwitcherInfo, hWnd));
+		hWnd = nullptr;
+		pPlayerHandle = nullptr;
+		pUserPtr = nullptr;
+		pCallBack = nullptr;
 	}
 	~CSwitcherInfo()
 	{
@@ -1031,9 +1039,9 @@ extern "C" {
 #endif
 
 /// @brief			移动画面上已经输出的文本
-/// @param [in]		nOSDText		由ipcplay_DrawOSD函数返回的文本句柄
+/// @param [in]		nOSDHandle		由ipcplay_DrawOSD函数返回的文本句柄
 /// @return 操作成功时返回IPC_Succeed	否则返回小于0的错误，可使用ipcplay_GetErrorMessage函数获取该错误号的具体含义
- int ipcplay_RmoveOSDText(long nOSDText);
+ int ipcplay_RmoveOSDText(long nOSDHandle);
 
 /// @brief			销毁由ipcplay_CreateOSDFont创建的字体
 /// @param [in]		nFontHandle		由ipcplay_CreateOSDFont函数返回的字体句柄
@@ -1042,13 +1050,34 @@ extern "C" {
  int ipcplay_DestroyOSDFont(long nFontHandle);
 
  /// @brief			设置切换回调
- /// @param [in]		nScreenWnd		由屏号和窗口号组的参数，高位为屏幕号，低为窗口号
- /// @param [in]		pVideoSwitchCB	切换通知回调，当前播放句柄进入解段阶段，准备呈现面画时会调用这个解口
+ /// @param [in]	nScreenWnd		由屏号和窗口号组的参数，高位为屏幕号，低为窗口号
+ /// @param [in]	pVideoSwitchCB	切换通知回调，当前播放句柄进入解段阶段，准备呈现面画时会调用这个解口
 
- /// @param [in]		pUserPtr		pVideoSwitchCB回调使用的用户接口 
- /// @remark			1.这个接口可用于作快速切换，当前窗口若正在显示视频时，若要切入下一视频，可设置此回调，在回中止上一次的视频播放。	
- ///					2.屏幕号和窗口号计数从0开始，最多支持16个屏幕(取值0~15)，每人屏幕的窗口数最多256(取值0~255)
- int ipcplay_SetSwitcherCallBack(IPC_PLAYHANDLE hPlayHandle, WORD nScreenWnd, void *pVideoSwitchCB, void *pUserPtr);
+ /// @param [in]	pUserPtr		pVideoSwitchCB回调使用的用户接口 
+ /// @remark		1.这个接口可用于作快速切换，当前窗口若正在显示视频时，若要切入下一视频，可设置此回调，在回中止上一次的视频播放。	
+ ///				2.屏幕号和窗口号计数从0开始，最多支持16个屏幕(取值0~15)，每人屏幕的窗口数最多256(取值0~255)
+ int ipcplay_SetSwitcherCallBack(IPC_PLAYHANDLE hPlayHandle, WORD nScreenWnd, HWND hWnd, void *pVideoSwitchCB, void *pUserPtr);
+
+#ifdef _UNICODE
+#define ipcplay_SetAdapterHAccel	ipcplay_SetAdapterHAccelW
+#else
+#define ipcplay_SetAdapterHAccel	ipcplay_SetAdapterHAccelA
+#endif
+ /// @brief			设置对应显卡的最大硬解路数
+ /// @param [in]	szAdapterID		显卡的GUID字符串，可ipcplay_GetDisplayAdapterInfo函数获取系统中的显卡信息，其中包含显卡的GUID
+ /// @param [in]	nMaxHAccel		对应显卡的最大硬解路数
+ int ipcplay_SetAdapterHAccelW(WCHAR *szAdapterID, int nMaxHAccel);
+
+ /// @brief			设置对应显卡的最大硬解路数
+ /// @param [in]	szAdapterID		显卡的GUID字符串，可ipcplay_GetDisplayAdapterInfo函数获取系统中的显卡信息，其中包含显卡的GUID
+ /// @param [in]	nMaxHAccel		对应显卡的最大硬解路数
+ int ipcplay_SetAdapterHAccelA(CHAR *szAdapterID, int nMaxHAccel);
+
+ /// @brief			启用硬解码优先策略
+ /// @param [in]	bEnale		是否启用硬解码优先的策略
+ /// @remark		1.这个接口可用于作快速切换，当前窗口若正在显示视频时，若要切入下一视频，可设置此回调，在回中止上一次的视频播放。	
+ ///				2.屏幕号和窗口号计数从0开始，最多支持16个屏幕(取值0~15)，每人屏幕的窗口数最多256(取值0~255)
+ int ipcplay_EnableHAccelPrefered(bool bEnale);
 
 #ifdef __cplusplus
 }

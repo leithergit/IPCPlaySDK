@@ -50,7 +50,7 @@ CIPCPlayer::CIPCPlayer()
 	m_nMaxYUVCache = 10;
 	m_nPixelFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
 	m_nDecodeDelay = -1;
-	m_nCoordinate = Coordinte_Wnd;
+	m_nCoordinate = Coordinte_Video;
 	m_hInputFrameEvent = CreateEvent(nullptr, false, false, nullptr);
 }
 
@@ -98,7 +98,7 @@ CIPCPlayer::CIPCPlayer(HWND hWnd, CHAR *szFileName, char *szLogFile)
 	m_nListAvFrameMaxSize = 50;
 	m_nProbeStreamTimeout = 10000;	// ºÁÃë
 	m_nMaxYUVCache = 10;
-	m_nCoordinate = Coordinte_Wnd;
+	m_nCoordinate = Coordinte_Video;
 #ifdef _DEBUG
 	OutputMsg("%s Alloc a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
 #endif
@@ -350,9 +350,9 @@ CIPCPlayer::CIPCPlayer(HWND hWnd, int nBufferSize, char *szLogFile)
 
 CIPCPlayer::~CIPCPlayer()
 {
-#ifdef _DEBUG
-	OutputMsg("%s \tReady to Free a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
-#endif
+//#ifdef _DEBUG
+//	OutputMsg("%s \tReady to Free a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
+//#endif
 	//StopPlay(0);
 
 	if (m_pParserBuffer)
@@ -433,7 +433,7 @@ CIPCPlayer::~CIPCPlayer()
 	}
 #ifdef _DEBUG
 	OutputMsg("%s \tFinish Free a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
-	OutputMsg("%s \tObject:%d Exist Time = %u(ms).\n", __FUNCTION__, m_nObjIndex, timeGetTime() - m_nLifeTime);
+	//OutputMsg("%s \tObject:%d Exist Time = %u(ms).\n", __FUNCTION__, m_nObjIndex, timeGetTime() - m_nLifeTime);
 	g_csPlayerHandles.Lock();
 	g_nPlayerHandles--;
 	g_csPlayerHandles.Unlock();
@@ -1915,6 +1915,7 @@ int CIPCPlayer::GetPlayerInfo(PlayerInfo *pPlayInfo)
 		pPlayInfo->nPlayFPS = m_nPlayFPS;
 		pPlayInfo->nCacheSize = m_nVideoCache;
 		pPlayInfo->nCacheSize2 = m_nAudioCache;
+		pPlayInfo->bD3DReady = (m_pDxSurface != nullptr)?(m_pDxSurface->m_pDirect3DDeviceEx != nullptr):false;
 		if (!m_bIpcStream)
 		{
 			pPlayInfo->bFilePlayFinished = m_bFilePlayFinished;
@@ -3990,7 +3991,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		}
 		~DxDeallocator()
 		{
-			//pThis->OutputMsg("%s pSurface = %08X\tpDDraw = %08X.\n", __FUNCTION__, m_pDxSurface, m_pDDraw);
+			DxTraceMsg("%s pSurface = %08X\tpDDraw = %08X.\n", __FUNCTION__, m_pDxSurface, m_pDDraw);
 			if (m_pDxSurface)
 			{
 				if (strlen(m_pDxSurface->m_szAdapterID) > 0)
