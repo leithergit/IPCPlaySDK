@@ -22,8 +22,8 @@ public:
 		nObjIndex = nIndex;
 		strcpy(szStatName, szName);
 		nArraySize = nSize;
-		pArray = new float[nArraySize];
-		ZeroMemory(pArray, sizeof(float)*nArraySize);
+		//pArray = new float[nArraySize];
+		//ZeroMemory(pArray, sizeof(float)*nArraySize);
 	}
 	CStat(int nIndex, int nSize = 200)
 	{
@@ -31,13 +31,13 @@ public:
 		nObjIndex = nIndex;
 		nArraySize = nSize;
 		strcpy(szStatName, "TimeStat");
-		pArray = new float[nArraySize];
-		ZeroMemory(pArray, sizeof(float)*nArraySize);
+		//pArray = new float[nArraySize];
+		//ZeroMemory(pArray, sizeof(float)*nArraySize);
 	}
 	~CStat()
 	{
-		if (pArray)
-			delete[]pArray;
+// 		if (pArray)
+// 			delete[]pArray;
 	}
 	const float GetAvgValue()
 	{
@@ -45,7 +45,7 @@ public:
 	}
 	void Stat(float fValue)
 	{
-		if (nCount < nArraySize)
+		/*if (nCount < nArraySize)
 		{
 			pArray[nCount++] = fValue;
 			fTotalValue += fValue;
@@ -54,7 +54,7 @@ public:
 			if (fMin == 0.0f ||
 				fMin > fValue)
 				fMin = fValue;
-		}
+		}*/
 	}
 
 	bool IsFull()

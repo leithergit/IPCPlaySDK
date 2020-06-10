@@ -639,6 +639,12 @@ struct DxPolygon
 };
 
 typedef shared_ptr<DxPolygon>  DxPolygonPtr;
+
+struct D3DADAPTER_IDENTIFIER9Ex :public D3DADAPTER_IDENTIFIER9
+{
+	char szMonitorArray[10][32];
+	int nMonitorCount;
+};
 class CD3D9Helper
 {
 public:
@@ -647,12 +653,11 @@ public:
 	pDirect3DCreate9Ex*	 m_pDirect3DCreate9Ex;
 	IDirect3D9 *  m_pDirect3D9;
 	IDirect3D9Ex* m_pDirect3D9Ex;	/* = NULL*/;
-	D3DADAPTER_IDENTIFIER9 m_AdapterArray[64];
-	int		m_nAdapterCount;
+	D3DADAPTER_IDENTIFIER9Ex m_AdapterArray[16];
+	int			  m_nAdapterCount;
 	CD3D9Helper()
 	{
-		ZeroMemory(this, sizeof(CD3D9Helper));
-		
+		ZeroMemory(this, sizeof(CD3D9Helper));		
 		m_hD3D9 = ::LoadLibraryA("d3d9.dll");
 		if (!m_hD3D9)
 		{
@@ -694,8 +699,11 @@ public:
 	{
 		if (m_pDirect3D9Ex)
 		{
-			D3DADAPTER_IDENTIFIER9 D3DAdapter;	
+			ZeroMemory(m_AdapterArray, sizeof(m_AdapterArray));
+			D3DADAPTER_IDENTIFIER9 D3DAdapter;
+			DWORD dwTNow = timeGetTime();
 			int nD3dAdapterCount = m_pDirect3D9Ex->GetAdapterCount();
+			DWORD dwTimeSpan = MMTimeSpan(dwTNow);
 			m_nAdapterCount = 0;
 			TraceMsgA(_T("%s AdapterCount = %d.\r\n"), __FUNCTION__, nD3dAdapterCount);
 			// LUID AdapterLUIDArray[10] = { 0 };
@@ -707,10 +715,10 @@ public:
 														 0/*Reserved for future use*/, 
 														 (D3DADAPTER_IDENTIFIER9 *)&D3DAdapter) != D3D_OK)
 					return false;
-				LUID luid;
-				HRESULT hr = m_pDirect3D9Ex->GetAdapterLUID(i, &luid);
 				bool bFound = false;
-				/*for (int k = 0; k < m_nAdapterCount; k++)
+				/*LUID luid;
+				HRESULT hr = m_pDirect3D9Ex->GetAdapterLUID(i, &luid);				
+				for (int k = 0; k < m_nAdapterCount; k++)
 				{
 					if (memcmp(&AdapterLUIDArray[k], &luid, sizeof(LUID)) == 0)
 					{
@@ -718,19 +726,27 @@ public:
 						break;
 					}
 				}*/
+				int nIndex = -1;
 				for (int k = 0; k < m_nAdapterCount; k++)
 				{
 					if (memcmp(&m_AdapterArray[k].DeviceIdentifier, &D3DAdapter.DeviceIdentifier, sizeof(GUID)) == 0)
 					{
 						bFound = true;
+						nIndex = k;
 						break;
 					}
 				}
 				if (bFound)
+				{
+					strcpy_s(m_AdapterArray[nIndex].szMonitorArray[m_AdapterArray[nIndex].nMonitorCount], 32, D3DAdapter.DeviceName);
+					m_AdapterArray[nIndex].nMonitorCount++;
 					continue;
+				}
 				//memcpy(&AdapterLUIDArray[m_nAdapterCount], &luid, sizeof(sizeof(LUID)));
 				//memcpy(&AdapterGUIDArray[m_nAdapterCount], &D3DAdapter.DeviceIdentifier, sizeof(GUID));
 				memcpy(&m_AdapterArray[m_nAdapterCount], &D3DAdapter, sizeof(D3DADAPTER_IDENTIFIER9));
+				strcpy_s(m_AdapterArray[m_nAdapterCount].szMonitorArray[0], 32, D3DAdapter.DeviceName);
+				m_AdapterArray[m_nAdapterCount].nMonitorCount++;
 				TraceMsgA("[%d]Driver: %s.\n", m_nAdapterCount, D3DAdapter.Driver);
 				TraceMsgA("[%d]Description: %s\n", m_nAdapterCount, D3DAdapter.Description);
 				TraceMsgA("[%d]Device Name: %s\n", m_nAdapterCount, D3DAdapter.DeviceName);
@@ -3188,9 +3204,7 @@ public:
 		}
 
 		hr = m_pDirect3DDeviceEx->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_ANISOTROPIC);
-
 		hr = m_pDirect3DDeviceEx->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_ANISOTROPIC);
-
 		hr = m_pDirect3DDeviceEx->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS,TRUE);
 		hr = m_pDirect3DDeviceEx->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
 		

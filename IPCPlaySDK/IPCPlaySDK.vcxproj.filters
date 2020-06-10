@@ -49,9 +49,6 @@
     <ClCompile Include="svacparser\svacstream.cpp">
       <Filter>savcSteamparser</Filter>
     </ClCompile>
-    <ClCompile Include="AutoLineLock.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AudioCodec\g726.h">

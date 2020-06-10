@@ -58,6 +58,9 @@ void MyDeleteCriticalSection(MYCRITICAL_SECTION *);
 
 #define AutoLock(cs)			CAutoLock Lock(cs,false,__FILE__,__FUNCTION__,__LINE__);
 
+#define AutoLockAgent(CSAgent)			CAutoLock LockAgent(CSAgent.Get(),false,__FILE__,__FUNCTION__,__LINE__);
+#define UnlockAgent()					LockAgent.Unlock();
+
 #define LineLockAgent(CSAgent)  CAutoLock  defLineVar(Lock,__LINE__)(CSAgent.Get(),false,__FILE__,__FUNCTION__,__LINE__);
 
 

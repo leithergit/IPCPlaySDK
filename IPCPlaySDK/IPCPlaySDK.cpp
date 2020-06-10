@@ -249,7 +249,6 @@ struct IPC_StreamHeader
 	}
 	else
 	{
-
 		delete pPlayer;
 	}
 
@@ -1821,8 +1820,7 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	 A2WHelper(szAdapterID, szAdapterIDW, 64);
 	 return ipcplay_SetAdapterHAccelW(szAdapterIDW, nMaxHAccel);
  }
-
-
+ 
  int ipcplay_EnableHAccelPrefered(bool bEnale)
  {
 	 if (!g_pSharedMemory || g_pSharedMemory->nAdapterCount <= 0)
