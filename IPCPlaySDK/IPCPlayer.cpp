@@ -4235,26 +4235,28 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 	}
 
 	pThis->OutputMsg("%s Try to InitizlizeDx.\n", __FUNCTION__);
-	if (pThis->m_nVideoWidth && pThis->m_nVideoHeight)
+	if (!pThis->m_nVideoWidth)
+		pThis->m_nVideoWidth = 1280;
+	if (!pThis->m_nVideoHeight)
+		pThis->m_nVideoHeight = 720;
+	
+	if (!pThis->InitizlizeDx())
 	{
-		if (!pThis->InitizlizeDx())
-		{
-			assert(false);
-			return 0;
-		}
-		if (pThis->m_bEnableHaccel && strlen(szAdapterID))
-			strcpy_s(pThis->m_pDxSurface->m_szAdapterID, 64, szAdapterID);
-		if (!pThis->m_pDxSurface)
-		{
-			assert(false);
-			return 0;
-		}
+		assert(false);
+		return 0;
+	}
+	if (pThis->m_bEnableHaccel && strlen(szAdapterID))
+		strcpy_s(pThis->m_pDxSurface->m_szAdapterID, 64, szAdapterID);
+	if (!pThis->m_pDxSurface)
+	{
+		assert(false);
+		return 0;
 	}
 			
 	shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface, pThis->m_pDDraw);
 	SaveRunTime();
 	pThis->m_bD3dShared = pThis->m_bEnableDDraw ? false : pThis->m_bD3dShared;
-	if (pThis->m_bD3dShared)
+	if (pThis->m_bD3dShared && pThis->m_pDxSurface)
 	{
 		pDecodec->SetD3DShared(pThis->m_pDxSurface->GetD3D9(), pThis->m_pDxSurface->GetD3DDevice());
 		pThis->m_pDxSurface->SetD3DShared(true);
