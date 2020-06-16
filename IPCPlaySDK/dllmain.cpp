@@ -104,9 +104,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		__try
 		{
 			g_pD3D9Helper.UpdateAdapterInfo();
-			if ((dwErrorCode = OpenShareMemory())!=0 )
+			if ((dwErrorCode = OpenShareMemory()) != IPC_Succeed)
 			{
-				if ((dwErrorCode = CreateShareMemory())!= 0)
+				if ((dwErrorCode = CreateShareMemory()) != IPC_Succeed)
 					__leave;
 				if (!::InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION))
 				{
@@ -419,12 +419,12 @@ DWORD OpenShareMemory()
 				TraceMsgA(_T("%s MapViewOfFile Failed,ErrorCode = %d.\r\n"), __FUNCTION__, GetLastError());
 				__leave;
 			}
-			dwResult = true;
+			dwResult = IPC_Succeed;
 			_TraceMsg(_T("Open Share memory map Succeed."));
 		}
 		__finally
 		{
-			if (!dwResult)
+			if (dwResult != IPC_Succeed)
 			{
 				ReleaseShareMemory();
 			}
