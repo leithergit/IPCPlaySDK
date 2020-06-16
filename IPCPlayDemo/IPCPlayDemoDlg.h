@@ -565,7 +565,8 @@ public:
 	afx_msg void OnBnClickedButtonPause();
 	afx_msg void OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2);
 	FullScreenWnd m_FullScreen;
-
+	AdapterInfo   m_DisplayCard[128];
+	int			  m_nDiapplayCard;
 	HWND m_hFullScreen/* = NULL*/;
 	UINT m_nOriMonitorIndex/* = 0*/;
 	void *m_hIOCP/* = NULL*/;

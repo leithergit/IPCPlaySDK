@@ -991,7 +991,7 @@ bool CIPCPlayer::TryEnableHAccelOnAdapter(CHAR* szAdapterID, int nBuffer)
 				{
 					ZeroMemory(szAdapterID, nBuffer);
 					ReleaseMutex(g_pSharedMemory->HAccelArray[k].hMutex);
-					OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s has reached up limit£º%d.\n", 
+					OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s has reached up limit %d.\n", 
 						__FUNCTION__, 
 						mi.szDevice, 
 						g_pD3D9Helper.m_AdapterArray[k].Description, 
@@ -4269,7 +4269,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		//SaveRunTime();
 		if (!pDecodec->InitDecoder(nCodecID, pThis->m_nVideoWidth, pThis->m_nVideoHeight, pThis->m_bEnableHaccel))
 		{
-			pThis->OutputMsg("%s Failed in Initializing Decoder£¬CodeCID =%d,Width = %d,Height = %d,HWAccel = %d.\n", __FUNCTION__, nCodecID, pThis->m_nVideoWidth, pThis->m_nVideoHeight, pThis->m_bEnableHaccel);
+			pThis->OutputMsg("%s Failed in Initializing Decoder:CodeCID =%d,Width = %d,Height = %d,HWAccel = %d.\n", __FUNCTION__, nCodecID, pThis->m_nVideoWidth, pThis->m_nVideoHeight, pThis->m_bEnableHaccel);
 #ifdef _DEBUG
 			pThis->OutputMsg("%s \tObject:%d Line %d Time = %d.\n", __FUNCTION__, pThis->m_nObjIndex, __LINE__, timeGetTime() - pThis->m_nLifeTime);
 #endif
@@ -4836,7 +4836,7 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 	{// Ä³´ËÊ±ºò¿ÉÄÜ»áÒòÎªÄÚ´æ»ò×ÊÔ´²»¹»µ¼ÖÂ³õÊ¼»¯½âÂë²Ù×÷ÐÔ,Òò´Ë¿ÉÒÔÑÓ³ÙÒ»¶ÎÊ±¼äºóÔÙ´Î³õÊ¼»¯£¬Èô¶à´Î³õÊ¼»¯ÈÔ²»³É¹¦£¬ÔòÐèÍË³öÏß³Ì
 		if (!pDecodec->InitDecoder(nCodecID, pThis->m_nVideoWidth, pThis->m_nVideoHeight, pThis->m_bEnableHaccel))
 		{
-			pThis->OutputMsg("%s Failed in Initializing Decoder£¬CodeCID =%d,Width = %d,Height = %d,HWAccel = %d.\n", __FUNCTION__, nCodecID, pThis->m_nVideoWidth, pThis->m_nVideoHeight, pThis->m_bEnableHaccel);
+			pThis->OutputMsg("%s Failed in Initializing Decoder:CodeCID =%d,Width = %d,Height = %d,HWAccel = %d.\n", __FUNCTION__, nCodecID, pThis->m_nVideoWidth, pThis->m_nVideoHeight, pThis->m_bEnableHaccel);
 #ifdef _DEBUG
 			pThis->OutputMsg("%s \tObject:%d Line %d Time = %d.\n", __FUNCTION__, pThis->m_nObjIndex, __LINE__, timeGetTime() - pThis->m_nLifeTime);
 #endif
@@ -5297,7 +5297,7 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 		//SaveRunTime();
 		if (!pDecodec->InitDecoder(nCodecID, pThis->m_nVideoWidth, pThis->m_nVideoHeight, true))
 		{
-			pThis->OutputMsg("%s Failed in Initializing Decoder£¬CodeCID =%d,Width = %d,Height = %d,HWAccel = %d.\n", __FUNCTION__, nCodecID, pThis->m_nVideoWidth, pThis->m_nVideoHeight, pThis->m_bEnableHaccel);
+			pThis->OutputMsg("%s Failed in Initializing Decoder:CodeCID =%d,Width = %d,Height = %d,HWAccel = %d.\n", __FUNCTION__, nCodecID, pThis->m_nVideoWidth, pThis->m_nVideoHeight, pThis->m_bEnableHaccel);
 #ifdef _DEBUG
 			pThis->OutputMsg("%s \tObject:%d Line %d Time = %d.\n", __FUNCTION__, pThis->m_nObjIndex, __LINE__, timeGetTime() - pThis->m_nLifeTime);
 #endif

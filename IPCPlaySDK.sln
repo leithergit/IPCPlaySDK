@@ -33,6 +33,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "H.264Parser", "H.264Parser\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MixPlayer", "MixPlayer\MixPlayer.vcxproj", "{E5214FB7-3F9E-49D8-9E04-FB9019954661}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FakeD3DX9", "FakeD3DX9\FakeD3DX9.vcxproj", "{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug.shared|Win32 = Debug.shared|Win32
@@ -279,6 +281,24 @@ Global
 		{E5214FB7-3F9E-49D8-9E04-FB9019954661}.ReleaseD|Win32.ActiveCfg = ReleaseD|Win32
 		{E5214FB7-3F9E-49D8-9E04-FB9019954661}.ReleaseD|Win32.Build.0 = ReleaseD|Win32
 		{E5214FB7-3F9E-49D8-9E04-FB9019954661}.ReleaseD|x64.ActiveCfg = ReleaseD|Win32
+		{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}.Debug.shared|Win32.ActiveCfg = Debug|Win32
+		{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}.Debug.shared|Win32.Build.0 = Debug|Win32
+		{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}.Debug.shared|x64.ActiveCfg = Debug|Win32
+		{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}.Debug|Win32.Build.0 = Debug|Win32
+		{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}.Debug|x64.ActiveCfg = Debug|Win32
+		{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}.Release.Shared|Win32.ActiveCfg = Release|Win32
+		{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}.Release.Shared|Win32.Build.0 = Release|Win32
+		{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}.Release.Shared|x64.ActiveCfg = Release|Win32
+		{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}.Release_SVAC|Win32.ActiveCfg = Release|Win32
+		{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}.Release_SVAC|Win32.Build.0 = Release|Win32
+		{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}.Release_SVAC|x64.ActiveCfg = Release|Win32
+		{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}.Release|Win32.ActiveCfg = Release|Win32
+		{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}.Release|Win32.Build.0 = Release|Win32
+		{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}.Release|x64.ActiveCfg = Release|Win32
+		{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}.ReleaseD|Win32.ActiveCfg = Release|Win32
+		{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}.ReleaseD|Win32.Build.0 = Release|Win32
+		{CF3A7B2A-D123-4299-9B48-CC0240EE66E8}.ReleaseD|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -281,7 +281,18 @@ BOOL CIPCPlayDemoDlg::OnInitDialog()
 
 	m_wndStreamInfo.InsertColumn(nCol++, _T("项目"), LVCFMT_LEFT, 60);
 	m_wndStreamInfo.InsertColumn(nCol++, _T("内容"), LVCFMT_LEFT, 130);
-	
+	m_nDiapplayCard = 128;
+	ipcplay_GetDisplayAdapterInfo(m_DisplayCard, m_nDiapplayCard);
+	if (m_nDiapplayCard > 0)
+	{
+		for (int i = 0; i < m_nDiapplayCard; i++)
+		{
+			WCHAR szGUID[64] = { 0 };
+			StringFromGUID2(m_DisplayCard[i].DeviceIdentifier, szGUID, 64);
+			ipcplay_SetAdapterHAccelW(szGUID, 8);
+		}
+	}
+
 	int nItem = 0;
 	ZeroMemory(m_szListText, sizeof(ListItem) * 16);
 	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("视频信息"));
@@ -444,6 +455,7 @@ BOOL CIPCPlayDemoDlg::OnInitDialog()
 			pSubMenu->CheckMenuRadioItem(ID_RENDER_D3D, ID_RENDER_DDRAW, ID_RENDER_D3D, MF_CHECKED | MF_BYCOMMAND);
 
 	}
+
 	
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }

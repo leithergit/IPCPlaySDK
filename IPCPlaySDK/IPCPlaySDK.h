@@ -241,6 +241,8 @@ struct AdapterInfo
 	DWORD           Revision;
 	GUID            DeviceIdentifier;
 	DWORD           WHQLLevel;
+	char szMonitorArray[10][32];			// Monitors Connected current display adapter
+	int nMonitorCount;
 	//int				nAdapter;			// the adapter NO.
 };
 #pragma pack(pop)
