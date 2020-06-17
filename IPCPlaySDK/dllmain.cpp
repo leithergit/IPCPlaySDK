@@ -142,10 +142,10 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 						//CHAR szGuidA[64] = { 0 };
 						//W2AHelper(szGuidW, szGuidA, 64);
 						swprintf_s(szAdapterMutexName, 64, L"Global\\%s", szGUID);
-						g_pSharedMemory->HAccelArray[nConfigIndex].hMutex = CreateMutexW(&sa, FALSE, szAdapterMutexName);;
-						wcscpy_s(g_pSharedMemory->HAccelArray[nConfigIndex].szAdapterGuid, 64, szGUID);
-						g_pSharedMemory->HAccelArray[nConfigIndex].nMaxHaccel = 0;
-						g_pSharedMemory->HAccelArray[nConfigIndex].nOpenCount = 0;
+						g_pSharedMemory->HAccelArray[nIndex].hMutex = CreateMutexW(&sa, FALSE, szAdapterMutexName);;
+						wcscpy_s(g_pSharedMemory->HAccelArray[nIndex].szAdapterGuid, 64, szGUID);
+						g_pSharedMemory->HAccelArray[nIndex].nMaxHaccel = 0;
+						g_pSharedMemory->HAccelArray[nIndex].nOpenCount = 0;
 					}
 				}
 				//do

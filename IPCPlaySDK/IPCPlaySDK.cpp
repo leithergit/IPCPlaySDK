@@ -1797,7 +1797,7 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 			break;
 
 		if (wcscmp(g_pSharedMemory->HAccelArray[i].szAdapterGuid, szAdapterID) != 0)
-			break;
+			continue;
 
 		if (WaitForSingleObject(g_pSharedMemory->HAccelArray[i].hMutex, 1000) == WAIT_TIMEOUT)
 			break;
