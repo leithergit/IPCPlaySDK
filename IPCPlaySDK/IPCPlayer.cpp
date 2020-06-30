@@ -971,7 +971,7 @@ bool CIPCPlayer::TryEnableHAccelOnAdapter(CHAR* szAdapterID, int nBuffer)
 					break;
 
 				if (wcscmp(g_pSharedMemory->HAccelArray[k].szAdapterGuid, szGuidW) != 0)
-					break;
+					continue;
 				
 				if (WaitForSingleObject(g_pSharedMemory->HAccelArray[k].hMutex, 100) == WAIT_TIMEOUT)
 					break;
@@ -3993,7 +3993,6 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 	{
 		CDxSurfaceEx *&m_pDxSurface;
 		CDirectDraw *&m_pDDraw;
-
 	public:
 		DxDeallocator(CDxSurfaceEx *&pDxSurface, CDirectDraw *&pDDraw)
 			:m_pDxSurface(pDxSurface), m_pDDraw(pDDraw)
@@ -4217,9 +4216,10 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 	}
 	SaveRunTime();
 	CHAR szAdapterID[64] = { 0 };
-	if (pThis->m_bEnableHaccel ||
+	if (!pThis->m_bEnableDDraw && 
+		(pThis->m_bEnableHaccel ||
 		(g_pSharedMemory &&
-		g_pSharedMemory->bHAccelPreferred))
+		g_pSharedMemory->bHAccelPreferred)))
 	{
 		// ³¢ÊÔ´ò¿ªÓ²½âÉèÖÃ
 		if (pThis->TryEnableHAccelOnAdapter(szAdapterID, 64))
@@ -4247,11 +4247,11 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 	}
 	if (pThis->m_bEnableHaccel && strlen(szAdapterID))
 		strcpy_s(pThis->m_pDxSurface->m_szAdapterID, 64, szAdapterID);
-	if (!pThis->m_pDxSurface)
+	/*if (!pThis->m_pDxSurface)
 	{
 		assert(false);
 		return 0;
-	}
+	}*/
 			
 	shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface, pThis->m_pDDraw);
 	SaveRunTime();

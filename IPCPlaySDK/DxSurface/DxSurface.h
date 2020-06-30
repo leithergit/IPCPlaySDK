@@ -710,6 +710,8 @@ public:
 			// GUID AdapterGUIDArray[10] = { 0 };
 			for (DWORD i = 0; i < nD3dAdapterCount; i++)
 			{
+				HMONITOR hMonitor = m_pDirect3D9Ex->GetAdapterMonitor(i);
+				TraceMsg(_T("%s hMonitor[%d] = %p\n"), __FUNCTION__, i, hMonitor);
 				ZeroMemory(&D3DAdapter, sizeof(D3DAdapter));
 				if (m_pDirect3D9Ex->GetAdapterIdentifier(i/*D3DADAPTER_DEFAULT*/, 
 														 0/*Reserved for future use*/, 
@@ -3007,17 +3009,27 @@ public:
 		//_RestoreWnd RestoreWnd(hWnd, rtOld);
 		if (bZoomWnd)
 			::MoveWindow(hWnd, rtZoom.left, rtZoom.top, RectWidth(rtZoom), RectHeight(rtZoom), false);
+		
 
 		HMONITOR	hCurrentMonitor = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
-		//UINT nCurrentAdapter = D3DADAPTER_DEFAULT;
-		for (int  nAdapter = 0; nAdapter < g_pD3D9Helper.m_nAdapterCount; nAdapter ++)
-		{
+		UINT nD3dAdapterCount = m_pDirect3D9Ex->GetAdapterCount();
+		m_nDisplayAdapter = D3DADAPTER_DEFAULT;
+		for (UINT nAdapter = 0; nAdapter < nD3dAdapterCount; nAdapter ++)
 			if (m_pDirect3D9Ex->GetAdapterMonitor(nAdapter) == hCurrentMonitor)
 			{
-				TraceMsgA("%s AdapterID = %d.\r\n", __FUNCTION__,nAdapter);
 				m_nDisplayAdapter = nAdapter;
+				break;
 			}
-		}
+		
+		//UINT nCurrentAdapter = D3DADAPTER_DEFAULT;
+		//for (int  nAdapter = 0; nAdapter < g_pD3D9Helper.m_nAdapterCount; nAdapter ++)
+		//{
+		//	if (m_pDirect3D9Ex->GetAdapterMonitor(nAdapter) == hCurrentMonitor)
+		//	{
+		//		TraceMsgA("%s AdapterID = %d.\r\n", __FUNCTION__,nAdapter);
+		//		m_nDisplayAdapter = nAdapter;
+		//	}
+		//}
 		bool bSucceed = false;
 #ifdef _DEBUG
 		double dfTStart = GetExactTime();		
