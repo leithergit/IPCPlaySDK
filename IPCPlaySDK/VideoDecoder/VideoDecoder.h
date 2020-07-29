@@ -812,11 +812,11 @@ public:
 		// Native decoding should use 16 buffers to enable seamless codec changes
 		// Buffers based on max ref frames
 		if (m_nCodecId == AV_CODEC_ID_H264)
-			buffers = 2;
+			buffers = 4;
 		else if (m_nCodecId == AV_CODEC_ID_HEVC)
-			buffers = 2;
+			buffers = 4;
 		else
-			buffers = 2;
+			buffers = 8;
 
 		// 4 extra buffers for handling and safety
 		//buffers += 4;
