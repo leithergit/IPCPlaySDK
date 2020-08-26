@@ -1,6 +1,7 @@
 #pragma once
 
 //////////////////////////////////////////////////////////////////////////
+#ifndef WIN64
 
 #include <DDraw.h>
 #include "DxSurface/DxSurface.h"
@@ -660,3 +661,4 @@ public:
 };
 
 typedef shared_ptr<CDirectDraw> CDirectDrawPtr;
+#endif

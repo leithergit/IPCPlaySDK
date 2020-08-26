@@ -16,9 +16,6 @@
 #define assert	((void)0)
 #endif
 #include <windows.h>
-#define _HI_MULTITHREAD
-#ifndef __HisiLicon
-#define __HisiLicon
-#endif
+
 
 // TODO: reference additional headers your program requires here

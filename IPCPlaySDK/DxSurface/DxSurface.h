@@ -87,7 +87,7 @@ extern "C" {
 #pragma warning(disable:4838)
 
 //#pragma comment ( lib, "d3d9.lib" )
-//#pragma comment ( lib, "d3dx9.lib" )
+#pragma comment ( lib, "d3dx9.lib")
 #pragma comment(lib,"winmm.lib")
 
 using namespace  std;
@@ -530,6 +530,7 @@ public:
 	// 进行像素转换
 	int inline ConvertPixel(AVFrame *pInputFrame = NULL, GraphicQulityParameter nGQ = GQ_BICUBIC)
 	{
+		TraceFunction();
 		if (pInputFrame)
 			this->pSrcFrame = pInputFrame;
 		if (!pImage)
@@ -847,6 +848,9 @@ public:
 	HMENU					m_hMenu;
 	D3DPOOL					m_nCurD3DPool;
 	IDirect3DSurface9		*m_pSurfaceRender/* = NULL*/;
+	IDirect3DSurface9		*m_pRGBSurface/* = NULL*/;
+	byte					*m_pRGBBuffer;
+	UINT					m_nRGBBufferSize = 0;
 	//				*m_pD3DXFont = nullptr;
 	IDirect3DSurface9		*m_pSurfaceYUVCache/* = NULL*/;
 	IDirect3DSurface9		*m_pSnapshotSurface;	/* = NULL*/;	//截图专用表面
@@ -995,6 +999,7 @@ public:
 			m_MapOSD.erase(itFind);
 		}
 	}
+
 	long DrawTextA(long nFont, CHAR *szText, int nLength, RECT rtPostion, DWORD dwFormat, D3DCOLOR nColor)
 	{
 		assert(nFont != 0);
@@ -1145,6 +1150,8 @@ public:
 			delete[]m_pszBackImageFileW;
 			m_pszBackImageFileW = nullptr;
 		}
+		if (m_pRGBBuffer)
+			delete []m_pRGBBuffer;
 	}
 
 	// 禁用垂直同步,只有在初始化之前调用,才会有效
@@ -1477,6 +1484,7 @@ public:
 			SafeRelease(m_pSurfaceRender);
 		}
 		
+		SafeRelease(m_pRGBSurface);
 		SafeRelease(m_pSnapshotSurface);
 		SafeRelease(m_pDirect3DDevice);
 	}
@@ -2777,6 +2785,152 @@ public:
 	}
 #endif
 
+	// 参考文档：https://docs.microsoft.com/en-us/windows/win32/gdi/capturing-an-image
+	int CopySurface(HDC hDC, int nWidth, int nHeight)
+	{
+		HDC hdcMemDC = NULL;
+		HBITMAP hBitmapSurface = NULL;
+		BITMAP bmpSurface;
+		__try
+		{
+			DWORD dwT = timeGetTime();
+			hdcMemDC = CreateCompatibleDC(hDC);
+			if (!hdcMemDC)
+			{
+				DxTraceMsg("%s CreateCompatibleDC has failed.\n",__FUNCTION__);
+				__leave;
+			}
+			hBitmapSurface = CreateCompatibleBitmap(hDC, nWidth, nHeight);
+
+			if (!hBitmapSurface)
+			{
+				DxTraceMsg("%s CreateCompatibleBitmap Failed.\n",__FUNCTION__);
+				__leave;
+			}
+
+			// Select the compatible bitmap into the compatible memory DC.
+			SelectObject(hdcMemDC, hBitmapSurface);
+
+			// Bit block transfer into our compatible memory DC.
+			if (!BitBlt(hdcMemDC,0, 0,nWidth, nHeight,hDC,0, 0,	SRCCOPY))
+			{
+				DxTraceMsg("%s BitBlt has failed.\n",__FUNCTION__);
+				__leave;
+			}
+			DWORD dwTS = MMTimeSpan(dwT);
+			DxTraceMsg("%s TimeSpan1 = %d.\n", __FUNCTION__, dwTS);
+			// Get the BITMAP from the HBITMAP
+			GetObject(hBitmapSurface, sizeof(BITMAP), &bmpSurface);
+
+			BITMAPINFOHEADER   bi;
+
+			bi.biSize = sizeof(BITMAPINFOHEADER);
+			bi.biWidth = bmpSurface.bmWidth;
+			bi.biHeight = bmpSurface.bmHeight;
+			bi.biPlanes = 1;
+			bi.biBitCount = 32;
+			bi.biCompression = BI_RGB;
+			bi.biSizeImage = 0;
+			bi.biXPelsPerMeter = 0;
+			bi.biYPelsPerMeter = 0;
+			bi.biClrUsed = 0;
+			bi.biClrImportant = 0;
+
+			m_nRGBBufferSize = ((bmpSurface.bmWidth * bi.biBitCount + 31) / 32) * 4 * bmpSurface.bmHeight;
+
+			if (!m_pRGBBuffer)
+				m_pRGBBuffer = new byte[m_nRGBBufferSize];
+			if (!m_pRGBBuffer)
+				__leave;
+
+			int nScanLines = GetDIBits(hDC, hBitmapSurface, 0, (UINT)bmpSurface.bmHeight, m_pRGBBuffer, (BITMAPINFO *)&bi, DIB_RGB_COLORS);
+
+			dwTS = MMTimeSpan(dwT);
+			DxTraceMsg("%s TimeSpan2 = %d.\n", __FUNCTION__, dwTS);
+		}
+		__finally
+		{
+			//Clean up
+			DeleteObject(hBitmapSurface);
+			DeleteObject(hdcMemDC);
+		}
+		
+		return 0;
+	}
+	BOOL GetRGBBuffer(byte **ppBuffer, int &nBuffersize)
+	{
+		TraceFunction();
+		
+		if (!m_pDirect3DDeviceEx || !m_pSurfaceRender)
+			return FALSE;
+		HRESULT hr = S_FALSE;
+		if (!m_pRGBSurface)
+		{
+			hr = m_pDirect3DDeviceEx->CreateOffscreenPlainSurface(m_nVideoWidth,
+				m_nVideoHeight,
+				D3DFORMAT::D3DFMT_X8R8G8B8,
+				D3DPOOL_SYSTEMMEM,
+				&m_pRGBSurface,
+				NULL);
+			if (FAILED(hr))
+				return FALSE;
+		}
+
+			
+		IDirect3DSurface9 * pBackSurface = NULL;
+		hr = m_pDirect3DDeviceEx->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &pBackSurface);
+		if (FAILED(hr))
+			return FALSE;
+
+		D3DSURFACE_DESC DescRGB;
+		pBackSurface->GetDesc(&DescRGB);			
+
+		hr = m_pDirect3DDeviceEx->GetRenderTargetData(pBackSurface, m_pRGBSurface);
+		D3DLOCKED_RECT rgbRect;
+		// A 方案，耗时30+ms,cpu占用15-18%
+		/*LPD3DXBUFFER pD3DXBuffer = nullptr;		
+		if (FAILED(D3DXSaveSurfaceToFileInMemory(&pD3DXBuffer, D3DXIFF_DIB, m_pRGBSurface, NULL, NULL)))
+			return FALSE;
+		
+		LPVOID pImageBuffer = pD3DXBuffer->GetBufferPointer();
+		
+		m_nRGBBufferSize = pD3DXBuffer->GetBufferSize();
+		if (!pImageBuffer || !m_nRGBBufferSize)
+			return FALSE;		
+		if (!m_pRGBBuffer)
+			m_pRGBBuffer = new byte[m_nRGBBufferSize];
+		if (!m_pRGBBuffer)
+			return FALSE;
+		memcpy(m_pRGBBuffer, pImageBuffer, m_nRGBBufferSize);
+		pD3DXBuffer->Release();*/
+
+		// B 方案 可直接获取RGB数据，耗时20-23ms左右 CPU占用10-15%
+		/*
+		HDC hDC = nullptr;
+		m_pRGBSurface->GetDC(&hDC);
+
+		CopySurface(hDC, DescRGB.Width, DescRGB.Height);
+		m_pRGBSurface->ReleaseDC(hDC);
+		*/
+
+		// 方案 C 只能获取X8R8G8B8数据，耗时10-12ms,CPU占用4-6%
+		hr = m_pRGBSurface->LockRect(&rgbRect, NULL, D3DLOCK_NO_DIRTY_UPDATE | D3DLOCK_READONLY);
+		if (FAILED(hr))
+			return FALSE;
+		m_nRGBBufferSize = rgbRect.Pitch*DescRGB.Height;
+		if (!m_pRGBBuffer)
+			m_pRGBBuffer = new byte[m_nRGBBufferSize];
+		if (!m_pRGBBuffer)
+			return FALSE;
+		memcpy(m_pRGBBuffer, rgbRect.pBits, rgbRect.Pitch*DescRGB.Height);
+		m_pRGBSurface->UnlockRect();		
+		nBuffersize = m_nRGBBufferSize;
+		*ppBuffer = m_pRGBBuffer;
+
+		// 方案D 详细见IPCPlayer.cpp line[3516~3535]
+		return TRUE;
+			
+	}
 	virtual long CreateFontW(LOGFONTW *pLogFont)
 	{
 		assert(m_pDirect3DDeviceEx!= nullptr);
@@ -2970,7 +3124,8 @@ public:
 		int nVideoWidth,
 		int nVideoHeight,
 		BOOL bIsWindowed = TRUE,
-		D3DFORMAT nD3DFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'))
+		D3DFORMAT nD3DFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'),
+		CRunlog *pRunlog = nullptr)
 	{
 		//TraceFunction();
 		assert(hWnd != NULL);
@@ -3178,6 +3333,8 @@ public:
 			NULL,
 			&m_pDirect3DDeviceEx)))
 		{
+			if (pRunlog)
+				pRunlog->Runlog("%s Failed in CreateDeviceEx On Adapter[%d] with Flag D3DCREATE_MULTITHREADED.hr = %x,Now Try Create without the Flag!\n", __FUNCTION__,m_nDisplayAdapter,hr);
 			vp = D3DCREATE_SOFTWARE_VERTEXPROCESSING;
 			if (FAILED(hr = m_pDirect3D9Ex->CreateDeviceEx(m_nDisplayAdapter,
 				D3DDEVTYPE_HAL,
@@ -3187,14 +3344,15 @@ public:
 				NULL,
 				&m_pDirect3DDeviceEx)))
 			{
-				DxTraceMsg("%s CreateDeviceEx Failed.\thr=%x.\n", __FUNCTION__, hr);
+				if (pRunlog)
+					pRunlog->Runlog("%s CreateDeviceEx Failed On Adapter[%d].\thr=%x.\n", __FUNCTION__, m_nDisplayAdapter, hr);
+				DxTraceMsg("%s CreateDeviceEx Failed On Adapter[%d].\thr=%x.\n", __FUNCTION__,m_nDisplayAdapter, hr);
 				goto _Failed;
 			}
 		}
 		if (!m_bD3DShared)
 		{
-			if (m_pSurfaceRender)
-				SafeRelease(m_pSurfaceRender);
+			SafeRelease(m_pSurfaceRender);
 			if (FAILED(hr = m_pDirect3DDeviceEx->CreateOffscreenPlainSurface(nVideoWidth,
 				nVideoHeight,
 				nD3DFormat,
@@ -3202,6 +3360,8 @@ public:
 				&m_pSurfaceRender,
 				NULL)))
 			{
+				if (pRunlog)
+					pRunlog->Runlog("%s CreateOffscreenPlainSurface Failed.\thr=%x.\n", __FUNCTION__, hr);
 				DxTraceMsg("%s CreateOffscreenPlainSurface Failed.\thr=%x.\n", __FUNCTION__, hr);
 				goto _Failed;
 			}
@@ -3215,11 +3375,10 @@ public:
 #endif
 		}
 
-		hr = m_pDirect3DDeviceEx->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_ANISOTROPIC);
-		hr = m_pDirect3DDeviceEx->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_ANISOTROPIC);
+		//hr = m_pDirect3DDeviceEx->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_ANISOTROPIC);
+		//hr = m_pDirect3DDeviceEx->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_ANISOTROPIC);
 		hr = m_pDirect3DDeviceEx->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS,TRUE);
 		hr = m_pDirect3DDeviceEx->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
-		
 		// 保存参数
 		m_nVideoWidth	 = nVideoWidth;
 		m_nVideoHeight	 = nVideoHeight;
@@ -3260,7 +3419,6 @@ public:
 						}
 					}
 				}
-				
 			}
 			SafeRelease(pSurfaceBackImage);
 		}
@@ -3819,7 +3977,6 @@ __Failure:
 		
 		//SaveRunTime();
 		IDirect3DSurface9 * pBackSurface = NULL;
-		//m_pDirect3DDeviceEx->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
 		m_pDirect3DDeviceEx->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
 		m_pDirect3DDeviceEx->BeginScene();
 
@@ -3828,7 +3985,6 @@ __Failure:
 		if (FAILED(hr))
 		{
 			m_pDirect3DDeviceEx->EndScene();
-			//DxTraceMsg("%s line(%d) IDirect3DDevice9Ex::GetBackBuffer failed:hr = %08X.\n",__FUNCTION__,__LINE__,hr);
 			return true;
 		}
 		D3DSURFACE_DESC DescDst,DescSrc;
@@ -3836,26 +3992,17 @@ __Failure:
 		m_pSurfaceRender->GetDesc(&DescSrc);
 		RECT dstrt = { 0, 0, DescDst.Width, DescDst.Height };
 		RECT srcrt = { 0, 0, m_nVideoWidth, m_nVideoHeight };
-// 		RECT dstrt1 = { 0, 0, Desc1.Width/2-1, Desc1.Height };
-// 		RECT dstrt2 = { Desc1.Width / 2, 0, Desc1.Width, Desc1.Height };
-//  		RECT srcrt1 = { 0, 0, m_nVideoWidth*3/8, m_nVideoHeight };
-// 		RECT srcrt2 = { m_nVideoWidth*5/8, 0, m_nVideoWidth, m_nVideoHeight };
 
 		if (pClippedRT)
 		{
 			CopyRect(&srcrt, pClippedRT);
 		}
 
-		//D3DXLoadSurfaceFromSurface(m_pSurfaceRender,nullptr,nullptr,pDCSurface,nullptr,nullptr,D3DX_FILTER_NONE，0)；
 		hr = m_pDirect3DDeviceEx->StretchRect(m_pSurfaceRender, &srcrt, pBackSurface, &dstrt, D3DTEXF_LINEAR);
 		
-		
-		//SaveRunTime();
 		// 处理外部分绘制接口
 		ExternDrawCall(hWnd, pBackSurface,pRenderRt);
 		SafeRelease(pBackSurface);
-		//ExternDrawExCall(hWnd, pRenderRt);
-		//SaveRunTime();
 		
 		ProcessD3DXDraw(hWnd);
 

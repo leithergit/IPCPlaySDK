@@ -340,7 +340,9 @@ CIPCPlayer::CIPCPlayer(HWND hWnd, int nBufferSize, char *szLogFile)
 	AddRenderWindow(hWnd, nullptr);
 	m_hInputFrameEvent = CreateEvent(nullptr, false, false, nullptr);
 	
+#ifndef _WIN64
 	m_bEnableDDraw = g_bEnableDDraw;
+#endif
 	
 	m_hRenderWnd = hWnd;
 	m_nDecodeDelay = -1;
@@ -410,11 +412,13 @@ CIPCPlayer::~CIPCPlayer()
 		CloseHandle(m_hInputFrameEvent);
 		m_hInputFrameEvent = nullptr;
 	}
+#ifndef _WIN64
 	if (m_pDDraw)
 	{
 		delete m_pDDraw;
 		m_pDDraw = nullptr;
 	}
+#endif
 
 	if (m_pDxSurface)
 	{
@@ -757,6 +761,7 @@ bool CIPCPlayer::InitizlizeDx(AVFrame *pAvFrame )
 	// 			return false;
 	// ³õÊ¼ÏÔÊ¾×é¼þ
 	//if (GetOsMajorVersion() < Win7MajorVersion)
+#ifndef _WIN64
 	if (m_bEnableDDraw)
 	{
 		OutputMsg("%s DirectDraw is enabled.\n", __FUNCTION__);
@@ -801,6 +806,7 @@ bool CIPCPlayer::InitizlizeDx(AVFrame *pAvFrame )
 		return true;
 	}
 	else
+#endif
 	{
 		SaveRunTime();
 // 		m_pDxSurface = GetDxSurfaceFromPool(m_nVideoWidth, m_nVideoHeight);
@@ -811,79 +817,82 @@ bool CIPCPlayer::InitizlizeDx(AVFrame *pAvFrame )
 			m_pDxSurface = _New CDxSurfaceEx;
 
 		// Ê¹ÓÃÏß³ÌÄÚCDxSurface¶ÔÏóÏÔÊ¾Í¼Ïó
-		if (m_pDxSurface)		// D3DÉè±¸ÉÐÎ´³õÊ¼»¯
+		if (!m_pDxSurface)		// D3DÉè±¸ÉÐÎ´³õÊ¼»¯
 		{
-			SaveRunTime();
-			//m_pSimpleWnd = make_shared<CSimpleWnd>(m_nVideoWidth, m_nVideoHeight);
-			DxSurfaceInitInfo &InitInfo = m_DxInitInfo;
-			InitInfo.nSize = sizeof(DxSurfaceInitInfo);
-			if (m_bEnableHaccel)
-			{
-				m_pDxSurface->SetD3DShared(m_bD3dShared);
-				AVCodecID nCodecID = AV_CODEC_ID_H264;
-				if (m_nVideoCodec == CODEC_H265)
-					nCodecID = AV_CODEC_ID_HEVC;
-				InitInfo.nFrameWidth = CVideoDecoder::GetAlignedDimension(nCodecID, m_nVideoWidth);
-				InitInfo.nFrameHeight = CVideoDecoder::GetAlignedDimension(nCodecID, m_nVideoHeight);
-				InitInfo.nD3DFormat = (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2');
-			}
-			else
-			{
-				///if (GetOsMajorVersion() < 6)
-				///	InitInfo.nD3DFormat = D3DFMT_A8R8G8B8;		// ÔÚXP»·¾³ÏÂ£¬Ä³Ð©¼¯³ÉÏÔÊ¾ÔÚÏÔÊ¾YV12ÏóËØÊ±£¬»áµ¼ÖÂCPUÕ¼ÓÃÂÊ»ºÂýÉÏÉý£¬Õâ¿ÉÄÜÊÇD3D9»ò¸Ã¼¯³ÉÏÔÊ¾µÄÒ»¸öBUG
-				InitInfo.nFrameWidth = m_nVideoWidth;
-				InitInfo.nFrameHeight = m_nVideoHeight;
-				InitInfo.nD3DFormat = m_nPixelFormat;//(D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
-			}
-			SaveRunTime();
-			InitInfo.bWindowed = TRUE;
+			OutputMsg("%s Failed in new a CDxSurfaceEx to m_pDxSurface.\n", __FUNCTION__);
+			return false;
+		}
+		
+		SaveRunTime();
+		//m_pSimpleWnd = make_shared<CSimpleWnd>(m_nVideoWidth, m_nVideoHeight);
+		DxSurfaceInitInfo &InitInfo = m_DxInitInfo;
+		InitInfo.nSize = sizeof(DxSurfaceInitInfo);
+		if (m_bEnableHaccel)
+		{
+			m_pDxSurface->SetD3DShared(m_bD3dShared);
+			AVCodecID nCodecID = AV_CODEC_ID_H264;
+			if (m_nVideoCodec == CODEC_H265)
+				nCodecID = AV_CODEC_ID_HEVC;
+			InitInfo.nFrameWidth = CVideoDecoder::GetAlignedDimension(nCodecID, m_nVideoWidth);
+			InitInfo.nFrameHeight = CVideoDecoder::GetAlignedDimension(nCodecID, m_nVideoHeight);
+			InitInfo.nD3DFormat = (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2');
+		}
+		else
+		{
+			///if (GetOsMajorVersion() < 6)
+			///	InitInfo.nD3DFormat = D3DFMT_A8R8G8B8;		// ÔÚXP»·¾³ÏÂ£¬Ä³Ð©¼¯³ÉÏÔÊ¾ÔÚÏÔÊ¾YV12ÏóËØÊ±£¬»áµ¼ÖÂCPUÕ¼ÓÃÂÊ»ºÂýÉÏÉý£¬Õâ¿ÉÄÜÊÇD3D9»ò¸Ã¼¯³ÉÏÔÊ¾µÄÒ»¸öBUG
+			InitInfo.nFrameWidth = m_nVideoWidth;
+			InitInfo.nFrameHeight = m_nVideoHeight;
+			InitInfo.nD3DFormat = m_nPixelFormat;//(D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+		}
+		SaveRunTime();
+		InitInfo.bWindowed = TRUE;
 // 			if (!m_pWndDxInit->GetSafeHwnd())
 // 				InitInfo.hPresentWnd = m_hRenderWnd;
 // 			else
-			//InitInfo.hPresentWnd = m_pWndDxInit->GetSafeHwnd();
-			/// ¼¯ÖÐÊ¹ÓÃÍ¬Ò»¸ö´°¿Ú×÷d3d³õÊ¼»¯£¬ÓÐ¿ÉÄÜÊÇÔì³É¶àÏÔÆ÷ÊÓÆµÏÔÊ¾Ê±¿¨¶ÙµÄÔ­Òò
-			/// 2018.11.30 ÔÚÕâÀï×÷Ò»¸ö²âÊÔ£¬Ê¹ÓÃÔ­Ê¼ÊäÈë´°¿Ú½øÐÐÏÔÊ¾£¬²¢¸ù¾Ý´°¿ÚËùÔÚÏÔÊ¾Æ÷Á¬½ÓµÄÏÔ¿¨ÐòºÅ£¬¾ö¶¨ÓÃÄÄÒ»¿éÏÔ¿¨À´×÷d3d³õÊ¼»¯
-			if (m_hRenderWnd)
-				InitInfo.hPresentWnd = m_hRenderWnd;
-			else
-				InitInfo.hPresentWnd = m_pWndDxInit->GetSafeHwnd();
-			
-			SaveRunTime();
-			if (m_nRocateAngle == Rocate90 ||
-				m_nRocateAngle == Rocate270 ||
-				m_nRocateAngle == RocateN90)
-				swap(InitInfo.nFrameWidth, InitInfo.nFrameHeight);
-			// ×¼±¸¼ÓÔØ±³¾°Í¼Æ¬
-			SaveRunTime();
-			if (m_pszBackImagePath)
-				m_pDxSurface->SetBackgroundPictureFile(m_pszBackImagePath, m_hRenderWnd);
-			SaveRunTime();
-			m_pDxSurface->SetDisplayAdapter(m_nDisplayAdapter);
-			m_pDxSurface->DisableVsync();		// ½ûÓÃ´¹Ö±Í¬²½£¬²¥·ÅÖ¡²ÅÓÐ¿ÉÄÜ³¬¹ýÏÔÊ¾Æ÷µÄË¢ÐÂÂÊ£¬´Ó¶ø´ïµ½¸ßËÙ²¥·ÅµÄÄ¿µÄ
-			if (!m_pDxSurface->InitD3D(InitInfo.hPresentWnd,
-				InitInfo.nFrameWidth,
-				InitInfo.nFrameHeight,
-				InitInfo.bWindowed,
-				InitInfo.nD3DFormat))
-			{
-				OutputMsg("%s Initialize DxSurface failed.\n", __FUNCTION__);
-#ifdef _DEBUG
-				OutputMsg("%s \tObject:%d DxSurface failed,Line %d Time = %d.\n", __FUNCTION__, m_nObjIndex, __LINE__, timeGetTime() - m_nLifeTime);
-#endif
-				delete m_pDxSurface;
-				m_pDxSurface = nullptr;
-				return false;
-			}
-			//m_pDxSurface->TestDxCheck(InitInfo.hPresentWnd, InitInfo.nFrameWidth, InitInfo.nFrameHeight);
-			SaveRunTime();
-			m_pDxSurface->SetCoordinateMode(m_nCoordinate);
-			m_pDxSurface->SetExternDraw(m_pDCCallBack, m_pDCCallBackParam);
-			
-			SaveRunTime();
-			return true;
-		}
+		//InitInfo.hPresentWnd = m_pWndDxInit->GetSafeHwnd();
+		/// ¼¯ÖÐÊ¹ÓÃÍ¬Ò»¸ö´°¿Ú×÷d3d³õÊ¼»¯£¬ÓÐ¿ÉÄÜÊÇÔì³É¶àÏÔÆ÷ÊÓÆµÏÔÊ¾Ê±¿¨¶ÙµÄÔ­Òò
+		/// 2018.11.30 ÔÚÕâÀï×÷Ò»¸ö²âÊÔ£¬Ê¹ÓÃÔ­Ê¼ÊäÈë´°¿Ú½øÐÐÏÔÊ¾£¬²¢¸ù¾Ý´°¿ÚËùÔÚÏÔÊ¾Æ÷Á¬½ÓµÄÏÔ¿¨ÐòºÅ£¬¾ö¶¨ÓÃÄÄÒ»¿éÏÔ¿¨À´×÷d3d³õÊ¼»¯
+		if (m_hRenderWnd)
+			InitInfo.hPresentWnd = m_hRenderWnd;
 		else
+			InitInfo.hPresentWnd = m_pWndDxInit->GetSafeHwnd();
+			
+		SaveRunTime();
+		if (m_nRocateAngle == Rocate90 ||
+			m_nRocateAngle == Rocate270 ||
+			m_nRocateAngle == RocateN90)
+			swap(InitInfo.nFrameWidth, InitInfo.nFrameHeight);
+		// ×¼±¸¼ÓÔØ±³¾°Í¼Æ¬
+		SaveRunTime();
+		if (m_pszBackImagePath)
+			m_pDxSurface->SetBackgroundPictureFile(m_pszBackImagePath, m_hRenderWnd);
+		SaveRunTime();
+		m_pDxSurface->SetDisplayAdapter(m_nDisplayAdapter);
+		m_pDxSurface->DisableVsync();		// ½ûÓÃ´¹Ö±Í¬²½£¬²¥·ÅÖ¡²ÅÓÐ¿ÉÄÜ³¬¹ýÏÔÊ¾Æ÷µÄË¢ÐÂÂÊ£¬´Ó¶ø´ïµ½¸ßËÙ²¥·ÅµÄÄ¿µÄ
+		if (!m_pDxSurface->InitD3D(InitInfo.hPresentWnd,
+			InitInfo.nFrameWidth,
+			InitInfo.nFrameHeight,
+			InitInfo.bWindowed,
+			InitInfo.nD3DFormat,
+			m_pRunlog.get()))
+		{
+			OutputMsg("%s Initialize DxSurface failed.\n", __FUNCTION__);
+#ifdef _DEBUG
+			OutputMsg("%s \tObject:%d DxSurface failed,Line %d Time = %d.\n", __FUNCTION__, m_nObjIndex, __LINE__, timeGetTime() - m_nLifeTime);
+#endif
+			delete m_pDxSurface;
+			m_pDxSurface = nullptr;
 			return false;
+		}
+		//m_pDxSurface->TestDxCheck(InitInfo.hPresentWnd, InitInfo.nFrameWidth, InitInfo.nFrameHeight);
+		SaveRunTime();
+		m_pDxSurface->SetCoordinateMode(m_nCoordinate);
+		m_pDxSurface->SetExternDraw(m_pDCCallBack, m_pDCCallBackParam);
+			
+		SaveRunTime();
+		return true;
+		
 	}
 }
 
@@ -899,7 +908,7 @@ int CIPCPlayer::AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent
 	{
 		m_hRenderWnd = hRenderWnd;
 	}
-
+#ifndef _WIN64
 	if (m_bEnableDDraw)
 	{
 		if (m_listRenderUnit.size() >= 3)
@@ -911,6 +920,7 @@ int CIPCPlayer::AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent
 		m_listRenderUnit.push_back(make_shared<RenderUnit>(hRenderWnd, pRtRender, m_bEnableHaccel));
 	}
 	else
+#endif
 	{
 		if (m_listRenderWnd.size() >= 4)
 			return IPC_Error_RenderWndOverflow;
@@ -1012,6 +1022,7 @@ int CIPCPlayer::RemoveRenderWindow(HWND hRenderWnd)
 	LineLockAgent(m_cslistRenderWnd);
 	if (m_listRenderWnd.size() < 1)
 		return IPC_Succeed;
+#ifndef _WIN64
 	if (m_bEnableDDraw)
 	{
 		auto itFind = find_if(m_listRenderUnit.begin(), m_listRenderUnit.end(), UnitFinder(hRenderWnd));
@@ -1030,6 +1041,7 @@ int CIPCPlayer::RemoveRenderWindow(HWND hRenderWnd)
 		}
 	}
 	else
+#endif
 	{
 		auto itFind = find_if(m_listRenderWnd.begin(), m_listRenderWnd.end(), WndFinder(hRenderWnd));
 		if (itFind != m_listRenderWnd.end())
@@ -1269,10 +1281,12 @@ int CIPCPlayer::StartPlay(bool bEnaleAudio , bool bEnableHaccel , bool bFitWindo
 #endif
 		return IPC_Error_VideoThreadStartFailed;
 	}
+#ifndef _WIN64
 	if (m_hRenderWnd)
 		EnableAudio(bEnaleAudio);
 	else
 		EnableAudio(false);
+#endif
 	m_dwStartTime = timeGetTime();
 	return IPC_Succeed;
 }
@@ -1323,8 +1337,9 @@ int CIPCPlayer::StartSyncPlay(bool bFitWindow,CIPCPlayer *pSyncSource,int nVideo
 #endif
 		return IPC_Error_VideoThreadStartFailed;
 	}
-	
+#ifndef _WIN64
 	EnableAudio(false);
+#endif
 	m_dwStartTime = timeGetTime();
 	return IPC_Succeed;
 }
@@ -1727,11 +1742,13 @@ bool CIPCPlayer::StopPlay(DWORD nTimeout)
 		it->second->cs.Unlock();
 	}
 	//m_csMapSwitcher.Unlock();
+#ifndef _WIN64
 	if (m_bEnableAudio)
 	{
 		EnableAudio(false);
 	}
-	
+#endif
+
 	m_cslistRenderWnd.Lock();
 	m_hRenderWnd = nullptr;
 	for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end();)
@@ -1840,7 +1857,9 @@ bool CIPCPlayer::StopPlay(DWORD nTimeout)
 		m_hThreadPlayAudio = nullptr;
 		OutputMsg("%s ThreadPlayAudio has exit.\n", __FUNCTION__);
 	}
+#ifndef _WIN64
 	EnableAudio(false);
+#endif
 	if (m_pFrameOffsetTable)
 	{
 		delete[]m_pFrameOffsetTable;
@@ -2408,6 +2427,7 @@ int CIPCPlayer::SeekNextFrame()
 		return IPC_Error_PlayerIsNotPaused;
 }
 
+#ifndef _WIN64
 int CIPCPlayer::EnableAudio(bool bEnable )
 {
 	// TraceFunction();
@@ -2481,7 +2501,7 @@ int CIPCPlayer::EnableAudio(bool bEnable )
 	}
 	return IPC_Succeed;
 }
-
+#endif
 void CIPCPlayer::Refresh()
 {
 	LineLockAgent(m_cslistRenderWnd);				
@@ -2633,7 +2653,7 @@ int CIPCPlayer::SetCallBack(IPC_CALLBACK nCallBackType, IN void *pUserCallBack, 
 	case RGBCapture:
 	{
 		AutoLock(&m_csCaptureRGB);
-		m_pUserCaptureRGB = (CaptureRGB)pUserCallBack;
+		m_pCaptureRGB = (CaptureRGB)pUserCallBack;
 		m_pUserCaptureRGB = pUserPtr;
 	}
 		break;
@@ -3514,9 +3534,22 @@ void CIPCPlayer::ProcessYUVCapture(AVFrame *pAvFrame, LONGLONG nTimestamp)
 	{
 		if (m_pCaptureRGB)
 		{
-			PixelConvert convert(pAvFrame, D3DFMT_R8G8B8);
-			if (convert.ConvertPixel() > 0)
-				m_pCaptureRGB(this, convert.pImage, pAvFrame->width, pAvFrame->height, nTimestamp, m_pUserCaptureRGB);
+			// 方案 D 可直接取得RGB数据，耗时4-5ms,CPU占用6-8%，只能纯软解，尚有优化空间
+			// 其它方案详见 CDxSurface::GetRGBBuffer函数
+			int nConverted = 0;
+			if (m_pPixelConvert)
+				nConverted = m_pPixelConvert->ConvertPixel(pAvFrame);
+			else
+			{
+				m_pPixelConvert = make_shared<PixelConvert>(pAvFrame, D3DFMT_R8G8B8, GQ_FAST_BILINEAR);
+				nConverted = m_pPixelConvert->ConvertPixel();
+			}
+			if (nConverted > 0)
+				m_pCaptureRGB(this, m_pPixelConvert->pImage, pAvFrame->width, pAvFrame->height, nTimestamp, m_pUserCaptureRGB);
+			/*byte *pRGBBuffer = nullptr;
+			int  nRGBBufferSize = 0;
+			if (m_pDxSurface && m_pDxSurface->GetRGBBuffer(&pRGBBuffer,nRGBBufferSize))
+				m_pCaptureRGB(this, pRGBBuffer, pAvFrame->width, pAvFrame->height, nTimestamp, m_pUserCaptureRGB);*/
 		}
 			
 		m_csCaptureRGB.Unlock();
@@ -3563,7 +3596,7 @@ int CIPCPlayer::ReadAvData(void *opaque, uint8_t *buf, int buf_size)
 		return 0;
 }
 
-
+#ifndef _WIN64
 UINT __stdcall CIPCPlayer::ThreadPlayAudioGSJ(void *p)
 {
 	CIPCPlayer *pThis = (CIPCPlayer *)p;
@@ -3920,7 +3953,7 @@ UINT __stdcall CIPCPlayer::ThreadPlayAudioIPC(void *p)
 		delete[]pPCM;
 	return 0;
 }
-
+#endif
 bool CIPCPlayer::InitialziePlayer()
 {
 	if (m_nVideoCodec == CODEC_UNKNOWN ||		/// ÂëÁ÷Î´ÖªÔò³¢ÊÔÌ½²âÂë
@@ -3971,7 +4004,9 @@ bool CIPCPlayer::InitialziePlayer()
 	}
 	}
 
+#ifndef _WIN64
 	m_bEnableHaccel = m_bEnableDDraw ? false : m_bEnableHaccel;
+#endif
 	if (!m_pDecoder->InitDecoder(nCodecID, m_nVideoWidth, m_nVideoHeight, m_bEnableHaccel))
 	{
 		OutputMsg("%s Failed in Initializing Decoder.\n", __FUNCTION__);
@@ -3983,59 +4018,71 @@ bool CIPCPlayer::InitialziePlayer()
 	return true;
 }
 
+struct DxDeallocator
+{
+public:
+	CDxSurfaceEx *&m_pDxSurface;
+#ifndef _WIN64
+	CDirectDraw *&m_pDDraw;
+	DxDeallocator(CDxSurfaceEx *&pDxSurface, CDirectDraw *&pDDraw)
+		:m_pDxSurface(pDxSurface), m_pDDraw(pDDraw)
+	{
+	}
+#else
+	DxDeallocator(CDxSurfaceEx *&pDxSurface)
+		: m_pDxSurface(pDxSurface)
+	{
+	}
+#endif
+	~DxDeallocator()
+	{
+#ifndef _WIN64
+		DxTraceMsg("%s pSurface = %08X\tpDDraw = %08X.\n", __FUNCTION__, m_pDxSurface, m_pDDraw);
+#else
+		DxTraceMsg("%s pSurface = %08X.\n", __FUNCTION__, m_pDxSurface);
+#endif
+		if (m_pDxSurface)
+		{
+			if (strlen(m_pDxSurface->m_szAdapterID) > 0)
+			{
+				WCHAR szGUIDW[64] = { 0 };
+				A2WHelper(m_pDxSurface->m_szAdapterID, szGUIDW, 64);
+				for (int i = 0; i < g_pSharedMemory->nAdapterCount; i++)
+				{
+					if (wcscmp(g_pSharedMemory->HAccelArray[i].szAdapterGuid, szGUIDW) == 0)
+					{
+						if (!g_pSharedMemory->HAccelArray[i].hMutex)
+							break;
+						WaitForSingleObject(g_pSharedMemory->HAccelArray[i].hMutex, INFINITE);
+						if (g_pSharedMemory->HAccelArray[i].nOpenCount > 0)
+						{
+							g_pSharedMemory->HAccelArray[i].nOpenCount--;
+						}
+#ifdef _DEBUG
+						//else
+						//{
+						//	assert(false);
+						//}
+#endif
+						ReleaseMutex(g_pSharedMemory->HAccelArray[i].hMutex);
+					}
+				}
+			}
+		}
+
+		Safe_Delete(m_pDxSurface);
+#ifndef _WIN64
+		Safe_Delete(m_pDDraw);
+#endif
+	}
+};
 UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 {
 	CIPCPlayer* pThis = (CIPCPlayer *)p;
 #ifdef _DEBUG
 	pThis->OutputMsg("%s Timespan1 of First Frame = %f.\n", __FUNCTION__, TimeSpanEx(pThis->m_dfFirstFrameTime));
 #endif
-	struct DxDeallocator
-	{
-		CDxSurfaceEx *&m_pDxSurface;
-		CDirectDraw *&m_pDDraw;
-	public:
-		DxDeallocator(CDxSurfaceEx *&pDxSurface, CDirectDraw *&pDDraw)
-			:m_pDxSurface(pDxSurface), m_pDDraw(pDDraw)
-		{
-		}
-		~DxDeallocator()
-		{
-			DxTraceMsg("%s pSurface = %08X\tpDDraw = %08X.\n", __FUNCTION__, m_pDxSurface, m_pDDraw);
-			if (m_pDxSurface)
-			{
-				if (strlen(m_pDxSurface->m_szAdapterID) > 0)
-				{
-					WCHAR szGUIDW[64] = { 0 };
-					A2WHelper(m_pDxSurface->m_szAdapterID, szGUIDW, 64);
-					for (int i = 0; i < g_pSharedMemory->nAdapterCount; i++)
-					{
-						if (wcscmp(g_pSharedMemory->HAccelArray[i].szAdapterGuid, szGUIDW) == 0)
-						{
-							if (!g_pSharedMemory->HAccelArray[i].hMutex)
-								break;
-							WaitForSingleObject(g_pSharedMemory->HAccelArray[i].hMutex, INFINITE);
-							if (g_pSharedMemory->HAccelArray[i].nOpenCount > 0)
-							{
-								g_pSharedMemory->HAccelArray[i].nOpenCount--;
-							}
-#ifdef _DEBUG
-							else
-							{
-								assert(false);
-							}
-#endif
-							ReleaseMutex(g_pSharedMemory->HAccelArray[i].hMutex);
-						}
-					}
-				}
-			}
-// 			PutDxSurfacePool(m_pDxSurface);
-// 			m_pDxSurface = nullptr;
-			Safe_Delete(m_pDxSurface);
-			Safe_Delete(m_pDDraw);
-			
-		}
-	};
+
 	DeclareRunTime(5);
 	
 #ifdef _DEBUG
@@ -4199,7 +4246,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		pThis->OutputMsg("%s You Input a unknown stream,Decode thread exit.\n", __FUNCTION__);
 		if (pThis->m_hRenderWnd)	// ÔÚÏß³ÌÖÐ¾¡Á¿±ÜÃâÊ¹ÓÃSendMessage£¬ÒòÎª¿ÉÄÜ»áµ¼ÖÂ×èÈû
 			::PostMessage(pThis->m_hRenderWnd, WM_IPCPLAYER_MESSAGE, IPCPLAYER_UNSURPPORTEDSTREAM, 0);
-		assert(false);
+		//assert(false);
 		return 0;
 		break;
 	}
@@ -4252,10 +4299,15 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		assert(false);
 		return 0;
 	}*/
-			
+#ifdef _WIN64
+	shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface);
+#else
 	shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface, pThis->m_pDDraw);
-	SaveRunTime();
 	pThis->m_bD3dShared = pThis->m_bEnableDDraw ? false : pThis->m_bD3dShared;
+#endif
+	SaveRunTime();
+	
+
 	if (pThis->m_bD3dShared && pThis->m_pDxSurface)
 	{
 		pDecodec->SetD3DShared(pThis->m_pDxSurface->GetD3D9(), pThis->m_pDxSurface->GetD3DDevice());
@@ -4682,43 +4734,7 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 #ifdef _DEBUG
 	pThis->OutputMsg("%s Timespan1 of First Frame = %f.\n", __FUNCTION__, TimeSpanEx(pThis->m_dfFirstFrameTime));
 #endif
-	struct DxDeallocator
-	{
-		CDxSurfaceEx *&m_pDxSurface;
-		CDirectDraw *&m_pDDraw;
 
-	public:
-		DxDeallocator(CDxSurfaceEx *&pDxSurface, CDirectDraw *&pDDraw)
-			:m_pDxSurface(pDxSurface), m_pDDraw(pDDraw)
-		{
-		}
-		~DxDeallocator()
-		{
-			//pThis->OutputMsg("%s pSurface = %08X\tpDDraw = %08X.\n", __FUNCTION__, m_pDxSurface, m_pDDraw);
-			if (m_pDxSurface)
-			{
-				if (strlen(m_pDxSurface->m_szAdapterID) > 0)
-				{
-					WCHAR szGUIDW[64] = { 0 };
-					A2WHelper(m_pDxSurface->m_szAdapterID, szGUIDW, 64);
-					for (int i = 0; i < g_pSharedMemory->nAdapterCount; i++)
-					{
-						if (wcscmp(g_pSharedMemory->HAccelArray[i].szAdapterGuid, szGUIDW) == 0)
-						{
-							if (!g_pSharedMemory->HAccelArray[i].hMutex)
-								break;
-							WaitForSingleObject(g_pSharedMemory->HAccelArray[i].hMutex, INFINITE);
-							if (g_pSharedMemory->HAccelArray[i].nOpenCount > 0)
-								g_pSharedMemory->HAccelArray[i].nOpenCount--;
-							ReleaseMutex(g_pSharedMemory->HAccelArray[i].hMutex);
-						}
-					}
-				}
-			}
-			Safe_Delete(m_pDxSurface);
-			Safe_Delete(m_pDDraw);
-		}
-	};
 	DeclareRunTime(5);
 
 #ifdef _DEBUG
@@ -4822,7 +4838,12 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 		}
 	}
 
+#ifdef _WIN64
+	shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface);
+#else
 	shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface, pThis->m_pDDraw);
+	pThis->m_bD3dShared = pThis->m_bEnableDDraw ? false : pThis->m_bD3dShared;
+#endif
 	SaveRunTime();
 	pThis->m_bD3dShared = pThis->m_bEnableDDraw ? false : pThis->m_bD3dShared;
 	if (pThis->m_bD3dShared)
@@ -4933,7 +4954,6 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 #ifdef _DEBUG
 	CStat  RenderInterval("RenderInterval", pThis->m_nObjIndex);
 	CStat  CacheStat("VideoCache Size", pThis->m_nObjIndex);
-	DWORD dwFrameTimeInput;
 	pThis->OutputMsg("%s Timespan2 of First Frame = %f.\n", __FUNCTION__, TimeSpanEx(pThis->m_dfFirstFrameTime));
 #endif
 	shared_ptr<CMMEvent> pRenderTimer = make_shared<CMMEvent>(pThis->m_hRenderAsyncEvent, nIPCPlayInterval);
@@ -5086,23 +5106,7 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 UINT __stdcall CIPCPlayer::ThreadAsyncRender(void *p)
 {
 	CIPCPlayer *pThis = (CIPCPlayer*)p;
-	struct DxDeallocator
-	{
-		CDxSurfaceEx *&m_pDxSurface;
-		CDirectDraw *&m_pDDraw;
 
-	public:
-		DxDeallocator(CDxSurfaceEx *&pDxSurface, CDirectDraw *&pDDraw)
-			:m_pDxSurface(pDxSurface), m_pDDraw(pDDraw)
-		{
-		}
-		~DxDeallocator()
-		{
-			//TraceMsgA("%s pSurface = %08X\tpDDraw = %08X.\n", __FUNCTION__, m_pDxSurface, m_pDDraw);
-			Safe_Delete(m_pDxSurface);
-			Safe_Delete(m_pDDraw);
-		}
-	};
 	if (!pThis->m_hRenderWnd)
 		pThis->OutputMsg("%s Warning!!!A Windows handle is Needed otherwise the video Will not showed..\n", __FUNCTION__);
 
@@ -5116,7 +5120,13 @@ UINT __stdcall CIPCPlayer::ThreadAsyncRender(void *p)
 	shared_ptr<CMMEvent> pRenderTimer = make_shared<CMMEvent>(pThis->m_hRenderAsyncEvent, nIPCPlayInterval);
 	// Á¢¼´¿ªÊ¼äÖÈ¾»­Ãæ
 	SetEvent(pThis->m_hRenderAsyncEvent);
+#ifdef _WIN64
+	shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface);
+#else
 	shared_ptr<DxDeallocator> DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface, pThis->m_pDDraw);
+	pThis->m_bD3dShared = pThis->m_bEnableDDraw ? false : pThis->m_bD3dShared;
+#endif
+
 	int nFameListSize = 0;
 	int nRenderFrames = 0;
 	CAVFramePtr pFrame;
@@ -5251,23 +5261,7 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 		return 0;
 	}
 	SaveRunTime();
-	struct DxDeallocator
-	{
-		CDxSurfaceEx *&m_pDxSurface;
-		CDirectDraw *&m_pDDraw;
 
-	public:
-		DxDeallocator(CDxSurfaceEx *&pDxSurface, CDirectDraw *&pDDraw)
-			:m_pDxSurface(pDxSurface), m_pDDraw(pDDraw)
-		{
-		}
-		~DxDeallocator()
-		{
-			TraceMsgA("%s pSurface = %08X\tpDDraw = %08X.\n", __FUNCTION__, m_pDxSurface, m_pDDraw);
-			Safe_Delete(m_pDxSurface);
-			Safe_Delete(m_pDDraw);
-		}
-	};
 	if (!pThis->m_hRenderWnd)
 		pThis->OutputMsg("%s Warning!!!A Windows handle is Needed otherwise the video Will not showed..\n", __FUNCTION__);
 
@@ -5282,13 +5276,17 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 	}
 	shared_ptr<DxDeallocator> DxDeallocatorPtr;
 	if (!pThis->m_bAsyncRender)
-		DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface, pThis->m_pDDraw);
-
-	//if (pThis->m_bD3dShared)
+#ifdef _WIN64
+		DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface);
+#else
 	{
-		pDecodec->SetD3DShared(pThis->m_pDxSurface->GetD3D9(), pThis->m_pDxSurface->GetD3DDevice());
-		pThis->m_pDxSurface->SetD3DShared(true);
+		DxDeallocatorPtr = make_shared<DxDeallocator>(pThis->m_pDxSurface, pThis->m_pDDraw);
+		pThis->m_bD3dShared = pThis->m_bEnableDDraw ? false : pThis->m_bD3dShared;
 	}
+#endif
+	pDecodec->SetD3DShared(pThis->m_pDxSurface->GetD3D9(), pThis->m_pDxSurface->GetD3DDevice());
+	pThis->m_pDxSurface->SetD3DShared(true);
+	
 	// Ê¹ÓÃµ¥Ïß³Ì½âÂë,¶àÏß³Ì½âÂëÔÚÄ³´Ë±È½ÏÂýµÄCPUÉÏ¿ÉÄÜ»áÌá¸ßÐ§¹û£¬µ«ÏÖÔÚI5 2GHZÒÔÉÏµÄCPUÉÏµÄ¶àÏß³Ì½âÂëÐ§¹û²¢²»Ã÷ÏÔ·´¶ø»áÕ¼ÓÃ¸ü¶àµÄÄÚ´æ
 	pDecodec->SetDecodeThreads(1);
 	// ³õÊ¼»¯½âÂëÆ÷

@@ -277,11 +277,10 @@ void CMagoHAccelConfigDlg::RefreshHACCel(bool bUpdateMaxHAccel)
 		{
 			if (wcscmp(pHAConfig[nAdapter].szAdapterGuid, _UnicodeString(szGuid[nItem],CP_ACP)) == 0)
 			{
-				if (bUpdateMaxHAccel)
-				{	
-					_stprintf_s(szItemText, 128, _T("%d"), pHAConfig[nAdapter].nMaxHaccel);
-					m_listAdapter.SetItemText(nItem, Item_MaxHAccel, szItemText);
-				}
+					
+				_stprintf_s(szItemText, 128, _T("%d"), pHAConfig[nAdapter].nMaxHaccel);
+				m_listAdapter.SetItemText(nItem, Item_MaxHAccel, szItemText);
+		
 				_stprintf_s(szItemText, 128, _T("%d"), pHAConfig[nAdapter].nOpenCount);
 				m_listAdapter.SetItemText(nItem, Item_HaccelUsed, szItemText);
 				break;

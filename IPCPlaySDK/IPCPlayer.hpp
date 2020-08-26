@@ -261,7 +261,9 @@ private:
 	list<StreamFramePtr>	m_listAudioCache;///< 音频流播放帧缓冲
 	list<StreamFramePtr>	m_listVideoCache;///< 视频流播放帧缓冲
 	//map<HWND, CDirectDrawPtr> m_MapDDraw;
+#ifndef _WIN64
 	list <RenderUnitPtr>	m_listRenderUnit;
+#endif
 	list <RenderWndPtr>		m_listRenderWnd;	///< 多窗口显示同一视频图像
 	list<CAVFramePtr>		m_listAVFrame;		///<视频帧缓存，用于异步显示图像
 
@@ -283,12 +285,13 @@ private:
 	CCriticalSectionAgent	m_cslistAVFrame;	// 异步渲染帧缓存锁
 	CCriticalSectionAgent	m_csTimebase;
 	CCriticalSectionAgent	m_csMapSwitcher;
+	shared_ptr<PixelConvert>m_pPixelConvert;
 	//////////////////////////////////////////////////////////////////////////
 	/// 注意：所有CCriticalSectionProxy类的对象和模板类的对象都必须定义在m_nZeroOffset
 	/// 成员变量之前，否则可能会出访问错误
 	//////////////////////////////////////////////////////////////////////////
 	int			m_nZeroOffset;
-	bool		m_bEnableDDraw = false;			// 是否启用DDRAW，启用DDRAW将禁用D3D，并且无法启用硬件黄享模式，导致解码效果下降
+
 	UINT					m_nListAvFrameMaxSize;	///<视频帧缓存最大容量
 /*	list<CSwitcherInfoPtr> *m_pSwitcherList;		/// 切换器表*/
 
@@ -340,10 +343,14 @@ private:
 	
 	void *m_pDCCallBack = nullptr;
 	void *m_pDCCallBackParam = nullptr;
+	bool		m_bEnableDDraw = false;	// 是否启用DDRAW，启用DDRAW将禁用D3D，并且无法启用硬件黄享模式，导致解码效果下降
+#ifndef _WIN64
   	CDirectDraw *m_pDDraw;				///< DirectDraw封装类对象，用于在xp下显示视频
+	shared_ptr<ImageSpace> m_pYUVImage = NULL;
+#endif
 	WCHAR		*m_pszBackImagePath;
 	bool		m_bEnableBackImage = false;
-  	shared_ptr<ImageSpace> m_pYUVImage = NULL;
+  	
 // 	bool		m_bDxReset;				///< 是否重置DxSurface
 // 	HWND		m_hDxReset;
 	shared_ptr<CVideoDecoder>	m_pDecoder;
@@ -556,7 +563,9 @@ private:
 		//PutDxSurfacePool(m_pDxSurface);
 		//m_pDxSurface = nullptr;
 		Safe_Delete(m_pDxSurface);
+#ifndef _WIN64
 		Safe_Delete(m_pDDraw);
+#endif
 	}
 #ifdef _DEBUG
 	int m_nRenderFPS = 0;
@@ -569,12 +578,15 @@ private:
 		if (!m_hRenderWnd)
 			return;
 		AutoLock(m_cslistRenderWnd.Get());
+#ifndef _WIN64
 		if (m_bEnableDDraw)
 		{
 			if (m_listRenderUnit.size() <= 0 || m_bStopFlag)
 				return;
 		}
-		else  if (m_listRenderWnd.size() <= 0 || m_bStopFlag)
+		else  
+#endif
+			if (m_listRenderWnd.size() <= 0 || m_bStopFlag)
 			return;
 		
 		Lock.Unlock();
@@ -582,7 +594,9 @@ private:
 			pAvFrame->height != m_nVideoHeight)
 		{
 			Safe_Delete(m_pDxSurface);
+#ifndef _WIN64
 			Safe_Delete(m_pDDraw);
+#endif
 			m_nVideoWidth = pAvFrame->width;
 			m_nVideoHeight = pAvFrame->height;
 			InitizlizeDx();
@@ -628,6 +642,7 @@ private:
 						m_pDxSurface->Present((*it)->hRenderWnd);
 				}
 			}
+#ifndef _WIN64
 			else if (m_pDDraw)
 			{
 				if (pAvFrame->format == AV_PIX_FMT_DXVA2_VLD)
@@ -700,6 +715,7 @@ private:
 						(*it)->RenderImage(*m_pYUVImage, nullptr, nullptr, true);
 				}
 			}
+#endif
 		}
 		else
 		{
@@ -763,6 +779,7 @@ private:
 					}
 				}
 			}
+#ifndef _WIN64
 			else if (m_pDDraw)
 			{
 				m_pYUVImage->pBuffer[0] = (PBYTE)pAvFrame->data[0];
@@ -785,6 +802,7 @@ private:
 					m_pDDraw->Draw(*m_pYUVImage,nullptr, &rtRender, true);
 				}	
 			}
+#endif
 		}
 	}
 	// 二分查找
@@ -823,14 +841,16 @@ public:
 		else
 			m_pRunlog = nullptr;
 	}
-
+#ifndef _WIN64
 	int EnableDDraw(bool bEnableDDraw = true)
 	{
+
 		if (m_pDDraw || m_pDxSurface)
 			return IPC_Error_DXRenderInitialized;
 		m_bEnableDDraw = bEnableDDraw;
 		return IPC_Succeed;
 	}
+#endif
 
 	/// @brief 设置音频播放参数
 	/// @param nPlayFPS		音频码流的帧率
@@ -901,7 +921,7 @@ public:
 		{
 			this->hWnd = hWnd;
 		}
-
+#ifndef _WIN64
 		bool operator()(RenderUnitPtr& Value)
 		{
 			if (Value->hRenderWnd == hWnd)
@@ -909,6 +929,7 @@ public:
 			else
 				return false;
 		}
+#endif
 	public:
 		HWND hWnd;
 	};
@@ -1012,10 +1033,12 @@ public:
 	
 	void SetDecodeDelay(int nDecodeDelay = -1)
 	{
+#ifndef _WIN64
 		if (nDecodeDelay == 0)
 			EnableAudio(false);
 		else
 			EnableAudio(true);
+#endif
 		m_nDecodeDelay = nDecodeDelay;
 		if (m_nDecodeDelay <= 2)
 		{

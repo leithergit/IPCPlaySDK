@@ -36,14 +36,14 @@ DhStreamParser::~DhStreamParser()
 		m_streamParser = NULL ;
 	}
 }
-
-#ifndef WIN32 
-void sig_handler(int signum, siginfo_t* info, void* arg)
-{
-	throw "stream parser exception\n"; 
-	return;			/* Unreachable code. */
-}
-#endif
+//
+//#ifndef WIN32 
+//void sig_handler(int signum, siginfo_t* info, void* arg)
+//{
+//	throw "stream parser exception\n"; 
+//	return;			/* Unreachable code. */
+//}
+//#endif
 
 int DhStreamParser::InputData(unsigned char *pData, unsigned long nDataLength)
 {

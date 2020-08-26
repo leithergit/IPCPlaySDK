@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Common.h"
 
 struct RenderWnd
@@ -37,7 +38,7 @@ struct RenderWnd
 	bool	bPercent;
 };
 typedef shared_ptr<RenderWnd> RenderWndPtr;
-
+#ifndef WIN64
 struct RenderUnit :public RenderWnd
 {
 // private:
@@ -146,3 +147,4 @@ public:
 };
 
 typedef shared_ptr<RenderUnit>RenderUnitPtr;
+#endif

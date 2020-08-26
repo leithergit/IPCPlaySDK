@@ -1,4 +1,5 @@
 #pragma once
+#ifndef _WIN64
 #include <assert.h>
 #include <windows.h>
 #include <stdio.h>
@@ -244,3 +245,4 @@ public:
 	}
 };
 
+#endif

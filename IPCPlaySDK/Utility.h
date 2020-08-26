@@ -435,8 +435,8 @@ bool IsValidSmsAddressW(WCHAR *szSms);
 		lpMultiByteStr if successful. The number includes the byte for 
 		the terminating null character.
 *************************************************************************/
-INT_PTR UnicodeStrToMultiByteStr(UINT_PTR nCodePage, LPCWSTR lpUniStr, LPSTR* lppMultiByteStr);
-INT_PTR UnicodeStrToMultiByteStr(UINT_PTR nCodePage, LPCWSTR lpUniStr, LPSTR lpMultiByteStr, UINT_PTR nMultiByteLen);
+INT_PTR UnicodeStrToMultiByteStr(UINT nCodePage, LPCWSTR lpUniStr, LPSTR* lppMultiByteStr);
+INT_PTR UnicodeStrToMultiByteStr(UINT nCodePage, LPCWSTR lpUniStr, LPSTR lpMultiByteStr, UINT nMultiByteLen);
 
 /*************************************************************************
 	function name
@@ -460,8 +460,8 @@ INT_PTR UnicodeStrToMultiByteStr(UINT_PTR nCodePage, LPCWSTR lpUniStr, LPSTR lpM
 		Returns the number of WCHAR values written to the buffer 
 		indicated by lpWideCharStr if successful.
 *************************************************************************/
-INT_PTR MultiByteStrToUnicodeStr(UINT_PTR nCodePage, LPCSTR lpMultiByteStr, LPWSTR* lppUniStr);
-INT_PTR MultiByteStrToUnicodeStr(UINT_PTR nCodePage, LPCSTR lpMultiByteStr, LPWSTR lpUniStr, UINT_PTR nUniStrLen);
+INT_PTR MultiByteStrToUnicodeStr(UINT nCodePage, LPCSTR lpMultiByteStr, LPWSTR* lppUniStr);
+INT_PTR MultiByteStrToUnicodeStr(UINT nCodePage, LPCSTR lpMultiByteStr, LPWSTR lpUniStr, UINT nUniStrLen);
 
 #define _UTF8(UnicodeText,nLength)		(UTF8String(UnicodeText,nLength).get())
 #define _AnsiString(UnicodeText,nLength)	(W2AString(UnicodeText,nLength).get())

@@ -20,7 +20,7 @@ using namespace std;
 
 
 #define __countof(array) (sizeof(array)/sizeof(array[0]))
-#pragma warning (disable:4996)
+#pragma warning (disable:4996 4267)
 
 void TraceMsgA(LPCSTR pFormat, ...)
 {
@@ -240,7 +240,7 @@ bool IsValidMailAddressA(CHAR *szMail)
 		return false;
 
 	// @不是最后一个字符
-	int nOffset = pDest - szMail;
+	__int64 nOffset = pDest - szMail;
 	if ((nOffset + 1) == nLen)
 		return false;
 
@@ -290,7 +290,7 @@ bool IsValidMailAddressW(WCHAR *szMail)
 		return false;
 
 	// @不是最后一个字符
-	int nOffset = pDest - szMail;
+	__int64 nOffset = pDest - szMail;
 	if ((nOffset + 1) == nLen)
 		return false;
 
@@ -2041,7 +2041,7 @@ bool GetDirectoryFromFullPathA(LPCSTR strPath,LPSTR strDestDir,int nDirSize,CHAR
 	LPCSTR pDest = strrchr(strPath,chSeperator);
 	if (!pDest)
 		return false;
-	int nPos = pDest - strPath;	
+	__int64 nPos = pDest - strPath;	
 	if (nPos <=2 )
 		return false;
 	strncpy_s(strDestDir,nDirSize,strPath,nPos);	
@@ -2524,10 +2524,10 @@ bool Variant2BytePtr(IN _variant_t var,INOUT byte *pBuff,IN int nBuffSize,OUT in
 /* add by Brezze.Wang                                                   */
 /************************************************************************/
 
-INT_PTR UnicodeStrToMultiByteStr(UINT_PTR nCodePage, LPCWSTR lpUniStr, LPSTR* lppMultiByteStr)
+INT_PTR UnicodeStrToMultiByteStr(UINT nCodePage, LPCWSTR lpUniStr, LPSTR* lppMultiByteStr)
 {
-	INT_PTR						nMultiByteStrLen;
-	INT_PTR						nRet;
+	INT						nMultiByteStrLen;
+	INT						nRet;
 
 	if((*lppMultiByteStr))
 	{
@@ -2553,9 +2553,9 @@ INT_PTR UnicodeStrToMultiByteStr(UINT_PTR nCodePage, LPCWSTR lpUniStr, LPSTR* lp
 	return 0;
 }
 
-INT_PTR UnicodeStrToMultiByteStr(UINT_PTR nCodePage, LPCWSTR lpUniStr, LPSTR lpMultiByteStr, UINT_PTR nMultiByteLen)
+INT_PTR UnicodeStrToMultiByteStr(UINT nCodePage, LPCWSTR lpUniStr, LPSTR lpMultiByteStr, UINT nMultiByteLen)
 {
-	INT_PTR						nRet;
+	INT						nRet;
 
 	if(!lpMultiByteStr)
 	{
@@ -2571,10 +2571,10 @@ INT_PTR UnicodeStrToMultiByteStr(UINT_PTR nCodePage, LPCWSTR lpUniStr, LPSTR lpM
 	return 0;
 }
 
-INT_PTR MultiByteStrToUnicodeStr(UINT_PTR nCodePage, LPCSTR lpMultiByteStr, LPWSTR* lppUniStr)
+INT_PTR MultiByteStrToUnicodeStr(UINT nCodePage, LPCSTR lpMultiByteStr, LPWSTR* lppUniStr)
 {
-	INT_PTR						nUniStrLen;
-	INT_PTR						nRet;
+	INT						nUniStrLen;
+	INT						nRet;
 
 	if((*lppUniStr))
 	{
@@ -2600,9 +2600,9 @@ INT_PTR MultiByteStrToUnicodeStr(UINT_PTR nCodePage, LPCSTR lpMultiByteStr, LPWS
 	return 0;
 }
 
-INT_PTR MultiByteStrToUnicodeStr(UINT_PTR nCodePage, LPCSTR lpMultiByteStr, LPWSTR lpUniStr, UINT_PTR nUniStrLen)
+INT_PTR MultiByteStrToUnicodeStr(UINT nCodePage, LPCSTR lpMultiByteStr, LPWSTR lpUniStr, UINT nUniStrLen)
 {
-	INT_PTR						nRet;
+	INT						nRet;
 
 	if(!lpUniStr)
 	{

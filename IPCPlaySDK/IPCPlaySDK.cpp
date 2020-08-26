@@ -870,14 +870,19 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 /// -#	false		禁用音频播放
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
+/// @remark			注意，在X64CPU架构调用此函数时将返回错误:IPC_Error_UnspportOpeationInArchX64
  int  ipcplay_EnableAudio(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable/* = true*/)
 {
+#ifndef _WIN64
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
 	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
 	if (pPlayer->nSize != sizeof(CIPCPlayer))
 		return IPC_Error_InvalidParameters;
 	return pPlayer->EnableAudio(bEnable);
+#else
+	return IPC_Error_UnspportOpeationInArchX64;
+#endif
 }
 
 /// @brief			刷新播放窗口
@@ -1276,12 +1281,16 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 /// @param [in]		szImageFile		背景图片路径，背景图片可以jpg,png或bmp文件,为null时，则删除背景图片
  int ipcplay_EnableDDraw(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable)
 {
+#ifndef _WIN64
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
 	CIPCPlayer *pPlayer = (CIPCPlayer *)hPlayHandle;
 	if (pPlayer->nSize != sizeof(CIPCPlayer))
 		return IPC_Error_InvalidParameters;
 	return pPlayer->EnableDDraw(bEnable);
+#else
+	return IPC_Error_UnspportOpeationInArchX64;
+#endif
 }
 
 /// @brief			启用流解析器

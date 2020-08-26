@@ -10,10 +10,6 @@
 #include "hi_config.h"
 #include <VersionHelpers.h>
 
-#define _HI_MULTITHREAD
-#ifndef __HisiLicon
-#define __HisiLicon
-#endif
 
 #ifndef IN
 #define	IN
@@ -652,6 +648,7 @@ public:
 				return false;
 			}
 		}
+#ifdef __HisiLicon
 		else
 		{
 			if (InitHisiliconDecoder() == IHW265D_OK)
@@ -663,7 +660,7 @@ public:
 			}
 		}
 		m_bInInit = TRUE;
-		
+#endif
 		return true;
 	}
 
@@ -760,6 +757,7 @@ private:
 		m_nCodecId = AV_CODEC_ID_NONE;
 		return 0;
 	}
+#ifdef __HisiLicon
 	/// 初始化华为海思H.265解码器
 	int InitHisiliconDecoder()
 	{
@@ -804,6 +802,7 @@ private:
 		}
 		return 0;
 	}
+#endif
 public:
 	STDMETHODIMP_(long) GetBufferCount()
 	{
@@ -894,8 +893,13 @@ public:
 
 		if (m_nManufacturer == FFMPEG)
 			InitFFmpegDecoder(bEnableHaccel);
+#ifdef __HisiLicon
 		else
 			InitHisiliconDecoder();
+#else
+		else
+			return false;
+#endif
 		m_pFrame = av_frame_alloc();
 		m_bInInit = true;
 		return true;
@@ -905,8 +909,10 @@ public:
 	{
 		if (m_nManufacturer == FFMPEG)
 			DestroyFFmpegDecoder();
+#ifdef __HisiLicon
 		else if (m_nManufacturer == HISILICON)
 			DestroyHisiliconDecoder();
+#endif
 		return S_OK;
 	}
 	/// @brief 根据编码格式，取得指定粒度的字节对齐数
@@ -1050,6 +1056,7 @@ public:
 			return nAvError;
 			//return avcodec_decode_video2(m_pAVCtx, pAvFrame, &got_picture, pPacket);
 		}
+#ifdef __HisiLicon
 		else
 		{
 			IH265DEC_INARGS stInArgs;
@@ -1080,6 +1087,9 @@ public:
 			}
 			return 0;
 		}
+#else
+		return -1;
+#endif
 	}
 	/// @brief 移动到指定帧，只支持ffmpeg文件解码
 	inline int SeekFrame(int64_t timestamp, int flags)

@@ -128,7 +128,7 @@ inline void* gpu_memcpy(void* d, const void* s, size_t size)
     return d;
 }
 
-
+#ifndef _WIN64
 inline void  memcpyMMX(void *Dest, void *Src, size_t nBytes)
 {
 	__asm
@@ -179,3 +179,4 @@ inline void  memcpyMMX(void *Dest, void *Src, size_t nBytes)
 		EndCopyLoop :
 	}
 }
+#endif

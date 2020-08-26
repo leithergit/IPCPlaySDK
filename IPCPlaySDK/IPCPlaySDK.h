@@ -155,7 +155,9 @@ enum IPCPLAY_Status
 	IPC_Error_InvalidSharedMemory		=(-50), ///< 尚未创建共享内存
 	IPC_Error_LibUninitialized			=(-51), ///< 动态库尚未加载或初始初始化
 	IPC_Error_InvalidVideoAdapterGUID	=(-52), ///< 无效的显卡GUID机或本机没有与之对应的显卡
+	IPC_Error_UnspportOpeationInArchX64	=(-53), ///< 在X64架构下，不支持当前操作
 	IPC_Error_InsufficentMemory			=(-255)	///< 内存不足
+	
 };
 
 #define		WM_IPCPLAYER_MESSAGE			WM_USER + 8192	///< 播放器出错时发出的消息 ,消息的LPARAM字段无意义,wparam字段定义如下：
@@ -227,14 +229,12 @@ struct AdapterInfo
 	char            Driver[MAX_DEVICE_IDENTIFIER_STRING];
 	char            Description[MAX_DEVICE_IDENTIFIER_STRING];
 	char            DeviceName[32];         /* Device name for GDI (ex. \\.\DISPLAY1) */
-
 #ifdef _WIN32
 	LARGE_INTEGER   DriverVersion;          /* Defined for 32 bit components */
 #else
 	DWORD           DriverVersionLowPart;   /* Defined for 16 bit driver components */
 	DWORD           DriverVersionHighPart;
 #endif
-
 	DWORD           VendorId;
 	DWORD           DeviceId;
 	DWORD           SubSysId;
@@ -726,6 +726,7 @@ extern "C" {
 /// -#	false		禁用音频播放
 /// @retval			0	操作成功
 /// @retval			-1	输入参数无效
+/// @remark			注意，在X64CPU架构调用此函数时将返回错误:IPC_Error_UnspportOpeationInArchX64
  int  ipcplay_EnableAudio(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable = true);
 
 /// @brief			刷新播放窗口
@@ -901,6 +902,7 @@ extern "C" {
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄
 /// @param [in]		bEnable			背景图片路径，背景图片可以jpg,png或bmp文件,为null时，则删除背景图片
 /// @remark			该函数必须在ipcplay_Start前调用，否则可能无效
+///					在64位CPU架构该函数无法发挥作用，会返回错误IPC_Error_UnspportOpeationInArchX64
  int ipcplay_EnableDDraw(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable = true);
 
 /// @brief			启用流解析器

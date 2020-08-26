@@ -1160,7 +1160,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 // 						ipcplay_SetPixFormat(m_pPlayContext->hPlayer[0], R8G8B8);
 // 						ipcplay_SetExternDrawCallBack(m_pPlayContext->hPlayer[0], ExternDCDraw, this);
 // 					}
-//					ipcplay_EnableDDraw(m_pPlayContext->hPlayer[0],m_bEnableDDraw);
+					ipcplay_EnableDDraw(m_pPlayContext->hPlayer[0],m_bEnableDDraw);
 					time_t T1 = pi.tTotalTime / 1000;
 					int nFloat = pi.tTotalTime - T1 * 1000;
 					int nHour = T1 / 3600;
