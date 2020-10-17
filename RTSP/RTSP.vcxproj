@@ -136,6 +136,7 @@ copy "$(TargetDir)$(TargetName).lib"  "$(SolutionDir)$(Configuration)" /y
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <Link>
       <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -147,6 +148,9 @@ copy "$(TargetDir)$(TargetName).lib"  "$(SolutionDir)$(Configuration)" /y
     <PostBuildEvent>
       <Command />
     </PostBuildEvent>
+    <Bscmake>
+      <PreserveSbr>true</PreserveSbr>
+    </Bscmake>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_SVAC|Win32'">
     <ClCompile>

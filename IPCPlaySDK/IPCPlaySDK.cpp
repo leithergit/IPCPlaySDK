@@ -164,7 +164,7 @@ struct IPC_StreamHeader
 		return nullptr;
 	}
 }
-
+ 
 ///	@brief			初始化流播放句柄,仅用于流播放
 /// @param [in]		hUserHandle		网络连接句柄
 ///	@param [in]		hWnd			显示图像的窗口

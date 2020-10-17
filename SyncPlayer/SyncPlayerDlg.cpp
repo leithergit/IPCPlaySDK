@@ -379,6 +379,7 @@ void CSyncPlayerDlg::OnBnClickedButtonStart()
 	}
 }
 
+
 UINT CSyncPlayerDlg::ReadFileRun(UINT nIndex)
 {
 	int nBufferSize = 128 * 1024;
@@ -437,7 +438,7 @@ UINT CSyncPlayerDlg::ReadFileRun(UINT nIndex)
 						}
 							
 					}
-					if (pFrame->nLength < 100)
+					if (pFrame->nLength < 64)
 						continue;
 					if (pFrame->nType == DH_FRAME_TYPE_VIDEO)
 					{
@@ -529,22 +530,149 @@ UINT CSyncPlayerDlg::ReadFileRun(UINT nIndex)
 }
 
 
+#include "mp4v2/mp4v2.h"
+#pragma comment(lib,"libmp4v2.lib")
+
+struct CMP4File
+{
+	MP4FileHandle	hMP4File;
+	int		nTimeScale;	
+	int		nFrameRate;
+	int		nVideoID;
+	int		nWidth;
+	int		nHeight;
+	bool	bAddSPS;
+	CMP4File(TCHAR *szFile, int nWidth = 0, int nHeight = 0, int nTimeScale = 90000, int nFrarate = 25)
+	{
+		ZeroMemory(this, sizeof(CMP4File));
+		if (szFile && strlen(szFile))
+		{
+			hMP4File = MP4CreateEx(szFile, 0, 1, 1, 0, 0, 0, 0);
+			if (hMP4File == MP4_INVALID_FILE_HANDLE)
+			{
+				char szException[1024] = { 0 };
+				_stprintf_s(szException, 1024, "Failed in createing file %s.\n", szFile);
+				throw exception(szException);
+			}
+			this->nTimeScale = nTimeScale;
+			this->nFrameRate = nFrarate;
+			this->nWidth = nWidth;
+			this->nHeight = nHeight;
+			MP4SetTimeScale(hMP4File, nTimeScale);
+		}
+		else
+		{
+			char szException[1024] = { 0 };
+			_stprintf_s(szException, 1024, "Input a invalid filename .\n");
+			throw exception(szException);
+		}
+	}
+	~CMP4File()
+	{
+		if (hMP4File)
+		{
+			MP4Close(hMP4File, 0);
+			ZeroMemory(this, sizeof(CMP4File));
+		}
+	}
+
+	bool WriteData(unsigned char *pBuffer, int nSize, int nFrameWidth = 0, int nFrameHeight = 0, int nFrameTimeScale = 0, int nFrameRate = 0)
+	{
+		if (!hMP4File)
+			return false;
+		TraceMsg("%s FrameType = %d\n", __FUNCTION__, (pBuffer[4] & 0x1F));
+		int index = -1;
+		if (pBuffer[0] != 0 ||
+			pBuffer[1] != 0 ||
+			pBuffer[2] != 0 ||
+			pBuffer[3] != 1)
+			return false;
+
+		unsigned char *pNalu = &pBuffer[4];
+		int nNaluType = pNalu[0] & 0x1F;
+		int nNaluLen = nSize - 4;
+		switch (nNaluType)
+		{
+		case 0x07: // SPS
+			TraceMsg("sps(%d)\n", nNaluLen);
+			if (!bAddSPS)
+			{
+				int nScale = nFrameTimeScale ? nFrameTimeScale : nTimeScale;
+				int nRate = nFrameRate ? nFrameRate : this->nFrameRate;
+				nVideoID = MP4AddH264VideoTrack
+					(hMP4File,
+					nScale,								// 一秒钟多少timescale
+					nScale / nRate,						// 每个帧有多少个timescale
+					nFrameWidth?nFrameWidth:nWidth,     // width
+					nFrameHeight?nFrameHeight:nHeight,  // height
+					pBuffer[1],               // sps[1] AVCProfileIndication
+					pBuffer[2],               // sps[2] profile_compat
+					pBuffer[3],               // sps[3] AVCLevelIndication
+					3);						  // 4 bytes length before each NAL unit
+				if (nVideoID == MP4_INVALID_TRACK_ID)
+				{
+					TraceMsg("Error:Can't add track.\n");
+					return false;
+				}
+
+				MP4SetVideoProfileLevel(hMP4File, 0x7F);
+
+				bAddSPS = true;
+				MP4AddH264SequenceParameterSet(hMP4File, nVideoID, (uint8_t *)pBuffer, nNaluLen);
+			}
+			else
+				MP4WriteSample(hMP4File, nVideoID, (uint8_t *)pBuffer, nNaluLen + 4, MP4_INVALID_DURATION, 0, 1);
+
+
+			break;
+
+		case 0x08: // PPS
+			TraceMsg("pps(%d)\n", nNaluLen);
+			MP4AddH264PictureParameterSet(hMP4File, nVideoID, (uint8_t *)pBuffer, nNaluLen);
+			break;
+
+		default:
+			TraceMsg("slice(%d)\n", nNaluLen);
+			pBuffer[0] = (nNaluLen >> 24) & 0xFF;
+			pBuffer[1] = (nNaluLen >> 16) & 0xFF;
+			pBuffer[2] = (nNaluLen >> 8) & 0xFF;
+			pBuffer[3] = (nNaluLen >> 0) & 0xFF;
+
+			MP4WriteSample(hMP4File, nVideoID, (uint8_t *)pBuffer, nNaluLen + 4, MP4_INVALID_DURATION, 0, 1);
+
+			break;
+		}
+		return true;
+	}
+	
+};
+
+
+
 UINT CSyncPlayerDlg::ReadFileRun2(UINT nIndex)
 {
 	DhStreamParser* pStreamParser = nullptr;
 	int nBufferSize =  16*1024;
 	byte *pFileBuffer = new byte[nBufferSize];
 	ZeroMemory(pFileBuffer, nBufferSize);
-
+	int nTimeScale = 90000;
+	bool bAddSample = true;
+	CMP4File *pMP4File = nullptr;
 	try
 	{
+		TCHAR szMP4[256] = { 0 };
+		_stprintf_s(szMP4, 256, _T("%s.mp4"), (LPCTSTR)m_strFile[nIndex].Left(m_strFile[nIndex].GetLength() - 4));
+		
+		
+			
 		CFile fileRead(m_strFile[nIndex], CFile::modeRead | CFile::shareDenyWrite);
-		CFile fileWrite(_T("FileSave.dav"), CFile::modeCreate | CFile::modeWrite);
+		//CFile fileWrite(_T("FileSave.dav"), CFile::modeCreate | CFile::modeWrite);
 		int nWidth = 0, nHeight = 0, nFramerate = 0;
 		int nOffsetStart = 0;
 		int nOffsetMatched = 0;
 		DHFrame *pDHFrame = nullptr;
 		int nFrames = 0;
+		int nVideoID = -1;
 		while (m_bThreadRun)
 		{
 			int nReadLength = fileRead.Read(pFileBuffer, nBufferSize);
@@ -559,11 +687,29 @@ UINT CSyncPlayerDlg::ReadFileRun2(UINT nIndex)
 					if (!pFrame)
 						break;
 					nFrames++;
-					if (pFrame->nEncodeType)
-					TraceMsgA("%s Frames = %d.\n", __FUNCTION__, nFrames);
+						
+					if (pFrame->nType == DH_FRAME_TYPE_VIDEO)
+					{
+						try
+						{
+							if (!pMP4File)
+								pMP4File = new CMP4File(szMP4, pFrame->nWidth, pFrame->nHeight, nTimeScale, pFrame->nFrameRate);
+							else
+								pMP4File->WriteData(pFrame->pContent, pFrame->nFrameLength);
+						}
+						catch (std::exception &e)
+						{
+							TraceMsgA("%s Catch a exception:%s.\n", __FUNCTION__, e.what());
+							return 0;
+						}
+					}
 				}
 			}
+			else
+				break;
 		}
+		if (pMP4File)
+			delete pMP4File;
 
 	}
 	catch (CFileException* e)

@@ -1989,11 +1989,10 @@ int CIPCPlayer::SnapShot(IN CHAR *szFileName, IN SNAPSHOT_FORMAT nFileFormat)
 	{
 		if (WaitForSingleObject(m_hEvnetYUVReady, 5000) == WAIT_TIMEOUT)
 			return IPC_Error_PlayerNotStart;
-		char szAvError[1024] = { 0 };
+		//char szAvError[1024] = { 0 };
 		// 			if (m_pSnapshot && m_pSnapshot->GetPixelFormat() != m_nDecodePirFmt)
 		// 				m_pSnapshot.reset();
-
-		if (!m_pSnapshot)
+		/*if (!m_pSnapshot)
 		{
 			if (m_nDecodePixelFmt == AV_PIX_FMT_DXVA2_VLD)
 				m_pSnapshot = make_shared<CSnapshot>(AV_PIX_FMT_YUV420P, m_nVideoWidth, m_nVideoHeight);
@@ -2023,13 +2022,16 @@ int CIPCPlayer::SnapShot(IN CHAR *szFileName, IN SNAPSHOT_FORMAT nFileFormat)
 		default:
 			nResult = IPC_Error_UnsupportedFormat;
 			break;
-		}
-		//m_pSnapshot.reset();
-		return nResult;
+		}*/
+		if (!m_pDxSurface)
+			return IPC_Error_PlayerNotStart;
+		if (m_pDxSurface->CapturetoFile(szFileName, (D3DXIMAGE_FILEFORMAT)nFileFormat))
+			return IPC_Succeed;
+		else
+			return IPC_Error_SnapShotFailed;
 	}
 	else
 		return IPC_Error_PlayerNotStart;
-	return IPC_Succeed;
 }
 
 void CIPCPlayer::ProcessSnapshotRequire(AVFrame *pAvFrame)
@@ -3536,7 +3538,7 @@ void CIPCPlayer::ProcessYUVCapture(AVFrame *pAvFrame, LONGLONG nTimestamp)
 		{
 			// 方案 D 可直接取得RGB数据，耗时4-5ms,CPU占用6-8%，只能纯软解，尚有优化空间
 			// 其它方案详见 CDxSurface::GetRGBBuffer函数
-			int nConverted = 0;
+			/*int nConverted = 0;
 			if (m_pPixelConvert)
 				nConverted = m_pPixelConvert->ConvertPixel(pAvFrame);
 			else
@@ -3545,11 +3547,11 @@ void CIPCPlayer::ProcessYUVCapture(AVFrame *pAvFrame, LONGLONG nTimestamp)
 				nConverted = m_pPixelConvert->ConvertPixel();
 			}
 			if (nConverted > 0)
-				m_pCaptureRGB(this, m_pPixelConvert->pImage, pAvFrame->width, pAvFrame->height, nTimestamp, m_pUserCaptureRGB);
-			/*byte *pRGBBuffer = nullptr;
+				m_pCaptureRGB(this, m_pPixelConvert->pImage, pAvFrame->width, pAvFrame->height, nTimestamp, m_pUserCaptureRGB);*/
+			byte *pRGBBuffer = nullptr;
 			int  nRGBBufferSize = 0;
 			if (m_pDxSurface && m_pDxSurface->GetRGBBuffer(&pRGBBuffer,nRGBBufferSize))
-				m_pCaptureRGB(this, pRGBBuffer, pAvFrame->width, pAvFrame->height, nTimestamp, m_pUserCaptureRGB);*/
+				m_pCaptureRGB(this, pRGBBuffer, pAvFrame->width, pAvFrame->height, nTimestamp, m_pUserCaptureRGB);
 		}
 			
 		m_csCaptureRGB.Unlock();

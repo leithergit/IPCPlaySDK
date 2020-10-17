@@ -72,7 +72,7 @@ public:
 	{
 		ThreadParam *TP = (ThreadParam*)p;
 		shared_ptr<ThreadParam> TPPtr(TP);
-		return ((CSyncPlayerDlg *)(TP->pDialog))->ReadFileRun(TP->nID);
+		return ((CSyncPlayerDlg *)(TP->pDialog))->ReadFileRun2(TP->nID);
 	}
 	UINT	ReadFileRun(UINT nIdex);
 	UINT	ReadFileRun2(UINT nIdex);
