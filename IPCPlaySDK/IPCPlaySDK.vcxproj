@@ -51,7 +51,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v120_xp</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -75,7 +75,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v120_xp</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -195,7 +195,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;_HI_MULTITHREAD;__HisiLicon;IPCPLAYSDK_EXPORTS;_ENABLE_FFMPEG_STAITC_LIB;_XKEYCHECK_H;_CRT_SECURE_NO_WARNINGS;_LineTime_;D3D_DEBUG_INFO;_TraceFunction;_STD_SMARTPTR;avpriv_strdod=strtod;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\Win10 SDK Includes;..\ffmpeg\Static.20200419\include;..\faad2-2.7\include;..\DirectX9.0 SDK\Include;.\svacparser;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Win10 SDK Includes;..\ffmpeg\Static_20201101\include;..\faad2-2.7\include;..\DirectX9.0 SDK\Include;.\svacparser;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BrowseInformation>true</BrowseInformation>
@@ -204,7 +204,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>..\ffmpeg\Static.20200419\lib;..\DirectX9.0 SDK\Lib\x86;..\faad2-2.7\include;.\TCmalloc;..\GCC.9.10;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <IgnoreSpecificDefaultLibraries>LIBCMTD.lib LIBCMT.lib</IgnoreSpecificDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>LIBCMTD.lib</IgnoreSpecificDefaultLibraries>
       <AdditionalOptions>/NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:libcmtd.lib %(AdditionalOptions)</AdditionalOptions>
       <ModuleDefinitionFile>IPCPlaySDK.def</ModuleDefinitionFile>
       <AdditionalDependencies>Bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -561,6 +561,7 @@ copy $(ProjectDir)ipcplaysdk.h "E:\SVN.NET\AVPlayer\ipcplaysdk" /y</Command>
     <ClInclude Include="VideoDecoder\hi_config.h" />
     <ClInclude Include="VideoDecoder\IHW265Dec_Api.h" />
     <ClInclude Include="VideoDecoder\IHWVideo_Typedef.h" />
+    <ClInclude Include="VideoDecoder\moreuuids.h" />
     <ClInclude Include="VideoDecoder\VideoDecoder.h" />
     <ClInclude Include="YUVFrame.h" />
   </ItemGroup>

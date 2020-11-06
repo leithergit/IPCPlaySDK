@@ -1,14 +1,14 @@
-#pragma once
+ï»¿#pragma once
 /////////////////////////////////////////////////////////////////////////
 /// @file  IPCPlayer.hpp
 /// Copyright (c) 2016, xionggao.lee
 /// All rights reserved.  
-/// @brief IPCIPCÏà»ú²¥·ÅSDKÊµÏÖ
+/// @brief IPCIPCç›¸æœºæ’­æ”¾SDKå®ç°
 /// @version 1.0  
 /// @author  xionggao.lee
 /// @date  2015.12.17
 ///   
-/// ĞŞ¶©ËµÃ÷£º×î³õ°æ±¾ 
+/// ä¿®è®¢è¯´æ˜ï¼šæœ€åˆç‰ˆæœ¬ 
 /////////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
 //#include <vld.h>
@@ -37,17 +37,17 @@
 #include "DhStreamParser.h"
 #define  Win7MajorVersion	6
 class CIPCPlayer;
-/// @brief ÎÄ¼şÖ¡ĞÅÏ¢£¬ÓÃÓÚ±êÊ¶Ã¿Ò»Ö¡ÔÚÎÄ¼şµÄÎ»ÖÃ
+/// @brief æ–‡ä»¶å¸§ä¿¡æ¯ï¼Œç”¨äºæ ‡è¯†æ¯ä¸€å¸§åœ¨æ–‡ä»¶çš„ä½ç½®
 struct FileFrameInfo
 {
-	UINT	nOffset;	///< Ö¡Êı¾İËùÔÚµÄÎÄ¼şÆ«ÒÆ
-	UINT	nFrameSize;	///< °üº¬ IPCFrameHeaderExÔÚÄÚµÄÖ¡Êı¾İµÄ³ß´ç
-	bool	bIFrame;	///< ÊÇ·ñIÖ¡
+	UINT	nOffset;	///< å¸§æ•°æ®æ‰€åœ¨çš„æ–‡ä»¶åç§»
+	UINT	nFrameSize;	///< åŒ…å« IPCFrameHeaderExåœ¨å†…çš„å¸§æ•°æ®çš„å°ºå¯¸
+	bool	bIFrame;	///< æ˜¯å¦Iå¸§
 	time_t	tTimeStamp;
 };
 
  
-// ÓÃÓÚÒì²½äÖÈ¾µÄÖ¡»º´æ
+// ç”¨äºå¼‚æ­¥æ¸²æŸ“çš„å¸§ç¼“å­˜
 struct CAvFrame
 {
 private:
@@ -78,7 +78,7 @@ public:
 			assert(false);
 			return;
 		}
-		// °ÑÏÔÊ¾Í¼ÏñÓëYUVÖ¡¹ØÁª
+		// æŠŠæ˜¾ç¤ºå›¾åƒä¸YUVå¸§å…³è”
 		av_image_fill_arrays(pFrame->data, pFrame->linesize, pImageBuffer, (AVPixelFormat)pSrcFrame->format, pSrcFrame->width, pSrcFrame->height, 16);
 		pFrame->width = pSrcFrame->width;
 		pFrame->height = pSrcFrame->height;
@@ -110,7 +110,7 @@ public:
 typedef shared_ptr<CAvFrame> CAVFramePtr;
 
 typedef shared_ptr<CSwitcherInfo> CSwitcherInfoPtr;
-// //µ÷ÊÔ¿ª¹Ø
+// //è°ƒè¯•å¼€å…³
 // struct _DebugPin
 // {
 // 	bool bSwitch;
@@ -142,7 +142,7 @@ struct _OutputTime
 	DWORD nQueueSize;
 	_OutputTime()
 	{
-		// ×Ô¶¯³õÊ¼»¯ËùÓĞDWORDĞÍ±äÁ¿£¬¼´Ê¹ºóĞøÔö¼Ó±äÁ¿Ò²²»ÓÃÔÙ×÷¸Ä¶¯
+		// è‡ªåŠ¨åˆå§‹åŒ–æ‰€æœ‰DWORDå‹å˜é‡ï¼Œå³ä½¿åç»­å¢åŠ å˜é‡ä¹Ÿä¸ç”¨å†ä½œæ”¹åŠ¨
 		DWORD *pThis = (DWORD *)this;
 		for (int i = 0; i < sizeof(_OutputTime) / 4; i++)
 			pThis[i] = timeGetTime();
@@ -150,7 +150,7 @@ struct _OutputTime
 	}
 };
 
-/// @brief ÓÃÓÚÂëÁ÷Ì½²âµÄÀà
+/// @brief ç”¨äºç æµæ¢æµ‹çš„ç±»
 struct StreamProbe
 {
 	StreamProbe(int nBuffSize = 256 * 1024)
@@ -176,15 +176,15 @@ struct StreamProbe
 		return true;
 	}
 
-	byte		*pProbeBuff;			///< ÂëÁ÷¿Ø¼şÌ½²â»º³åÇø
-	int			nProbeBuffSize;			///< Ì½²â»º³åµÄ³ß´ç
-	int			nProbeDataLength;		///< Ì½²â»º³åÇøÊı¾ÓµÄ³¤¶È
+	byte		*pProbeBuff;			///< ç æµæ§ä»¶æ¢æµ‹ç¼“å†²åŒº
+	int			nProbeBuffSize;			///< æ¢æµ‹ç¼“å†²çš„å°ºå¯¸
+	int			nProbeDataLength;		///< æ¢æµ‹ç¼“å†²åŒºæ•°å±…çš„é•¿åº¦
 	int			nProbeDataRemained;
-	AVCodecID	nProbeAvCodecID;		///< Ì½²âµ½µÄÂëÁ÷ID
+	AVCodecID	nProbeAvCodecID;		///< æ¢æµ‹åˆ°çš„ç æµID
 	int			nProbeWidth;
 	int			nProbeHeight;
-	int			nProbeCount;			///< Ì½²â´ÎÊı
-	int			nProbeOffset;			///< ÂëÁ÷Ì½²âÊ±ÊÓÆµÖ¡¸´ÖÆÊ±µÄÖ¡ÄÚÆ«ÒÆ
+	int			nProbeCount;			///< æ¢æµ‹æ¬¡æ•°
+	int			nProbeOffset;			///< ç æµæ¢æµ‹æ—¶è§†é¢‘å¸§å¤åˆ¶æ—¶çš„å¸§å†…åç§»
 };
 
 
@@ -249,23 +249,23 @@ extern double	g_dfProcessLoadTime ;
 extern HMODULE  g_hDllModule;
 //extern HWND g_hSnapShotWnd;
 
-/// IPCIPCPlay SDKÖ÷Òª¹¦ÄÜÊµÏÖÀà
+/// IPCIPCPlay SDKä¸»è¦åŠŸèƒ½å®ç°ç±»
 
 class CIPCPlayer
 {
 public:
 	int		nSize;
 private:
-	list<FrameNV12Ptr>		m_listNV12;		// YUV»º´æ£¬Ó²½âÂë
-	list<FrameYV12Ptr>		m_listYV12;		// YUV»º´æ£¬Èí½âÂë
-	list<StreamFramePtr>	m_listAudioCache;///< ÒôÆµÁ÷²¥·ÅÖ¡»º³å
-	list<StreamFramePtr>	m_listVideoCache;///< ÊÓÆµÁ÷²¥·ÅÖ¡»º³å
+	list<FrameNV12Ptr>		m_listNV12;		// YUVç¼“å­˜ï¼Œç¡¬è§£ç 
+	list<FrameYV12Ptr>		m_listYV12;		// YUVç¼“å­˜ï¼Œè½¯è§£ç 
+	list<StreamFramePtr>	m_listAudioCache;///< éŸ³é¢‘æµæ’­æ”¾å¸§ç¼“å†²
+	list<StreamFramePtr>	m_listVideoCache;///< è§†é¢‘æµæ’­æ”¾å¸§ç¼“å†²
 	//map<HWND, CDirectDrawPtr> m_MapDDraw;
 #ifndef _WIN64
 	list <RenderUnitPtr>	m_listRenderUnit;
 #endif
-	list <RenderWndPtr>		m_listRenderWnd;	///< ¶à´°¿ÚÏÔÊ¾Í¬Ò»ÊÓÆµÍ¼Ïñ
-	list<CAVFramePtr>		m_listAVFrame;		///<ÊÓÆµÖ¡»º´æ£¬ÓÃÓÚÒì²½ÏÔÊ¾Í¼Ïñ
+	list <RenderWndPtr>		m_listRenderWnd;	///< å¤šçª—å£æ˜¾ç¤ºåŒä¸€è§†é¢‘å›¾åƒ
+	list<CAVFramePtr>		m_listAVFrame;		///<è§†é¢‘å¸§ç¼“å­˜ï¼Œç”¨äºå¼‚æ­¥æ˜¾ç¤ºå›¾åƒ
 
 	map<WORD, SwitcherPtrListAgent*> m_MapSwitcher;
 private:
@@ -282,30 +282,30 @@ private:
 	CCriticalSectionAgent	m_csYUVFilter;
 	CCriticalSectionAgent	m_csVideoCache;
 	CCriticalSectionAgent	m_csCaptureRGB;
-	CCriticalSectionAgent	m_cslistAVFrame;	// Òì²½äÖÈ¾Ö¡»º´æËø
+	CCriticalSectionAgent	m_cslistAVFrame;	// å¼‚æ­¥æ¸²æŸ“å¸§ç¼“å­˜é”
 	CCriticalSectionAgent	m_csTimebase;
 	CCriticalSectionAgent	m_csMapSwitcher;
 	shared_ptr<PixelConvert>m_pPixelConvert;
 	//////////////////////////////////////////////////////////////////////////
-	/// ×¢Òâ£ºËùÓĞCCriticalSectionProxyÀàµÄ¶ÔÏóºÍÄ£°åÀàµÄ¶ÔÏó¶¼±ØĞë¶¨ÒåÔÚm_nZeroOffset
-	/// ³ÉÔ±±äÁ¿Ö®Ç°£¬·ñÔò¿ÉÄÜ»á³ö·ÃÎÊ´íÎó
+	/// æ³¨æ„ï¼šæ‰€æœ‰CCriticalSectionProxyç±»çš„å¯¹è±¡å’Œæ¨¡æ¿ç±»çš„å¯¹è±¡éƒ½å¿…é¡»å®šä¹‰åœ¨m_nZeroOffset
+	/// æˆå‘˜å˜é‡ä¹‹å‰ï¼Œå¦åˆ™å¯èƒ½ä¼šå‡ºè®¿é—®é”™è¯¯
 	//////////////////////////////////////////////////////////////////////////
 	int			m_nZeroOffset;
 
-	UINT					m_nListAvFrameMaxSize;	///<ÊÓÆµÖ¡»º´æ×î´óÈİÁ¿
-/*	list<CSwitcherInfoPtr> *m_pSwitcherList;		/// ÇĞ»»Æ÷±í*/
+	UINT					m_nListAvFrameMaxSize;	///<è§†é¢‘å¸§ç¼“å­˜æœ€å¤§å®¹é‡
+/*	list<CSwitcherInfoPtr> *m_pSwitcherList;		/// åˆ‡æ¢å™¨è¡¨*/
 
 	/************************************************************************/
-	//   ********×¢Òâ ********                                                               
-	//Çë´ÒÒÆ¶¯m_nZeroOffset±äÁ¿¶¨ÒåµÄÎ»ÖÃ£¬ÒòÎªÔÚ¹¹Ôìº¯ÊıÖĞ,ÎªÊµÏÖ¿ìËÙ³õÊ¼»¯£¬ĞèÒªÊ¹ÓÃ      
-	//ZeroMemory¶ÔÆäËü³ÉÔ±³õÊ¼»¯£¬µ«ÒªÒÔ´ËÎª±ß½ç±Ü¿ªËùÓĞSTLÈİÆ÷Àà¶ÔÏó,Òò´ËËùÓĞÈİÆ÷Àà¶ÔÏó±Ø
-	//Ğë¶¨ÒåÔÚ´Ë±äÁ¿Ö®Ç° 
+	//   ********æ³¨æ„ ********                                                               
+	//è¯·åŒ†ç§»åŠ¨m_nZeroOffsetå˜é‡å®šä¹‰çš„ä½ç½®ï¼Œå› ä¸ºåœ¨æ„é€ å‡½æ•°ä¸­,ä¸ºå®ç°å¿«é€Ÿåˆå§‹åŒ–ï¼Œéœ€è¦ä½¿ç”¨      
+	//ZeroMemoryå¯¹å…¶å®ƒæˆå‘˜åˆå§‹åŒ–ï¼Œä½†è¦ä»¥æ­¤ä¸ºè¾¹ç•Œé¿å¼€æ‰€æœ‰STLå®¹å™¨ç±»å¯¹è±¡,å› æ­¤æ‰€æœ‰å®¹å™¨ç±»å¯¹è±¡å¿…
+	//é¡»å®šä¹‰åœ¨æ­¤å˜é‡ä¹‹å‰ 
 	//***********************************************************************/								
 	
 	//CCriticalSectionProxy	m_csListYUV;
-	int					m_nMaxYUVCache;	// ÔÊĞí×î´óµÄYUV»º´æÊıÁ¿
-	int					m_nMaxFrameCache;///< ×î´óÊÓÆµ»º³åÊıÁ¿,Ä¬ÈÏÖµ100
-		///< µ±m_FrameCacheÖĞµÄÊÓÆµÖ¡ÊıÁ¿³¬¹ım_nMaxFrameCacheÊ±£¬±ãÎŞ·¨ÔÙ¼ÌĞøÊäÈëÁ÷Êı
+	int					m_nMaxYUVCache;	// å…è®¸æœ€å¤§çš„YUVç¼“å­˜æ•°é‡
+	int					m_nMaxFrameCache;///< æœ€å¤§è§†é¢‘ç¼“å†²æ•°é‡,é»˜è®¤å€¼100
+		///< å½“m_FrameCacheä¸­çš„è§†é¢‘å¸§æ•°é‡è¶…è¿‡m_nMaxFrameCacheæ—¶ï¼Œä¾¿æ— æ³•å†ç»§ç»­è¾“å…¥æµæ•°
 public:
 	static CCriticalSectionAgentPtr m_pCSGlobalCount;
 	shared_ptr<CMMEvent> m_pRenderTimer;
@@ -313,126 +313,126 @@ public:
 	HANDLE		m_hEventFlushDecoder = nullptr;
 //#ifdef _DEBUG
 	
-	int			m_nObjIndex;			///< µ±Ç°¶ÔÏóµÄ¼ÆÊı
-	static int	m_nGloabalCount;		///< µ±Ç°½ø³ÌÖĞCIPCPlayer¶ÔÏó×ÜÊı
+	int			m_nObjIndex;			///< å½“å‰å¯¹è±¡çš„è®¡æ•°
+	static int	m_nGloabalCount;		///< å½“å‰è¿›ç¨‹ä¸­CIPCPlayerå¯¹è±¡æ€»æ•°
 private:
-	DWORD		m_nLifeTime;			///< µ±Ç°¶ÔÏó´æÔÚÊ±¼ä
+	DWORD		m_nLifeTime;			///< å½“å‰å¯¹è±¡å­˜åœ¨æ—¶é—´
 	_OutputTime	m_OuputTime;
 //#endif
 private:
-	// ÊÓÆµ²¥·ÅÏà¹Ø±äÁ¿
-	int			m_nTotalFrames;			///< µ±Ç°ÎÄ¼şÖĞÓĞĞ§ÊÓÆµÖ¡µÄÊıÁ¿,½öµ±²¥·ÅÎÄ¼şÊ±ÓĞĞ§
-	int			m_nTotalTime;			///< µ±Ç°ÎÄ¼şÖĞ²¥·Å×ÜÊ±³¤,½öµ±²¥·ÅÎÄ¼şÊ±ÓĞĞ§
+	// è§†é¢‘æ’­æ”¾ç›¸å…³å˜é‡
+	int			m_nTotalFrames;			///< å½“å‰æ–‡ä»¶ä¸­æœ‰æ•ˆè§†é¢‘å¸§çš„æ•°é‡,ä»…å½“æ’­æ”¾æ–‡ä»¶æ—¶æœ‰æ•ˆ
+	int			m_nTotalTime;			///< å½“å‰æ–‡ä»¶ä¸­æ’­æ”¾æ€»æ—¶é•¿,ä»…å½“æ’­æ”¾æ–‡ä»¶æ—¶æœ‰æ•ˆ
 	shared_ptr<StreamProbe>m_pStreamProbe;
-	/// ²»ÔÙĞèÒªÖ÷´°¿Ú£¬ËùÓĞµÄäÖÈ¾´°¿Ú¶¼ÔÚäÖÈ¾´°¿Ú±íÖĞ
-	HWND		m_hRenderWnd;			///< ²¥·ÅÊÓÆµµÄ´°¿Ú¾ä±ú
+	/// ä¸å†éœ€è¦ä¸»çª—å£ï¼Œæ‰€æœ‰çš„æ¸²æŸ“çª—å£éƒ½åœ¨æ¸²æŸ“çª—å£è¡¨ä¸­
+	HWND		m_hRenderWnd;			///< æ’­æ”¾è§†é¢‘çš„çª—å£å¥æŸ„
 	
-	volatile bool m_bIpcStream;			///< ÊäÈëÁ÷ÎªIPCÁ÷
-	volatile DWORD m_nProbeStreamTimeout;///< Ì½²âÂëÁ÷³¬Ê±¼ä£¬µ¥Î»ºÁÃë
+	volatile bool m_bIpcStream;			///< è¾“å…¥æµä¸ºIPCæµ
+	volatile DWORD m_nProbeStreamTimeout;///< æ¢æµ‹ç æµè¶…æ—¶é—´ï¼Œå•ä½æ¯«ç§’
 	D3DFORMAT	m_nPixelFormat;
-	IPC_CODEC	m_nVideoCodec;			///< ÊÓÆµ±àÂë¸ñÊ½ @see IPC_CODEC	
+	IPC_CODEC	m_nVideoCodec;			///< è§†é¢‘ç¼–ç æ ¼å¼ @see IPC_CODEC	
 	static		CAvRegister avRegister;	
-	static		CTimerQueue m_TimeQueue;///< ¶ÓÁĞ¶¨Ê±Æ÷
-	//static shared_ptr<CDSound> m_pDsPlayer;///< DirectSound²¥·Å¶ÔÏóÖ¸Õë
-	shared_ptr<CDSound> m_pDsPlayer;///< DirectSound²¥·Å¶ÔÏóÖ¸Õë
-	//shared_ptr<CDSound> m_pDsPlayer;	///< DirectSound²¥·Å¶ÔÏóÖ¸Õë
+	static		CTimerQueue m_TimeQueue;///< é˜Ÿåˆ—å®šæ—¶å™¨
+	//static shared_ptr<CDSound> m_pDsPlayer;///< DirectSoundæ’­æ”¾å¯¹è±¡æŒ‡é’ˆ
+	shared_ptr<CDSound> m_pDsPlayer;///< DirectSoundæ’­æ”¾å¯¹è±¡æŒ‡é’ˆ
+	//shared_ptr<CDSound> m_pDsPlayer;	///< DirectSoundæ’­æ”¾å¯¹è±¡æŒ‡é’ˆ
 	CDSoundBuffer* m_pDsBuffer;
 	Coordinte		m_nCoordinate = Coordinte_Video;
 	DxSurfaceInitInfo	m_DxInitInfo;
-	CDxSurfaceEx* m_pDxSurface;			///< Direct3d Surface·â×°Àà,ÓÃÓÚÏÔÊ¾ÊÓÆµ
+	CDxSurfaceEx* m_pDxSurface;			///< Direct3d Surfaceå°è£…ç±»,ç”¨äºæ˜¾ç¤ºè§†é¢‘
 	
 	void *m_pDCCallBack = nullptr;
 	void *m_pDCCallBackParam = nullptr;
-	bool		m_bEnableDDraw = false;	// ÊÇ·ñÆôÓÃDDRAW£¬ÆôÓÃDDRAW½«½ûÓÃD3D£¬²¢ÇÒÎŞ·¨ÆôÓÃÓ²¼ş»ÆÏíÄ£Ê½£¬µ¼ÖÂ½âÂëĞ§¹ûÏÂ½µ
+	bool		m_bEnableDDraw = false;	// æ˜¯å¦å¯ç”¨DDRAWï¼Œå¯ç”¨DDRAWå°†ç¦ç”¨D3Dï¼Œå¹¶ä¸”æ— æ³•å¯ç”¨ç¡¬ä»¶é»„äº«æ¨¡å¼ï¼Œå¯¼è‡´è§£ç æ•ˆæœä¸‹é™
 #ifndef _WIN64
-  	CDirectDraw *m_pDDraw;				///< DirectDraw·â×°Àà¶ÔÏó£¬ÓÃÓÚÔÚxpÏÂÏÔÊ¾ÊÓÆµ
+  	CDirectDraw *m_pDDraw;				///< DirectDrawå°è£…ç±»å¯¹è±¡ï¼Œç”¨äºåœ¨xpä¸‹æ˜¾ç¤ºè§†é¢‘
 	shared_ptr<ImageSpace> m_pYUVImage = NULL;
 #endif
 	WCHAR		*m_pszBackImagePath;
 	bool		m_bEnableBackImage = false;
   	
-// 	bool		m_bDxReset;				///< ÊÇ·ñÖØÖÃDxSurface
+// 	bool		m_bDxReset;				///< æ˜¯å¦é‡ç½®DxSurface
 // 	HWND		m_hDxReset;
 	shared_ptr<CVideoDecoder>	m_pDecoder;
 	
-	bool		m_bRefreshWnd;			///< Í£Ö¹²¥·ÅÊ±ÊÇ·ñË¢ĞÂ»­Ãæ
-	int			m_nVideoWidth;			///< ÊÓÆµ¿í¶È
-	int			m_nVideoHeight;			///< ÊÓÆµ¸ß¶È	
+	bool		m_bRefreshWnd;			///< åœæ­¢æ’­æ”¾æ—¶æ˜¯å¦åˆ·æ–°ç”»é¢
+	int			m_nVideoWidth;			///< è§†é¢‘å®½åº¦
+	int			m_nVideoHeight;			///< è§†é¢‘é«˜åº¦	
 	int			m_nDecodeDelay;
-	AVPixelFormat	m_nDecodePixelFmt;	///< ½âÂëºóµÄÏóËØ¸ñÊ½
-	int			m_nFrameEplased;		///< ÒÑ¾­²¥·ÅÖ¡Êı
-	int			m_nCurVideoFrame;		///< µ±Ç°Õı²¥·ÅµÄÊÓÆµÖ¡ID
-	time_t		m_tFirstFrameTime;		///< ÎÄ¼ş²¥·Å»òÁ÷»Ø·ÅµÄµÚ1Ö¡µÄÊ±¼ä
+	AVPixelFormat	m_nDecodePixelFmt;	///< è§£ç åçš„è±¡ç´ æ ¼å¼
+	int			m_nFrameEplased;		///< å·²ç»æ’­æ”¾å¸§æ•°
+	int			m_nCurVideoFrame;		///< å½“å‰æ­£æ’­æ”¾çš„è§†é¢‘å¸§ID
+	time_t		m_tFirstFrameTime;		///< æ–‡ä»¶æ’­æ”¾æˆ–æµå›æ”¾çš„ç¬¬1å¸§çš„æ—¶é—´
 	time_t		m_tCurFrameTimeStamp;
 	time_t		m_tLastFrameTime;
-	USHORT		m_nPlayFPS;				///< Êµ¼Ê²¥·ÅÊ±Ö¡ÂÊ
-	USHORT		m_nPlayFrameInterval;	///< ²¥·ÅÊ±Ö¡¼ä¸ô	
-	HANDLE		m_hEventDecodeStart;	///< ÊÓÆµ½âÂëÒÑ¾­¿ªÊ¼ÊÂ¼ş
-	int			m_nSkipFrames;			///< ÌøÖ¡±íÖĞµÄÔªËØÊıÁ¿
-	bool		m_bAsnycClose;		///< ÊÇ·ñÆôÓÃD3D»º´æ
-	double		m_dfLastTimeVideoPlay;	///< Ç°Ò»´ÎÊÓÆµ²¥·ÅµÄÊ±¼ä
+	USHORT		m_nPlayFPS;				///< å®é™…æ’­æ”¾æ—¶å¸§ç‡
+	USHORT		m_nPlayFrameInterval;	///< æ’­æ”¾æ—¶å¸§é—´éš”	
+	HANDLE		m_hEventDecodeStart;	///< è§†é¢‘è§£ç å·²ç»å¼€å§‹äº‹ä»¶
+	int			m_nSkipFrames;			///< è·³å¸§è¡¨ä¸­çš„å…ƒç´ æ•°é‡
+	bool		m_bAsnycClose;		///< æ˜¯å¦å¯ç”¨D3Dç¼“å­˜
+	double		m_dfLastTimeVideoPlay;	///< å‰ä¸€æ¬¡è§†é¢‘æ’­æ”¾çš„æ—¶é—´
 	double		m_dfLastTimer;
-	double		m_dfTimesStart;			///< ¿ªÊ¼²¥·ÅµÄÊ±¼ä
-	bool		m_bEnableHaccel;		///< ÊÇ·ñÆôÓÃÓ²½âÂë
-	bool		m_bFitWindow;			///< ÊÓÆµÏÔÊ¾ÊÇ·ñÌîÂú´°¿Ú
-										///< ÎªtrueÊ±£¬Ôò°ÑÊÓÆµÌîÂú´°¿Ú,ÕâÑù»á°ÑÍ¼ÏñÀ­Éì,¿ÉÄÜ»áÔì³ÉÍ¼Ïñ±äĞÎ
-										///< ÎªfalseÊ±£¬ÔòÖ»°´Í¼ÏñÔ­Ê¼±ÈÀıÔÚ´°¿ÚÖĞÏÔÊ¾,³¬³ö±ÈÀı²¿·Ö,ÔòÒÔºÚÉ«±³¾°ÏÔÊ¾
+	double		m_dfTimesStart;			///< å¼€å§‹æ’­æ”¾çš„æ—¶é—´
+	bool		m_bEnableHaccel;		///< æ˜¯å¦å¯ç”¨ç¡¬è§£ç 
+	bool		m_bFitWindow;			///< è§†é¢‘æ˜¾ç¤ºæ˜¯å¦å¡«æ»¡çª—å£
+										///< ä¸ºtrueæ—¶ï¼Œåˆ™æŠŠè§†é¢‘å¡«æ»¡çª—å£,è¿™æ ·ä¼šæŠŠå›¾åƒæ‹‰ä¼¸,å¯èƒ½ä¼šé€ æˆå›¾åƒå˜å½¢
+										///< ä¸ºfalseæ—¶ï¼Œåˆ™åªæŒ‰å›¾åƒåŸå§‹æ¯”ä¾‹åœ¨çª—å£ä¸­æ˜¾ç¤º,è¶…å‡ºæ¯”ä¾‹éƒ¨åˆ†,åˆ™ä»¥é»‘è‰²èƒŒæ™¯æ˜¾ç¤º
 
-	shared_ptr<RECT>m_pBorderRect;		///< ÊÓÆµÏÔÊ¾µÄ±ß½ç£¬±ß½çÍâµÄÍ¼Ïó²»ÓèÏÔÊ¾
-	bool		m_bBorderInPencent;	///< m_pBorderRectÖĞµÄ¸÷·ÖÁ¿ÊÇ·ñÎª°Ù·Ö±È,¼´Èôleft=20,ÔòÊ¹ÓÃÍ¼Ïñ20%µÄ¿í¶È£¬Èôtop=10,ÔòÊ¹ÓÃÍ¼Ïñ10%µÄ¸ß¶È
-	bool		m_bPlayerInialized;		///< ²¥·ÅÆ÷ÊÇ·ñÒÑ¾­Íê³É³õÊ¼»¯
+	shared_ptr<RECT>m_pBorderRect;		///< è§†é¢‘æ˜¾ç¤ºçš„è¾¹ç•Œï¼Œè¾¹ç•Œå¤–çš„å›¾è±¡ä¸äºˆæ˜¾ç¤º
+	bool		m_bBorderInPencent;	///< m_pBorderRectä¸­çš„å„åˆ†é‡æ˜¯å¦ä¸ºç™¾åˆ†æ¯”,å³è‹¥left=20,åˆ™ä½¿ç”¨å›¾åƒ20%çš„å®½åº¦ï¼Œè‹¥top=10,åˆ™ä½¿ç”¨å›¾åƒ10%çš„é«˜åº¦
+	bool		m_bPlayerInialized;		///< æ’­æ”¾å™¨æ˜¯å¦å·²ç»å®Œæˆåˆå§‹åŒ–
 	shared_ptr<PixelConvert> m_pConvert;
-public:		// ÊµÊ±Á÷²¥·Å²ÎÊı
-	static shared_ptr<CSimpleWnd>m_pWndDxInit;///< ÊÓÆµÏÔÊ¾Ê±£¬ÓÃÒÔ³õÊ¼»¯DirectXµÄÒş²Ø´°¿Ú¶ÔÏó
+public:		// å®æ—¶æµæ’­æ”¾å‚æ•°
+	static shared_ptr<CSimpleWnd>m_pWndDxInit;///< è§†é¢‘æ˜¾ç¤ºæ—¶ï¼Œç”¨ä»¥åˆå§‹åŒ–DirectXçš„éšè—çª—å£å¯¹è±¡
 	bool		m_bProbeStream ;
 	int			m_nProbeOffset ;
 	volatile bool m_bAsyncRender ;
-	HANDLE		m_hRenderAsyncEvent;	///< Òì²½äÖÈ¾ÊÂ¼ş
-	HANDLE		m_hInputFrameEvent;		///< ÊäÈëÒ»Ö¡ÊÂ¼ş
+	HANDLE		m_hRenderAsyncEvent;	///< å¼‚æ­¥æ¸²æŸ“äº‹ä»¶
+	HANDLE		m_hInputFrameEvent;		///< è¾“å…¥ä¸€å¸§äº‹ä»¶
 	
-	time_t		m_tSyncTimeBase;		///< Í¬²½Ê±¼äÖá
-	CIPCPlayer *m_pSyncPlayer;			///< Í¬²½²¥·Å¶ÔÏó
-	int			m_nVideoFPS;			///< ÊÓÆµÖ¡µÄÔ­Ê¼Ö¡ÂÊ
+	time_t		m_tSyncTimeBase;		///< åŒæ­¥æ—¶é—´è½´
+	CIPCPlayer *m_pSyncPlayer;			///< åŒæ­¥æ’­æ”¾å¯¹è±¡
+	int			m_nVideoFPS;			///< è§†é¢‘å¸§çš„åŸå§‹å¸§ç‡
 	int			m_nDisplayAdapter = 0;
 	
-private:	// ÒôÆµ²¥·ÅÏà¹Ø±äÁ¿
+private:	// éŸ³é¢‘æ’­æ”¾ç›¸å…³å˜é‡
 
-	IPC_CODEC	m_nAudioCodec;			///< ÒôÆµ±àÂë¸ñÊ½ @see IPC_CODEC
-	bool		m_bEnableAudio;			///< ÊÇ·ñÆôÓÃÒôÆµ²¥·Å
-	DWORD		m_dwAudioOffset;		///< ÒôÆµ»ºÖĞÇøÖĞµÄÆ«ÒÆµØÖ·
-	HANDLE		m_hAudioFrameEvent[2];	///< ÒôÆµÖ¡ÒÑ²¥·ÅÊÂ¼ş
+	IPC_CODEC	m_nAudioCodec;			///< éŸ³é¢‘ç¼–ç æ ¼å¼ @see IPC_CODEC
+	bool		m_bEnableAudio;			///< æ˜¯å¦å¯ç”¨éŸ³é¢‘æ’­æ”¾
+	DWORD		m_dwAudioOffset;		///< éŸ³é¢‘ç¼“ä¸­åŒºä¸­çš„åç§»åœ°å€
+	HANDLE		m_hAudioFrameEvent[2];	///< éŸ³é¢‘å¸§å·²æ’­æ”¾äº‹ä»¶
 	DWORD		m_dwAudioBuffLength;	///< 
-	int			m_nNotifyNum;			///< ÒôÆµ·ÖÇø¶ÎÊıÁ¿
-	double		m_dfLastTimeAudioPlay;	///< Ç°Ò»´Î²¥·ÅÒôÆµµÄÊ±¼ä
-	double		m_dfLastTimeAudioSample;///< Ç°Ò»´ÎÒôÆµ²ÉÑùµÄÊ±¼ä
-	int			m_nAudioFrames;			///< µ±Ç°»º´æÖĞÒôÆµÖ¡ÊıÁ¿
-	int			m_nCurAudioFrame;		///< µ±Ç°Õı²¥·ÅµÄÒôÆµÖ¡ID
-	DWORD		m_nSampleFreq;			///< ÒôÆµ²ÉÑùÆµÂÊ
-	WORD		m_nSampleBit;			///< ²ÉÑùÎ»¿í
-	WORD		m_nAudioPlayFPS;		///< ÒôÆµ²¥·ÅÖ¡ÂÊ
+	int			m_nNotifyNum;			///< éŸ³é¢‘åˆ†åŒºæ®µæ•°é‡
+	double		m_dfLastTimeAudioPlay;	///< å‰ä¸€æ¬¡æ’­æ”¾éŸ³é¢‘çš„æ—¶é—´
+	double		m_dfLastTimeAudioSample;///< å‰ä¸€æ¬¡éŸ³é¢‘é‡‡æ ·çš„æ—¶é—´
+	int			m_nAudioFrames;			///< å½“å‰ç¼“å­˜ä¸­éŸ³é¢‘å¸§æ•°é‡
+	int			m_nCurAudioFrame;		///< å½“å‰æ­£æ’­æ”¾çš„éŸ³é¢‘å¸§ID
+	DWORD		m_nSampleFreq;			///< éŸ³é¢‘é‡‡æ ·é¢‘ç‡
+	WORD		m_nSampleBit;			///< é‡‡æ ·ä½å®½
+	WORD		m_nAudioPlayFPS;		///< éŸ³é¢‘æ’­æ”¾å¸§ç‡
 
-	static shared_ptr<CDSoundEnum> m_pDsoundEnum;	///< ÒôÆµÉè±¸Ã¶¾ÙÆ÷
+	static shared_ptr<CDSoundEnum> m_pDsoundEnum;	///< éŸ³é¢‘è®¾å¤‡æšä¸¾å™¨
 	static CCriticalSectionAgentPtr m_csDsoundEnum;
 private:
-	HANDLE		m_hThreadFileParser;	///< ½âÎöIPCË½ÓĞ¸ñÊ½Â¼ÏñµÄÏß³Ì
-	HANDLE		m_hThreadDecode;		///< ÊÓÆµ½âÂëºÍ²¥·ÅÏß³Ì
-	HANDLE		m_hThreadPlayAudio;		///< ÒôÆµ½âÂëºÍ²¥·ÅÏß³Ì
-	HANDLE		m_hThreadAsyncReander;	///< Òì²½ÏÔÊ¾Ïß³Ì
-	HANDLE		m_hThreadStreamParser;	///< Á÷½âÎöÏß³Ì;
-	HANDLE		m_hThreadReversePlay;	///< ÄæĞò²¥·ÅÏß³Ì
+	HANDLE		m_hThreadFileParser;	///< è§£æIPCç§æœ‰æ ¼å¼å½•åƒçš„çº¿ç¨‹
+	HANDLE		m_hThreadDecode;		///< è§†é¢‘è§£ç å’Œæ’­æ”¾çº¿ç¨‹
+	HANDLE		m_hThreadPlayAudio;		///< éŸ³é¢‘è§£ç å’Œæ’­æ”¾çº¿ç¨‹
+	HANDLE		m_hThreadAsyncReander;	///< å¼‚æ­¥æ˜¾ç¤ºçº¿ç¨‹
+	HANDLE		m_hThreadStreamParser;	///< æµè§£æçº¿ç¨‹;
+	HANDLE		m_hThreadReversePlay;	///< é€†åºæ’­æ”¾çº¿ç¨‹
 	
-	//HANDLE		m_hThreadGetFileSummary;///< ÎÄ¼şĞÅÏ¢ÕªÒªÏß³Ì
+	//HANDLE		m_hThreadGetFileSummary;///< æ–‡ä»¶ä¿¡æ¯æ‘˜è¦çº¿ç¨‹
 	UINT		m_nVideoCache;
 	UINT		m_nAudioCache;
-	//HANDLE		m_hCacheFulled;			///< »º´æÔÚË÷ÒıÏß³Ì±»ÌîÂúµÄÊÂ¼ş
-	UINT		m_nHeaderFrameID;		///< »º´æÖĞµÚ1Ö¡µÄID
-	UINT		m_nTailFrameID;			///< ¼¶´æÖĞ×îºóÒ»Ö¡µÄID
+	//HANDLE		m_hCacheFulled;			///< ç¼“å­˜åœ¨ç´¢å¼•çº¿ç¨‹è¢«å¡«æ»¡çš„äº‹ä»¶
+	UINT		m_nHeaderFrameID;		///< ç¼“å­˜ä¸­ç¬¬1å¸§çš„ID
+	UINT		m_nTailFrameID;			///< çº§å­˜ä¸­æœ€åä¸€å¸§çš„ID
 	//bool		m_bThreadSummaryRun;
-	bool		m_bSummaryIsReady;		///< ÎÄ¼şÕªÒªĞÅÏ¢×¼±¸Íê±Ï
-	bool		m_bStopFlag;			///< ²¥·ÅÒÑÍ£Ö¹±êÖ¾£¬²»ÔÙ½ÓÊÕÂëÁ÷
+	bool		m_bSummaryIsReady;		///< æ–‡ä»¶æ‘˜è¦ä¿¡æ¯å‡†å¤‡å®Œæ¯•
+	bool		m_bStopFlag;			///< æ’­æ”¾å·²åœæ­¢æ ‡å¿—ï¼Œä¸å†æ¥æ”¶ç æµ
 	volatile bool m_bThreadParserRun;
 	volatile bool m_bThreadDecodeRun;
-	volatile bool m_bThreadReversePlayRun; ///<  ÆôÓÃÄæĞò²¥·Å
+	volatile bool m_bThreadReversePlayRun; ///<  å¯ç”¨é€†åºæ’­æ”¾
 	volatile bool m_bThreadPlayAudioRun;
 	volatile bool m_bStreamParserRun = false;
 	
@@ -442,44 +442,44 @@ private:
 #ifdef _DEBUG
 	double		m_dfFirstFrameTime;
 #endif
-	byte*		m_pParserBuffer;		///< Êı¾İ½âÎö»º³åÇø
-	UINT		m_nParserBufferSize;	///< Êı¾İ½âÎö»º³åÇø³ß´ç
-	DWORD		m_nParserDataLength;	///< Êı¾İ½âÎö»º³åÇøÖĞµÄÓĞĞ§Êı¾İ³¤¶È
-	UINT		m_nParserOffset;		///< Êı¾İ½âÎö»º³åÇø³ß´çµ±Ç°ÒÑ¾­½âÎöµÄÆ«ÒÆ
+	byte*		m_pParserBuffer;		///< æ•°æ®è§£æç¼“å†²åŒº
+	UINT		m_nParserBufferSize;	///< æ•°æ®è§£æç¼“å†²åŒºå°ºå¯¸
+	DWORD		m_nParserDataLength;	///< æ•°æ®è§£æç¼“å†²åŒºä¸­çš„æœ‰æ•ˆæ•°æ®é•¿åº¦
+	UINT		m_nParserOffset;		///< æ•°æ®è§£æç¼“å†²åŒºå°ºå¯¸å½“å‰å·²ç»è§£æçš„åç§»
 			
 	//volatile bool m_bThreadFileAbstractRun;
-	bool		m_bPause;				///< ÊÇ·ñ´¦ÓÚÔİÍ£×´Ì¬
-	byte		*m_pYUV;				///< YVU²¶×½×¨ÓÃÄÚ´æ
+	bool		m_bPause;				///< æ˜¯å¦å¤„äºæš‚åœçŠ¶æ€
+	byte		*m_pYUV;				///< YVUæ•æ‰ä¸“ç”¨å†…å­˜
 	int			m_nYUVSize ;			///<
 	shared_ptr<byte>m_pYUVPtr;
-	// ½ØÍ¼²Ù×÷Ïà¹Ø¾ä±äÁ¿
-	HANDLE		m_hEvnetYUVReady;		///< YUVÊı¾İ¾ÍĞ÷ÊÂ¼ş
-	HANDLE		m_hEventYUVRequire;		///< YUVÊı¾İÇëÇóÊÂ¼ş,Á¢¼´°Ñµ±Ç°½âÂëÖ¡½øĞĞ¸´ÖÆm_pAvFrameSnapshot
-	HANDLE		m_hEventFrameCopied;	///< ½ØÍ¼¶¯×÷ÒÑÍê³É¸´ÖÆÊÂ¼ş
+	// æˆªå›¾æ“ä½œç›¸å…³å¥å˜é‡
+	HANDLE		m_hEvnetYUVReady;		///< YUVæ•°æ®å°±ç»ªäº‹ä»¶
+	HANDLE		m_hEventYUVRequire;		///< YUVæ•°æ®è¯·æ±‚äº‹ä»¶,ç«‹å³æŠŠå½“å‰è§£ç å¸§è¿›è¡Œå¤åˆ¶m_pAvFrameSnapshot
+	HANDLE		m_hEventFrameCopied;	///< æˆªå›¾åŠ¨ä½œå·²å®Œæˆå¤åˆ¶äº‹ä»¶
 	shared_ptr<CSnapshot>m_pSnapshot;
 	
-private:	// ÎÄ¼ş²¥·ÅÏà¹Ø±äÁ¿
+private:	// æ–‡ä»¶æ’­æ”¾ç›¸å…³å˜é‡
 	
-	HANDLE		m_hVideoFile;				///< ÕıÔÚ²¥·ÅµÄÎÄ¼ş¾ä±ú
-	INT64		m_nSummaryOffset;		///< ÔÚ¶ÁÈ¡Ë÷ÒıÊ±»ñµÃµÄÎÄ¼ş½âÎöÆ«ÒÆ
+	HANDLE		m_hVideoFile;				///< æ­£åœ¨æ’­æ”¾çš„æ–‡ä»¶å¥æŸ„
+	INT64		m_nSummaryOffset;		///< åœ¨è¯»å–ç´¢å¼•æ—¶è·å¾—çš„æ–‡ä»¶è§£æåç§»
 #ifdef _DEBUG
-	bool		m_bSeekSetDetected = false;///< ÊÇ·ñ´æÔÚÌø¶¯Ö¡¶¯×÷
+	bool		m_bSeekSetDetected = false;///< æ˜¯å¦å­˜åœ¨è·³åŠ¨å¸§åŠ¨ä½œ
 #endif
-	shared_ptr<IPC_MEDIAINFO>m_pMediaHeader;/// Ã½ÌåÎÄ¼şÍ·
+	shared_ptr<IPC_MEDIAINFO>m_pMediaHeader;/// åª’ä½“æ–‡ä»¶å¤´
 	long		m_nSDKVersion;
 	IPCFrameHeader m_FirstFrame, m_LastFrame;
-	UINT		m_nFrametoRead;			///< µ±Ç°½«Òª¶ÁÈ¡µÄÊÓÆµÖ¡ID
-	char		*m_pszFileName;			///< ÕıÔÚ²¥·ÅµÄÎÄ¼şÃû,¸Ã×Ö¶Î½öÔÚÎÄ¼ş²¥·ÅÊ±¼äÓĞĞ§
-	FileFrameInfo	*m_pFrameOffsetTable;///< ÊÓÆµÖ¡ID¶ÔÓ¦ÎÄ¼şÆ«ÒÆ±í
-	volatile LONGLONG m_nSeekOffset;	///< ¶ÁÎÄ¼şµÄÆ«ÒÆ
+	UINT		m_nFrametoRead;			///< å½“å‰å°†è¦è¯»å–çš„è§†é¢‘å¸§ID
+	char		*m_pszFileName;			///< æ­£åœ¨æ’­æ”¾çš„æ–‡ä»¶å,è¯¥å­—æ®µä»…åœ¨æ–‡ä»¶æ’­æ”¾æ—¶é—´æœ‰æ•ˆ
+	FileFrameInfo	*m_pFrameOffsetTable;///< è§†é¢‘å¸§IDå¯¹åº”æ–‡ä»¶åç§»è¡¨
+	volatile LONGLONG m_nSeekOffset;	///< è¯»æ–‡ä»¶çš„åç§»
 	
-	float		m_fPlayRate;			///< µ±Ç°µÄ²¥·ÅµÄ±¶ÂÊ,´óÓÚ1Ê±Îª¼ÓËÙ²¥·Å,Ğ¡ÓÚ1Ê±Îª¼õËÙ²¥·Å£¬²»ÄÜÎª0»òĞ¡ÓÚ0
-	int			m_nMaxFrameSize;		///< ×î´óIÖ¡µÄ´óĞ¡£¬ÒÔ×Ö½ÚÎªµ¥Î»,Ä¬ÈÏÖµ256K
+	float		m_fPlayRate;			///< å½“å‰çš„æ’­æ”¾çš„å€ç‡,å¤§äº1æ—¶ä¸ºåŠ é€Ÿæ’­æ”¾,å°äº1æ—¶ä¸ºå‡é€Ÿæ’­æ”¾ï¼Œä¸èƒ½ä¸º0æˆ–å°äº0
+	int			m_nMaxFrameSize;		///< æœ€å¤§Iå¸§çš„å¤§å°ï¼Œä»¥å­—èŠ‚ä¸ºå•ä½,é»˜è®¤å€¼256K
 	
-	USHORT		m_nFileFrameInterval;	///< ÎÄ¼şÖĞ,ÊÓÆµÖ¡µÄÔ­Ê¼Ö¡¼ä¸ô
-	float		m_fPlayInterval;		///< Ö¡²¥·Å¼ä¸ô,µ¥Î»ºÁÃë
-	bool		m_bFilePlayFinished;	///< ÎÄ¼ş²¥·ÅÍê³É±êÖ¾, ÎªtrueÊ±£¬²¥·Å½áÊø£¬ÎªfalseÊ±£¬ÔòÎ´½áÊø
-	bool		m_bPlayOneFrame;		///< ÆôÓÃµ¥Ö¡²¥·Å
+	USHORT		m_nFileFrameInterval;	///< æ–‡ä»¶ä¸­,è§†é¢‘å¸§çš„åŸå§‹å¸§é—´éš”
+	float		m_fPlayInterval;		///< å¸§æ’­æ”¾é—´éš”,å•ä½æ¯«ç§’
+	bool		m_bFilePlayFinished;	///< æ–‡ä»¶æ’­æ”¾å®Œæˆæ ‡å¿—, ä¸ºtrueæ—¶ï¼Œæ’­æ”¾ç»“æŸï¼Œä¸ºfalseæ—¶ï¼Œåˆ™æœªç»“æŸ
+	bool		m_bPlayOneFrame;		///< å¯ç”¨å•å¸§æ’­æ”¾
 	DWORD		m_dwStartTime;
 private:
 // 	CaptureFrame	m_pfnCaptureFrame;
@@ -496,7 +496,7 @@ private:
 	CaptureRGB		m_pCaptureRGB;
 	void*			m_pUserCaptureRGB;
 private:
-	shared_ptr<CRunlog> m_pRunlog;	///< ÔËĞĞÈÕÖ¾
+	shared_ptr<CRunlog> m_pRunlog;	///< è¿è¡Œæ—¥å¿—
 #define __countof(array) (sizeof(array)/sizeof(array[0]))
 #pragma warning (disable:4996)
 	void OutputMsg(char *pFormat, ...)
@@ -530,28 +530,28 @@ private:
 		CAutoLock lock(&m_csSeekOffset, false, __FILE__, __FUNCTION__, __LINE__);
 		m_nSeekOffset = nSeekOffset;
 	}
-	// ³¬´óÎÄ¼şÑ°Ö·
+	// è¶…å¤§æ–‡ä»¶å¯»å€
 	__int64 LargerFileSeek(HANDLE hFile, __int64 nOffset64, DWORD MoveMethod);
 
-	/// @brief ÅĞ¶ÏÊäÈëÖ¡ÊÇ·ñÎªIPCË½ÓĞµÄÊÓÆµÖ¡
-	/// @param[in]	pFrameHeader	IPCË½ÓĞÖ¡½á¹¹Ö¸ÕëÏê¼û@see IPCFrameHeaderEx
-	/// @param[out] bIFrame			ÅĞ¶ÏÊäÈëÖ¡ÊÇ·ñÎªIÖ¡
-	/// -# true			ÊäÈëÖ¡ÎªIÖ¡
-	///	-# false		ÊäÈëÖ¡ÎªÆäËüÖ¡
+	/// @brief åˆ¤æ–­è¾“å…¥å¸§æ˜¯å¦ä¸ºIPCç§æœ‰çš„è§†é¢‘å¸§
+	/// @param[in]	pFrameHeader	IPCç§æœ‰å¸§ç»“æ„æŒ‡é’ˆè¯¦è§@see IPCFrameHeaderEx
+	/// @param[out] bIFrame			åˆ¤æ–­è¾“å…¥å¸§æ˜¯å¦ä¸ºIå¸§
+	/// -# true			è¾“å…¥å¸§ä¸ºIå¸§
+	///	-# false		è¾“å…¥å¸§ä¸ºå…¶å®ƒå¸§
 	static bool IsIPCVideoFrame(IPCFrameHeader *pFrameHeader, bool &bIFrame, int nSDKVersion);
 
-	/// @brief È¡µÃÊÓÆµÎÄ¼şµÚÒ»¸öIÖ¡»ò×îºóÒ»¸öÊÓÆµÖ¡Ê±¼ä
-	/// @param[out]	Ö¡Ê±¼ä
-	/// @param[in]	ÊÇ·ñÈ¡µÚÒ»¸öIÖ¡Ê±¼ä£¬ÈôÎªtrueÔòÈ¡µÚÒ»¸öIÖ¡µÄÊ±¼ä·ñÔòÈ¡×îÒ»¸öÊÓÆµÖ¡Ê±¼ä
-	/// @remark ¸Ãº¯ÊıÖ»ÓÃÓÚ´Ó¾É°æµÄIPCÂ¼ÏñÎÄ¼şÖĞÈ¡µÃµÚÒ»Ö¡ºÍ×îºóÒ»Ö¡
+	/// @brief å–å¾—è§†é¢‘æ–‡ä»¶ç¬¬ä¸€ä¸ªIå¸§æˆ–æœ€åä¸€ä¸ªè§†é¢‘å¸§æ—¶é—´
+	/// @param[out]	å¸§æ—¶é—´
+	/// @param[in]	æ˜¯å¦å–ç¬¬ä¸€ä¸ªIå¸§æ—¶é—´ï¼Œè‹¥ä¸ºtrueåˆ™å–ç¬¬ä¸€ä¸ªIå¸§çš„æ—¶é—´å¦åˆ™å–æœ€ä¸€ä¸ªè§†é¢‘å¸§æ—¶é—´
+	/// @remark è¯¥å‡½æ•°åªç”¨äºä»æ—§ç‰ˆçš„IPCå½•åƒæ–‡ä»¶ä¸­å–å¾—ç¬¬ä¸€å¸§å’Œæœ€åä¸€å¸§
 	int GetFrame(IPCFrameHeader *pFrame, bool bFirstFrame = true);
 	
-	/// @brief È¡µÃÊÓÆµÎÄ¼şÖ¡µÄIDºÍÊ±¼ä,Ïàµ±ÓÚÊÓÆµÎÄ¼şÖĞ°üº¬µÄÊÓÆµ×ÜÖ¡Êı
+	/// @brief å–å¾—è§†é¢‘æ–‡ä»¶å¸§çš„IDå’Œæ—¶é—´,ç›¸å½“äºè§†é¢‘æ–‡ä»¶ä¸­åŒ…å«çš„è§†é¢‘æ€»å¸§æ•°
 	int GetLastFrameID(int &nLastFrameID);
 
 	//shared_ptr<CSimpleWnd> m_pSimpleWnd /*= make_shared<CSimpleWnd>()*/;
 
-	// ³õÊ¼»¯DirectXÏÔÊ¾×é¼ş
+	// åˆå§‹åŒ–DirectXæ˜¾ç¤ºç»„ä»¶
 	bool InitizlizeDx(AVFrame *pAvFrame = nullptr);
 
 	static CDxSurfaceEx *GetDxSurfaceFromPool(int nWidth, int  nHeight);
@@ -572,7 +572,7 @@ private:
 	int m_nRenderFrames = 0;
 	double dfTRender = 0.0f;
 #endif
-	/// @brief äÖÈ¾Ò»Ö¡
+	/// @brief æ¸²æŸ“ä¸€å¸§
 	void RenderFrame(AVFrame *pAvFrame)
 	{
 		if (!m_hRenderWnd)
@@ -607,7 +607,7 @@ private:
 			if (m_pDxSurface)
 			{
 				m_pDxSurface->Render(pAvFrame, m_nRocateAngle);
-				// ×¼±¸·¢ËÍÊÓÆµÌæ»»Í¨Öª
+				// å‡†å¤‡å‘é€è§†é¢‘æ›¿æ¢é€šçŸ¥
 				ProcessSwitchEvent();
 				LineLockAgent(m_cslistRenderWnd);
 				if (m_listRenderWnd.size() <= 0)
@@ -725,17 +725,17 @@ private:
 			int nWndHeight = rtRender.bottom - rtRender.top;
 			float fScaleWnd = (float)nWndHeight / nWndWidth;
 			float fScaleVideo = (float)pAvFrame->height / pAvFrame->width;
-			if (fScaleVideo < fScaleWnd)			// ´°¿Ú¸ß¶È³¬³ö±ÈÀı,ĞèÒªÈ¥µôÒ»²¿·Ö¸ß¶È,ÊÓÆµĞèÒªÉÏÏÂ¾ÓÖĞ
+			if (fScaleVideo < fScaleWnd)			// çª—å£é«˜åº¦è¶…å‡ºæ¯”ä¾‹,éœ€è¦å»æ‰ä¸€éƒ¨åˆ†é«˜åº¦,è§†é¢‘éœ€è¦ä¸Šä¸‹å±…ä¸­
 			{
 				int nNewHeight = (int)nWndWidth * fScaleVideo;
 				int nOverHeight = nWndHeight - nNewHeight;
-				if ((float)nOverHeight / nWndHeight > 0.01f)	// ´°¿Ú¸ß¶È³¬³ö1%,Ôòµ÷Õû¸ß¶È£¬·ñÔòºöÂÔ¸Ã²îÒì
+				if ((float)nOverHeight / nWndHeight > 0.01f)	// çª—å£é«˜åº¦è¶…å‡º1%,åˆ™è°ƒæ•´é«˜åº¦ï¼Œå¦åˆ™å¿½ç•¥è¯¥å·®å¼‚
 				{
 					rtRender.top += nOverHeight / 2;
 					rtRender.bottom -= nOverHeight / 2;
 				}
 			}
-			else if (fScaleVideo > fScaleWnd)		// ´°¿Ú¿í¶È³¬³ö±ÈÀı,ĞèÒªÈ¥µôÒ»²¿·Ö¿í¶È£¬ÊÓÆµĞèÒª×óÓÒ¾ÓÖĞ
+			else if (fScaleVideo > fScaleWnd)		// çª—å£å®½åº¦è¶…å‡ºæ¯”ä¾‹,éœ€è¦å»æ‰ä¸€éƒ¨åˆ†å®½åº¦ï¼Œè§†é¢‘éœ€è¦å·¦å³å±…ä¸­
 			{
 				int nNewWidth = nWndHeight/fScaleVideo;
 				int nOverWidth = nWndWidth - nNewWidth;
@@ -805,7 +805,7 @@ private:
 #endif
 		}
 	}
-	// ¶ş·Ö²éÕÒ
+	// äºŒåˆ†æŸ¥æ‰¾
 	int BinarySearch(time_t tTime)
 	{
 		int low = 0;
@@ -817,19 +817,19 @@ private:
 			if (tTime >= m_pFrameOffsetTable[middle].tTimeStamp &&
 				tTime <= m_pFrameOffsetTable[middle + 1].tTimeStamp)
 				return middle;
-			//ÔÚ×ó°ë±ß
+			//åœ¨å·¦åŠè¾¹
 			else if (tTime < m_pFrameOffsetTable[middle].tTimeStamp)
 				high = middle - 1;
-			//ÔÚÓÒ°ë±ß
+			//åœ¨å³åŠè¾¹
 			else if (tTime > m_pFrameOffsetTable[middle + 1].tTimeStamp)
 				low = middle + 1;
 		}
-		//Ã»ÕÒµ½
+		//æ²¡æ‰¾åˆ°
 		return -1;
 	}
 public:
-	/// @brief  ÆôÓÃÈÕÖ¾
-	/// @param	szLogFile		ÈÕÖ¾ÎÄ¼şÃû,Èô¸Ã²ÎÊıÎªnull£¬Ôò½ûÓÃÈÕÖ¾
+	/// @brief  å¯ç”¨æ—¥å¿—
+	/// @param	szLogFile		æ—¥å¿—æ–‡ä»¶å,è‹¥è¯¥å‚æ•°ä¸ºnullï¼Œåˆ™ç¦ç”¨æ—¥å¿—
 	void EnableRunlog(const char *szLogFile)
 	{
 		char szFileLog[MAX_PATH] = { 0 };
@@ -852,12 +852,12 @@ public:
 	}
 #endif
 
-	/// @brief ÉèÖÃÒôÆµ²¥·Å²ÎÊı
-	/// @param nPlayFPS		ÒôÆµÂëÁ÷µÄÖ¡ÂÊ
-	/// @param nSampleFreq	²ÉÑùÆµÂÊ
-	/// @param nSampleBit	²ÉÑùÎ»ÖÃ
-	/// @remark ÔÚ²¥·ÅÒôÆµÖ®Ç°£¬Ó¦ÏÈÉèÖÃÒôÆµ²¥·Å²ÎÊı,SDKÄÚ²¿Ä¬ÈÏ²ÎÊınPlayFPS = 50£¬nSampleFreq = 8000£¬nSampleBit = 16
-	///         ÈôÒôÆµ²¥·Å²ÎÊıÓëSDKÄÚ²¿Ä¬ÈÏ²ÎÊıÒ»ÖÂ£¬¿ÉÒÔ²»ÓÃÉèÖÃÕâĞ©²ÎÊı
+	/// @brief è®¾ç½®éŸ³é¢‘æ’­æ”¾å‚æ•°
+	/// @param nPlayFPS		éŸ³é¢‘ç æµçš„å¸§ç‡
+	/// @param nSampleFreq	é‡‡æ ·é¢‘ç‡
+	/// @param nSampleBit	é‡‡æ ·ä½ç½®
+	/// @remark åœ¨æ’­æ”¾éŸ³é¢‘ä¹‹å‰ï¼Œåº”å…ˆè®¾ç½®éŸ³é¢‘æ’­æ”¾å‚æ•°,SDKå†…éƒ¨é»˜è®¤å‚æ•°nPlayFPS = 50ï¼ŒnSampleFreq = 8000ï¼ŒnSampleBit = 16
+	///         è‹¥éŸ³é¢‘æ’­æ”¾å‚æ•°ä¸SDKå†…éƒ¨é»˜è®¤å‚æ•°ä¸€è‡´ï¼Œå¯ä»¥ä¸ç”¨è®¾ç½®è¿™äº›å‚æ•°
 	void SetAudioPlayParameters(DWORD nPlayFPS = 50, DWORD nSampleFreq = 8000, WORD nSampleBit = 16)
 	{
 		m_nAudioPlayFPS	 = nPlayFPS;
@@ -874,7 +874,7 @@ public:
 		if (m_pRunlog)
 			m_pRunlog = nullptr;
 		/*
-		Ê¹ÓÃCCriticalSectionProxyÀà´úÀí£¬²»ÔÙÖ±½Óµ÷ÓÃDeleteCriticalSectionº¯Êı
+		ä½¿ç”¨CCriticalSectionProxyç±»ä»£ç†ï¼Œä¸å†ç›´æ¥è°ƒç”¨DeleteCriticalSectionå‡½æ•°
 		DeleteCriticalSection(&m_csVideoCache); 
 		*/
 		if (m_hVideoFile)
@@ -886,9 +886,9 @@ public:
 
 	~CIPCPlayer();
 	
-	/// @brief  ÊÇ·ñÎªÎÄ¼ş²¥·Å
-	/// @retval			true	ÎÄ¼ş²¥·Å
-	/// @retval			false	Á÷²¥·Å
+	/// @brief  æ˜¯å¦ä¸ºæ–‡ä»¶æ’­æ”¾
+	/// @retval			true	æ–‡ä»¶æ’­æ”¾
+	/// @retval			false	æµæ’­æ”¾
 	bool IsFilePlayer()
 	{
 		if (m_hVideoFile || m_pszFileName)
@@ -955,7 +955,7 @@ public:
 
 	int RemoveRenderWindow(HWND hRenderWnd);
 
-	// »ñÈ¡ÏÔÊ¾Í¼Ïñ´°¿ÚµÄÊıÁ¿
+	// è·å–æ˜¾ç¤ºå›¾åƒçª—å£çš„æ•°é‡
 	int GetRenderWindows(HWND* hWndArray, int &nSize);
 
 	void SetRefresh(bool bRefresh = true)
@@ -963,8 +963,8 @@ public:
 		m_bRefreshWnd = bRefresh;
 	}
 
-	// ÉèÖÃÁ÷²¥·ÅÍ·
-	// ÔÚÁ÷²¥·ÅÊ±£¬²¥·ÅÖ®Ç°£¬±ØĞëÏÈÉèÖÃÁ÷Í·
+	// è®¾ç½®æµæ’­æ”¾å¤´
+	// åœ¨æµæ’­æ”¾æ—¶ï¼Œæ’­æ”¾ä¹‹å‰ï¼Œå¿…é¡»å…ˆè®¾ç½®æµå¤´
 	int SetStreamHeader(CHAR *szStreamHeader, int nHeaderSize);
 
 	int SetMaxFrameSize(int nMaxFrameSize = 256*1024)
@@ -998,30 +998,30 @@ public:
 			SetEvent(m_hEventFlushDecoder);
 	}
 	
-	/// @brief ÉèÖÃÏÔÊ¾±ß½ç,±ß½çÍâµÄÍ¼Ïñ½«²»ÓèÒÔÏÔÊ¾
-	/// @param rtBorder	±ß½ç²ÎÊı Ïê¼ûÒÔÏÂÍ¼±í
-	/// @param bPercent ÊÇ·ñÊ¹ÓÃ°Ù·Ö±È¿ØÖÆ±ß½ç
-	/// left	×ó±ß½ç¾àÀë
-	/// top		ÉÏ±ß½ç¾àÀë
-	/// right	ÓÒ±ß½ç¾àÀë
-	/// bottom  ÏÂ±ß½ç¾àÀë 
-	///©°©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©´
-	///©¦                  ©¦                  ©¦
-	///©¦                 top                 ©¦
-	///©¦                  ©¦                  ©¦©¤©¤©¤©¤©¤©¤©¤ the source rect
-	///©¦       ©°©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©´       ©¦
-	///©¦       ©¦                     ©¦       ©¦
-	///©¦       ©¦                     ©¦       ©¦
-	///©¦©¤left©¤ ©¦  the clipped rect   ©¦©¤right©¤©¦
-	///©¦       ©¦                     ©¦       ©¦
-	///©¦       ©¦                     ©¦       ©¦
-	///©¦       ©¸©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¼       ©¦
-	///©¦                  ©¦                  ©¦
-	///©¦                bottom               ©¦
-	///©¦                  ©¦                  ©¦
-	///©¸©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¼
-	/// @remark ±ß½çµÄÉÏÏÂ×óÓÒÎ»ÖÃ²»¿Éµßµ¹
-	int SetBorderRect(HWND hWnd, LPRECT pRectBorder, bool bPercent = false);
+	/// @brief è®¾ç½®æ˜¾ç¤ºè¾¹ç•Œ,è¾¹ç•Œå¤–çš„å›¾åƒå°†ä¸äºˆä»¥æ˜¾ç¤º
+	/// @param rtBorder	è¾¹ç•Œå‚æ•° è¯¦è§ä»¥ä¸‹å›¾è¡¨
+	/// @param bPercent æ˜¯å¦ä½¿ç”¨ç™¾åˆ†æ¯”æ§åˆ¶è¾¹ç•Œ
+	/// left	å·¦è¾¹ç•Œè·ç¦»
+	/// top		ä¸Šè¾¹ç•Œè·ç¦»
+	/// right	å³è¾¹ç•Œè·ç¦»
+	/// bottom  ä¸‹è¾¹ç•Œè·ç¦» 
+	///â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+	///â”‚                  â”‚                  â”‚
+	///â”‚                 top                 â”‚
+	///â”‚                  â”‚                  â”‚â”€â”€â”€â”€â”€â”€â”€ the source rect
+	///â”‚       â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”       â”‚
+	///â”‚       â”‚                     â”‚       â”‚
+	///â”‚       â”‚                     â”‚       â”‚
+	///â”‚â”€leftâ”€ â”‚  the clipped rect   â”‚â”€rightâ”€â”‚
+	///â”‚       â”‚                     â”‚       â”‚
+	///â”‚       â”‚                     â”‚       â”‚
+	///â”‚       â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜       â”‚
+	///â”‚                  â”‚                  â”‚
+	///â”‚                bottom               â”‚
+	///â”‚                  â”‚                  â”‚
+	///â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+	/// @remark è¾¹ç•Œçš„ä¸Šä¸‹å·¦å³ä½ç½®ä¸å¯é¢ å€’
+	int SetBorderRect(HWND hWnd, LPRECT pRectBorder, bool bPercent = false, bool bSkipVideoSize = false);
 
 	void RemoveBorderRect(HWND hWnd)
 	{
@@ -1045,47 +1045,47 @@ public:
 			m_fPlayInterval = nDecodeDelay;
 		}
 	}
-	/// @brief			ÉèÖÃÇĞ»»»Øµ÷
-	/// @param [in]		nScreenWnd		ÓÉÆÁºÅºÍ´°¿ÚºÅ×éµÄ²ÎÊı£¬¸ßÎ»ÎªÆÁÄ»ºÅ£¬µÍÎª´°¿ÚºÅ
-	/// @param [in]		pVideoSwitchCB	ÇĞ»»Í¨Öª»Øµ÷£¬µ±Ç°²¥·Å¾ä±ú½øÈë½â¶Î½×¶Î£¬×¼±¸³ÊÏÖÃæ»­Ê±»áµ÷ÓÃÕâ¸ö½â¿Ú
+	/// @brief			è®¾ç½®åˆ‡æ¢å›è°ƒ
+	/// @param [in]		nScreenWnd		ç”±å±å·å’Œçª—å£å·ç»„çš„å‚æ•°ï¼Œé«˜ä½ä¸ºå±å¹•å·ï¼Œä½ä¸ºçª—å£å·
+	/// @param [in]		pVideoSwitchCB	åˆ‡æ¢é€šçŸ¥å›è°ƒï¼Œå½“å‰æ’­æ”¾å¥æŸ„è¿›å…¥è§£æ®µé˜¶æ®µï¼Œå‡†å¤‡å‘ˆç°é¢ç”»æ—¶ä¼šè°ƒç”¨è¿™ä¸ªè§£å£
 	
-	/// @param [in]		pUserPtr		pVideoSwitchCB»Øµ÷Ê¹ÓÃµÄÓÃ»§½Ó¿Ú 
-	/// @remark			1.Õâ¸ö½Ó¿Ú¿ÉÓÃÓÚ×÷¿ìËÙÇĞ»»£¬µ±Ç°´°¿ÚÈôÕıÔÚÏÔÊ¾ÊÓÆµÊ±£¬ÈôÒªÇĞÈëÏÂÒ»ÊÓÆµ£¬¿ÉÉèÖÃ´Ë»Øµ÷£¬ÔÚ»ØÖĞÖ¹ÉÏÒ»´ÎµÄÊÓÆµ²¥·Å¡£	
-	///					2.ÆÁÄ»ºÅºÍ´°¿ÚºÅ¼ÆÊı´Ó0¿ªÊ¼£¬×î¶àÖ§³Ö16¸öÆÁÄ»(È¡Öµ0~15)£¬Ã¿ÈËÆÁÄ»µÄ´°¿ÚÊı×î¶à256(È¡Öµ0~255)
+	/// @param [in]		pUserPtr		pVideoSwitchCBå›è°ƒä½¿ç”¨çš„ç”¨æˆ·æ¥å£ 
+	/// @remark			1.è¿™ä¸ªæ¥å£å¯ç”¨äºä½œå¿«é€Ÿåˆ‡æ¢ï¼Œå½“å‰çª—å£è‹¥æ­£åœ¨æ˜¾ç¤ºè§†é¢‘æ—¶ï¼Œè‹¥è¦åˆ‡å…¥ä¸‹ä¸€è§†é¢‘ï¼Œå¯è®¾ç½®æ­¤å›è°ƒï¼Œåœ¨å›ä¸­æ­¢ä¸Šä¸€æ¬¡çš„è§†é¢‘æ’­æ”¾ã€‚	
+	///					2.å±å¹•å·å’Œçª—å£å·è®¡æ•°ä»0å¼€å§‹ï¼Œæœ€å¤šæ”¯æŒ16ä¸ªå±å¹•(å–å€¼0~15)ï¼Œæ¯äººå±å¹•çš„çª—å£æ•°æœ€å¤š256(å–å€¼0~255)
 	int SetSwitcherCallBack(WORD nScreenWnd, HWND hWnd, void *pVideoSwitchCB, void *pUserPtr);
-	/// @brief			¿ªÊ¼²¥·Å
-	/// @param [in]		bEnaleAudio		ÊÇ·ñ¿ªÆôÒôÆµ²¥·Å
-	/// #- true			¿ªÆôÒôÆµ²¥·Å
-	/// #- false		¹Ø±ÕÒôÆµ²¥·Å
-	/// @param [in]		bEnableHaccel	ÊÇ·ñ¿ªÆôÓ²½âÂë¹¦ÄÜ
-	/// #- true			ÆôÓÃÓ²½âÂë
-	/// #- false		½ûÓÃÓ²½âÂë
-	/// @param [in]		bFitWindow		ÊÓÆµÊÇ·ñÊÊÓ¦´°¿Ú
-	/// #- true			ÊÓÆµÌîÂú´°¿Ú,ÕâÑù»á°ÑÍ¼ÏñÀ­Éì,¿ÉÄÜ»áÔì³ÉÍ¼Ïñ±äĞÎ
-	/// #- false		Ö»°´Í¼ÏñÔ­Ê¼±ÈÀıÔÚ´°¿ÚÖĞÏÔÊ¾,³¬³ö±ÈÀı²¿·Ö,ÔòÒÔºÚÉ«±³¾°ÏÔÊ¾
+	/// @brief			å¼€å§‹æ’­æ”¾
+	/// @param [in]		bEnaleAudio		æ˜¯å¦å¼€å¯éŸ³é¢‘æ’­æ”¾
+	/// #- true			å¼€å¯éŸ³é¢‘æ’­æ”¾
+	/// #- false		å…³é—­éŸ³é¢‘æ’­æ”¾
+	/// @param [in]		bEnableHaccel	æ˜¯å¦å¼€å¯ç¡¬è§£ç åŠŸèƒ½
+	/// #- true			å¯ç”¨ç¡¬è§£ç 
+	/// #- false		ç¦ç”¨ç¡¬è§£ç 
+	/// @param [in]		bFitWindow		è§†é¢‘æ˜¯å¦é€‚åº”çª—å£
+	/// #- true			è§†é¢‘å¡«æ»¡çª—å£,è¿™æ ·ä¼šæŠŠå›¾åƒæ‹‰ä¼¸,å¯èƒ½ä¼šé€ æˆå›¾åƒå˜å½¢
+	/// #- false		åªæŒ‰å›¾åƒåŸå§‹æ¯”ä¾‹åœ¨çª—å£ä¸­æ˜¾ç¤º,è¶…å‡ºæ¯”ä¾‹éƒ¨åˆ†,åˆ™ä»¥é»‘è‰²èƒŒæ™¯æ˜¾ç¤º
 	
-	/// @retval			0	²Ù×÷³É¹¦
-	/// @retval			1	Á÷»º³åÇøÒÑÂú
-	/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-	/// @remark			²¥·ÅÁ÷Êı¾İÊ±£¬ÏàÓ¦µÄÖ¡Êı¾İÆäÊµ²¢Î´Á¢¼´²¥·Å£¬¶øÊÇ±»·ÅÁË²¥·Å¶ÓÁĞÖĞ£¬Ó¦¸Ã¸ù¾İipcplay_PlayStream
-	///					µÄ·µ»ØÖµÀ´ÅĞ¶Ï£¬ÊÇ·ñ¼ÌĞø²¥·Å£¬ÈôËµÃ÷¶ÓÁĞÒÑÂú£¬ÔòÓ¦¸ÃÔİÍ£²¥·Å
+	/// @retval			0	æ“ä½œæˆåŠŸ
+	/// @retval			1	æµç¼“å†²åŒºå·²æ»¡
+	/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+	/// @remark			æ’­æ”¾æµæ•°æ®æ—¶ï¼Œç›¸åº”çš„å¸§æ•°æ®å…¶å®å¹¶æœªç«‹å³æ’­æ”¾ï¼Œè€Œæ˜¯è¢«æ”¾äº†æ’­æ”¾é˜Ÿåˆ—ä¸­ï¼Œåº”è¯¥æ ¹æ®ipcplay_PlayStream
+	///					çš„è¿”å›å€¼æ¥åˆ¤æ–­ï¼Œæ˜¯å¦ç»§ç»­æ’­æ”¾ï¼Œè‹¥è¯´æ˜é˜Ÿåˆ—å·²æ»¡ï¼Œåˆ™åº”è¯¥æš‚åœæ’­æ”¾
 	int StartPlay(bool bEnaleAudio = false, bool bEnableHaccel = false, bool bFitWindow = true);
 
-	/// @brief			¿ªÊ¼Í¬²½²¥·Å
-	/// @param [in]		bFitWindow		ÊÓÆµÊÇ·ñÊÊÓ¦´°¿Ú
-	/// @param [in]		pSyncSource		Í¬²½Ô´£¬ÎªÁíÒ»IPCPlaySDK ¾ä±ú£¬ÈôÍ¬²½Ô´Îªnull,Ôò´´½¨Í¬²½Ê±ÖÓ£¬×ÔÎÒÍ¬²½
-	/// @param [in]		nVideoFPS		ÊÓÆµÖ¡ÂÊ
-	/// #- true			ÊÓÆµÌîÂú´°¿Ú,ÕâÑù»á°ÑÍ¼ÏñÀ­Éì,¿ÉÄÜ»áÔì³ÉÍ¼Ïñ±äĞÎ
-	/// #- false		Ö»°´Í¼ÏñÔ­Ê¼±ÈÀıÔÚ´°¿ÚÖĞÏÔÊ¾,³¬³ö±ÈÀı²¿·Ö,ÔòÒÔºÚÉ«±³¾°ÏÔÊ¾
-	/// @retval			0	²Ù×÷³É¹¦
-	/// @retval			1	Á÷»º³åÇøÒÑÂú
-	/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-	/// @remark			ÈôpSyncSourceÎªnull,µ±Ç°µÄ²¥·ÅÆ÷³ÉÎªÍ¬²½Ô´£¬nVideoFPS²»ÄÜÎª0£¬·ñÔò·µ»ØIPC_Error_InvalidParameters´íÎó
-	///					ÈôpSyncSource²»Îªnull£¬Ôòµ±Ç°²¥·ÅÆ÷ÒÔpSyncSourceÎªÍ¬²½Ô´£¬nVideoFPSÖµ±»ºöÂÔ
+	/// @brief			å¼€å§‹åŒæ­¥æ’­æ”¾
+	/// @param [in]		bFitWindow		è§†é¢‘æ˜¯å¦é€‚åº”çª—å£
+	/// @param [in]		pSyncSource		åŒæ­¥æºï¼Œä¸ºå¦ä¸€IPCPlaySDK å¥æŸ„ï¼Œè‹¥åŒæ­¥æºä¸ºnull,åˆ™åˆ›å»ºåŒæ­¥æ—¶é’Ÿï¼Œè‡ªæˆ‘åŒæ­¥
+	/// @param [in]		nVideoFPS		è§†é¢‘å¸§ç‡
+	/// #- true			è§†é¢‘å¡«æ»¡çª—å£,è¿™æ ·ä¼šæŠŠå›¾åƒæ‹‰ä¼¸,å¯èƒ½ä¼šé€ æˆå›¾åƒå˜å½¢
+	/// #- false		åªæŒ‰å›¾åƒåŸå§‹æ¯”ä¾‹åœ¨çª—å£ä¸­æ˜¾ç¤º,è¶…å‡ºæ¯”ä¾‹éƒ¨åˆ†,åˆ™ä»¥é»‘è‰²èƒŒæ™¯æ˜¾ç¤º
+	/// @retval			0	æ“ä½œæˆåŠŸ
+	/// @retval			1	æµç¼“å†²åŒºå·²æ»¡
+	/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+	/// @remark			è‹¥pSyncSourceä¸ºnull,å½“å‰çš„æ’­æ”¾å™¨æˆä¸ºåŒæ­¥æºï¼ŒnVideoFPSä¸èƒ½ä¸º0ï¼Œå¦åˆ™è¿”å›IPC_Error_InvalidParametersé”™è¯¯
+	///					è‹¥pSyncSourceä¸ä¸ºnullï¼Œåˆ™å½“å‰æ’­æ”¾å™¨ä»¥pSyncSourceä¸ºåŒæ­¥æºï¼ŒnVideoFPSå€¼è¢«å¿½ç•¥
 	int StartSyncPlay(bool bFitWindow = true, CIPCPlayer *pSyncSource = nullptr, int nVideoFPS = 25);
 
-	/// ÒÆ¶¯²¥·ÅÊ±¼äµãµ½Ö¸Î»Î»ÖÃ
-	/// tTime			ĞèÒªµ½´ïµÄÊ±¼äµã£¬µ¥Î»ºÁÃë
+	/// ç§»åŠ¨æ’­æ”¾æ—¶é—´ç‚¹åˆ°æŒ‡ä½ä½ç½®
+	/// tTime			éœ€è¦åˆ°è¾¾çš„æ—¶é—´ç‚¹ï¼Œå•ä½æ¯«ç§’
 	int SeekTime(time_t tTime)
 	{
 		if (!m_bAsyncRender)
@@ -1095,9 +1095,9 @@ public:
 		m_tSyncTimeBase = tTime;
 	}
 
-	/// @brief			ÅĞ¶Ï²¥·ÅÆ÷ÊÇ·ñÕıÔÚ²¥·ÅÖĞ	
-	/// @retval			true	²¥·ÅÆ÷ÕıÔÚ²¥·ÅÖĞ
-	/// @retval			false	²å·ÅÆ÷ÒÑÍ£Ö¹²¥·Å
+	/// @brief			åˆ¤æ–­æ’­æ”¾å™¨æ˜¯å¦æ­£åœ¨æ’­æ”¾ä¸­	
+	/// @retval			true	æ’­æ”¾å™¨æ­£åœ¨æ’­æ”¾ä¸­
+	/// @retval			false	æ’æ”¾å™¨å·²åœæ­¢æ’­æ”¾
 	bool IsPlaying()
 	{
 		if (m_hThreadDecode)
@@ -1106,7 +1106,7 @@ public:
 			return false;
 	}
 
-	/// @brief ¸´Î»²¥·Å´°¿Ú
+	/// @brief å¤ä½æ’­æ”¾çª—å£
 	bool Reset(HWND hWnd = nullptr, int nWidth = 0, int nHeight = 0)
 	{
 // 		CAutoLock lock(&m_csDxSurface, false, __FILE__, __FUNCTION__, __LINE__);
@@ -1144,7 +1144,7 @@ public:
 
 	int GetFileHeader();
 	
-	// ³¢ÊÔÔÚµ±Ç°ÏÔ¿¨ÉÏ½øĞĞÓ²½âÂë£¬Èô¿ªÆô³É¹¦ÔòszAdapterID·µ»ØÏÔ¿¨µÄGUID£¬ÈôszAdapterID·µ»Ø¿Õ£¬Ôò¿ªÆôÊ§°Ü
+	// å°è¯•åœ¨å½“å‰æ˜¾å¡ä¸Šè¿›è¡Œç¡¬è§£ç ï¼Œè‹¥å¼€å¯æˆåŠŸåˆ™szAdapterIDè¿”å›æ˜¾å¡çš„GUIDï¼Œè‹¥szAdapterIDè¿”å›ç©ºï¼Œåˆ™å¼€å¯å¤±è´¥
 	bool TryEnableHAccelOnAdapter(CHAR* szAdapterID, int nBuffer);
 
 	void FitWindow(bool bFitWindow)
@@ -1152,27 +1152,27 @@ public:
 		m_bFitWindow = bFitWindow;
 	}
 
-	/// @brief			ÊäÈëIPCË½¸ñÊ½µÄÂëÁ÷Êı¾İ
-	/// @retval			0	²Ù×÷³É¹¦
-	/// @retval			1	Á÷»º³åÇøÒÑÂú
-	/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-	/// @remark			²¥·ÅÁ÷Êı¾İÊ±£¬ÏàÓ¦µÄÖ¡Êı¾İÆäÊµ²¢Î´Á¢¼´²¥·Å£¬¶øÊÇ±»·ÅÁË²¥·Å¶ÓÁĞÖĞ£¬Ó¦¸Ã¸ù¾İipcplay_PlayStream
-	///					µÄ·µ»ØÖµÀ´ÅĞ¶Ï£¬ÊÇ·ñ¼ÌĞø²¥·Å£¬ÈôËµÃ÷¶ÓÁĞÒÑÂú£¬ÔòÓ¦¸ÃÔİÍ£ÊäÈë
-	int InputStream(unsigned char *szFrameData, int nFrameSize, UINT nCacheSize, bool bThreadInside = false/*ÊÇ·ñÄÚ²¿Ïß³Ìµ÷ÓÃ±êÖ¾*/);
+	/// @brief			è¾“å…¥IPCç§æ ¼å¼çš„ç æµæ•°æ®
+	/// @retval			0	æ“ä½œæˆåŠŸ
+	/// @retval			1	æµç¼“å†²åŒºå·²æ»¡
+	/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+	/// @remark			æ’­æ”¾æµæ•°æ®æ—¶ï¼Œç›¸åº”çš„å¸§æ•°æ®å…¶å®å¹¶æœªç«‹å³æ’­æ”¾ï¼Œè€Œæ˜¯è¢«æ”¾äº†æ’­æ”¾é˜Ÿåˆ—ä¸­ï¼Œåº”è¯¥æ ¹æ®ipcplay_PlayStream
+	///					çš„è¿”å›å€¼æ¥åˆ¤æ–­ï¼Œæ˜¯å¦ç»§ç»­æ’­æ”¾ï¼Œè‹¥è¯´æ˜é˜Ÿåˆ—å·²æ»¡ï¼Œåˆ™åº”è¯¥æš‚åœè¾“å…¥
+	int InputStream(unsigned char *szFrameData, int nFrameSize, UINT nCacheSize, bool bThreadInside = false/*æ˜¯å¦å†…éƒ¨çº¿ç¨‹è°ƒç”¨æ ‡å¿—*/);
 	
 
-	/// @brief			ÊäÈëIPCÂëÁ÷Êı¾İ
-	/// @retval			0	²Ù×÷³É¹¦
-	/// @retval			1	Á÷»º³åÇøÒÑÂú
-	/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-	/// @remark			²¥·ÅÁ÷Êı¾İÊ±£¬ÏàÓ¦µÄÖ¡Êı¾İÆäÊµ²¢Î´Á¢¼´²¥·Å£¬¶øÊÇ±»·ÅÁË²¥·Å¶ÓÁĞÖĞ£¬Ó¦¸Ã¸ù¾İipcplay_PlayStream
-	///					µÄ·µ»ØÖµÀ´ÅĞ¶Ï£¬ÊÇ·ñ¼ÌĞø²¥·Å£¬ÈôËµÃ÷¶ÓÁĞÒÑÂú£¬ÔòÓ¦¸ÃÔİÍ£²¥·Å
+	/// @brief			è¾“å…¥IPCç æµæ•°æ®
+	/// @retval			0	æ“ä½œæˆåŠŸ
+	/// @retval			1	æµç¼“å†²åŒºå·²æ»¡
+	/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+	/// @remark			æ’­æ”¾æµæ•°æ®æ—¶ï¼Œç›¸åº”çš„å¸§æ•°æ®å…¶å®å¹¶æœªç«‹å³æ’­æ”¾ï¼Œè€Œæ˜¯è¢«æ”¾äº†æ’­æ”¾é˜Ÿåˆ—ä¸­ï¼Œåº”è¯¥æ ¹æ®ipcplay_PlayStream
+	///					çš„è¿”å›å€¼æ¥åˆ¤æ–­ï¼Œæ˜¯å¦ç»§ç»­æ’­æ”¾ï¼Œè‹¥è¯´æ˜é˜Ÿåˆ—å·²æ»¡ï¼Œåˆ™åº”è¯¥æš‚åœæ’­æ”¾
 // 	UINT m_nAudioFrames1 = 0;
 // 	UINT m_nVideoFraems = 0;
 // 	DWORD m_dwInputStream = timeGetTime();
 	int InputStream(IN byte *pFrameData, IN int nFrameType, IN int nFrameLength, int nFrameNum, time_t nFrameTime);
 
-	// ÊäÈëÎ´½âÎöÂëÁ÷
+	// è¾“å…¥æœªè§£æç æµ
 	int InputStream(IN byte *pData, IN int nLength);
 
 	bool IsH264KeyFrame(byte *pFrame)
@@ -1202,38 +1202,38 @@ public:
 		m_bPause = !m_bPause;
 	}
 
-	/// @brief			ÉèÖÃÌ½²âÂëÁ÷ÀàĞÍÊ±£¬µÈ´ıÂëÁ÷µÄ³¬Ê±Öµ
-	/// @param [in]		dwTimeout µÈ´ıÂëÁ÷µÄ¸ÏÊ±Öµ£¬µ¥Î»ºÁÃë
-	/// @remark			¸Ãº¯Êı±ØĞëÒªÔÚStartÖ®Ç°µ÷ÓÃ£¬²ÅÄÜÉúĞ§
+	/// @brief			è®¾ç½®æ¢æµ‹ç æµç±»å‹æ—¶ï¼Œç­‰å¾…ç æµçš„è¶…æ—¶å€¼
+	/// @param [in]		dwTimeout ç­‰å¾…ç æµçš„èµ¶æ—¶å€¼ï¼Œå•ä½æ¯«ç§’
+	/// @remark			è¯¥å‡½æ•°å¿…é¡»è¦åœ¨Startä¹‹å‰è°ƒç”¨ï¼Œæ‰èƒ½ç”Ÿæ•ˆ
 	void SetProbeStreamTimeout(DWORD dwTimeout = 3000)
 	{
 		m_nProbeStreamTimeout = dwTimeout;
 	}
 
-	/// @brief			¿ªÆôÓ²½âÂë¹¦ÄÜ
-	/// @param [in]		bEnableHaccel	ÊÇ·ñ¿ªÆôÓ²½âÂë¹¦ÄÜ
-	/// #- true			¿ªÆôÓ²½âÂë¹¦ÄÜ
-	/// #- false		¹Ø±ÕÓ²½âÂë¹¦ÄÜ
-	/// @remark			¿ªÆôºÍ¹Ø±ÕÓ²½âÂë¹¦ÄÜ±ØĞëÒªStartÖ®Ç°µ÷ÓÃ²ÅÄÜÉúĞ§
+	/// @brief			å¼€å¯ç¡¬è§£ç åŠŸèƒ½
+	/// @param [in]		bEnableHaccel	æ˜¯å¦å¼€å¯ç¡¬è§£ç åŠŸèƒ½
+	/// #- true			å¼€å¯ç¡¬è§£ç åŠŸèƒ½
+	/// #- false		å…³é—­ç¡¬è§£ç åŠŸèƒ½
+	/// @remark			å¼€å¯å’Œå…³é—­ç¡¬è§£ç åŠŸèƒ½å¿…é¡»è¦Startä¹‹å‰è°ƒç”¨æ‰èƒ½ç”Ÿæ•ˆ
 	int  EnableHaccel(IN bool bEnableHaccel = false);
 
-	/// @brief			»ñÈ¡Ó²½âÂë×´Ì¬
-	/// @retval			true	ÒÑ¿ªÆôÓ²½âÂë¹¦ÄÜ
-	/// @retval			flase	Î´¿ªÆôÓ²½âÂë¹¦ÄÜ
+	/// @brief			è·å–ç¡¬è§£ç çŠ¶æ€
+	/// @retval			true	å·²å¼€å¯ç¡¬è§£ç åŠŸèƒ½
+	/// @retval			flase	æœªå¼€å¯ç¡¬è§£ç åŠŸèƒ½
 	inline bool  GetHaccelStatus()
 	{
 		return m_bEnableHaccel;
 	}
 
 
-/// @brief			ÆôÓÃ/½ûÓÃÒì²½äÖÈ¾
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		bEnable			ÊÇ·ñÆôÓÃÒì²½äÖÈ¾
-/// -#	true		ÆôÓÃÒì²½äÖÈ¾
-/// -#	false		½ûÓÃÒì²½äÖÈ¾
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-/// ÆôÓÃÒì²½äÖÈ¾ºó£¬½âÂëµÃµ½µÄYUVÊı¾İ»á±»´æÈëYUV¶ÓÁĞ£¬äÖÈ¾Ê±´ÓYUV¶ÓÁĞÈ¡³ö£¬Òò´Ë±ØĞëÏÈÉèÖÃYUV¶ÓÁĞµÄ×î´óÖµ£¬²»È»¿ÉÄÜ»áµ¼ÖÂÄÚ´æ²»×ã
+/// @brief			å¯ç”¨/ç¦ç”¨å¼‚æ­¥æ¸²æŸ“
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		bEnable			æ˜¯å¦å¯ç”¨å¼‚æ­¥æ¸²æŸ“
+/// -#	true		å¯ç”¨å¼‚æ­¥æ¸²æŸ“
+/// -#	false		ç¦ç”¨å¼‚æ­¥æ¸²æŸ“
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+/// å¯ç”¨å¼‚æ­¥æ¸²æŸ“åï¼Œè§£ç å¾—åˆ°çš„YUVæ•°æ®ä¼šè¢«å­˜å…¥YUVé˜Ÿåˆ—ï¼Œæ¸²æŸ“æ—¶ä»YUVé˜Ÿåˆ—å–å‡ºï¼Œå› æ­¤å¿…é¡»å…ˆè®¾ç½®YUVé˜Ÿåˆ—çš„æœ€å¤§å€¼ï¼Œä¸ç„¶å¯èƒ½ä¼šå¯¼è‡´å†…å­˜ä¸è¶³
 	int EnableAsyncRender(bool bEnable = true,int nFrameCache = 50)
 	{
 		if (m_hThreadDecode)
@@ -1242,13 +1242,13 @@ public:
 		m_nListAvFrameMaxSize = nFrameCache;
 		return IPC_Succeed;
 	}
-	/// @brief			¼ì²éÊÇ·ñÖ§³ÖÌØ¶¨ÊÓÆµ±àÂëµÄÓ²½âÂë
-	/// @param [in]		nCodec		ÊÓÆµ±àÂë¸ñÊ½,@see IPC_CODEC
-	/// @retval			true		Ö§³ÖÖ¸¶¨ÊÓÆµ±àÂëµÄÓ²½âÂë
-	/// @retval			false		²»Ö§³ÖÖ¸¶¨ÊÓÆµ±àÂëµÄÓ²½âÂë
+	/// @brief			æ£€æŸ¥æ˜¯å¦æ”¯æŒç‰¹å®šè§†é¢‘ç¼–ç çš„ç¡¬è§£ç 
+	/// @param [in]		nCodec		è§†é¢‘ç¼–ç æ ¼å¼,@see IPC_CODEC
+	/// @retval			true		æ”¯æŒæŒ‡å®šè§†é¢‘ç¼–ç çš„ç¡¬è§£ç 
+	/// @retval			false		ä¸æ”¯æŒæŒ‡å®šè§†é¢‘ç¼–ç çš„ç¡¬è§£ç 
 	static bool  IsSupportHaccel(IN IPC_CODEC nCodec);
 
-	/// @brief			È¡µÃµ±Ç°²¥·ÅÊÓÆµµÄ¼´Ê±ĞÅÏ¢
+	/// @brief			å–å¾—å½“å‰æ’­æ”¾è§†é¢‘çš„å³æ—¶ä¿¡æ¯
 	int GetPlayerInfo(PlayerInfo *pPlayInfo);
 	
 // 	static void CloseShareMemory(HANDLE &hMemHandle, void *pMemory)
@@ -1308,21 +1308,21 @@ public:
 // 		}
 // 		return pShareSection;
 // 	}
-	/// @brief			½ØÈ¡Õı·Å²¥·ÅµÄÊÓÆµÍ¼Ïñ
-	/// @param [in]		szFileName		Òª±£´æµÄÎÄ¼şÃû
-	/// @param [in]		nFileFormat		±£´æÎÄ¼şµÄ±àÂë¸ñÊ½,@see SNAPSHOT_FORMAT¶¨Òå
-	/// @retval			0	²Ù×÷³É¹¦
-	/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
+	/// @brief			æˆªå–æ­£æ”¾æ’­æ”¾çš„è§†é¢‘å›¾åƒ
+	/// @param [in]		szFileName		è¦ä¿å­˜çš„æ–‡ä»¶å
+	/// @param [in]		nFileFormat		ä¿å­˜æ–‡ä»¶çš„ç¼–ç æ ¼å¼,@see SNAPSHOT_FORMATå®šä¹‰
+	/// @retval			0	æ“ä½œæˆåŠŸ
+	/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
 	int  SnapShot(IN CHAR *szFileName, IN SNAPSHOT_FORMAT nFileFormat = XIFF_JPG);
 	
-	/// @brief			´¦Àí½ØÍ¼ÇëÇó
-	/// remark			´¦ÀíÍê³Éºó£¬½«ÖÃĞÅm_hEventSnapShotÊÂ¼ş
+	/// @brief			å¤„ç†æˆªå›¾è¯·æ±‚
+	/// remark			å¤„ç†å®Œæˆåï¼Œå°†ç½®ä¿¡m_hEventSnapShotäº‹ä»¶
 	void ProcessSnapshotRequire(AVFrame *pAvFrame);
 
-	/// @brief			ÉèÖÃ²¥·ÅµÄÒôÁ¿
-	/// @param [in]		nVolume			ÒªÉèÖÃµÄÒôÁ¿Öµ£¬È¡Öµ·¶Î§0~100£¬Îª0Ê±£¬ÔòÎª¾²Òô
-	/// @retval			0	²Ù×÷³É¹¦
-	/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
+	/// @brief			è®¾ç½®æ’­æ”¾çš„éŸ³é‡
+	/// @param [in]		nVolume			è¦è®¾ç½®çš„éŸ³é‡å€¼ï¼Œå–å€¼èŒƒå›´0~100ï¼Œä¸º0æ—¶ï¼Œåˆ™ä¸ºé™éŸ³
+	/// @retval			0	æ“ä½œæˆåŠŸ
+	/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
 	void  SetVolume(IN int nVolume)
 	{
 		if (m_bEnableAudio && m_pDsBuffer)
@@ -1332,7 +1332,7 @@ public:
 		}
 	}
 
-	/// @brief			È¡µÃµ±Ç°²¥·ÅµÄÒôÁ¿
+	/// @brief			å–å¾—å½“å‰æ’­æ”¾çš„éŸ³é‡
 	int  GetVolume()
 	{
 		if (m_bEnableAudio && m_pDsBuffer)
@@ -1341,71 +1341,71 @@ public:
 			return 0;
 	}
 
-	/// @brief			ÉèÖÃµ±Ç°²¥·ÅµÄËÙ¶ÈµÄ±¶ÂÊ
-	/// @param [in]		fPlayRate		µ±Ç°µÄ²¥·ÅµÄ±¶ÂÊ,´óÓÚ1Ê±Îª¼ÓËÙ²¥·Å,Ğ¡ÓÚ1Ê±Îª¼õËÙ²¥·Å£¬²»ÄÜÎª0»òĞ¡ÓÚ0
-	/// @retval			0	²Ù×÷³É¹¦
-	/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
+	/// @brief			è®¾ç½®å½“å‰æ’­æ”¾çš„é€Ÿåº¦çš„å€ç‡
+	/// @param [in]		fPlayRate		å½“å‰çš„æ’­æ”¾çš„å€ç‡,å¤§äº1æ—¶ä¸ºåŠ é€Ÿæ’­æ”¾,å°äº1æ—¶ä¸ºå‡é€Ÿæ’­æ”¾ï¼Œä¸èƒ½ä¸º0æˆ–å°äº0
+	/// @retval			0	æ“ä½œæˆåŠŸ
+	/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
 	int  SetRate(IN float fPlayRate);
 
-	/// @brief			ÌøÔ¾µ½Ö¸ÊÓÆµÖ¡½øĞĞ²¥·Å
-	/// @param [in]		nFrameID	Òª²¥·ÅÖ¡µÄÆğÊ¼ID
-	/// @param [in]		bUpdate		ÊÇ·ñ¸üĞÂ»­Ãæ,bUpdateÎªtrueÔòÓèÒÔ¸üĞÂ»­Ãæ,»­ÃæÔò²»¸üĞÂ
-	/// @retval			0	²Ù×÷³É¹¦
-	/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-	/// @remark			1.ÈôËùÖ¸¶¨Ê±¼äµã¶ÔÓ¦Ö¡Îª·Ç¹Ø¼üÖ¡£¬Ö¡×Ô¶¯ÒÆ¶¯µ½¾Í½üµÄ¹Ø¼üÖ¡½øĞĞ²¥·Å
-	///					2.ÈôËùÖ¸¶¨Ö¡Îª·Ç¹Ø¼üÖ¡£¬Ö¡×Ô¶¯ÒÆ¶¯µ½¾Í½üµÄ¹Ø¼üÖ¡½øĞĞ²¥·Å
-	///					3.Ö»ÓĞÔÚ²¥·ÅÔİÊ±,bUpdate²ÎÊı²ÅÓĞĞ§
-	///					4.ÓÃÓÚµ¥Ö¡²¥·ÅÊ±Ö»ÄÜÏòÇ°ÒÆ¶¯
+	/// @brief			è·³è·ƒåˆ°æŒ‡è§†é¢‘å¸§è¿›è¡Œæ’­æ”¾
+	/// @param [in]		nFrameID	è¦æ’­æ”¾å¸§çš„èµ·å§‹ID
+	/// @param [in]		bUpdate		æ˜¯å¦æ›´æ–°ç”»é¢,bUpdateä¸ºtrueåˆ™äºˆä»¥æ›´æ–°ç”»é¢,ç”»é¢åˆ™ä¸æ›´æ–°
+	/// @retval			0	æ“ä½œæˆåŠŸ
+	/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+	/// @remark			1.è‹¥æ‰€æŒ‡å®šæ—¶é—´ç‚¹å¯¹åº”å¸§ä¸ºéå…³é”®å¸§ï¼Œå¸§è‡ªåŠ¨ç§»åŠ¨åˆ°å°±è¿‘çš„å…³é”®å¸§è¿›è¡Œæ’­æ”¾
+	///					2.è‹¥æ‰€æŒ‡å®šå¸§ä¸ºéå…³é”®å¸§ï¼Œå¸§è‡ªåŠ¨ç§»åŠ¨åˆ°å°±è¿‘çš„å…³é”®å¸§è¿›è¡Œæ’­æ”¾
+	///					3.åªæœ‰åœ¨æ’­æ”¾æš‚æ—¶,bUpdateå‚æ•°æ‰æœ‰æ•ˆ
+	///					4.ç”¨äºå•å¸§æ’­æ”¾æ—¶åªèƒ½å‘å‰ç§»åŠ¨
 	int  SeekFrame(IN int nFrameID, bool bUpdate = false);
 	
-	/// @brief			ÌøÔ¾µ½Ö¸¶¨Ê±¼äÆ«ÒÆ½øĞĞ²¥·Å
-	/// @param [in]		tTimeOffset		Òª²¥·ÅµÄÆğÊ¼Ê±¼ä,µ¥Î»Ãë,ÈçFPS=25,Ôò0.04ÃëÎªµÚ2Ö¡£¬1.00Ãë£¬ÎªµÚ25Ö¡
-	/// @param [in]		bUpdate		ÊÇ·ñ¸üĞÂ»­Ãæ,bUpdateÎªtrueÔòÓèÒÔ¸üĞÂ»­Ãæ,»­ÃæÔò²»¸üĞÂ
-	/// @retval			0	²Ù×÷³É¹¦
-	/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-	/// @remark			1.ÈôËùÖ¸¶¨Ê±¼äµã¶ÔÓ¦Ö¡Îª·Ç¹Ø¼üÖ¡£¬Ö¡×Ô¶¯ÒÆ¶¯µ½¾Í½üµÄ¹Ø¼üÖ¡½øĞĞ²¥·Å
-	///					2.ÈôËùÖ¸¶¨Ö¡Îª·Ç¹Ø¼üÖ¡£¬Ö¡×Ô¶¯ÒÆ¶¯µ½¾Í½üµÄ¹Ø¼üÖ¡½øĞĞ²¥·Å
-	///					3.Ö»ÓĞÔÚ²¥·ÅÔİÊ±,bUpdate²ÎÊı²ÅÓĞĞ§
+	/// @brief			è·³è·ƒåˆ°æŒ‡å®šæ—¶é—´åç§»è¿›è¡Œæ’­æ”¾
+	/// @param [in]		tTimeOffset		è¦æ’­æ”¾çš„èµ·å§‹æ—¶é—´,å•ä½ç§’,å¦‚FPS=25,åˆ™0.04ç§’ä¸ºç¬¬2å¸§ï¼Œ1.00ç§’ï¼Œä¸ºç¬¬25å¸§
+	/// @param [in]		bUpdate		æ˜¯å¦æ›´æ–°ç”»é¢,bUpdateä¸ºtrueåˆ™äºˆä»¥æ›´æ–°ç”»é¢,ç”»é¢åˆ™ä¸æ›´æ–°
+	/// @retval			0	æ“ä½œæˆåŠŸ
+	/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+	/// @remark			1.è‹¥æ‰€æŒ‡å®šæ—¶é—´ç‚¹å¯¹åº”å¸§ä¸ºéå…³é”®å¸§ï¼Œå¸§è‡ªåŠ¨ç§»åŠ¨åˆ°å°±è¿‘çš„å…³é”®å¸§è¿›è¡Œæ’­æ”¾
+	///					2.è‹¥æ‰€æŒ‡å®šå¸§ä¸ºéå…³é”®å¸§ï¼Œå¸§è‡ªåŠ¨ç§»åŠ¨åˆ°å°±è¿‘çš„å…³é”®å¸§è¿›è¡Œæ’­æ”¾
+	///					3.åªæœ‰åœ¨æ’­æ”¾æš‚æ—¶,bUpdateå‚æ•°æ‰æœ‰æ•ˆ
 	int  SeekTime(IN time_t tTimeOffset, bool bUpdate);
 
-	/// Ìøµ½Ö¸¶¨µÄÖ¡£¬²¢Ö»äÖÈ¾Ò»Ö¡
-	/// @param [in]		tTimeOffset		Òª²¥·ÅµÄÆğÊ¼Ê±¼ä,µ¥Î»Ãë,ÈçFPS=25,Ôò0.04ÃëÎªµÚ2Ö¡£¬1.00Ãë£¬ÎªµÚ25Ö¡
-	/// @param [in]		bUpdate		ÊÇ·ñ¸üĞÂ»­Ãæ,bUpdateÎªtrueÔòÓèÒÔ¸üĞÂ»­Ãæ,»­ÃæÔò²»¸üĞÂ
-	/// @retval			0	²Ù×÷³É¹¦
-	/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-	/// @remark			1.Ö»ÓĞÒì²½äÖÈ¾Ê±£¬¸Ãº¯Êı²ÅÄÜÉúĞ§£¬·ñÔò·µ»ØIPC_Error_NotAsyncPlayer´íÎó
-	///					2.±ØĞëÆô¶¯²¥·ÅÆ÷ºó£¬¸Ãº¯Êı²ÅÄÜÉú½»£¬·ñÔò·µ»ØIPC_Error_PlayerNotStart´íÎó
+	/// è·³åˆ°æŒ‡å®šçš„å¸§ï¼Œå¹¶åªæ¸²æŸ“ä¸€å¸§
+	/// @param [in]		tTimeOffset		è¦æ’­æ”¾çš„èµ·å§‹æ—¶é—´,å•ä½ç§’,å¦‚FPS=25,åˆ™0.04ç§’ä¸ºç¬¬2å¸§ï¼Œ1.00ç§’ï¼Œä¸ºç¬¬25å¸§
+	/// @param [in]		bUpdate		æ˜¯å¦æ›´æ–°ç”»é¢,bUpdateä¸ºtrueåˆ™äºˆä»¥æ›´æ–°ç”»é¢,ç”»é¢åˆ™ä¸æ›´æ–°
+	/// @retval			0	æ“ä½œæˆåŠŸ
+	/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+	/// @remark			1.åªæœ‰å¼‚æ­¥æ¸²æŸ“æ—¶ï¼Œè¯¥å‡½æ•°æ‰èƒ½ç”Ÿæ•ˆï¼Œå¦åˆ™è¿”å›IPC_Error_NotAsyncPlayeré”™è¯¯
+	///					2.å¿…é¡»å¯åŠ¨æ’­æ”¾å™¨åï¼Œè¯¥å‡½æ•°æ‰èƒ½ç”Ÿäº¤ï¼Œå¦åˆ™è¿”å›IPC_Error_PlayerNotStarté”™è¯¯
 	int  AsyncSeekTime(IN time_t tTimeOffset, bool bUpdate);
 
-	/// @brief ´ÓÎÄ¼şÖĞ¶ÁÈ¡Ò»Ö¡£¬¶ÁÈ¡µÄÆğµãÄ¬ÈÏÖµÎª0,SeekFrame»òSeekTime¿ÉÉè¶¨ÆäÆğµãÎ»ÖÃ
-	/// @param [in,out]		pBuffer		Ö¡Êı¾İ»º³åÇø,¿ÉÉèÖÃÎªnull
-	/// @param [in,out]		nBufferSize Ö¡»º³åÇøµÄ´óĞ¡
+	/// @brief ä»æ–‡ä»¶ä¸­è¯»å–ä¸€å¸§ï¼Œè¯»å–çš„èµ·ç‚¹é»˜è®¤å€¼ä¸º0,SeekFrameæˆ–SeekTimeå¯è®¾å®šå…¶èµ·ç‚¹ä½ç½®
+	/// @param [in,out]		pBuffer		å¸§æ•°æ®ç¼“å†²åŒº,å¯è®¾ç½®ä¸ºnull
+	/// @param [in,out]		nBufferSize å¸§ç¼“å†²åŒºçš„å¤§å°
 	int GetFrame(INOUT byte **pBuffer, OUT UINT &nBufferSize);
 	
-	/// @brief			²¥·ÅÏÂÒ»Ö¡
-	/// @retval			0	²Ù×÷³É¹¦
-	/// @retval			-24	²¥·ÅÆ÷Î´ÔİÍ£
-	/// @remark			¸Ãº¯Êı½öÊÊÓÃÓÚµ¥Ö¡²¥·Å
+	/// @brief			æ’­æ”¾ä¸‹ä¸€å¸§
+	/// @retval			0	æ“ä½œæˆåŠŸ
+	/// @retval			-24	æ’­æ”¾å™¨æœªæš‚åœ
+	/// @remark			è¯¥å‡½æ•°ä»…é€‚ç”¨äºå•å¸§æ’­æ”¾
 	int  SeekNextFrame();
 
-	/// @brief			¿ª/¹ØÒôÆµ²¥·Å
-	/// @param [in]		bEnable			ÊÇ·ñ²¥·ÅÒôÆµ
-	/// -#	true		¿ªÆôÒôÆµ²¥·Å
-	/// -#	false		½ûÓÃÒôÆµ²¥·Å
-	/// @retval			0	²Ù×÷³É¹¦
-	/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-	/// @retval			IPC_Error_AudioFailed	ÒôÆµ²¥·ÅÉè±¸Î´¾ÍĞ÷
+	/// @brief			å¼€/å…³éŸ³é¢‘æ’­æ”¾
+	/// @param [in]		bEnable			æ˜¯å¦æ’­æ”¾éŸ³é¢‘
+	/// -#	true		å¼€å¯éŸ³é¢‘æ’­æ”¾
+	/// -#	false		ç¦ç”¨éŸ³é¢‘æ’­æ”¾
+	/// @retval			0	æ“ä½œæˆåŠŸ
+	/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+	/// @retval			IPC_Error_AudioFailed	éŸ³é¢‘æ’­æ”¾è®¾å¤‡æœªå°±ç»ª
 	int  EnableAudio(bool bEnable = true);
 
-	/// @brief			Ë¢ĞÂ²¥·Å´°¿Ú
-	/// @retval			0	²Ù×÷³É¹¦
-	/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-	/// @remark			¸Ã¹¦ÄÜÒ»°ãÓÃÓÚ²¥·Å½áÊøºó£¬Ë¢ĞÂ´°¿Ú£¬°Ñ»­ÃæÖÃÎªºÚÉ«
+	/// @brief			åˆ·æ–°æ’­æ”¾çª—å£
+	/// @retval			0	æ“ä½œæˆåŠŸ
+	/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+	/// @remark			è¯¥åŠŸèƒ½ä¸€èˆ¬ç”¨äºæ’­æ”¾ç»“æŸåï¼Œåˆ·æ–°çª—å£ï¼ŒæŠŠç”»é¢ç½®ä¸ºé»‘è‰²
 	void  Refresh();
 
 	void SetBackgroundImage(LPCWSTR szImageFilePath = nullptr);
 
-	// Ìí¼ÓÏßÌõÊ§°ÜÊ±£¬·µ»Ø0£¬·ñÔò·µ»ØÏßÌõ×éµÄ¾ä±ú
+	// æ·»åŠ çº¿æ¡å¤±è´¥æ—¶ï¼Œè¿”å›0ï¼Œå¦åˆ™è¿”å›çº¿æ¡ç»„çš„å¥æŸ„
 	long AddLineArray(POINT *pPointArray, int nCount, float fWidth, D3DCOLOR nColor);
 
 	int	RemoveLineArray(long nIndex);
@@ -1422,36 +1422,36 @@ public:
 	int SetCallBack(IPC_CALLBACK nCallBackType, IN void *pUserCallBack, IN void *pUserPtr);
 	
 
-	/// @brief			È¡µÃÎÄ¼şµÄË÷ÒıµÄĞÅÏ¢,ÈçÎÄ¼ş×ÜÖ¡Êı,ÎÄ¼şÆ«ÒÆ±í
-	/// ÒÔ¶ÁÈ¡´ó¿éÎÄ¼şÄÚÈİµÄĞÎÊ½£¬»ñÈ¡Ö¡ĞÅÏ¢£¬Ö´ĞĞĞ§ÂÊÉÏ±ÈGetFileSummary0Òª¸ß
-	/// ÎªÌá¸ßĞ§ÂÊ£¬·ÀÖ¹ÎÄ¼ş½âÎöÏß³ÌºÍË÷ÒıÏß³Ì¾ºÕù´ÅÅÌ¶ÁÈ¡È¨£¬ÔÚµÃÈ¡Ë÷ÒıĞÅÏ¢µÄÍ¬Ê±£¬
-	/// Ïò»º³åÖĞÍ¶Èë16Ãë(400Ö¡)µÄÊÓÆµÊı¾İ£¬Ïàµ±ÓÚ½âÎöÏß³Ì¿ÉÒÔÑÓ³Ù8-10Ãë²Å¿ªÊ¼¹¤×÷£¬
-	/// ¼õÉÙÁË¾ºÕù£¬ÌáÉıÁËËÙ¶È;Óë´ËÍ¬Ê±£¬ÓÃ»§¿ÉÒÔÁ¢¼´¿´µ½»­Ãæ£¬ÌáÉıÁËÓÃ»§ÌåÑé£»
+	/// @brief			å–å¾—æ–‡ä»¶çš„ç´¢å¼•çš„ä¿¡æ¯,å¦‚æ–‡ä»¶æ€»å¸§æ•°,æ–‡ä»¶åç§»è¡¨
+	/// ä»¥è¯»å–å¤§å—æ–‡ä»¶å†…å®¹çš„å½¢å¼ï¼Œè·å–å¸§ä¿¡æ¯ï¼Œæ‰§è¡Œæ•ˆç‡ä¸Šæ¯”GetFileSummary0è¦é«˜
+	/// ä¸ºæé«˜æ•ˆç‡ï¼Œé˜²æ­¢æ–‡ä»¶è§£æçº¿ç¨‹å’Œç´¢å¼•çº¿ç¨‹ç«äº‰ç£ç›˜è¯»å–æƒï¼Œåœ¨å¾—å–ç´¢å¼•ä¿¡æ¯çš„åŒæ—¶ï¼Œ
+	/// å‘ç¼“å†²ä¸­æŠ•å…¥16ç§’(400å¸§)çš„è§†é¢‘æ•°æ®ï¼Œç›¸å½“äºè§£æçº¿ç¨‹å¯ä»¥å»¶è¿Ÿ8-10ç§’æ‰å¼€å§‹å·¥ä½œï¼Œ
+	/// å‡å°‘äº†ç«äº‰ï¼Œæå‡äº†é€Ÿåº¦;ä¸æ­¤åŒæ—¶ï¼Œç”¨æˆ·å¯ä»¥ç«‹å³çœ‹åˆ°ç”»é¢ï¼Œæå‡äº†ç”¨æˆ·ä½“éªŒï¼›
 	int GetFileSummary(volatile bool &bWorking);
 
-	/// @brief			½âÎöÖ¡Êı¾İ
-	/// @param [in,out]	pBuffer			À´×ÔIPCË½ÓĞÂ¼ÏñÎÄ¼şÖĞµÄÊı¾İÁ÷
-	/// @param [in,out]	nDataSize		pBufferÖĞÓĞĞ§Êı¾İµÄ³¤¶È
-	/// @param [out]	pFrameParser	IPCË½ÓĞÂ¼ÏñµÄÖ¡Êı¾İ	
-	/// @retval			true	²Ù×÷³É¹¦
-	/// @retval			false	Ê§°Ü£¬pBufferÒÑ¾­Ã»ÓĞÓĞĞ§µÄÖ¡Êı¾İ
+	/// @brief			è§£æå¸§æ•°æ®
+	/// @param [in,out]	pBuffer			æ¥è‡ªIPCç§æœ‰å½•åƒæ–‡ä»¶ä¸­çš„æ•°æ®æµ
+	/// @param [in,out]	nDataSize		pBufferä¸­æœ‰æ•ˆæ•°æ®çš„é•¿åº¦
+	/// @param [out]	pFrameParser	IPCç§æœ‰å½•åƒçš„å¸§æ•°æ®	
+	/// @retval			true	æ“ä½œæˆåŠŸ
+	/// @retval			false	å¤±è´¥ï¼ŒpBufferå·²ç»æ²¡æœ‰æœ‰æ•ˆçš„å¸§æ•°æ®
 	bool ParserFrame(INOUT byte **ppBuffer,	INOUT DWORD &nDataSize,	FrameParser* pFrameParser);
 
-	///< @brief ÊÓÆµÎÄ¼ş½âÎöÏß³Ì
+	///< @brief è§†é¢‘æ–‡ä»¶è§£æçº¿ç¨‹
 	static UINT __stdcall ThreadFileParser(void *p);
 
 	int EnableStreamParser(IPC_CODEC nCodec = CODEC_H264);
 
-	///< @brief ÊÓÆµÁ÷½âÎöÏß³Ì
+	///< @brief è§†é¢‘æµè§£æçº¿ç¨‹
 	static UINT __stdcall ThreadStreamParser(void *p);
 
-	/// @brief			»ñÈ¡ÂëÁ÷ÀàĞÍ	
-	/// @param [in]		pVideoCodec		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-	/// @param [out]	pAudioCodec	·µ»Øµ±Ç°hPlayHandleÊÇ·ñÒÑ¿ªÆôÓ²½âÂë¹¦ÄÜ
-	/// @remark ÂëÁ÷ÀàĞÍ¶¨ÒåÇë²Î¿¼:@see IPC_CODEC
-	/// @retval			0	²Ù×÷³É¹¦
-	/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-	/// @retval			IPC_Error_PlayerNotStart	²¥·ÅÆ÷ÉĞÎ´Æô¶¯,ÎŞ·¨È¡µÃ²¥·Å¹ı³ÌµÄĞÅÏ¢»òÊôĞÔ
+	/// @brief			è·å–ç æµç±»å‹	
+	/// @param [in]		pVideoCodec		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+	/// @param [out]	pAudioCodec	è¿”å›å½“å‰hPlayHandleæ˜¯å¦å·²å¼€å¯ç¡¬è§£ç åŠŸèƒ½
+	/// @remark ç æµç±»å‹å®šä¹‰è¯·å‚è€ƒ:@see IPC_CODEC
+	/// @retval			0	æ“ä½œæˆåŠŸ
+	/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+	/// @retval			IPC_Error_PlayerNotStart	æ’­æ”¾å™¨å°šæœªå¯åŠ¨,æ— æ³•å–å¾—æ’­æ”¾è¿‡ç¨‹çš„ä¿¡æ¯æˆ–å±æ€§
 	int GetCodec(IPC_CODEC *pVideoCodec, IPC_CODEC *pAudioCodec)
 	{
 		if (!m_hThreadDecode)
@@ -1463,13 +1463,13 @@ public:
 		return IPC_Succeed;
 	}
 
-	// Ì½²âÊÓÆµÂëÁ÷ÀàĞÍ,ÒªÇó±ØĞëÊäÈëIÖ¡
+	// æ¢æµ‹è§†é¢‘ç æµç±»å‹,è¦æ±‚å¿…é¡»è¾“å…¥Iå¸§
 	bool ProbeStream(byte *szFrameBuffer, int nBufferLength);
 			
-	/// @brief °ÑNV12Í¼Ïñ×ª»»ÎªYUV420PÍ¼Ïñ
-	void CopyNV12ToYUV420P(byte *pYV12, byte *pNV12[2], int src_pitch[2], unsigned width, unsigned height);
+	/// @brief æŠŠNV12å›¾åƒè½¬æ¢ä¸ºYUV420På›¾åƒ
+	static void CopyNV12ToYUV420P(byte *pYV12, byte *pNV12[2], int src_pitch[2], unsigned width, unsigned height);
 
-	/// @brief °ÑDxvaÓ²½âÂëNV12Ö¡×ª»»³ÉYV12Í¼Ïñ
+	/// @brief æŠŠDxvaç¡¬è§£ç NV12å¸§è½¬æ¢æˆYV12å›¾åƒ
 	void CopyDxvaFrame(byte *pYuv420, AVFrame *pAvFrameDXVA);
 	
 	void CopyDxvaFrameYV12(byte **ppYV12, int &nStrideY, int &nWidth, int &nHeight, AVFrame *pAvFrameDXVA);
@@ -1480,7 +1480,7 @@ public:
 
 	void UnlockDxvaFrame(AVFrame *pAvFrameDXVA);
 
-	// °ÑYUVC420PÖ¡¸´ÖÆµ½YV12»º´æÖĞ
+	// æŠŠYUVC420På¸§å¤åˆ¶åˆ°YV12ç¼“å­˜ä¸­
 	void CopyFrameYUV420(byte *pYUV420, int nYUV420Size, AVFrame *pFrame420P);
 	
 	void ProcessYUVFilter(AVFrame *pAvFrame, LONGLONG nTimestamp);
@@ -1519,17 +1519,17 @@ public:
 // 		return nStatus;
 // 	}
 	
-	/// @brief			ÂëÁ÷Ì½²â¶ÁÈ¡Êı¾İ°ü»Øµ÷º¯Êı
-	/// @param [in]		opaque		ÓÃ»§ÊäÈëµÄ»Øµ÷º¯Êı²ÎÊıÖ¸Õë
-	/// @param [in]		buf			¶ÁÈ¡Êı¾İµÄ»º´æ
-	/// @param [in]		buf_size	»º´æµÄ³¤¶È
-	/// @return			Êµ¼Ê¶ÁÈ¡Êı¾İµÄ³¤¶È
+	/// @brief			ç æµæ¢æµ‹è¯»å–æ•°æ®åŒ…å›è°ƒå‡½æ•°
+	/// @param [in]		opaque		ç”¨æˆ·è¾“å…¥çš„å›è°ƒå‡½æ•°å‚æ•°æŒ‡é’ˆ
+	/// @param [in]		buf			è¯»å–æ•°æ®çš„ç¼“å­˜
+	/// @param [in]		buf_size	ç¼“å­˜çš„é•¿åº¦
+	/// @return			å®é™…è¯»å–æ•°æ®çš„é•¿åº¦
 	static int ReadAvData(void *opaque, uint8_t *buf, int buf_size);
 
-	/// @brief			ÊµÏÖÖ¸Ê±Ê±³¤µÄÑÓÊ±
-	/// @param [in]		dwDelay		ÑÓÊ±Ê±³¤£¬µ¥Î»Îªms
-	/// @param [in]		bStopFlag	´¦ÀíÍ£Ö¹µÄ±êÖ¾,ÎªfalseÊ±£¬ÔòÍ£Ö¹ÑÓÊ±
-	/// @param [in]		nSleepGranularity	ÑÓÊ±Ê±SleepµÄÁ£¶È,Á£¶ÈÔ½Ğ¡£¬ÖĞÖ¹ÑÓÊ±Ô½Ñ¸ËÙ£¬Í¬Ê±Ò²¸üºÄCPU£¬·´Ö®ÒàÈ»
+	/// @brief			å®ç°æŒ‡æ—¶æ—¶é•¿çš„å»¶æ—¶
+	/// @param [in]		dwDelay		å»¶æ—¶æ—¶é•¿ï¼Œå•ä½ä¸ºms
+	/// @param [in]		bStopFlag	å¤„ç†åœæ­¢çš„æ ‡å¿—,ä¸ºfalseæ—¶ï¼Œåˆ™åœæ­¢å»¶æ—¶
+	/// @param [in]		nSleepGranularity	å»¶æ—¶æ—¶Sleepçš„ç²’åº¦,ç²’åº¦è¶Šå°ï¼Œä¸­æ­¢å»¶æ—¶è¶Šè¿…é€Ÿï¼ŒåŒæ—¶ä¹Ÿæ›´è€—CPUï¼Œåä¹‹äº¦ç„¶
 	static void Delay(DWORD dwDelay, volatile bool &bStopFlag, WORD nSleepGranularity = 20)
 	{
 		DWORD dwTotal = 0;
@@ -1545,8 +1545,8 @@ public:
 		m_bD3dShared = bD3dShared;
 	}
 
-	// Ö¸ÕëÄæ·ÖÅäÆ÷
-	// ÓÃÓÚÅäºÏÖÇÄÜÖ¸Õë»ØÊÕÄÚ´æ
+	// æŒ‡é’ˆé€†åˆ†é…å™¨
+	// ç”¨äºé…åˆæ™ºèƒ½æŒ‡é’ˆå›æ”¶å†…å­˜
 	
 	static UINT __stdcall ThreadDecode(void *p);
 	
@@ -1569,7 +1569,7 @@ public:
 	bool InitialziePlayer();
 	
 	
-	// ÓÃÓÚÒì²½äÖÈ¾µÄµ¯³öÖ¡²Ù×÷
+	// ç”¨äºå¼‚æ­¥æ¸²æŸ“çš„å¼¹å‡ºå¸§æ“ä½œ
 	bool PopFrame(CAVFramePtr &pAvFrame,int &nSize)
 	{
 		CAutoLock lock(m_cslistAVFrame.Get(), false, __FILE__, __FUNCTION__, __LINE__);
@@ -1584,8 +1584,8 @@ public:
 			return false;
 	}
 	
-	/// ÆôÓÃµ¥Ö¡²¥·Å
-	/// ĞëÔÚStartÖ®Ç°µ÷ÓÃ
+	/// å¯ç”¨å•å¸§æ’­æ”¾
+	/// é¡»åœ¨Startä¹‹å‰è°ƒç”¨
 	int EnabelPlayOneFrame(bool bEanble = true)
 	{
 		if (m_hThreadDecode || m_hThreadAsyncReander)
@@ -1594,7 +1594,7 @@ public:
 		return IPC_Succeed;
 	}
 	
-	// ÓÃÓÚÒì²½äÖÈ¾µÄÑ¹ÈëÖ¡²Ù×÷
+	// ç”¨äºå¼‚æ­¥æ¸²æŸ“çš„å‹å…¥å¸§æ“ä½œ
 	int PushFrame(AVFrame *pSrcFrame,time_t tFrame)
 	{
 		CAVFramePtr pFrame = make_shared<CAvFrame>(pSrcFrame,tFrame);
@@ -1634,10 +1634,10 @@ public:
 // 	}
 //
 // 	UINT ReversePlayRun();
-	/// @brief			ÆôÓÃÄæÏò²¥·Å
-	/// @remark			ÄæÏò²¥·ÅµÄÔ­ÀíÊÇÏÈ¸ßËÙ½âÂë£¬°ÑÍ¼Ïñ·ÅÈëÏÈÈëÏÈ³ö¶ÓÁĞµÄ»º´æ½øĞĞ²¥·Å£¬µ±ĞèÒªÄæÏò²¥·Å·Å£¬Ôò´Ó»º´æÎ²²¿ÏòÍ·²¿²¥·Å£¬ĞÎ³ÉÄæÏòĞ§¹û
-	/// @param [in]		bFlag			ÊÇ·ñÆôÓÃÄæÏò²¥·Å£¬ÎªtrueÊ±ÔòÆôÓÃ£¬ÎªfalseÊ±£¬Ôò¹Ø±Õ£¬¹Ø±ÕºÍ¿ª»§¶¯×÷¶¼»áÊÓÆµÖ¡»º´æ
-	/// @param [in]		nCacheFrames	ÄæÏò²¥·ÅÊÓÆµÖ¡»º´æÈİÁ¿
+	/// @brief			å¯ç”¨é€†å‘æ’­æ”¾
+	/// @remark			é€†å‘æ’­æ”¾çš„åŸç†æ˜¯å…ˆé«˜é€Ÿè§£ç ï¼ŒæŠŠå›¾åƒæ”¾å…¥å…ˆå…¥å…ˆå‡ºé˜Ÿåˆ—çš„ç¼“å­˜è¿›è¡Œæ’­æ”¾ï¼Œå½“éœ€è¦é€†å‘æ’­æ”¾æ”¾ï¼Œåˆ™ä»ç¼“å­˜å°¾éƒ¨å‘å¤´éƒ¨æ’­æ”¾ï¼Œå½¢æˆé€†å‘æ•ˆæœ
+	/// @param [in]		bFlag			æ˜¯å¦å¯ç”¨é€†å‘æ’­æ”¾ï¼Œä¸ºtrueæ—¶åˆ™å¯ç”¨ï¼Œä¸ºfalseæ—¶ï¼Œåˆ™å…³é—­ï¼Œå…³é—­å’Œå¼€æˆ·åŠ¨ä½œéƒ½ä¼šè§†é¢‘å¸§ç¼“å­˜
+	/// @param [in]		nCacheFrames	é€†å‘æ’­æ”¾è§†é¢‘å¸§ç¼“å­˜å®¹é‡
 	/// void EnableReservePlay(bool bFlag = true);
 	int SetDisplayAdapter(int nAdapterNo)
 	{
@@ -1650,7 +1650,7 @@ public:
 			return IPC_Error_InvalidParameters;
 	}
 
-	// ´´½¨ÓÃÓÚOSDµş¼ÓµÄD3DFont
+	// åˆ›å»ºç”¨äºOSDå åŠ çš„D3DFont
 	long CreateOSDFontW(LOGFONTW lf, long *nFontHandle)
 	{
 		if (m_pDxSurface)

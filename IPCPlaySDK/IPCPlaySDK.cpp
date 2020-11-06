@@ -1,13 +1,13 @@
-/////////////////////////////////////////////////////////////////////////
+ï»¿/////////////////////////////////////////////////////////////////////////
 /// @file  IPCPlaySDK.cpp
 /// Copyright (c) 2015, xionggao.lee
 /// All rights reserved.  
-/// @brief IPC²¥·ÅSDKÊµÏÖ
+/// @brief IPCæ’­æ”¾SDKå®ç°
 /// @version 1.0  
 /// @author  xionggao.lee
 /// @date  2015.12.17
 ///   
-/// ĞŞ¶©ËµÃ÷£º×î³õ°æ±¾ 
+/// ä¿®è®¢è¯´æ˜ï¼šæœ€åˆç‰ˆæœ¬ 
 /////////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
 #include <list>
@@ -21,7 +21,7 @@
 CAvRegister CIPCPlayer::avRegister;
 //CTimerQueue CIPCPlayer::m_TimeQueue;
 CCriticalSectionAgentPtr CIPCPlayer::m_csDsoundEnum = make_shared<CCriticalSectionAgent>();
-shared_ptr<CDSoundEnum> CIPCPlayer::m_pDsoundEnum = nullptr;/*= make_shared<CDSoundEnum>()*/;	///< ÒôÆµÉè±¸Ã¶¾ÙÆ÷
+shared_ptr<CDSoundEnum> CIPCPlayer::m_pDsoundEnum = nullptr;/*= make_shared<CDSoundEnum>()*/;	///< éŸ³é¢‘è®¾å¤‡æšä¸¾å™¨
 #ifdef _DEBUG
 int	CIPCPlayer::m_nGloabalCount = 0;
 CCriticalSectionAgentPtr CIPCPlayer::m_pCSGlobalCount = make_shared<CCriticalSectionAgent>();
@@ -57,33 +57,33 @@ struct ipcplay_OSD
 extern SharedMemory *g_pSharedMemory;
 
 //shared_ptr<CDSound> CPlayer::m_pDsPlayer = make_shared<CDSound>(nullptr);
-shared_ptr<CSimpleWnd> CIPCPlayer::m_pWndDxInit = make_shared<CSimpleWnd>();	///< ÊÓÆµÏÔÊ¾Ê±£¬ÓÃÒÔ³õÊ¼»¯DirectXµÄÒş²Ø´°¿Ú¶ÔÏó
+shared_ptr<CSimpleWnd> CIPCPlayer::m_pWndDxInit = make_shared<CSimpleWnd>();	///< è§†é¢‘æ˜¾ç¤ºæ—¶ï¼Œç”¨ä»¥åˆå§‹åŒ–DirectXçš„éšè—çª—å£å¯¹è±¡
 
 
 using namespace std;
 using namespace std::tr1;
 
-//IPC IPC ·µ»ØÁ÷°üÍ·
+//IPC IPC è¿”å›æµåŒ…å¤´
 struct IPC_StreamHeader
 {
-	UINT		    chn;	            //ÊÓÆµÊäÈëÍ¨µÀºÅ£¬È¡Öµ0~MAX-1.
-	UINT		    stream;             //ÂëÁ÷±àºÅ£º0:Ö÷ÂëÁ÷£¬1£º×ÓÂëÁ÷£¬2£ºµÚÈıÂëÁ÷¡£
-	UINT		    frame_type;         //Ö¡ÀàĞÍ£¬·¶Î§²Î¿¼APP_NET_TCP_STREAM_TYPE
-	UINT		    frame_num;          //Ö¡ĞòºÅ£¬·¶Î§0~0xFFFFFFFF.
-	UINT		    sec;	            //Ê±¼ä´Á,µ¥Î»£ºÃë£¬Îª1970ÄêÒÔÀ´µÄÃëÊı¡£
-	UINT		    usec;               //Ê±¼ä´Á,µ¥Î»£ºÎ¢Ãë¡£
+	UINT		    chn;	            //è§†é¢‘è¾“å…¥é€šé“å·ï¼Œå–å€¼0~MAX-1.
+	UINT		    stream;             //ç æµç¼–å·ï¼š0:ä¸»ç æµï¼Œ1ï¼šå­ç æµï¼Œ2ï¼šç¬¬ä¸‰ç æµã€‚
+	UINT		    frame_type;         //å¸§ç±»å‹ï¼ŒèŒƒå›´å‚è€ƒAPP_NET_TCP_STREAM_TYPE
+	UINT		    frame_num;          //å¸§åºå·ï¼ŒèŒƒå›´0~0xFFFFFFFF.
+	UINT		    sec;	            //æ—¶é—´æˆ³,å•ä½ï¼šç§’ï¼Œä¸º1970å¹´ä»¥æ¥çš„ç§’æ•°ã€‚
+	UINT		    usec;               //æ—¶é—´æˆ³,å•ä½ï¼šå¾®ç§’ã€‚
 	UINT		    rev[2];
 };
 
-///	@brief			ÓÃÓÚ²¥·ÅIPCË½ÓĞ¸ñÊ½µÄÂ¼ÏñÎÄ¼ş
-///	@param [in]		szFileName		Òª²¥·ÅµÄÎÄ¼şÃû
-///	@param [in]		hWnd			ÏÔÊ¾Í¼ÏñµÄ´°¿Ú
-/// @param [in]		pPlayCallBack	²¥·ÅÊ±µÄ»Øµ÷º¯ÊıÖ¸Õë
-/// @param [in]		pUserPtr		¹©pPlayCallBack·µ»ØµÄÓÃ»§×Ô¶¨ÒåÖ¸Õë
-/// @param [in]		szLogFile		ÈÕÖ¾ÎÄ¼şÃû,ÈôÎªnull£¬Ôò²»¿ªÆôÈÕÖ¾
-///	@return			Èô²Ù×÷³É¹¦£¬·µ»ØÒ»¸öIPC_PLAYHANDLEÀàĞÍµÄ²¥·Å¾ä±ú£¬ËùÓĞºóĞø²¥
-///	·Åº¯Êı¶¼ÒªÊ¹ÓÃĞ©½Ó¿Ú£¬Èô²Ù×÷Ê§°ÜÔò·µ»ØNULL,´íÎóÔ­Òò¿É²Î¿¼
-///	GetLastErrorµÄ·µ»ØÖµ
+///	@brief			ç”¨äºæ’­æ”¾IPCç§æœ‰æ ¼å¼çš„å½•åƒæ–‡ä»¶
+///	@param [in]		szFileName		è¦æ’­æ”¾çš„æ–‡ä»¶å
+///	@param [in]		hWnd			æ˜¾ç¤ºå›¾åƒçš„çª—å£
+/// @param [in]		pPlayCallBack	æ’­æ”¾æ—¶çš„å›è°ƒå‡½æ•°æŒ‡é’ˆ
+/// @param [in]		pUserPtr		ä¾›pPlayCallBackè¿”å›çš„ç”¨æˆ·è‡ªå®šä¹‰æŒ‡é’ˆ
+/// @param [in]		szLogFile		æ—¥å¿—æ–‡ä»¶å,è‹¥ä¸ºnullï¼Œåˆ™ä¸å¼€å¯æ—¥å¿—
+///	@return			è‹¥æ“ä½œæˆåŠŸï¼Œè¿”å›ä¸€ä¸ªIPC_PLAYHANDLEç±»å‹çš„æ’­æ”¾å¥æŸ„ï¼Œæ‰€æœ‰åç»­æ’­
+///	æ”¾å‡½æ•°éƒ½è¦ä½¿ç”¨äº›æ¥å£ï¼Œè‹¥æ“ä½œå¤±è´¥åˆ™è¿”å›NULL,é”™è¯¯åŸå› å¯å‚è€ƒ
+///	GetLastErrorçš„è¿”å›å€¼
  IPC_PLAYHANDLE	ipcplay_OpenFileA(IN HWND hWnd, IN char *szFileName, FilePlayProc pPlayCallBack, void *pUserPtr,char *szLogFile)
 {
 	if (!szFileName)
@@ -116,15 +116,15 @@ struct IPC_StreamHeader
 	}
 }
 
-///	@brief			ÓÃÓÚ²¥·ÅIPCË½ÓĞ¸ñÊ½µÄÂ¼ÏñÎÄ¼ş
-///	@param [in]		szFileName		Òª²¥·ÅµÄÎÄ¼şÃû
-///	@param [in]		hWnd			ÏÔÊ¾Í¼ÏñµÄ´°¿Ú
-/// @param [in]		pPlayCallBack	²¥·ÅÊ±µÄ»Øµ÷º¯ÊıÖ¸Õë
-/// @param [in]		pUserPtr		¹©pPlayCallBack·µ»ØµÄÓÃ»§×Ô¶¨ÒåÖ¸Õë
-/// @param [in]		szLogFile		ÈÕÖ¾ÎÄ¼şÃû,ÈôÎªnull£¬Ôò²»¿ªÆôÈÕÖ¾
-///	@return			Èô²Ù×÷³É¹¦£¬·µ»ØÒ»¸öIPC_PLAYHANDLEÀàĞÍµÄ²¥·Å¾ä±ú£¬ËùÓĞºóĞø²¥
-///	·Åº¯Êı¶¼ÒªÊ¹ÓÃĞ©½Ó¿Ú£¬Èô²Ù×÷Ê§°ÜÔò·µ»ØNULL,´íÎóÔ­Òò¿É²Î¿¼
-///	GetLastErrorµÄ·µ»ØÖµ
+///	@brief			ç”¨äºæ’­æ”¾IPCç§æœ‰æ ¼å¼çš„å½•åƒæ–‡ä»¶
+///	@param [in]		szFileName		è¦æ’­æ”¾çš„æ–‡ä»¶å
+///	@param [in]		hWnd			æ˜¾ç¤ºå›¾åƒçš„çª—å£
+/// @param [in]		pPlayCallBack	æ’­æ”¾æ—¶çš„å›è°ƒå‡½æ•°æŒ‡é’ˆ
+/// @param [in]		pUserPtr		ä¾›pPlayCallBackè¿”å›çš„ç”¨æˆ·è‡ªå®šä¹‰æŒ‡é’ˆ
+/// @param [in]		szLogFile		æ—¥å¿—æ–‡ä»¶å,è‹¥ä¸ºnullï¼Œåˆ™ä¸å¼€å¯æ—¥å¿—
+///	@return			è‹¥æ“ä½œæˆåŠŸï¼Œè¿”å›ä¸€ä¸ªIPC_PLAYHANDLEç±»å‹çš„æ’­æ”¾å¥æŸ„ï¼Œæ‰€æœ‰åç»­æ’­
+///	æ”¾å‡½æ•°éƒ½è¦ä½¿ç”¨äº›æ¥å£ï¼Œè‹¥æ“ä½œå¤±è´¥åˆ™è¿”å›NULL,é”™è¯¯åŸå› å¯å‚è€ƒ
+///	GetLastErrorçš„è¿”å›å€¼
  IPC_PLAYHANDLE	ipcplay_OpenFileW(IN HWND hWnd, IN WCHAR *szFileName, FilePlayProc pPlayCallBack, void *pUserPtr, char *szLogFile)
 {
 	if (!szFileName || !PathFileExistsW(szFileName))
@@ -134,12 +134,12 @@ struct IPC_StreamHeader
 	return ipcplay_OpenFileA(hWnd, szFilenameA, pPlayCallBack,pUserPtr,szLogFile);
 }
 
-///	@brief			³õÊ¼»¯Á÷²¥·Å¾ä±ú,½öÓÃÓÚÁ÷²¥·Å
-///	@param [in]		hWnd			ÏÔÊ¾Í¼ÏñµÄ´°¿Ú
-/// @param [in]		nBufferSize	Á÷²¥·ÅÊ±ÔÊĞí×î´óÊÓÆµÖ¡Êı»º´æÊıÁ¿,¸ÃÖµ±ØĞë´óÓÚ0£¬·ñÔò½«·µ»Ønull
-/// @param [in]		szLogFile		ÈÕÖ¾ÎÄ¼şÃû,ÈôÎªnull£¬Ôò²»¿ªÆôÈÕÖ¾
-///	@return			Èô²Ù×÷³É¹¦£¬·µ»ØÒ»¸öIPC_PLAYHANDLEÀàĞÍµÄ²¥·Å¾ä±ú£¬ËùÓĞºóĞø²¥
-///	·Åº¯Êı¶¼ÒªÊ¹ÓÃĞ©½Ó¿Ú£¬Èô²Ù×÷Ê§°ÜÔò·µ»ØNULL,´íÎóÔ­Òò¿É²Î¿¼GetLastErrorµÄ·µ»ØÖµ
+///	@brief			åˆå§‹åŒ–æµæ’­æ”¾å¥æŸ„,ä»…ç”¨äºæµæ’­æ”¾
+///	@param [in]		hWnd			æ˜¾ç¤ºå›¾åƒçš„çª—å£
+/// @param [in]		nBufferSize	æµæ’­æ”¾æ—¶å…è®¸æœ€å¤§è§†é¢‘å¸§æ•°ç¼“å­˜æ•°é‡,è¯¥å€¼å¿…é¡»å¤§äº0ï¼Œå¦åˆ™å°†è¿”å›null
+/// @param [in]		szLogFile		æ—¥å¿—æ–‡ä»¶å,è‹¥ä¸ºnullï¼Œåˆ™ä¸å¼€å¯æ—¥å¿—
+///	@return			è‹¥æ“ä½œæˆåŠŸï¼Œè¿”å›ä¸€ä¸ªIPC_PLAYHANDLEç±»å‹çš„æ’­æ”¾å¥æŸ„ï¼Œæ‰€æœ‰åç»­æ’­
+///	æ”¾å‡½æ•°éƒ½è¦ä½¿ç”¨äº›æ¥å£ï¼Œè‹¥æ“ä½œå¤±è´¥åˆ™è¿”å›NULL,é”™è¯¯åŸå› å¯å‚è€ƒGetLastErrorçš„è¿”å›å€¼
  IPC_PLAYHANDLE	ipcplay_OpenRTStream(IN HWND hWnd, IN int nBufferSize , char *szLogFile)
 {
 	if ((hWnd && !IsWindow(hWnd))/* || !szStreamHeader || !nHeaderSize*/)
@@ -165,13 +165,13 @@ struct IPC_StreamHeader
 	}
 }
  
-///	@brief			³õÊ¼»¯Á÷²¥·Å¾ä±ú,½öÓÃÓÚÁ÷²¥·Å
-/// @param [in]		hUserHandle		ÍøÂçÁ¬½Ó¾ä±ú
-///	@param [in]		hWnd			ÏÔÊ¾Í¼ÏñµÄ´°¿Ú
-/// @param [in]		nMaxFramesCache	Á÷²¥·ÅÊ±ÔÊĞí×î´óÊÓÆµÖ¡Êı»º´æÊıÁ¿
-/// @param [in]		szLogFile		ÈÕÖ¾ÎÄ¼şÃû,ÈôÎªnull£¬Ôò²»¿ªÆôÈÕÖ¾
-///	@return			Èô²Ù×÷³É¹¦£¬·µ»ØÒ»¸öIPC_PLAYHANDLEÀàĞÍµÄ²¥·Å¾ä±ú£¬ËùÓĞºóĞø²¥
-///	·Åº¯Êı¶¼ÒªÊ¹ÓÃĞ©½Ó¿Ú£¬Èô²Ù×÷Ê§°ÜÔò·µ»ØNULL,´íÎóÔ­Òò¿É²Î¿¼GetLastErrorµÄ·µ»ØÖµ
+///	@brief			åˆå§‹åŒ–æµæ’­æ”¾å¥æŸ„,ä»…ç”¨äºæµæ’­æ”¾
+/// @param [in]		hUserHandle		ç½‘ç»œè¿æ¥å¥æŸ„
+///	@param [in]		hWnd			æ˜¾ç¤ºå›¾åƒçš„çª—å£
+/// @param [in]		nMaxFramesCache	æµæ’­æ”¾æ—¶å…è®¸æœ€å¤§è§†é¢‘å¸§æ•°ç¼“å­˜æ•°é‡
+/// @param [in]		szLogFile		æ—¥å¿—æ–‡ä»¶å,è‹¥ä¸ºnullï¼Œåˆ™ä¸å¼€å¯æ—¥å¿—
+///	@return			è‹¥æ“ä½œæˆåŠŸï¼Œè¿”å›ä¸€ä¸ªIPC_PLAYHANDLEç±»å‹çš„æ’­æ”¾å¥æŸ„ï¼Œæ‰€æœ‰åç»­æ’­
+///	æ”¾å‡½æ•°éƒ½è¦ä½¿ç”¨äº›æ¥å£ï¼Œè‹¥æ“ä½œå¤±è´¥åˆ™è¿”å›NULL,é”™è¯¯åŸå› å¯å‚è€ƒGetLastErrorçš„è¿”å›å€¼
  IPC_PLAYHANDLE	ipcplay_OpenStream(IN HWND hWnd, byte *szStreamHeader, int nHeaderSize, IN int nMaxFramesCache, char *szLogFile)
 {
  	if ((hWnd && !IsWindow(hWnd))/* || !szStreamHeader || !nHeaderSize*/)
@@ -218,14 +218,14 @@ struct IPC_StreamHeader
 	return pPlayer->SetStreamHeader((CHAR *)szStreamHeader, nHeaderSize);
 }
 
-/// @brief			¹Ø±Õ²¥·Å¾ä±ú
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		bAsyncClose		ÊÇ·ñÆôÒì²½¹Ø±Õ
-///	-# true			Ë¢ĞÂ»­ÃæÒÔ±³¾°É«Ìî³ä
-///	-# false			²»Ë¢ĞÂ»­Ãæ,±£Áô×îºóÒ»Ö¡µÄÍ¼Ïñ
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-/// @remark			¹Ø±Õ²¥·Å¾ä±ú»áµ¼ÖÂ²¥·Å½ø¶ÈÍêÈ«ÖÕÖ¹£¬Ïà¹ØÄÚ´æÈ«²¿±»ÊÍ·Å,ÒªÔÙ¶È²¥·Å±ØĞëÖØĞÂ´ò¿ªÎÄ¼ş»òÁ÷Êı¾İ
+/// @brief			å…³é—­æ’­æ”¾å¥æŸ„
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		bAsyncClose		æ˜¯å¦å¯å¼‚æ­¥å…³é—­
+///	-# true			åˆ·æ–°ç”»é¢ä»¥èƒŒæ™¯è‰²å¡«å……
+///	-# false			ä¸åˆ·æ–°ç”»é¢,ä¿ç•™æœ€åä¸€å¸§çš„å›¾åƒ
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+/// @remark			å…³é—­æ’­æ”¾å¥æŸ„ä¼šå¯¼è‡´æ’­æ”¾è¿›åº¦å®Œå…¨ç»ˆæ­¢ï¼Œç›¸å…³å†…å­˜å…¨éƒ¨è¢«é‡Šæ”¾,è¦å†åº¦æ’­æ”¾å¿…é¡»é‡æ–°æ‰“å¼€æ–‡ä»¶æˆ–æµæ•°æ®
  int ipcplay_Close(IN IPC_PLAYHANDLE hPlayHandle, bool bAsyncClose/* = true*/)
 {
 	//TraceFunction();
@@ -255,11 +255,11 @@ struct IPC_StreamHeader
 	return 0;
 }
 
-/// @brief			¿ªÆôÔËĞĞÈÕÖ¾
-/// @param			szLogFile		ÈÕÖ¾ÎÄ¼şÃû,´Ë²ÎÊıÎªNULLÊ±£¬Ôò¹Ø±ÕÈÕÖ¾
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-/// @remark			Ä¬ÈÏÇé¿öÏÂ£¬²»»á¿ªÆôÈÕÖ¾,µ÷ÓÃ´Ëº¯Êıºó»á¿ªÆôÈÕÖ¾£¬ÔÙ´Îµ÷ÓÃÊ±Ôò»á¹Ø±ÕÈÕÖ¾
+/// @brief			å¼€å¯è¿è¡Œæ—¥å¿—
+/// @param			szLogFile		æ—¥å¿—æ–‡ä»¶å,æ­¤å‚æ•°ä¸ºNULLæ—¶ï¼Œåˆ™å…³é—­æ—¥å¿—
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+/// @remark			é»˜è®¤æƒ…å†µä¸‹ï¼Œä¸ä¼šå¼€å¯æ—¥å¿—,è°ƒç”¨æ­¤å‡½æ•°åä¼šå¼€å¯æ—¥å¿—ï¼Œå†æ¬¡è°ƒç”¨æ—¶åˆ™ä¼šå…³é—­æ—¥å¿—
  int	EnableLog(IN IPC_PLAYHANDLE hPlayHandle, char *szLogFile)
 {
 	if (!hPlayHandle)
@@ -271,7 +271,7 @@ struct IPC_StreamHeader
 	return 0;
 }
 
- int ipcplay_SetBorderRect(IN IPC_PLAYHANDLE hPlayHandle,HWND hWnd, LPRECT pRectBorder,bool bPercent)
+ int ipcplay_SetBorderRect(IN IPC_PLAYHANDLE hPlayHandle, HWND hWnd, LPRECT pRectBorder, bool bPercent, bool bSkipVideoSize)
 {
 	if (!hPlayHandle)
 		return IPC_Error_InvalidParameters;
@@ -280,7 +280,7 @@ struct IPC_StreamHeader
 		return IPC_Error_InvalidParameters;
 	if (!pRectBorder || (pRectBorder->left < 0 || pRectBorder->right < 0 || pRectBorder->top < 0 || pRectBorder->bottom < 0))
 		return IPC_Error_InvalidParameters;
-	return pPlayer->SetBorderRect(hWnd, pRectBorder, bPercent);
+	return pPlayer->SetBorderRect(hWnd, pRectBorder, bPercent,bSkipVideoSize);
 }
 
  int ipcplay_RemoveBorderRect(IN IPC_PLAYHANDLE hPlayHandle,HWND hWnd)
@@ -327,13 +327,13 @@ struct IPC_StreamHeader
 	return pPlayer->GetRenderWindows(hWndArray, nCount);
 }
 
-/// @brief			ÊäÈëÁ÷Êı¾İ
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			1	Á÷»º³åÇøÒÑÂú
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-/// @remark			²¥·ÅÁ÷Êı¾İÊ±£¬ÏàÓ¦µÄÖ¡Êı¾İÆäÊµ²¢Î´Á¢¼´²¥·Å£¬¶øÊÇ±»·ÅÁË²¥·Å¶ÓÁĞÖĞ£¬Ó¦¸Ã¸ù¾İipcplay_     
-///					µÄ·µ»ØÖµÀ´ÅĞ¶Ï£¬ÊÇ·ñ¼ÌĞø²¥·Å£¬ÈôËµÃ÷¶ÓÁĞÒÑÂú£¬ÔòÓ¦¸ÃÔİÍ£²¥·Å
+/// @brief			è¾“å…¥æµæ•°æ®
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			1	æµç¼“å†²åŒºå·²æ»¡
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+/// @remark			æ’­æ”¾æµæ•°æ®æ—¶ï¼Œç›¸åº”çš„å¸§æ•°æ®å…¶å®å¹¶æœªç«‹å³æ’­æ”¾ï¼Œè€Œæ˜¯è¢«æ”¾äº†æ’­æ”¾é˜Ÿåˆ—ä¸­ï¼Œåº”è¯¥æ ¹æ®ipcplay_     
+///					çš„è¿”å›å€¼æ¥åˆ¤æ–­ï¼Œæ˜¯å¦ç»§ç»­æ’­æ”¾ï¼Œè‹¥è¯´æ˜é˜Ÿåˆ—å·²æ»¡ï¼Œåˆ™åº”è¯¥æš‚åœæ’­æ”¾
  int ipcplay_InputStream(IN IPC_PLAYHANDLE hPlayHandle, unsigned char *szFrameData, int nFrameSize)
 {
 	if (!hPlayHandle)
@@ -344,13 +344,13 @@ struct IPC_StreamHeader
 	return pPlayer->InputStream(szFrameData, nFrameSize,0);
 }
 
-/// @brief			ÊäÈëÁ÷Ïà»úÊµÊ±ÂëÁ÷
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			1	Á÷»º³åÇøÒÑÂú
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-/// @remark			²¥·ÅÁ÷Êı¾İÊ±£¬ÏàÓ¦µÄÖ¡Êı¾İÆäÊµ²¢Î´Á¢¼´²¥·Å£¬¶øÊÇ±»·ÅÁË²¥·Å¶ÓÁĞÖĞ£¬Ó¦¸Ã¸ù¾İipcplay_PlayStream
-///					µÄ·µ»ØÖµÀ´ÅĞ¶Ï£¬ÊÇ·ñ¼ÌĞø²¥·Å£¬ÈôËµÃ÷¶ÓÁĞÒÑÂú£¬ÔòÓ¦¸ÃÔİÍ£²¥·Å
+/// @brief			è¾“å…¥æµç›¸æœºå®æ—¶ç æµ
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			1	æµç¼“å†²åŒºå·²æ»¡
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+/// @remark			æ’­æ”¾æµæ•°æ®æ—¶ï¼Œç›¸åº”çš„å¸§æ•°æ®å…¶å®å¹¶æœªç«‹å³æ’­æ”¾ï¼Œè€Œæ˜¯è¢«æ”¾äº†æ’­æ”¾é˜Ÿåˆ—ä¸­ï¼Œåº”è¯¥æ ¹æ®ipcplay_PlayStream
+///					çš„è¿”å›å€¼æ¥åˆ¤æ–­ï¼Œæ˜¯å¦ç»§ç»­æ’­æ”¾ï¼Œè‹¥è¯´æ˜é˜Ÿåˆ—å·²æ»¡ï¼Œåˆ™åº”è¯¥æš‚åœæ’­æ”¾
  int ipcplay_InputIPCStream(IN IPC_PLAYHANDLE hPlayHandle, IN byte *pFrameData, IN int nFrameType, IN int nFrameLength, int nFrameNum, time_t nFrameTime)
 {
 	if (!hPlayHandle)
@@ -365,18 +365,18 @@ struct IPC_StreamHeader
 	return pPlayer->InputStream(pFrameData,nFrameType,nFrameLength,nFrameNum,nFrameTime);
 }
 
-/// @brief			¿ªÊ¼²¥·Å
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-///	@param [in]		bEnableAudio	ÊÇ·ñ²¥·ÅÒôÆµ
-///	-# true			²¥·ÅÉùÒô
-///	-# false		¹Ø±ÕÉùÒô
-/// @param [in]		bEnableHaccel	ÊÇ·ñ¿ªÆôÓ²½âÂë
-/// #- true			¿ªÆôÓ²½âÂë¹¦ÄÜ
-/// #- false		¹Ø±ÕÓ²½âÂë¹¦ÄÜ
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-/// @remark			µ±¿ªÆôÓ²½âÂë£¬¶øÏÔ¿¨²»Ö§³Ö¶ÔÓ¦µÄÊÓÆµ±àÂëµÄ½âÂëÊ±£¬»á×Ô¶¯ÇĞ»»µ½Èí¼ş½âÂëµÄ×´Ì¬,¿ÉÍ¨¹ı
-///					ipcplay_GetHaccelStatusÅĞ¶ÏÊÇ·ñÒÑ¾­¿ªÆôÓ²½âÂë
+/// @brief			å¼€å§‹æ’­æ”¾
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+///	@param [in]		bEnableAudio	æ˜¯å¦æ’­æ”¾éŸ³é¢‘
+///	-# true			æ’­æ”¾å£°éŸ³
+///	-# false		å…³é—­å£°éŸ³
+/// @param [in]		bEnableHaccel	æ˜¯å¦å¼€å¯ç¡¬è§£ç 
+/// #- true			å¼€å¯ç¡¬è§£ç åŠŸèƒ½
+/// #- false		å…³é—­ç¡¬è§£ç åŠŸèƒ½
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+/// @remark			å½“å¼€å¯ç¡¬è§£ç ï¼Œè€Œæ˜¾å¡ä¸æ”¯æŒå¯¹åº”çš„è§†é¢‘ç¼–ç çš„è§£ç æ—¶ï¼Œä¼šè‡ªåŠ¨åˆ‡æ¢åˆ°è½¯ä»¶è§£ç çš„çŠ¶æ€,å¯é€šè¿‡
+///					ipcplay_GetHaccelStatusåˆ¤æ–­æ˜¯å¦å·²ç»å¼€å¯ç¡¬è§£ç 
  int ipcplay_Start(IN IPC_PLAYHANDLE hPlayHandle, 
 									IN bool bEnableAudio/* = false*/, 
 									IN bool bFitWindow /*= true*/, 
@@ -390,18 +390,18 @@ struct IPC_StreamHeader
 	return pPlayer->StartPlay(bEnableAudio, bEnableHaccel, bFitWindow);
 }
 
-/// @brief			¿ªÊ¼Í¬²½²¥·Å
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		bFitWindow		ÊÓÆµÊÇ·ñÊÊÓ¦´°¿Ú
-/// @param [in]		pSyncSource		Í¬²½Ô´£¬ÎªÁíÒ»IPCPlaySDK ¾ä±ú£¬ÈôÍ¬²½Ô´Îªnull,Ôò´´½¨Í¬²½Ê±ÖÓ£¬×ÔÎÒÍ¬²½
-/// @param [in]		nVideoFPS		ÊÓÆµÖ¡ÂÊ
-/// #- true			ÊÓÆµÌîÂú´°¿Ú,ÕâÑù»á°ÑÍ¼ÏñÀ­Éì,¿ÉÄÜ»áÔì³ÉÍ¼Ïñ±äĞÎ
-/// #- false		Ö»°´Í¼ÏñÔ­Ê¼±ÈÀıÔÚ´°¿ÚÖĞÏÔÊ¾,³¬³ö±ÈÀı²¿·Ö,ÔòÒÔºÚÉ«±³¾°ÏÔÊ¾
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			1	Á÷»º³åÇøÒÑÂú
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-/// @remark			ÈôpSyncSourceÎªnull,µ±Ç°µÄ²¥·ÅÆ÷³ÉÎªÍ¬²½Ô´£¬nVideoFPS²»ÄÜÎª0£¬·ñÔò·µ»ØIPC_Error_InvalidParameters´íÎó
-///					ÈôpSyncSource²»Îªnull£¬Ôòµ±Ç°²¥·ÅÆ÷ÒÔpSyncSourceÎªÍ¬²½Ô´£¬nVideoFPSÖµ±»ºöÂÔ
+/// @brief			å¼€å§‹åŒæ­¥æ’­æ”¾
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		bFitWindow		è§†é¢‘æ˜¯å¦é€‚åº”çª—å£
+/// @param [in]		pSyncSource		åŒæ­¥æºï¼Œä¸ºå¦ä¸€IPCPlaySDK å¥æŸ„ï¼Œè‹¥åŒæ­¥æºä¸ºnull,åˆ™åˆ›å»ºåŒæ­¥æ—¶é’Ÿï¼Œè‡ªæˆ‘åŒæ­¥
+/// @param [in]		nVideoFPS		è§†é¢‘å¸§ç‡
+/// #- true			è§†é¢‘å¡«æ»¡çª—å£,è¿™æ ·ä¼šæŠŠå›¾åƒæ‹‰ä¼¸,å¯èƒ½ä¼šé€ æˆå›¾åƒå˜å½¢
+/// #- false		åªæŒ‰å›¾åƒåŸå§‹æ¯”ä¾‹åœ¨çª—å£ä¸­æ˜¾ç¤º,è¶…å‡ºæ¯”ä¾‹éƒ¨åˆ†,åˆ™ä»¥é»‘è‰²èƒŒæ™¯æ˜¾ç¤º
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			1	æµç¼“å†²åŒºå·²æ»¡
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+/// @remark			è‹¥pSyncSourceä¸ºnull,å½“å‰çš„æ’­æ”¾å™¨æˆä¸ºåŒæ­¥æºï¼ŒnVideoFPSä¸èƒ½ä¸º0ï¼Œå¦åˆ™è¿”å›IPC_Error_InvalidParametersé”™è¯¯
+///					è‹¥pSyncSourceä¸ä¸ºnullï¼Œåˆ™å½“å‰æ’­æ”¾å™¨ä»¥pSyncSourceä¸ºåŒæ­¥æºï¼ŒnVideoFPSå€¼è¢«å¿½ç•¥
 int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void *pSyncSource, int nVideoFPS)
 {
 	if (!hPlayHandle)
@@ -420,12 +420,12 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return pPlayer->StartSyncPlay(bFitWindow, pSyncPlayer, nVideoFPS);
 }
 
-/// @brief			ÉèÖÃ½âÂëÑÓÊ±
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-///	@param [in]		nDecodeDelay	½âÂëÑÓÊ±£¬µ¥Î»Îªms
-///	-# -1			Ê¹ÓÃÄ¬ÈÏÑÓÊ±
-///	-# 0			ÎŞÑÓÊ±
-/// -# n			ÆäËüÑÓÊ±
+/// @brief			è®¾ç½®è§£ç å»¶æ—¶
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+///	@param [in]		nDecodeDelay	è§£ç å»¶æ—¶ï¼Œå•ä½ä¸ºms
+///	-# -1			ä½¿ç”¨é»˜è®¤å»¶æ—¶
+///	-# 0			æ— å»¶æ—¶
+/// -# n			å…¶å®ƒå»¶æ—¶
  void ipcplay_SetDecodeDelay(IPC_PLAYHANDLE hPlayHandle, int nDecodeDelay)
 {
 	if (!hPlayHandle)
@@ -435,10 +435,10 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 		return ;
 	pPlayer->SetDecodeDelay(nDecodeDelay);
 }
-/// @brief			ÅĞ¶Ï²¥·ÅÆ÷ÊÇ·ñÕıÔÚ²¥·ÅÖĞ
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @retval			true	²¥·ÅÆ÷ÕıÔÚ²¥·ÅÖĞ
-/// @retval			false	²å·ÅÆ÷ÒÑÍ£Ö¹²¥·Å
+/// @brief			åˆ¤æ–­æ’­æ”¾å™¨æ˜¯å¦æ­£åœ¨æ’­æ”¾ä¸­
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @retval			true	æ’­æ”¾å™¨æ­£åœ¨æ’­æ”¾ä¸­
+/// @retval			false	æ’æ”¾å™¨å·²åœæ­¢æ’­æ”¾
  bool ipcplay_IsPlaying(IN IPC_PLAYHANDLE hPlayHandle)
 {
 	if (!hPlayHandle)
@@ -448,11 +448,11 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 		return false;
 	return pPlayer->IsPlaying();
 }
-/// @brief ¸´Î»²¥·ÅÆ÷,ÔÚ´°¿Ú´óĞ¡±ä»¯½Ï´ó»òÒªÇĞ»»²¥·Å´°¿ÚÊ±£¬½¨Òé¸´Î»²¥·ÅÆ÷£¬·ñÔò»­ÃæÖÊÁ¿¿ÉÄÜ»áÑÏÖØÏÂ½µ
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		hWnd			ÏÔÊ¾ÊÓÆµµÄ´°¿Ú
-/// @param [in]		nWidth			´°¿Ú¿í¶È,¸Ã²ÎÊıÔİÎ´Ê¹ÓÃ,¿ÉÉèÎª0
-/// @param [in]		nHeight			´°¿Ú¸ß¶È,¸Ã²ÎÊıÔİÎ´Ê¹ÓÃ,¿ÉÉèÎª0
+/// @brief å¤ä½æ’­æ”¾å™¨,åœ¨çª—å£å¤§å°å˜åŒ–è¾ƒå¤§æˆ–è¦åˆ‡æ¢æ’­æ”¾çª—å£æ—¶ï¼Œå»ºè®®å¤ä½æ’­æ”¾å™¨ï¼Œå¦åˆ™ç”»é¢è´¨é‡å¯èƒ½ä¼šä¸¥é‡ä¸‹é™
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		hWnd			æ˜¾ç¤ºè§†é¢‘çš„çª—å£
+/// @param [in]		nWidth			çª—å£å®½åº¦,è¯¥å‚æ•°æš‚æœªä½¿ç”¨,å¯è®¾ä¸º0
+/// @param [in]		nHeight			çª—å£é«˜åº¦,è¯¥å‚æ•°æš‚æœªä½¿ç”¨,å¯è®¾ä¸º0
  int  ipcplay_Reset(IN IPC_PLAYHANDLE hPlayHandle, HWND hWnd, int nWidth , int nHeight)
 {
 // 	if (!hPlayHandle)
@@ -466,10 +466,10 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 //		return IPC_Error_DxError;
 }
 
-/// @brief			Ê¹ÊÓÆµÊÊÓ¦´°¿Ú
-/// @param [in]		bFitWindow		ÊÓÆµÊÇ·ñÊÊÓ¦´°¿Ú
-/// #- true			ÊÓÆµÌîÂú´°¿Ú,ÕâÑù»á°ÑÍ¼ÏñÀ­Éì,¿ÉÄÜ»áÔì³ÉÍ¼Ïñ±äĞÎ
-/// #- false		Ö»°´Í¼ÏñÔ­Ê¼±ÈÀıÔÚ´°¿ÚÖĞÏÔÊ¾,³¬³ö±ÈÀı²¿·Ö,ÔòÒÔÔ­Ê¼±³¾°ÏÔÊ¾
+/// @brief			ä½¿è§†é¢‘é€‚åº”çª—å£
+/// @param [in]		bFitWindow		è§†é¢‘æ˜¯å¦é€‚åº”çª—å£
+/// #- true			è§†é¢‘å¡«æ»¡çª—å£,è¿™æ ·ä¼šæŠŠå›¾åƒæ‹‰ä¼¸,å¯èƒ½ä¼šé€ æˆå›¾åƒå˜å½¢
+/// #- false		åªæŒ‰å›¾åƒåŸå§‹æ¯”ä¾‹åœ¨çª—å£ä¸­æ˜¾ç¤º,è¶…å‡ºæ¯”ä¾‹éƒ¨åˆ†,åˆ™ä»¥åŸå§‹èƒŒæ™¯æ˜¾ç¤º
  int ipcplay_FitWindow(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow )
 {
 	if (!hPlayHandle)
@@ -481,11 +481,11 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return IPC_Succeed;
 }
 
-/// @brief			Í£Ö¹²¥·Å
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		bStopAsync		ÊÇ·ñÒì²½¹Ø±Õ
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
+/// @brief			åœæ­¢æ’­æ”¾
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		bStopAsync		æ˜¯å¦å¼‚æ­¥å…³é—­
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
  int ipcplay_Stop(IN IPC_PLAYHANDLE hPlayHandle,bool bStopAsync )
 {
 	if (!hPlayHandle)
@@ -497,12 +497,12 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return IPC_Succeed;
 }
 
-/// @brief			ÔİÍ£ÎÄ¼ş²¥·Å
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-/// @remark			ÕâÊÇÒ»¸ö¿ª¹Øº¯Êı£¬Èôµ±Ç°¾ä±úÒÑ¾­´¦ÓÚ²¥·Å×´Ì¬£¬Ê×´Îµ÷ÓÃipcplay_PauseÊ±£¬»á²¥·Å½ø¶ÈÔò»áÔİÍ£
-///					ÔÙ´Îµ÷ÓÃÊ±£¬Ôò»áÔÙ¶È²¥·Å
+/// @brief			æš‚åœæ–‡ä»¶æ’­æ”¾
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+/// @remark			è¿™æ˜¯ä¸€ä¸ªå¼€å…³å‡½æ•°ï¼Œè‹¥å½“å‰å¥æŸ„å·²ç»å¤„äºæ’­æ”¾çŠ¶æ€ï¼Œé¦–æ¬¡è°ƒç”¨ipcplay_Pauseæ—¶ï¼Œä¼šæ’­æ”¾è¿›åº¦åˆ™ä¼šæš‚åœ
+///					å†æ¬¡è°ƒç”¨æ—¶ï¼Œåˆ™ä¼šå†åº¦æ’­æ”¾
  int ipcplay_Pause(IN IPC_PLAYHANDLE hPlayHandle)
 {
 	if (!hPlayHandle)
@@ -514,10 +514,10 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return IPC_Succeed;
 }
 
-/// @brief			Çå¿Õ²¥·Å»º´æ
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
+/// @brief			æ¸…ç©ºæ’­æ”¾ç¼“å­˜
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
  int ipcplay_ClearCache(IN IPC_PLAYHANDLE hPlayHandle)
 {
 	if (!hPlayHandle)
@@ -530,14 +530,14 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 }
 
 
-/// @brief			¿ªÆôÓ²½âÂë¹¦ÄÜ
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		bEnableHaccel	ÊÇ·ñ¿ªÆôÓ²½âÂë¹¦ÄÜ
-/// #- true			¿ªÆôÓ²½âÂë¹¦ÄÜ
-/// #- false		¹Ø±ÕÓ²½âÂë¹¦ÄÜ
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-/// @remark			¿ªÆôºÍ¹Ø±ÕÓ²½âÂë¹¦ÄÜ±ØĞëÒªipcplay_StartÖ®Ç°µ÷ÓÃ²ÅÄÜÉúĞ§
+/// @brief			å¼€å¯ç¡¬è§£ç åŠŸèƒ½
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		bEnableHaccel	æ˜¯å¦å¼€å¯ç¡¬è§£ç åŠŸèƒ½
+/// #- true			å¼€å¯ç¡¬è§£ç åŠŸèƒ½
+/// #- false		å…³é—­ç¡¬è§£ç åŠŸèƒ½
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+/// @remark			å¼€å¯å’Œå…³é—­ç¡¬è§£ç åŠŸèƒ½å¿…é¡»è¦ipcplay_Startä¹‹å‰è°ƒç”¨æ‰èƒ½ç”Ÿæ•ˆ
  int  ipcplay_EnableHaccel(IN IPC_PLAYHANDLE hPlayHandle, IN bool bEnableHaccel/* = false*/)
 {
 	if (!hPlayHandle)
@@ -548,13 +548,13 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return pPlayer->EnableHaccel(bEnableHaccel);
 }
 
-/// @brief			»ñÈ¡Ó²½âÂë×´Ì¬
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [out]	bEnableHaccel	·µ»Øµ±Ç°hPlayHandleÊÇ·ñÒÑ¿ªÆôÓ²½âÂë¹¦ÄÜ
-/// #- true			ÒÑ¿ªÆôÓ²½âÂë¹¦ÄÜ
-/// #- false		Î´¿ªÆôÓ²½âÂë¹¦ÄÜ
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
+/// @brief			è·å–ç¡¬è§£ç çŠ¶æ€
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [out]	bEnableHaccel	è¿”å›å½“å‰hPlayHandleæ˜¯å¦å·²å¼€å¯ç¡¬è§£ç åŠŸèƒ½
+/// #- true			å·²å¼€å¯ç¡¬è§£ç åŠŸèƒ½
+/// #- false		æœªå¼€å¯ç¡¬è§£ç åŠŸèƒ½
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
  int  ipcplay_GetHaccelStatus(IN IPC_PLAYHANDLE hPlayHandle, OUT bool &bEnableHaccel)
 {
 	if (!hPlayHandle)
@@ -566,20 +566,20 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return IPC_Succeed;
 }
 
-/// @brief			¼ì²éÊÇ·ñÖ§³ÖÌØ¶¨ÊÓÆµ±àÂëµÄÓ²½âÂë
-/// @param [in]		nCodec		ÊÓÆµ±àÂë¸ñÊ½,@see IPC_CODEC
-/// @retval			true		Ö§³ÖÖ¸¶¨ÊÓÆµ±àÂëµÄÓ²½âÂë
-/// @retval			false		²»Ö§³ÖÖ¸¶¨ÊÓÆµ±àÂëµÄÓ²½âÂë
+/// @brief			æ£€æŸ¥æ˜¯å¦æ”¯æŒç‰¹å®šè§†é¢‘ç¼–ç çš„ç¡¬è§£ç 
+/// @param [in]		nCodec		è§†é¢‘ç¼–ç æ ¼å¼,@see IPC_CODEC
+/// @retval			true		æ”¯æŒæŒ‡å®šè§†é¢‘ç¼–ç çš„ç¡¬è§£ç 
+/// @retval			false		ä¸æ”¯æŒæŒ‡å®šè§†é¢‘ç¼–ç çš„ç¡¬è§£ç 
  bool  ipcplay_IsSupportHaccel(IN IPC_CODEC nCodec)
 {
 	return CIPCPlayer::IsSupportHaccel(nCodec);
 }
 
-/// @brief			È¡µÃµ±Ç°²¥·ÅÊÓÆµµÄÖ¡ĞÅÏ¢
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [out]	pFilePlayInfo	ÎÄ¼ş²¥·ÅµÄÏà¹ØĞÅÏ¢£¬²Î¼û@see FilePlayInfo
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
+/// @brief			å–å¾—å½“å‰æ’­æ”¾è§†é¢‘çš„å¸§ä¿¡æ¯
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [out]	pFilePlayInfo	æ–‡ä»¶æ’­æ”¾çš„ç›¸å…³ä¿¡æ¯ï¼Œå‚è§@see FilePlayInfo
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
  int  ipcplay_GetPlayerInfo(IN IPC_PLAYHANDLE hPlayHandle, OUT PlayerInfo *pPlayerInfo)
 {
 	if (!hPlayHandle || !pPlayerInfo)
@@ -590,12 +590,12 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return pPlayer->GetPlayerInfo(pPlayerInfo);
 }
 
-/// @brief			½ØÈ¡Õı·Å²¥·ÅµÄÊÓÆµÍ¼Ïñ
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		szFileName		Òª±£´æµÄÎÄ¼şÃû
-/// @param [in]		nFileFormat		±£´æÎÄ¼şµÄ±àÂë¸ñÊ½,@see SNAPSHOT_FORMAT¶¨Òå
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
+/// @brief			æˆªå–æ­£æ”¾æ’­æ”¾çš„è§†é¢‘å›¾åƒ
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		szFileName		è¦ä¿å­˜çš„æ–‡ä»¶å
+/// @param [in]		nFileFormat		ä¿å­˜æ–‡ä»¶çš„ç¼–ç æ ¼å¼,@see SNAPSHOT_FORMATå®šä¹‰
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
  int  ipcplay_SnapShotW(IN IPC_PLAYHANDLE hPlayHandle, IN WCHAR *szFileName, IN SNAPSHOT_FORMAT nFileFormat/* = XIFF_JPG*/)
 {
 	if (!hPlayHandle)
@@ -608,12 +608,12 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return ipcplay_SnapShotA(hPlayHandle, szFileNameA, nFileFormat);
 }
 
-/// @brief			½ØÈ¡Õı·Å²¥·ÅµÄÊÓÆµÍ¼Ïñ
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		szFileName		Òª±£´æµÄÎÄ¼şÃû
-/// @param [in]		nFileFormat		±£´æÎÄ¼şµÄ±àÂë¸ñÊ½,@see SNAPSHOT_FORMAT¶¨Òå
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
+/// @brief			æˆªå–æ­£æ”¾æ’­æ”¾çš„è§†é¢‘å›¾åƒ
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		szFileName		è¦ä¿å­˜çš„æ–‡ä»¶å
+/// @param [in]		nFileFormat		ä¿å­˜æ–‡ä»¶çš„ç¼–ç æ ¼å¼,@see SNAPSHOT_FORMATå®šä¹‰
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
  int  ipcplay_SnapShotA(IN IPC_PLAYHANDLE hPlayHandle, IN CHAR *szFileName, IN SNAPSHOT_FORMAT nFileFormat/* = XIFF_JPG*/)
 {
 	if (!hPlayHandle)
@@ -624,11 +624,11 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return pPlayer->SnapShot(szFileName, nFileFormat);
 }
 
-/// @brief			ÉèÖÃ²¥·ÅµÄÒôÁ¿
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		nVolume			ÒªÉèÖÃµÄÒôÁ¿Öµ£¬È¡Öµ·¶Î§0~100£¬Îª0Ê±£¬ÔòÎª¾²Òô
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
+/// @brief			è®¾ç½®æ’­æ”¾çš„éŸ³é‡
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		nVolume			è¦è®¾ç½®çš„éŸ³é‡å€¼ï¼Œå–å€¼èŒƒå›´0~100ï¼Œä¸º0æ—¶ï¼Œåˆ™ä¸ºé™éŸ³
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
  int  ipcplay_SetVolume(IN IPC_PLAYHANDLE hPlayHandle, IN int nVolume)
 {
 	if (!hPlayHandle)
@@ -640,11 +640,11 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return IPC_Succeed;
 }
 
-/// @brief			È¡µÃµ±Ç°²¥·ÅµÄÒôÁ¿
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [out]	nVolume			µ±Ç°µÄÒôÁ¿Öµ£¬È¡Öµ·¶Î§0~100£¬Îª0Ê±£¬ÔòÎª¾²Òô
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
+/// @brief			å–å¾—å½“å‰æ’­æ”¾çš„éŸ³é‡
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [out]	nVolume			å½“å‰çš„éŸ³é‡å€¼ï¼Œå–å€¼èŒƒå›´0~100ï¼Œä¸º0æ—¶ï¼Œåˆ™ä¸ºé™éŸ³
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
  int  ipcplay_GetVolume(IN IPC_PLAYHANDLE hPlayHandle, OUT int &nVolume)
 {
 	if (!hPlayHandle)
@@ -656,11 +656,11 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return IPC_Succeed;
 }
 
-/// @brief			ÉèÖÃµ±Ç°²¥·ÅµÄËÙ¶ÈµÄ±¶ÂÊ
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		nPlayRate		µ±Ç°µÄ²¥·ÅµÄ±¶ÂÊ,´óÓÚ1Ê±Îª¼ÓËÙ²¥·Å,Ğ¡ÓÚ1Ê±Îª¼õËÙ²¥·Å£¬²»ÄÜÎª0»òĞ¡ÓÚ0
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
+/// @brief			è®¾ç½®å½“å‰æ’­æ”¾çš„é€Ÿåº¦çš„å€ç‡
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		nPlayRate		å½“å‰çš„æ’­æ”¾çš„å€ç‡,å¤§äº1æ—¶ä¸ºåŠ é€Ÿæ’­æ”¾,å°äº1æ—¶ä¸ºå‡é€Ÿæ’­æ”¾ï¼Œä¸èƒ½ä¸º0æˆ–å°äº0
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
  int  ipcplay_SetRate(IN IPC_PLAYHANDLE hPlayHandle, IN float fPlayRate)
 {
 	if (!hPlayHandle ||fPlayRate <= 0.0f )
@@ -671,11 +671,11 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return pPlayer->SetRate(fPlayRate);
 }
 
-/// @brief			²¥·ÅÏÂÒ»Ö¡
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-/// @retval			-24	²¥·ÅÆ÷Î´ÔİÍ£
-/// @remark			¸Ãº¯Êı½öÊÊÓÃÓÚµ¥Ö¡²¥·Å
+/// @brief			æ’­æ”¾ä¸‹ä¸€å¸§
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+/// @retval			-24	æ’­æ”¾å™¨æœªæš‚åœ
+/// @remark			è¯¥å‡½æ•°ä»…é€‚ç”¨äºå•å¸§æ’­æ”¾
  int  ipcplay_SeekNextFrame(IN IPC_PLAYHANDLE hPlayHandle)
 {
 	if (!hPlayHandle)
@@ -691,15 +691,15 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 		return IPC_Error_NotFilePlayer;
 }
 
-/// @brief			ÌøÔ¾µ½Ö¸ÊÓÆµÖ¡½øĞĞ²¥·Å
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		nFrameID		Òª²¥·ÅÖ¡µÄÆğÊ¼ID
-/// @param [in]		bUpdate		ÊÇ·ñ¸üĞÂ»­Ãæ,bUpdateÎªtrueÔòÓèÒÔ¸üĞÂ»­Ãæ,»­ÃæÔò²»¸üĞÂ
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-/// @remark			1.ÈôËùÖ¸¶¨Ê±¼äµã¶ÔÓ¦Ö¡Îª·Ç¹Ø¼üÖ¡£¬Ö¡×Ô¶¯ÒÆ¶¯µ½¾Í½üµÄ¹Ø¼üÖ¡½øĞĞ²¥·Å
-///					2.ÈôËùÖ¸¶¨Ö¡Îª·Ç¹Ø¼üÖ¡£¬Ö¡×Ô¶¯ÒÆ¶¯µ½¾Í½üµÄ¹Ø¼üÖ¡½øĞĞ²¥·Å
-///					3.Ö»ÓĞÔÚ²¥·ÅÔİÊ±,bUpdate²ÎÊı²ÅÓĞĞ§
+/// @brief			è·³è·ƒåˆ°æŒ‡è§†é¢‘å¸§è¿›è¡Œæ’­æ”¾
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		nFrameID		è¦æ’­æ”¾å¸§çš„èµ·å§‹ID
+/// @param [in]		bUpdate		æ˜¯å¦æ›´æ–°ç”»é¢,bUpdateä¸ºtrueåˆ™äºˆä»¥æ›´æ–°ç”»é¢,ç”»é¢åˆ™ä¸æ›´æ–°
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+/// @remark			1.è‹¥æ‰€æŒ‡å®šæ—¶é—´ç‚¹å¯¹åº”å¸§ä¸ºéå…³é”®å¸§ï¼Œå¸§è‡ªåŠ¨ç§»åŠ¨åˆ°å°±è¿‘çš„å…³é”®å¸§è¿›è¡Œæ’­æ”¾
+///					2.è‹¥æ‰€æŒ‡å®šå¸§ä¸ºéå…³é”®å¸§ï¼Œå¸§è‡ªåŠ¨ç§»åŠ¨åˆ°å°±è¿‘çš„å…³é”®å¸§è¿›è¡Œæ’­æ”¾
+///					3.åªæœ‰åœ¨æ’­æ”¾æš‚æ—¶,bUpdateå‚æ•°æ‰æœ‰æ•ˆ
  int  ipcplay_SeekFrame(IN IPC_PLAYHANDLE hPlayHandle, IN int nFrameID,bool bUpdate)
 {
 	if (!hPlayHandle)
@@ -715,15 +715,15 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 		return IPC_Error_NotFilePlayer;
 }
 
-/// @brief			ÌøÔ¾µ½Ö¸¶¨Ê±¼äÆ«ÒÆ½øĞĞ²¥·Å
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		tTimeOffset		Òª²¥·ÅµÄÆğÊ¼Ê±¼ä,µ¥Î»ÎªÃë
-/// @param [in]		bUpdate		ÊÇ·ñ¸üĞÂ»­Ãæ,bUpdateÎªtrueÔòÓèÒÔ¸üĞÂ»­Ãæ,»­ÃæÔò²»¸üĞÂ
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-/// @remark			1.ÈôËùÖ¸¶¨Ê±¼äµã¶ÔÓ¦Ö¡Îª·Ç¹Ø¼üÖ¡£¬Ö¡×Ô¶¯ÒÆ¶¯µ½¾Í½üµÄ¹Ø¼üÖ¡½øĞĞ²¥·Å
-///					2.ÈôËùÖ¸¶¨Ö¡Îª·Ç¹Ø¼üÖ¡£¬Ö¡×Ô¶¯ÒÆ¶¯µ½¾Í½üµÄ¹Ø¼üÖ¡½øĞĞ²¥·Å
-///					3.Ö»ÓĞÔÚ²¥·ÅÔİÊ±,bUpdate²ÎÊı²ÅÓĞĞ§
+/// @brief			è·³è·ƒåˆ°æŒ‡å®šæ—¶é—´åç§»è¿›è¡Œæ’­æ”¾
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		tTimeOffset		è¦æ’­æ”¾çš„èµ·å§‹æ—¶é—´,å•ä½ä¸ºç§’
+/// @param [in]		bUpdate		æ˜¯å¦æ›´æ–°ç”»é¢,bUpdateä¸ºtrueåˆ™äºˆä»¥æ›´æ–°ç”»é¢,ç”»é¢åˆ™ä¸æ›´æ–°
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+/// @remark			1.è‹¥æ‰€æŒ‡å®šæ—¶é—´ç‚¹å¯¹åº”å¸§ä¸ºéå…³é”®å¸§ï¼Œå¸§è‡ªåŠ¨ç§»åŠ¨åˆ°å°±è¿‘çš„å…³é”®å¸§è¿›è¡Œæ’­æ”¾
+///					2.è‹¥æ‰€æŒ‡å®šå¸§ä¸ºéå…³é”®å¸§ï¼Œå¸§è‡ªåŠ¨ç§»åŠ¨åˆ°å°±è¿‘çš„å…³é”®å¸§è¿›è¡Œæ’­æ”¾
+///					3.åªæœ‰åœ¨æ’­æ”¾æš‚æ—¶,bUpdateå‚æ•°æ‰æœ‰æ•ˆ
  int  ipcplay_SeekTime(IN IPC_PLAYHANDLE hPlayHandle, IN time_t tTimeOffset,bool bUpdate)
 {
 	if (!hPlayHandle)
@@ -738,16 +738,16 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 }
 
 
-/// @brief			²¥·ÅÖ¸¶¨Ê±¼äµãµÄÒ»Ö¡»­Ãæ
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		nTimeOffset		Òª²¥·ÅµÄÆğÊ¼Ê±¼ä(µ¥Î»:ºÁÃë)
-/// @param [in]		bUpdate			ÊÇ·ñ¸üĞÂ»­Ãæ,bUpdateÎªtrueÔòÓèÒÔ¸üĞÂ»­Ãæ,»­ÃæÔò²»¸üĞÂ
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-/// @remark			1.ÈôËùÖ¸¶¨Ê±¼äµã¶ÔÓ¦Ö¡Îª·Ç¹Ø¼üÖ¡£¬Ö¡×Ô¶¯ÒÆ¶¯µ½¾Í½üµÄ¹Ø¼üÖ¡½øĞĞ²¥·Å
-///					2.ÈôËùÖ¸¶¨Ö¡Îª·Ç¹Ø¼üÖ¡£¬Ö¡×Ô¶¯ÒÆ¶¯µ½¾Í½üµÄ¹Ø¼üÖ¡½øĞĞ²¥·Å
-///					3.Ö»ÓĞÔÚ²¥·ÅÔİÊ±,bUpdate²ÎÊı²ÅÓĞĞ§
-///					4.ÓÃÓÚµ¥Ö¡²¥·ÅÊ±Ö»ÄÜÏòÇ°ÒÆ¶¯
+/// @brief			æ’­æ”¾æŒ‡å®šæ—¶é—´ç‚¹çš„ä¸€å¸§ç”»é¢
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		nTimeOffset		è¦æ’­æ”¾çš„èµ·å§‹æ—¶é—´(å•ä½:æ¯«ç§’)
+/// @param [in]		bUpdate			æ˜¯å¦æ›´æ–°ç”»é¢,bUpdateä¸ºtrueåˆ™äºˆä»¥æ›´æ–°ç”»é¢,ç”»é¢åˆ™ä¸æ›´æ–°
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+/// @remark			1.è‹¥æ‰€æŒ‡å®šæ—¶é—´ç‚¹å¯¹åº”å¸§ä¸ºéå…³é”®å¸§ï¼Œå¸§è‡ªåŠ¨ç§»åŠ¨åˆ°å°±è¿‘çš„å…³é”®å¸§è¿›è¡Œæ’­æ”¾
+///					2.è‹¥æ‰€æŒ‡å®šå¸§ä¸ºéå…³é”®å¸§ï¼Œå¸§è‡ªåŠ¨ç§»åŠ¨åˆ°å°±è¿‘çš„å…³é”®å¸§è¿›è¡Œæ’­æ”¾
+///					3.åªæœ‰åœ¨æ’­æ”¾æš‚æ—¶,bUpdateå‚æ•°æ‰æœ‰æ•ˆ
+///					4.ç”¨äºå•å¸§æ’­æ”¾æ—¶åªèƒ½å‘å‰ç§»åŠ¨
  int  ipcplay_AsyncSeekFrame(IN IPC_PLAYHANDLE hPlayHandle, IN time_t tTimeOffset, bool bUpdate)
 {
 	if (!hPlayHandle)
@@ -760,11 +760,11 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	
 }
 
-/// @brief			ÆôÓÃµ¥Ö¡²¥·Å
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		bEnable		Òª²¥·ÅµÄÆğÊ¼Ê±¼ä(µ¥Î»:ºÁÃë)
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
+/// @brief			å¯ç”¨å•å¸§æ’­æ”¾
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		bEnable		è¦æ’­æ”¾çš„èµ·å§‹æ—¶é—´(å•ä½:æ¯«ç§’)
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
  int  ipcplay_EnablePlayOneFrame(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable)
 {
 	if (!hPlayHandle)
@@ -777,10 +777,10 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	
 }
 
-/// @brief ´ÓÎÄ¼şÖĞ¶ÁÈ¡Ò»Ö¡£¬¶ÁÈ¡µÄÆğµãÄ¬ÈÏÖµÎª0,SeekFrame»òSeekTime¿ÉÉè¶¨ÆäÆğµãÎ»ÖÃ
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [out]	pFrameBuffer	Ö¡Êı¾İ»º³åÇø
-/// @param [out]	nBufferSize		Ö¡»º³åÇøµÄ´óĞ¡
+/// @brief ä»æ–‡ä»¶ä¸­è¯»å–ä¸€å¸§ï¼Œè¯»å–çš„èµ·ç‚¹é»˜è®¤å€¼ä¸º0,SeekFrameæˆ–SeekTimeå¯è®¾å®šå…¶èµ·ç‚¹ä½ç½®
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [out]	pFrameBuffer	å¸§æ•°æ®ç¼“å†²åŒº
+/// @param [out]	nBufferSize		å¸§ç¼“å†²åŒºçš„å¤§å°
  int  ipcplay_GetFrame(IN IPC_PLAYHANDLE hPlayHandle, OUT byte **pFrameBuffer, OUT UINT &nBufferSize)
 {
 	if (!hPlayHandle)
@@ -794,13 +794,13 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 		return IPC_Error_NotFilePlayer;
 }
 
-/// @brief			ÉèÖÃ×î´óÊÓÆµÖ¡µÄ³ß´ç,Ä¬ÈÏ×î´óµÄÊÓÆµµÄ³ß´çÎª256K,µ±ÊÓÆµÖ¡´óÓÚ256KÊ±,
-/// ¿ÉÄÜ»áÔìÎÄ¼ş¶ÁÈ¡ÎÄ¼ş´íÎó,Òò´ËĞèÒªÉèÖÃÊÓÆµÖ¡µÄ´óĞ¡,ÔÚipcplay_StartÇ°µ÷ÓÃ²ÅÓĞĞ§
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		nMaxFrameSize	×î´óÊÓÆµÖ¡µÄ³ß´ç
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-/// @remark			ÈôËùÖ¸¶¨Ê±¼äµã¶ÔÓ¦Ö¡Îª·Ç¹Ø¼üÖ¡£¬Ö¡×Ô¶¯ÒÆ¶¯µ½¾Í½üµÄ¹Ø¼üÖ¡½øĞĞ²¥·Å
+/// @brief			è®¾ç½®æœ€å¤§è§†é¢‘å¸§çš„å°ºå¯¸,é»˜è®¤æœ€å¤§çš„è§†é¢‘çš„å°ºå¯¸ä¸º256K,å½“è§†é¢‘å¸§å¤§äº256Kæ—¶,
+/// å¯èƒ½ä¼šé€ æ–‡ä»¶è¯»å–æ–‡ä»¶é”™è¯¯,å› æ­¤éœ€è¦è®¾ç½®è§†é¢‘å¸§çš„å¤§å°,åœ¨ipcplay_Startå‰è°ƒç”¨æ‰æœ‰æ•ˆ
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		nMaxFrameSize	æœ€å¤§è§†é¢‘å¸§çš„å°ºå¯¸
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+/// @remark			è‹¥æ‰€æŒ‡å®šæ—¶é—´ç‚¹å¯¹åº”å¸§ä¸ºéå…³é”®å¸§ï¼Œå¸§è‡ªåŠ¨ç§»åŠ¨åˆ°å°±è¿‘çš„å…³é”®å¸§è¿›è¡Œæ’­æ”¾
  int  ipcplay_SetMaxFrameSize(IN IPC_PLAYHANDLE hPlayHandle, IN UINT nMaxFrameSize)
 {
 	if (!hPlayHandle)
@@ -812,13 +812,13 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 }
 
 
-/// @brief			È¡µÃÎÄ¼ş²¥·ÅÊ±,Ö§³ÖµÄ×î´óÊÓÆµÖ¡µÄ³ß´ç,Ä¬ÈÏ×î´óµÄÊÓÆµµÄ³ß´çÎª256K,µ±ÊÓÆµÖ¡
-/// ´óÓÚ256KÊ±,¿ÉÄÜ»áÔìÎÄ¼ş¶ÁÈ¡ÎÄ¼ş´íÎó,Òò´ËĞèÒªÉèÖÃÊÓÆµÖ¡µÄ´óĞ¡,ÔÚipcplay_StartÇ°µ÷ÓÃ²ÅÓĞĞ§
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		nMaxFrameSize	×î´óÊÓÆµÖ¡µÄ³ß´ç
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-/// @remark			ÈôËùÖ¸¶¨Ê±¼äµã¶ÔÓ¦Ö¡Îª·Ç¹Ø¼üÖ¡£¬Ö¡×Ô¶¯ÒÆ¶¯µ½¾Í½üµÄ¹Ø¼üÖ¡½øĞĞ²¥·Å
+/// @brief			å–å¾—æ–‡ä»¶æ’­æ”¾æ—¶,æ”¯æŒçš„æœ€å¤§è§†é¢‘å¸§çš„å°ºå¯¸,é»˜è®¤æœ€å¤§çš„è§†é¢‘çš„å°ºå¯¸ä¸º256K,å½“è§†é¢‘å¸§
+/// å¤§äº256Kæ—¶,å¯èƒ½ä¼šé€ æ–‡ä»¶è¯»å–æ–‡ä»¶é”™è¯¯,å› æ­¤éœ€è¦è®¾ç½®è§†é¢‘å¸§çš„å¤§å°,åœ¨ipcplay_Startå‰è°ƒç”¨æ‰æœ‰æ•ˆ
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		nMaxFrameSize	æœ€å¤§è§†é¢‘å¸§çš„å°ºå¯¸
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+/// @remark			è‹¥æ‰€æŒ‡å®šæ—¶é—´ç‚¹å¯¹åº”å¸§ä¸ºéå…³é”®å¸§ï¼Œå¸§è‡ªåŠ¨ç§»åŠ¨åˆ°å°±è¿‘çš„å…³é”®å¸§è¿›è¡Œæ’­æ”¾
  int  ipcplay_GetMaxFrameSize(IN IPC_PLAYHANDLE hPlayHandle, INOUT UINT &nMaxFrameSize)
 {
 	if (!hPlayHandle)
@@ -835,23 +835,23 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 		return IPC_Error_NotFilePlayer;
 }
 
-/// @brief			²¥·ÅÏÂÒ»Ö¡
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-/// @remark			¸Ãº¯Êı½öÊÊÓÃÓÚµ¥Ö¡²¥·Å,¸Ãº¯Êı¹¦ÄÜÔİÎ´ÊµÏÖ
+/// @brief			æ’­æ”¾ä¸‹ä¸€å¸§
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+/// @remark			è¯¥å‡½æ•°ä»…é€‚ç”¨äºå•å¸§æ’­æ”¾,è¯¥å‡½æ•°åŠŸèƒ½æš‚æœªå®ç°
 // IPC int  ipcplay_SeekNextFrame(IN IPC_PLAYHANDLE hPlayHandle)
 // {
 // 	return IPC_Succeed;
 // }
 
 
-/// @brief ÉèÖÃÒôÆµ²¥·Å²ÎÊı
-/// @param nPlayFPS		ÒôÆµÂëÁ÷µÄÖ¡ÂÊ
-/// @param nSampleFreq	²ÉÑùÆµÂÊ
-/// @param nSampleBit	²ÉÑùÎ»ÖÃ
-/// @remark ÔÚ²¥·ÅÒôÆµÖ®Ç°£¬Ó¦ÏÈÉèÖÃÒôÆµ²¥·Å²ÎÊı,SDKÄÚ²¿Ä¬ÈÏ²ÎÊınPlayFPS = 50£¬nSampleFreq = 8000£¬nSampleBit = 16
-///         ÈôÒôÆµ²¥·Å²ÎÊıÓëSDKÄÚ²¿Ä¬ÈÏ²ÎÊıÒ»ÖÂ£¬¿ÉÒÔ²»ÓÃÉèÖÃÕâĞ©²ÎÊı
+/// @brief è®¾ç½®éŸ³é¢‘æ’­æ”¾å‚æ•°
+/// @param nPlayFPS		éŸ³é¢‘ç æµçš„å¸§ç‡
+/// @param nSampleFreq	é‡‡æ ·é¢‘ç‡
+/// @param nSampleBit	é‡‡æ ·ä½ç½®
+/// @remark åœ¨æ’­æ”¾éŸ³é¢‘ä¹‹å‰ï¼Œåº”å…ˆè®¾ç½®éŸ³é¢‘æ’­æ”¾å‚æ•°,SDKå†…éƒ¨é»˜è®¤å‚æ•°nPlayFPS = 50ï¼ŒnSampleFreq = 8000ï¼ŒnSampleBit = 16
+///         è‹¥éŸ³é¢‘æ’­æ”¾å‚æ•°ä¸SDKå†…éƒ¨é»˜è®¤å‚æ•°ä¸€è‡´ï¼Œå¯ä»¥ä¸ç”¨è®¾ç½®è¿™äº›å‚æ•°
  int  ipcplay_SetAudioPlayParameters(IN IPC_PLAYHANDLE hPlayHandle, DWORD nPlayFPS /*= 50*/, DWORD nSampleFreq/* = 8000*/, WORD nSampleBit/* = 16*/)
 {
 	if (!hPlayHandle)
@@ -863,14 +863,14 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return IPC_Succeed;
 }
 
-/// @brief			¿ª/¹ØÒôÆµ²¥·Å
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		bEnable			ÊÇ·ñ²¥·ÅÒôÆµ
-/// -#	true		¿ªÆôÒôÆµ²¥·Å
-/// -#	false		½ûÓÃÒôÆµ²¥·Å
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-/// @remark			×¢Òâ£¬ÔÚX64CPU¼Ü¹¹µ÷ÓÃ´Ëº¯ÊıÊ±½«·µ»Ø´íÎó:IPC_Error_UnspportOpeationInArchX64
+/// @brief			å¼€/å…³éŸ³é¢‘æ’­æ”¾
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		bEnable			æ˜¯å¦æ’­æ”¾éŸ³é¢‘
+/// -#	true		å¼€å¯éŸ³é¢‘æ’­æ”¾
+/// -#	false		ç¦ç”¨éŸ³é¢‘æ’­æ”¾
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+/// @remark			æ³¨æ„ï¼Œåœ¨X64CPUæ¶æ„è°ƒç”¨æ­¤å‡½æ•°æ—¶å°†è¿”å›é”™è¯¯:IPC_Error_UnspportOpeationInArchX64
  int  ipcplay_EnableAudio(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable/* = true*/)
 {
 #ifndef _WIN64
@@ -885,11 +885,11 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 #endif
 }
 
-/// @brief			Ë¢ĞÂ²¥·Å´°¿Ú
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§
-/// @remark			¸Ã¹¦ÄÜÒ»°ãÓÃÓÚ²¥·Å½áÊøºó£¬Ë¢ĞÂ´°¿Ú£¬°Ñ»­ÃæÖÃÎªºÚÉ«
+/// @brief			åˆ·æ–°æ’­æ”¾çª—å£
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ
+/// @remark			è¯¥åŠŸèƒ½ä¸€èˆ¬ç”¨äºæ’­æ”¾ç»“æŸåï¼Œåˆ·æ–°çª—å£ï¼ŒæŠŠç”»é¢ç½®ä¸ºé»‘è‰²
  int  ipcplay_Refresh(IN IPC_PLAYHANDLE hPlayHandle)
 {
 	if (!hPlayHandle)
@@ -901,11 +901,11 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return IPC_Succeed;
 }
 
-/// @brief			ÉèÖÃ»ñÈ¡ÓÃ»§»Øµ÷½Ó¿Ú,Í¨¹ı´Ë»Øµ÷£¬ÓÃ»§¿ÉÍ¨¹ı»Øµ÷µÃµ½Ò»Ğ©Êı¾İ,»ò¶ÔµÃµ½µÄÊı¾İ×÷Ò»Ğ©´¦Àí
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		»Øµ÷º¯ÊıµÄÀàĞÍ @see IPC_CALLBACK
-/// @param [in]		pUserCallBack	»Øµ÷º¯ÊıÖ¸Õë
-/// @param [in]		pUserPtr		ÓÃ»§×Ô¶¨ÒåÖ¸Õë£¬ÔÚµ÷ÓÃ»Øµ÷Ê±£¬½«»á´«»Ø´ËÖ¸Õë
+/// @brief			è®¾ç½®è·å–ç”¨æˆ·å›è°ƒæ¥å£,é€šè¿‡æ­¤å›è°ƒï¼Œç”¨æˆ·å¯é€šè¿‡å›è°ƒå¾—åˆ°ä¸€äº›æ•°æ®,æˆ–å¯¹å¾—åˆ°çš„æ•°æ®ä½œä¸€äº›å¤„ç†
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		å›è°ƒå‡½æ•°çš„ç±»å‹ @see IPC_CALLBACK
+/// @param [in]		pUserCallBack	å›è°ƒå‡½æ•°æŒ‡é’ˆ
+/// @param [in]		pUserPtr		ç”¨æˆ·è‡ªå®šä¹‰æŒ‡é’ˆï¼Œåœ¨è°ƒç”¨å›è°ƒæ—¶ï¼Œå°†ä¼šä¼ å›æ­¤æŒ‡é’ˆ
  int ipcplay_SetCallBack(IN IPC_PLAYHANDLE hPlayHandle, IPC_CALLBACK nCallBackType, IN void *pUserCallBack, IN void *pUserPtr)
 {
 	if (!hPlayHandle)
@@ -917,9 +917,9 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return IPC_Succeed;
 }
 
-/// @brief			ÉèÖÃÍâ²¿»æÖÆ»Øµ÷½Ó¿Ú
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		pUserPtr		ÓÃ»§×Ô¶¨ÒåÖ¸Õë£¬ÔÚµ÷ÓÃ»Øµ÷Ê±£¬½«»á´«»Ø´ËÖ¸Õë
+/// @brief			è®¾ç½®å¤–éƒ¨ç»˜åˆ¶å›è°ƒæ¥å£
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		pUserPtr		ç”¨æˆ·è‡ªå®šä¹‰æŒ‡é’ˆï¼Œåœ¨è°ƒç”¨å›è°ƒæ—¶ï¼Œå°†ä¼šä¼ å›æ­¤æŒ‡é’ˆ
  int ipcplay_SetExternDrawCallBack(IN IPC_PLAYHANDLE hPlayHandle, IN void *pExternCallBack,IN void *pUserPtr)
 {
 	if (!hPlayHandle)
@@ -930,9 +930,9 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return pPlayer->SetCallBack(ExternDcDraw,pExternCallBack, pUserPtr);
 }
 
-/// @brief			ÉèÖÃ»ñÈ¡YUVÊı¾İ»Øµ÷½Ó¿Ú,Í¨¹ı´Ë»Øµ÷£¬ÓÃ»§¿ÉÖ±½Ó»ñÈ¡½âÂëºóµÄYUVÊı¾İ
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		pUserPtr		ÓÃ»§×Ô¶¨ÒåÖ¸Õë£¬ÔÚµ÷ÓÃ»Øµ÷Ê±£¬½«»á´«»Ø´ËÖ¸Õë
+/// @brief			è®¾ç½®è·å–YUVæ•°æ®å›è°ƒæ¥å£,é€šè¿‡æ­¤å›è°ƒï¼Œç”¨æˆ·å¯ç›´æ¥è·å–è§£ç åçš„YUVæ•°æ®
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		pUserPtr		ç”¨æˆ·è‡ªå®šä¹‰æŒ‡é’ˆï¼Œåœ¨è°ƒç”¨å›è°ƒæ—¶ï¼Œå°†ä¼šä¼ å›æ­¤æŒ‡é’ˆ
  int ipcplay_SetYUVCapture(IN IPC_PLAYHANDLE hPlayHandle, IN void *pCaptureYUV, IN void *pUserPtr)
 {
 	if (!hPlayHandle)
@@ -943,9 +943,9 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return pPlayer->SetCallBack(YUVCapture, pCaptureYUV, pUserPtr);
 }
 
-/// @brief			ÉèÖÃ»ñÈ¡YUVÊı¾İ»Øµ÷½Ó¿Ú,Í¨¹ı´Ë»Øµ÷£¬ÓÃ»§¿ÉÖ±½Ó»ñÈ¡½âÂëºóµÄYUVÊı¾İ
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		pUserPtr		ÓÃ»§×Ô¶¨ÒåÖ¸Õë£¬ÔÚµ÷ÓÃ»Øµ÷Ê±£¬½«»á´«»Ø´ËÖ¸Õë
+/// @brief			è®¾ç½®è·å–YUVæ•°æ®å›è°ƒæ¥å£,é€šè¿‡æ­¤å›è°ƒï¼Œç”¨æˆ·å¯ç›´æ¥è·å–è§£ç åçš„YUVæ•°æ®
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		pUserPtr		ç”¨æˆ·è‡ªå®šä¹‰æŒ‡é’ˆï¼Œåœ¨è°ƒç”¨å›è°ƒæ—¶ï¼Œå°†ä¼šä¼ å›æ­¤æŒ‡é’ˆ
  int ipcplay_SetYUVCaptureEx(IN IPC_PLAYHANDLE hPlayHandle, IN void *pCaptureYUVEx, IN void *pUserPtr)
 {
 	if (!hPlayHandle)
@@ -956,9 +956,9 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return pPlayer->SetCallBack(YUVCaptureEx,pCaptureYUVEx, pUserPtr);
 }
 
-/// @brief			ÉèÖÃIPCË½ÓÃ¸ñÊ½Â¼Ïñ£¬Ö¡½âÎö»Øµ÷,Í¨¹ı´Ë»Ø£¬ÓÃ»§¿ÉÖ±½Ó»ñÈ¡Ô­Ê¼µÄÖ¡Êı¾İ
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		pUserPtr		ÓÃ»§×Ô¶¨ÒåÖ¸Õë£¬ÔÚµ÷ÓÃ»Øµ÷Ê±£¬½«»á´«»Ø´ËÖ¸Õë
+/// @brief			è®¾ç½®IPCç§ç”¨æ ¼å¼å½•åƒï¼Œå¸§è§£æå›è°ƒ,é€šè¿‡æ­¤å›ï¼Œç”¨æˆ·å¯ç›´æ¥è·å–åŸå§‹çš„å¸§æ•°æ®
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		pUserPtr		ç”¨æˆ·è‡ªå®šä¹‰æŒ‡é’ˆï¼Œåœ¨è°ƒç”¨å›è°ƒæ—¶ï¼Œå°†ä¼šä¼ å›æ­¤æŒ‡é’ˆ
  int ipcplay_SetFrameParserCallback(IN IPC_PLAYHANDLE hPlayHandle, IN void *pCaptureFrame, IN void *pUserPtr)
 {
 	if (!hPlayHandle)
@@ -970,13 +970,13 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return	pPlayer->SetCallBack(FramePaser,pCaptureFrame, pUserPtr);
 }
 
-/// @brief			Éú³ÉÒ»¸öIPCÂ¼ÏñÎÄ¼şÍ·
-/// @param [in,out]	pMediaHeader	ÓÉÓÃ»§Ìá¹©µÄÓÃÒÔ½ÓÊÕIPCÂ¼ÏñÎÄ¼şÍ·µÄ»º³åÇø
-/// @param [in,out]	pHeaderSize		Ö¸¶¨ÓÃ»§Ìá¹©µÄÓÃ»º³åÇøµÄ³¤¶È£¬Èô²Ù×÷³É¹¦£¬Ôò·µ»ØÒÑÉú³ÉµÄIPCÂ¼ÏñÎÄ¼şÍ·³¤¶È
-/// @param [in]		nAudioCodec		ÒôÆµµÄ±àÂëÀàĞÍ
-/// @param [in]		nVideoCodec		ÊÓÆµµÄ±àÒëÀàĞÍ
-/// @param [in]		nFPS			ÊÓÆµµÄÖ¡ÂÊ
-/// @remark		    ÈôpMediaHeaderÎªNULL,ÔòpHeaderSizeÖ»·µ»ØËùĞè»º³åÇøµÄ³¤¶È
+/// @brief			ç”Ÿæˆä¸€ä¸ªIPCå½•åƒæ–‡ä»¶å¤´
+/// @param [in,out]	pMediaHeader	ç”±ç”¨æˆ·æä¾›çš„ç”¨ä»¥æ¥æ”¶IPCå½•åƒæ–‡ä»¶å¤´çš„ç¼“å†²åŒº
+/// @param [in,out]	pHeaderSize		æŒ‡å®šç”¨æˆ·æä¾›çš„ç”¨ç¼“å†²åŒºçš„é•¿åº¦ï¼Œè‹¥æ“ä½œæˆåŠŸï¼Œåˆ™è¿”å›å·²ç”Ÿæˆçš„IPCå½•åƒæ–‡ä»¶å¤´é•¿åº¦
+/// @param [in]		nAudioCodec		éŸ³é¢‘çš„ç¼–ç ç±»å‹
+/// @param [in]		nVideoCodec		è§†é¢‘çš„ç¼–è¯‘ç±»å‹
+/// @param [in]		nFPS			è§†é¢‘çš„å¸§ç‡
+/// @remark		    è‹¥pMediaHeaderä¸ºNULL,åˆ™pHeaderSizeåªè¿”å›æ‰€éœ€ç¼“å†²åŒºçš„é•¿åº¦
  int ipcplay_BuildMediaHeader(INOUT byte *pMediaHeader, INOUT int  *pHeaderSize,IN IPC_CODEC nAudioCodec,IN IPC_CODEC nVideoCodec,USHORT nFPS)
 {
 	if (!pHeaderSize)
@@ -989,7 +989,7 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	else if (*pHeaderSize < sizeof(IPC_MEDIAINFO))
 		return IPC_Error_BufferSizeNotEnough;
 	
-	// ÒôÆµºÍÊÓÆµ±àÂëµÄÀàĞÍ±ØĞëÏŞ¶¨ÏÂÒÔÏÂ·¶Î§ÄÚ
+	// éŸ³é¢‘å’Œè§†é¢‘ç¼–ç çš„ç±»å‹å¿…é¡»é™å®šä¸‹ä»¥ä¸‹èŒƒå›´å†…
 	if (nAudioCodec < CODEC_G711A ||
 		nAudioCodec > CODEC_AAC||
 		nVideoCodec < CODEC_H264||
@@ -997,7 +997,7 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 		return IPC_Error_InvalidParameters;
 
 	IPC_MEDIAINFO *pMedia = new IPC_MEDIAINFO();
-	pMedia->nCameraType	 = 0;	// 0ÎªµÏÎ¬Å·Ïà»ú²úÉúµÄÎÄ¼ş
+	pMedia->nCameraType	 = 0;	// 0ä¸ºè¿ªç»´æ¬§ç›¸æœºäº§ç”Ÿçš„æ–‡ä»¶
 	pMedia->nFps			 = (UCHAR)nFPS;	
 	pMedia->nVideoCodec  = nVideoCodec;
 	pMedia->nAudioCodec  = nAudioCodec;	
@@ -1007,13 +1007,13 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return IPC_Succeed;
 }
 
-/// @brief			Éú³ÉÒ»¸öIPCÂ¼ÏñÖ¡
-/// @param [in,out]	pMediaFrame		ÓÉÓÃ»§Ìá¹©µÄÓÃÒÔ½ÓÊÕIPCÂ¼ÏñÖ¡µÄ»º³åÇø
-/// @param [in,out]	pFrameSize		Ö¸¶¨ÓÃ»§Ìá¹©µÄÓÃ»º³åÇøµÄ³¤¶È£¬Èô²Ù×÷³É¹¦£¬Ôò·µ»ØÒÑÉú³ÉµÄIPCÂ¼ÏñÖ¡³¤¶È
-/// @param [in,out]	nFrameID		IPCÂ¼ÏñÖ¡µÄID£¬µÚÒ»Ö¡±ØĞëÎª0£¬ºóĞøÖ¡ÒÀ´ÎµİÔö£¬ÒôÆµÖ¡ºÍÊÓÆµÖ¡±ØĞë·Ö¿ª¼ÆÊı
-/// @param [in]		pIPCIpcStream	´ÓIPC IPCµÃµ½µÄÂëÁ÷Êı¾İ
-/// @param [in,out]	nStreamLength	ÊäÈëÊ±Îª´ÓIPC IPCµÃµ½µÄÂëÁ÷Êı¾İ³¤¶È£¬Êä³öÊ±ÎªÂëÁ÷Êı¾İÈ¥Í·ºóµÄ³¤¶È,¼´ÂãÂëÁ÷µÄ³¤¶È
-/// @remark		    ÈôpMediaFrameÎªNULL,ÔòpFrameSizeÖ»·µ»ØIPCÂ¼ÏñÖ¡³¤¶È
+/// @brief			ç”Ÿæˆä¸€ä¸ªIPCå½•åƒå¸§
+/// @param [in,out]	pMediaFrame		ç”±ç”¨æˆ·æä¾›çš„ç”¨ä»¥æ¥æ”¶IPCå½•åƒå¸§çš„ç¼“å†²åŒº
+/// @param [in,out]	pFrameSize		æŒ‡å®šç”¨æˆ·æä¾›çš„ç”¨ç¼“å†²åŒºçš„é•¿åº¦ï¼Œè‹¥æ“ä½œæˆåŠŸï¼Œåˆ™è¿”å›å·²ç”Ÿæˆçš„IPCå½•åƒå¸§é•¿åº¦
+/// @param [in,out]	nFrameID		IPCå½•åƒå¸§çš„IDï¼Œç¬¬ä¸€å¸§å¿…é¡»ä¸º0ï¼Œåç»­å¸§ä¾æ¬¡é€’å¢ï¼ŒéŸ³é¢‘å¸§å’Œè§†é¢‘å¸§å¿…é¡»åˆ†å¼€è®¡æ•°
+/// @param [in]		pIPCIpcStream	ä»IPC IPCå¾—åˆ°çš„ç æµæ•°æ®
+/// @param [in,out]	nStreamLength	è¾“å…¥æ—¶ä¸ºä»IPC IPCå¾—åˆ°çš„ç æµæ•°æ®é•¿åº¦ï¼Œè¾“å‡ºæ—¶ä¸ºç æµæ•°æ®å»å¤´åçš„é•¿åº¦,å³è£¸ç æµçš„é•¿åº¦
+/// @remark		    è‹¥pMediaFrameä¸ºNULL,åˆ™pFrameSizeåªè¿”å›IPCå½•åƒå¸§é•¿åº¦
  int ipcplay_BuildFrameHeader(OUT byte *pFrameHeader, INOUT int *HeaderSize, IN int nFrameID, IN byte *pIPCIpcStream, IN int &nStreamLength)
 {
 	if (!pIPCIpcStream || !nStreamLength)
@@ -1035,17 +1035,17 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	IPCFrameHeaderEx FrameHeader;	
 	switch (pStreamHeader->frame_type)
 	{
-	case 0:									// º£Ë¼IÖ¡ºÅÎª0£¬ÕâÊÇ¹Ì¼şµÄÒ»¸öBUG£¬ÓĞ´ıĞŞÕı
-	case IPC_IDR_FRAME: 	// IDRÖ¡
-	case IPC_I_FRAME:		// IÖ¡
+	case 0:									// æµ·æ€Iå¸§å·ä¸º0ï¼Œè¿™æ˜¯å›ºä»¶çš„ä¸€ä¸ªBUGï¼Œæœ‰å¾…ä¿®æ­£
+	case IPC_IDR_FRAME: 	// IDRå¸§
+	case IPC_I_FRAME:		// Iå¸§
 		FrameHeader.nType = FRAME_I;
 		break;
-	case IPC_P_FRAME:       // PÖ¡
-	case IPC_B_FRAME:       // BÖ¡
-	case IPC_711_ALAW:      // 711 AÂÉ±àÂëÖ¡
-	case IPC_711_ULAW:      // 711 UÂÉ±àÂëÖ¡
-	case IPC_726:           // 726±àÂëÖ¡
-	case IPC_AAC:           // AAC±àÂëÖ¡
+	case IPC_P_FRAME:       // På¸§
+	case IPC_B_FRAME:       // Bå¸§
+	case IPC_711_ALAW:      // 711 Aå¾‹ç¼–ç å¸§
+	case IPC_711_ULAW:      // 711 Uå¾‹ç¼–ç å¸§
+	case IPC_726:           // 726ç¼–ç å¸§
+	case IPC_AAC:           // AACç¼–ç å¸§
 		FrameHeader.nType = pStreamHeader->frame_type;
 		break;
 	default:
@@ -1065,10 +1065,10 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return IPC_Succeed;
 }
 
-/// @brief			ÉèÖÃÌ½²âÂëÁ÷ÀàĞÍÊ±£¬µÈ´ıÂëÁ÷µÄ³¬Ê±Öµ
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		dwTimeout		µÈ´ıÂëÁ÷µÄ¸ÏÊ±Öµ£¬µ¥Î»ºÁÃë
-/// @remark			¸Ãº¯Êı±ØĞëÒªÔÚipcplay_StartÖ®Ç°µ÷ÓÃ£¬²ÅÄÜÉúĞ§
+/// @brief			è®¾ç½®æ¢æµ‹ç æµç±»å‹æ—¶ï¼Œç­‰å¾…ç æµçš„è¶…æ—¶å€¼
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		dwTimeout		ç­‰å¾…ç æµçš„èµ¶æ—¶å€¼ï¼Œå•ä½æ¯«ç§’
+/// @remark			è¯¥å‡½æ•°å¿…é¡»è¦åœ¨ipcplay_Startä¹‹å‰è°ƒç”¨ï¼Œæ‰èƒ½ç”Ÿæ•ˆ
  int ipcplay_SetProbeStreamTimeout(IN IPC_PLAYHANDLE hPlayHandle, IN DWORD dwTimeout /*= 3000*/)
 {
 	if (!hPlayHandle)
@@ -1080,11 +1080,11 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return IPC_Succeed;
 }
 
-/// @brief			ÉèÖÃÍ¼ÏñµÄÏñËØ¸ñÊ½
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		nPixelFMT		ÒªÉèÖÃµÄÏñËØ¸ñÊ½£¬Ïê¼û¼û@see PIXELFMORMAT
-/// @param [in]		pUserPtr		ÓÃ»§×Ô¶¨ÒåÖ¸Õë£¬ÔÚµ÷ÓÃ»Øµ÷Ê±£¬½«»á´«»Ø´ËÖ¸Õë
-/// @remark			ÈôÒªÉèÖÃÍâ²¿ÏÔÊ¾»Øµ÷£¬±ØĞë°ÑÏÔÊ¾¸ñÊ½ÉèÖÃÎªR8G8B8¸ñÊ½
+/// @brief			è®¾ç½®å›¾åƒçš„åƒç´ æ ¼å¼
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		nPixelFMT		è¦è®¾ç½®çš„åƒç´ æ ¼å¼ï¼Œè¯¦è§è§@see PIXELFMORMAT
+/// @param [in]		pUserPtr		ç”¨æˆ·è‡ªå®šä¹‰æŒ‡é’ˆï¼Œåœ¨è°ƒç”¨å›è°ƒæ—¶ï¼Œå°†ä¼šä¼ å›æ­¤æŒ‡é’ˆ
+/// @remark			è‹¥è¦è®¾ç½®å¤–éƒ¨æ˜¾ç¤ºå›è°ƒï¼Œå¿…é¡»æŠŠæ˜¾ç¤ºæ ¼å¼è®¾ç½®ä¸ºR8G8B8æ ¼å¼
  int ipcplay_SetPixFormat(IN IPC_PLAYHANDLE hPlayHandle, IN PIXELFMORMAT nPixelFMT)
 {
 	if (!hPlayHandle)
@@ -1163,10 +1163,10 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 // }
 
 
-/// @brief			ÉèÖÃÍ¼ÏñĞı×ª½Ç¶È
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		nAngle			ÒªĞı×ªµÄ½Ç¶ÈÖµ£¬ÏêÇéÇë¼û@see RocateAngle
-/// @remark	×¢Òâ    Ä¿Ç°Í¼ÏñĞı×ª¹¦ÄÜ½öÖ§³ÖÈí½â
+/// @brief			è®¾ç½®å›¾åƒæ—‹è½¬è§’åº¦
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		nAngle			è¦æ—‹è½¬çš„è§’åº¦å€¼ï¼Œè¯¦æƒ…è¯·è§@see RocateAngle
+/// @remark	æ³¨æ„    ç›®å‰å›¾åƒæ—‹è½¬åŠŸèƒ½ä»…æ”¯æŒè½¯è§£
  int ipcplay_SetRocateAngle(IN IPC_PLAYHANDLE hPlayHandle, RocateAngle nAngle )
 {
 	if (!hPlayHandle)
@@ -1177,17 +1177,17 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return pPlayer->SetRocate(nAngle);
 }
 
-/// @brief		°ÑYUVÍ¼Ïñ×ª»»ÎªRGB24Í¼Ïñ
-/// @param [in]		hPlayHandle	ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		pY			YUVÊı¾İY·ÖÁ¿Ö¸Õë
-/// @param [in]		pU			YUVÊı¾İU·ÖÁ¿Ö¸Õë
-/// @param [in]		pV			YUVÊı¾İV·ÖÁ¿Ö¸Õë
-/// @param [in]		nStrideY	YUVÊı¾İY·ÖÁ¿µÄ¸±³¤£¬¼´Ò»ĞĞÊı¾İµÄ³¤¶È
-/// @param [in]		nStrideUV	YUVÊı¾İUV·ÖÁ¿µÄ¸±³¤£¬¼´Ò»ĞĞÊı¾İµÄ³¤¶È
-/// @param [in]		nWidth		YUVÍ¼ÏñµÄ¿í¶È
-/// @param [in]		nHeight		YUVÍ¼ÏñµÄ¸ß¶È
-/// @param [out]    pRGBBuffer	RGB24Í¼ÏñµÄ»º´æ
-/// @param [out]	nBufferSize	RGB24Í¼ÏñµÄ»º´æµÄ³¤¶È
+/// @brief		æŠŠYUVå›¾åƒè½¬æ¢ä¸ºRGB24å›¾åƒ
+/// @param [in]		hPlayHandle	ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		pY			YUVæ•°æ®Yåˆ†é‡æŒ‡é’ˆ
+/// @param [in]		pU			YUVæ•°æ®Uåˆ†é‡æŒ‡é’ˆ
+/// @param [in]		pV			YUVæ•°æ®Våˆ†é‡æŒ‡é’ˆ
+/// @param [in]		nStrideY	YUVæ•°æ®Yåˆ†é‡çš„å‰¯é•¿ï¼Œå³ä¸€è¡Œæ•°æ®çš„é•¿åº¦
+/// @param [in]		nStrideUV	YUVæ•°æ®UVåˆ†é‡çš„å‰¯é•¿ï¼Œå³ä¸€è¡Œæ•°æ®çš„é•¿åº¦
+/// @param [in]		nWidth		YUVå›¾åƒçš„å®½åº¦
+/// @param [in]		nHeight		YUVå›¾åƒçš„é«˜åº¦
+/// @param [out]    pRGBBuffer	RGB24å›¾åƒçš„ç¼“å­˜
+/// @param [out]	nBufferSize	RGB24å›¾åƒçš„ç¼“å­˜çš„é•¿åº¦
 //  int ipcplay_YUV2RGB24(IN IPC_PLAYHANDLE hPlayHandle,
 // 	const unsigned char* pY,
 //	const unsigned char* pU,
@@ -1208,14 +1208,14 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 }
 */
 
-/// @brief			ÉèÖÃÒ»×éÏßÌõ×ø±ê
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		pPointArray		ÏßÌõ×ø±êÊı×é
-/// @param [in]		nCount			pPointArrayÖĞ°üº¬ÏßÌõµÄ×ø±êÊıÁ¿
-/// @param [in]		fWidth			ÏßÌõ¿í¶È
-/// @param [in]		nColor			ÏßÌõµÄÑÕÉ«
-/// @return ²Ù×÷³É¹¦Ê±£¬·µ»ØÏßÌõ×éµÄ¾ä±ú£¬·ñÔò·µ»Ø0
-/// @remark	×¢Òâ    ÉèÖÃºÃÏßÌõ×ø±êºó,SDKÄÚ²¿»á¸ù¾İ×ø±êĞÅÏ¢»æÖÆÏßÌõ£¬Ò»×é×ø±êµÄÏßÌõµÄÑÕÉ«ÊÇÏàÍ¬µÄ£¬²¢ÇÒÊÇÏàÁ¬µÄ£¬ÈôÒª»æÖÆ¶àÌõ²»ÏàÁ¬µÄÏßÌõ£¬±ØĞë¶à´Îµ÷ÓÃipcplay_AddLineArray
+/// @brief			è®¾ç½®ä¸€ç»„çº¿æ¡åæ ‡
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		pPointArray		çº¿æ¡åæ ‡æ•°ç»„
+/// @param [in]		nCount			pPointArrayä¸­åŒ…å«çº¿æ¡çš„åæ ‡æ•°é‡
+/// @param [in]		fWidth			çº¿æ¡å®½åº¦
+/// @param [in]		nColor			çº¿æ¡çš„é¢œè‰²
+/// @return æ“ä½œæˆåŠŸæ—¶ï¼Œè¿”å›çº¿æ¡ç»„çš„å¥æŸ„ï¼Œå¦åˆ™è¿”å›0
+/// @remark	æ³¨æ„    è®¾ç½®å¥½çº¿æ¡åæ ‡å,SDKå†…éƒ¨ä¼šæ ¹æ®åæ ‡ä¿¡æ¯ç»˜åˆ¶çº¿æ¡ï¼Œä¸€ç»„åæ ‡çš„çº¿æ¡çš„é¢œè‰²æ˜¯ç›¸åŒçš„ï¼Œå¹¶ä¸”æ˜¯ç›¸è¿çš„ï¼Œè‹¥è¦ç»˜åˆ¶å¤šæ¡ä¸ç›¸è¿çš„çº¿æ¡ï¼Œå¿…é¡»å¤šæ¬¡è°ƒç”¨ipcplay_AddLineArray
  long ipcplay_AddLineArray(IN IPC_PLAYHANDLE hPlayHandle, POINT *pPointArray, int nCount, float fWidth, DWORD nColor)
 {
 	if (!hPlayHandle)
@@ -1226,10 +1226,10 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return pPlayer->AddLineArray(pPointArray, nCount, fWidth, nColor);
 }
 
-/// @brief			ÒÆ³ıÒ»×éÏßÌõ
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		nLineIndex		ÓÉipcplay_AddLineArray·µ»ØµÄÏßÌõ¾ä±ú
-/// @return ²Ù×÷³É¹¦Ê±·µ»ØSDKÄÚ´æÈÔÔÚ»æÖÆÏßÌõ×éµÄÊıÁ¿£¬·ñÔò·µ»Ø-1
+/// @brief			ç§»é™¤ä¸€ç»„çº¿æ¡
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		nLineIndex		ç”±ipcplay_AddLineArrayè¿”å›çš„çº¿æ¡å¥æŸ„
+/// @return æ“ä½œæˆåŠŸæ—¶è¿”å›SDKå†…å­˜ä»åœ¨ç»˜åˆ¶çº¿æ¡ç»„çš„æ•°é‡ï¼Œå¦åˆ™è¿”å›-1
  int  ipcplay_RemoveLineArray(IN IPC_PLAYHANDLE hPlayHandle, long nLineIndex)
 {
 	if (!hPlayHandle)
@@ -1242,11 +1242,11 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 }
 
 
-/// @brief			ÉèÖÃ±³¾°Í¼Æ¬Â·¾¶
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		szImageFile		±³¾°Í¼Æ¬Â·¾¶£¬±³¾°Í¼Æ¬¿ÉÒÔjpg,png»òbmpÎÄ¼ş
-/// @remark ×¢Òâ£¬ÈôÖ®Ç°Î´µ÷ÓÃipcplay_SetBackgroundImageº¯Êı£¬¼´Ê¹szImageFileÎªnull,SDKÈÔ»áÆôÓÃÄ¬ÈÏµÄÍ¼Ïñ£¬
-///                ÈôÒÑ¾­µ÷ÓÃ¹ıSDK£¬µ±szImageFileÎªnullÊ±£¬Ôò½ûÓÃ±³¾°Í¼Æ¬
+/// @brief			è®¾ç½®èƒŒæ™¯å›¾ç‰‡è·¯å¾„
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		szImageFile		èƒŒæ™¯å›¾ç‰‡è·¯å¾„ï¼ŒèƒŒæ™¯å›¾ç‰‡å¯ä»¥jpg,pngæˆ–bmpæ–‡ä»¶
+/// @remark æ³¨æ„ï¼Œè‹¥ä¹‹å‰æœªè°ƒç”¨ipcplay_SetBackgroundImageå‡½æ•°ï¼Œå³ä½¿szImageFileä¸ºnull,SDKä»ä¼šå¯ç”¨é»˜è®¤çš„å›¾åƒï¼Œ
+///                è‹¥å·²ç»è°ƒç”¨è¿‡SDKï¼Œå½“szImageFileä¸ºnullæ—¶ï¼Œåˆ™ç¦ç”¨èƒŒæ™¯å›¾ç‰‡
  int ipcplay_SetBackgroundImageA(IN IPC_PLAYHANDLE hPlayHandle, LPCSTR szImageFile)
 {
 	if (!hPlayHandle)
@@ -1260,11 +1260,11 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return IPC_Succeed;
 }
 
-/// @brief			ÉèÖÃ±³¾°Í¼Æ¬Â·¾¶
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		szImageFile		±³¾°Í¼Æ¬Â·¾¶£¬±³¾°Í¼Æ¬¿ÉÒÔjpg,png»òbmpÎÄ¼ş
-/// @remark ×¢Òâ£¬ÈôÖ®Ç°Î´µ÷ÓÃipcplay_SetBackgroundImageº¯Êı£¬¼´Ê¹szImageFileÎªnull,SDKÈÔ»áÆôÓÃÄ¬ÈÏµÄÍ¼Ïñ£¬
-///                ÈôÒÑ¾­µ÷ÓÃ¹ıSDK£¬µ±szImageFileÎªnullÊ±£¬Ôò½ûÓÃ±³¾°Í¼Æ¬
+/// @brief			è®¾ç½®èƒŒæ™¯å›¾ç‰‡è·¯å¾„
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		szImageFile		èƒŒæ™¯å›¾ç‰‡è·¯å¾„ï¼ŒèƒŒæ™¯å›¾ç‰‡å¯ä»¥jpg,pngæˆ–bmpæ–‡ä»¶
+/// @remark æ³¨æ„ï¼Œè‹¥ä¹‹å‰æœªè°ƒç”¨ipcplay_SetBackgroundImageå‡½æ•°ï¼Œå³ä½¿szImageFileä¸ºnull,SDKä»ä¼šå¯ç”¨é»˜è®¤çš„å›¾åƒï¼Œ
+///                è‹¥å·²ç»è°ƒç”¨è¿‡SDKï¼Œå½“szImageFileä¸ºnullæ—¶ï¼Œåˆ™ç¦ç”¨èƒŒæ™¯å›¾ç‰‡
  int ipcplay_SetBackgroundImageW(IN IPC_PLAYHANDLE hPlayHandle, LPCWSTR szImageFile)
 {
 	if (!hPlayHandle)
@@ -1276,9 +1276,9 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return IPC_Succeed;
 }
 
-/// @brief			ÆôÓÃDirectDraw×÷ÎªäÖÈ¾Æ÷,Õâ½«½ûÓÃD3DäÖÈ¾,Ó²½âÂëÊ±ÎŞ·¨ÆôÓÃD3D¹²ÏíÄ£Ê½£¬Õâ½»´ó¸±½µµÍÓ²½âÂëµÄĞ§ÂÊ
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		szImageFile		±³¾°Í¼Æ¬Â·¾¶£¬±³¾°Í¼Æ¬¿ÉÒÔjpg,png»òbmpÎÄ¼ş,ÎªnullÊ±£¬ÔòÉ¾³ı±³¾°Í¼Æ¬
+/// @brief			å¯ç”¨DirectDrawä½œä¸ºæ¸²æŸ“å™¨,è¿™å°†ç¦ç”¨D3Dæ¸²æŸ“,ç¡¬è§£ç æ—¶æ— æ³•å¯ç”¨D3Då…±äº«æ¨¡å¼ï¼Œè¿™äº¤å¤§å‰¯é™ä½ç¡¬è§£ç çš„æ•ˆç‡
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		szImageFile		èƒŒæ™¯å›¾ç‰‡è·¯å¾„ï¼ŒèƒŒæ™¯å›¾ç‰‡å¯ä»¥jpg,pngæˆ–bmpæ–‡ä»¶,ä¸ºnullæ—¶ï¼Œåˆ™åˆ é™¤èƒŒæ™¯å›¾ç‰‡
  int ipcplay_EnableDDraw(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable)
 {
 #ifndef _WIN64
@@ -1293,9 +1293,9 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 #endif
 }
 
-/// @brief			ÆôÓÃÁ÷½âÎöÆ÷
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		nCodec			±àÂë¸ñÊ½
+/// @brief			å¯ç”¨æµè§£æå™¨
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		nCodec			ç¼–ç æ ¼å¼
  int ipcplay_EnableStreamParser(IN IPC_PLAYHANDLE hPlayHandle, IPC_CODEC nCodec )
 {
 	if (!hPlayHandle)
@@ -1306,10 +1306,10 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return pPlayer->EnableStreamParser(nCodec);
 }
 
-/// @brief			ÊäÈëÎ´½âÎö£¬Î´·ÖÖ¡ÂëÁ÷
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		pData			ÊäÈëµÄÊı¾İÁ÷
-/// @param [in]		nLength			Êı¾İÁ÷³ß´ç
+/// @brief			è¾“å…¥æœªè§£æï¼Œæœªåˆ†å¸§ç æµ
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		pData			è¾“å…¥çš„æ•°æ®æµ
+/// @param [in]		nLength			æ•°æ®æµå°ºå¯¸
  int ipcplay_InputStream2(IN IPC_PLAYHANDLE hPlayHandle, byte *pData, int nLength)
 {
 	if (!hPlayHandle)
@@ -1320,9 +1320,9 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return pPlayer->InputStream(pData, nLength);
 }
 
-/// @brief			ÊäÈë´ó»ªÊÓÆµÖ¡
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		pData			´ó»ªÊÓÆµÖ¡
+/// @brief			è¾“å…¥å¤§åè§†é¢‘å¸§
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		pData			å¤§åè§†é¢‘å¸§
  int ipcplay_InputDHStream(IN IPC_PLAYHANDLE hPlayHandle, byte *pBuffer,int nLength)
 {
 	if (!hPlayHandle)
@@ -1332,14 +1332,14 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 		return IPC_Error_InvalidParameters;
 	return pPlayer->InputDHStream(pBuffer,nLength);
 }
-/// @brief			»æÖÆÒ»¸öÊµĞÄ¶à±ßĞÎ
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		pPointArray		¶à±ßĞÎ¶¥µã×ø±êÊı×é
-/// @param [in]		nCount			pPointArrayÖĞ°üº¬ÏßÌõµÄ×ø±êÊıÁ¿
-/// @param [in]		pVertexIndex	pPointArrayÖĞ×ø±êµÄÅÅÁĞË³Ğò£¬¼´»æÖÆ¶à±ßĞÎ»­±ÊÒÆ¶¯µÄË³Ğò
-/// @param [in]		nColor			¶à±ßĞÎµÄÑÕÉ«
-/// @return ²Ù×÷³É¹¦Ê±£¬·µ»ØÏßÌõ×éµÄ¾ä±ú£¬·ñÔò·µ»Ø0
-/// @remark	×¢Òâ    ÉèÖÃºÃÏßÌõ×ø±êºó,SDKÄÚ²¿»á¸ù¾İ×ø±êĞÅÏ¢»æÖÆÏßÌõ£¬Ò»×é×ø±êµÄÏßÌõµÄÑÕÉ«ÊÇÏàÍ¬µÄ£¬²¢ÇÒÊÇÏàÁ¬µÄ£¬ÈôÒª»æÖÆ¶àÌõ²»ÏàÁ¬µÄÏßÌõ£¬±ØĞë¶à´Îµ÷ÓÃipcplay_AddLineArray
+/// @brief			ç»˜åˆ¶ä¸€ä¸ªå®å¿ƒå¤šè¾¹å½¢
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		pPointArray		å¤šè¾¹å½¢é¡¶ç‚¹åæ ‡æ•°ç»„
+/// @param [in]		nCount			pPointArrayä¸­åŒ…å«çº¿æ¡çš„åæ ‡æ•°é‡
+/// @param [in]		pVertexIndex	pPointArrayä¸­åæ ‡çš„æ’åˆ—é¡ºåºï¼Œå³ç»˜åˆ¶å¤šè¾¹å½¢ç”»ç¬”ç§»åŠ¨çš„é¡ºåº
+/// @param [in]		nColor			å¤šè¾¹å½¢çš„é¢œè‰²
+/// @return æ“ä½œæˆåŠŸæ—¶ï¼Œè¿”å›çº¿æ¡ç»„çš„å¥æŸ„ï¼Œå¦åˆ™è¿”å›0
+/// @remark	æ³¨æ„    è®¾ç½®å¥½çº¿æ¡åæ ‡å,SDKå†…éƒ¨ä¼šæ ¹æ®åæ ‡ä¿¡æ¯ç»˜åˆ¶çº¿æ¡ï¼Œä¸€ç»„åæ ‡çš„çº¿æ¡çš„é¢œè‰²æ˜¯ç›¸åŒçš„ï¼Œå¹¶ä¸”æ˜¯ç›¸è¿çš„ï¼Œè‹¥è¦ç»˜åˆ¶å¤šæ¡ä¸ç›¸è¿çš„çº¿æ¡ï¼Œå¿…é¡»å¤šæ¬¡è°ƒç”¨ipcplay_AddLineArray
  long ipcplay_AddPolygon(IN IPC_PLAYHANDLE hPlayHandle, POINT *pPointArray, int nCount, WORD *pVertexIndex, DWORD nColor)
 {
 	if (!hPlayHandle)
@@ -1350,9 +1350,9 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return pPlayer->AddPolygon(pPointArray, nCount, pVertexIndex, nColor);
 }
 
-/// @brief			ÒÆ³ıÒ»¸ö¶à±ßĞÎ
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		nLineIndex		ÓÉipcplay_AddPolygon·µ»ØµÄ¶à±ßĞÎ¾ä±ú
+/// @brief			ç§»é™¤ä¸€ä¸ªå¤šè¾¹å½¢
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		nLineIndex		ç”±ipcplay_AddPolygonè¿”å›çš„å¤šè¾¹å½¢å¥æŸ„
  int ipcplay_RemovePolygon(IN IPC_PLAYHANDLE hPlayHandle, long nLineIndex)
 {
 	if (!hPlayHandle)
@@ -1376,13 +1376,13 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 }
 
 
-/// @brief			ÆôÓÃ/½ûÓÃÒì²½äÖÈ¾
-/// @param [in]		hPlayHandle		ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-/// @param [in]		bEnable			ÊÇ·ñÆôÓÃÒì²½äÖÈ¾
-/// -#	true		ÆôÓÃÒì²½äÖÈ¾
-/// -#	false		½ûÓÃÒì²½äÖÈ¾
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§		
+/// @brief			å¯ç”¨/ç¦ç”¨å¼‚æ­¥æ¸²æŸ“
+/// @param [in]		hPlayHandle		ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+/// @param [in]		bEnable			æ˜¯å¦å¯ç”¨å¼‚æ­¥æ¸²æŸ“
+/// -#	true		å¯ç”¨å¼‚æ­¥æ¸²æŸ“
+/// -#	false		ç¦ç”¨å¼‚æ­¥æ¸²æŸ“
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ		
  int ipcplay_EnableAsyncRender(IN IPC_PLAYHANDLE hPlayHandle, bool bEnable,int nFrameCache)
 {
 	if (!hPlayHandle)
@@ -1394,12 +1394,12 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return IPC_Succeed;
 }
 
-/// @brief		»ñÈ¡Ö¸¶¨µÄ´íÎó´úÂëËù°üº¬µÄ´íÎóĞÅÏ¢
-/// @param [in] nErrorCode ´íÎó´úÂë
-/// @param [in] szMessage  ·µ»Ø´íÎó´úÂëµÄÎÄ±¾»º³åÇø
-/// @param [in] nBufferSize ÎÄ±¾»º³åÇøµÄÈİÁ¿£¬×î´óÄÜÈİÄÉµÄ×Ö·ûÊı
-/// @retval		0  ²Ù×÷³É¹¦
-/// @retval		-1 ²Ù×÷Ê§°Ü£¬ÊäÈëÁËÒ»¸öÎ´ÖªµÄ´íÎó´úÂë¡£
+/// @brief		è·å–æŒ‡å®šçš„é”™è¯¯ä»£ç æ‰€åŒ…å«çš„é”™è¯¯ä¿¡æ¯
+/// @param [in] nErrorCode é”™è¯¯ä»£ç 
+/// @param [in] szMessage  è¿”å›é”™è¯¯ä»£ç çš„æ–‡æœ¬ç¼“å†²åŒº
+/// @param [in] nBufferSize æ–‡æœ¬ç¼“å†²åŒºçš„å®¹é‡ï¼Œæœ€å¤§èƒ½å®¹çº³çš„å­—ç¬¦æ•°
+/// @retval		0  æ“ä½œæˆåŠŸ
+/// @retval		-1 æ“ä½œå¤±è´¥ï¼Œè¾“å…¥äº†ä¸€ä¸ªæœªçŸ¥çš„é”™è¯¯ä»£ç ã€‚
  int ipcplay_GetErrorMessageA(int nErrorCode, LPSTR szMessage, int nBufferSize)
 {
 	WCHAR szMessageW[4096] = { 0 };
@@ -1571,10 +1571,10 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 		case IPC_Error_NotAsyncPlayer:
 			szMessaageW = L"Not a AsyncPlayer.";
 			break;
-		case IPC_Error_InvalidSharedMemory:		// = (-50), ///< ÉĞÎ´´´½¨¹²ÏíÄÚ´æ
+		case IPC_Error_InvalidSharedMemory:		// = (-50), ///< å°šæœªåˆ›å»ºå…±äº«å†…å­˜
 			szMessaageW = L"Invliad shared Memory.";
 			break;
-		case IPC_Error_LibUninitialized:		// = (-51), ///< ¶¯Ì¬¿âÉĞÎ´¼ÓÔØ»ò³õÊ¼³õÊ¼»¯
+		case IPC_Error_LibUninitialized:		// = (-51), ///< åŠ¨æ€åº“å°šæœªåŠ è½½æˆ–åˆå§‹åˆå§‹åŒ–
 			szMessaageW = L"The lib is not load or Initialized.";
 			break;
 		case IPC_Error_InvalidVideoAdapterGUID:
@@ -1603,14 +1603,14 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 
 }
 
-/// @brief			»ñÈ¡ÏµÍ³ÖĞÁ¬½ÓÏÔÆ÷µÄÊıÁ¿ºÍËùÁ¬½ÓÏÔ¿¨µÄĞÅÏ¢
-/// @param [in,out]	pAdapterBuffer	ÏÔ¿¨ĞÅÏ¢½ÓÊÕ»º³åÇø,µ±¸Ã»º³åÇøÎªnullÊ±£¬Ö»·µ»ØÊµ¼ÊÁ¬½ÓÏÔÆ÷µÄÊıÁ¿
-/// @param [in,out]	nAdapterNo		ÊäÈëÊ±£¬Ö¸¶¨pAdapterBuffer×î´ó¿É±£´æÏÔ¿¨ĞÅÏ¢µÄÊıÁ¿£¬Êä³öÊ±·µ»ØÊµ¼ÊÏÔ¿¨µÄÊıÁ¿
-/// @retval			0	²Ù×÷³É¹¦
-/// @retval			-1	ÊäÈë²ÎÊıÎŞĞ§	
-/// @retval			-15	ÊäÈë»º³åÇø²»×ã£¬ÏµÍ³ÖĞ°²×°ÏÔ¿¨µÄÊıÁ¿³¬¹ınBufferSizeÖ¸¶¨µÄÊıÁ¿
-/// @remark	×¢Òâ    ÕâÀï»ñµÃµÄÏÔ¿¨ÊıÁ¿ºÍÏµÍ³ÖĞÊµ¼Ê°²×°µÄÏÔ¿¨ÊıÁ¿²»Ò»¶¨ÏàÍ¬£¬¶øÊÇËùÓĞÏÔ¿¨Á¬½ÓÏÔÊ¾Æ÷µÄÊµ¼ÊÊıÁ¿,±ÈÈçÏµÍ³
-////				ÖĞ°²×°ÁËÁ½¿éÏÔ¿¨£¬µ«Ã¿¿éÏÔ¿¨ÓÖ¸÷Á¬½ÓÁËÁ½Ì¨ÏÔÊ¾Æ÷£¬Ôò»ñµÃµÄÏÔ¿¨ÊıÁ¿ÔòÎª4
+/// @brief			è·å–ç³»ç»Ÿä¸­è¿æ¥æ˜¾å™¨çš„æ•°é‡å’Œæ‰€è¿æ¥æ˜¾å¡çš„ä¿¡æ¯
+/// @param [in,out]	pAdapterBuffer	æ˜¾å¡ä¿¡æ¯æ¥æ”¶ç¼“å†²åŒº,å½“è¯¥ç¼“å†²åŒºä¸ºnullæ—¶ï¼Œåªè¿”å›å®é™…è¿æ¥æ˜¾å™¨çš„æ•°é‡
+/// @param [in,out]	nAdapterNo		è¾“å…¥æ—¶ï¼ŒæŒ‡å®špAdapterBufferæœ€å¤§å¯ä¿å­˜æ˜¾å¡ä¿¡æ¯çš„æ•°é‡ï¼Œè¾“å‡ºæ—¶è¿”å›å®é™…æ˜¾å¡çš„æ•°é‡
+/// @retval			0	æ“ä½œæˆåŠŸ
+/// @retval			-1	è¾“å…¥å‚æ•°æ— æ•ˆ	
+/// @retval			-15	è¾“å…¥ç¼“å†²åŒºä¸è¶³ï¼Œç³»ç»Ÿä¸­å®‰è£…æ˜¾å¡çš„æ•°é‡è¶…è¿‡nBufferSizeæŒ‡å®šçš„æ•°é‡
+/// @remark	æ³¨æ„    è¿™é‡Œè·å¾—çš„æ˜¾å¡æ•°é‡å’Œç³»ç»Ÿä¸­å®é™…å®‰è£…çš„æ˜¾å¡æ•°é‡ä¸ä¸€å®šç›¸åŒï¼Œè€Œæ˜¯æ‰€æœ‰æ˜¾å¡è¿æ¥æ˜¾ç¤ºå™¨çš„å®é™…æ•°é‡,æ¯”å¦‚ç³»ç»Ÿ
+////				ä¸­å®‰è£…äº†ä¸¤å—æ˜¾å¡ï¼Œä½†æ¯å—æ˜¾å¡åˆå„è¿æ¥äº†ä¸¤å°æ˜¾ç¤ºå™¨ï¼Œåˆ™è·å¾—çš„æ˜¾å¡æ•°é‡åˆ™ä¸º4
  int ipcplay_GetDisplayAdapterInfo(AdapterInfo *pAdapterBuffer,int &nBufferSize)
 {
 	//TraceFunction();
@@ -1689,7 +1689,7 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 		return nResult;
 }
 
-// Ê¹ÓÃOSD×ÖÌå»æÖÆÎÄ±¾
+// ä½¿ç”¨OSDå­—ä½“ç»˜åˆ¶æ–‡æœ¬
  int ipcplay_DrawOSDTextA(IN long nFontHandle, IN CHAR *szText, IN int nLength, IN RECT rtPostion, IN DWORD dwFormat, IN  DWORD nColor, OUT long *nOSDHandle)
 {
 	int nNeedBuffSize = ::MultiByteToWideChar(CP_ACP, NULL, szText, -1, NULL, 0);
@@ -1722,7 +1722,7 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 		return nResult;
 }
 
-// ³Æ³ıÎÄ±¾
+// ç§°é™¤æ–‡æœ¬
  int ipcplay_RmoveOSDText(long nOSDText)
 {
 	if (!nOSDText)
@@ -1754,7 +1754,7 @@ int ipcplay_StartSyncPlay(IN IPC_PLAYHANDLE hPlayHandle, bool bFitWindow , void 
 	return nResult;
 }
 
-// Ïú»Ù×ÖÌå
+// é”€æ¯å­—ä½“
  int ipcplay_DestroyOSDFont(long nFontHandle)
 {
 	if (!nFontHandle)

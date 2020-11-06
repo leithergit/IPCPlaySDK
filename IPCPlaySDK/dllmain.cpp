@@ -436,3 +436,4 @@ DWORD OpenShareMemory()
 	}
 	return dwResult;
 }
+

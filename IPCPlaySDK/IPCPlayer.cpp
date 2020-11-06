@@ -926,7 +926,10 @@ int CIPCPlayer::AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent
 			return IPC_Error_RenderWndOverflow;
 		auto itFind = find_if(m_listRenderWnd.begin(), m_listRenderWnd.end(), WndFinder(hRenderWnd));
 		if (itFind != m_listRenderWnd.end())
+		{
+			(*itFind)->SetBorder(pRtRender, bPercent);
 			return IPC_Succeed;
+		}
 
 		m_listRenderWnd.push_back(make_shared<RenderWnd>(hRenderWnd, pRtRender, bPercent));
 		OutputMsg("%s size of m_listRenderWnd = %d.\n", __FUNCTION__,m_listRenderWnd.size());
@@ -1148,24 +1151,27 @@ int CIPCPlayer::SetStreamHeader(CHAR *szStreamHeader, int nHeaderSize)
 		return IPC_Error_InsufficentMemory;
 }
 
-int CIPCPlayer::SetBorderRect(HWND hWnd, LPRECT pRectBorder, bool bPercent )
+int CIPCPlayer::SetBorderRect(HWND hWnd, LPRECT pRectBorder, bool bPercent,bool bSkipVideoSize )
 {
 	RECT rtVideo = { 0 };
 	// 		rtVideo.left = rtBorder.left;
 	// 		rtVideo.right = m_nVideoWidth - rtBorder.right;
 	// 		rtVideo.top += rtBorder.top;
 	// 		rtVideo.bottom = m_nVideoHeight - rtBorder.bottom;
-	if (bPercent)
+	if (!bSkipVideoSize)
 	{
-		if ((pRectBorder->left + pRectBorder->right) >= 100 ||
-			(pRectBorder->top + pRectBorder->bottom) >= 100)
-			return IPC_Error_InvalidParameters;
-	}
-	else
-	{
-		if ((pRectBorder->left + pRectBorder->right) >= m_nVideoWidth ||
-			(pRectBorder->top + pRectBorder->bottom) >= m_nVideoHeight)
-			return IPC_Error_InvalidParameters;
+		if (bPercent)
+		{
+			if ((pRectBorder->left + pRectBorder->right) >= 100 ||
+				(pRectBorder->top + pRectBorder->bottom) >= 100)
+				return IPC_Error_InvalidParameters;
+		}
+		else
+		{
+			if ((pRectBorder->left + pRectBorder->right) >= m_nVideoWidth ||
+				(pRectBorder->top + pRectBorder->bottom) >= m_nVideoHeight)
+				return IPC_Error_InvalidParameters;
+		}
 	}
 
 	LineLockAgent(m_cslistRenderWnd);
@@ -1230,7 +1236,6 @@ int CIPCPlayer::StartPlay(bool bEnaleAudio , bool bEnableHaccel , bool bFitWindo
 		// Æô¶¯ÎÄ¼þ½âÎöÏß³Ì
 		m_bThreadParserRun = true;
 		m_hThreadFileParser = (HANDLE)_beginthreadex(nullptr, 0, ThreadFileParser, this, 0, 0);
-
 	}
 	else
 	{
@@ -3298,7 +3303,7 @@ void CIPCPlayer::CopyDxvaFrameYV12(byte **ppYV12, int &nStrideY, int &nWidth, in
 #ifdef _DEBUG
 	ZeroMemory(*ppYV12, nYUVSize);
 #endif
-	gpu_memcpy(*ppYV12, lRect.pBits, nPictureSize);
+	memcpy(*ppYV12, lRect.pBits, nPictureSize);
 
 	UINT heithtUV = SurfaceDesc.Height >> 1;
 	UINT widthUV = lRect.Pitch >> 1;

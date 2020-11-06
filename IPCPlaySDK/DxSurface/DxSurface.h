@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <d3d9.h>
 #include <d3dx9tex.h>
 //#include <ppl.h>
@@ -117,7 +117,7 @@ struct  D3DLineArray
 	D3DCOLOR	 nColor;
 	int			 nCount;
 	int			 nIndex;
-	bool		 bConvert;		// ÊÇ·ñÒÑ¾­Ö´ĞĞ×ø±ê×ª»»
+	bool		 bConvert;		// æ˜¯å¦å·²ç»æ‰§è¡Œåæ ‡è½¬æ¢
 	D3DLineArray()
 	{
 		ZeroMemory(this, sizeof(D3DLineArray));
@@ -141,8 +141,8 @@ struct LineArrayFinder
 	}
 };
 
-#define WM_RENDERFRAME		WM_USER + 1024		// Ö¡äÖÈ¾ÏûÏ¢	WPARAMÎªCDxSurfaceÖ¸Õë,LPARAMÎªÒ»¸öÖ¸ÏòDxSurfaceRenderInfo½á¹¹µÄÖ¸Õë,
-#define	WM_INITDXSURFACE	WM_USER + 1025		// DXSurface³õÊ¼»¯ÏûÏ¢	WPARAMÎªCDxSurfaceÖ¸Õë£¬LPARAMÎªDxSurfaceInitInfo½á¹¹µÄÖ¸Õë
+#define WM_RENDERFRAME		WM_USER + 1024		// å¸§æ¸²æŸ“æ¶ˆæ¯	WPARAMä¸ºCDxSurfaceæŒ‡é’ˆ,LPARAMä¸ºä¸€ä¸ªæŒ‡å‘DxSurfaceRenderInfoç»“æ„çš„æŒ‡é’ˆ,
+#define	WM_INITDXSURFACE	WM_USER + 1025		// DXSurfaceåˆå§‹åŒ–æ¶ˆæ¯	WPARAMä¸ºCDxSurfaceæŒ‡é’ˆï¼ŒLPARAMä¸ºDxSurfaceInitInfoç»“æ„çš„æŒ‡é’ˆ
 struct DxSurfaceInitInfo
 {
 	int		nSize;
@@ -172,17 +172,17 @@ enum Coordinte
 
 enum GraphicQulityParameter
 {
-	GQ_SINC = -3,		//30		Ïà¶ÔÓÚÉÏÒ»Ëã·¨£¬Ï¸½ÚÒªÇåÎúÒ»Ğ©¡£
-	GQ_SPLINE = -2,		//47		ºÍÉÏÒ»¸öËã·¨£¬ÎÒ¿´²»³öÇø±ğ¡£
-	GQ_LANCZOS = -1,	//70		Ïà¶ÔÓÚÉÏÒ»Ëã·¨£¬ÒªÆ½»¬(Ò²¿ÉÒÔËµÊÇÄ£ºı)Ò»µãµã£¬¼¸ºõÎŞÇø±ğ¡£
-	GQ_BICUBIC = 0,		//80		¸Ğ¾õ²î²»¶à£¬±ÈÉÏÉÏËã·¨±ßÔµÒªÆ½»¬£¬±ÈÉÏÒ»Ëã·¨ÒªÈñÀû¡£	
-	GQ_GAUSS,			//80		Ïà¶ÔÓÚÉÏÒ»Ëã·¨£¬ÒªÆ½»¬(Ò²¿ÉÒÔËµÊÇÄ£ºı)Ò»Ğ©¡£
-	GQ_BICUBLIN,		//87		Í¬ÉÏ¡£
-	GQ_X,				//91		ÓëÉÏÒ»Í¼Ïñ£¬ÎÒ¿´²»³öÇø±ğ¡£
-	GQ_BILINEAR,		//95		¸Ğ¾õÒ²ºÜ²»´í£¬±ÈÉÏÒ»¸öËã·¨±ßÔµÆ½»¬Ò»Ğ©¡£
-	GQ_AREA,			//116		ÓëÉÏÉÏËã·¨£¬ÎÒ¿´²»³öÇø±ğ¡£
-	GQ_FAST_BILINEAR,	//228		Í¼ÏñÎŞÃ÷ÏÔÊ§Õæ£¬¸Ğ¾õĞ§¹ûºÜ²»´í
-	GQ_POINT			//427		Ï¸½Ú±È½ÏÈñÀû£¬Í¼ÏñĞ§¹û±ÈÉÏÍ¼ÂÔ²îÒ»µãµã¡£
+	GQ_SINC = -3,		//30		ç›¸å¯¹äºä¸Šä¸€ç®—æ³•ï¼Œç»†èŠ‚è¦æ¸…æ™°ä¸€äº›ã€‚
+	GQ_SPLINE = -2,		//47		å’Œä¸Šä¸€ä¸ªç®—æ³•ï¼Œæˆ‘çœ‹ä¸å‡ºåŒºåˆ«ã€‚
+	GQ_LANCZOS = -1,	//70		ç›¸å¯¹äºä¸Šä¸€ç®—æ³•ï¼Œè¦å¹³æ»‘(ä¹Ÿå¯ä»¥è¯´æ˜¯æ¨¡ç³Š)ä¸€ç‚¹ç‚¹ï¼Œå‡ ä¹æ— åŒºåˆ«ã€‚
+	GQ_BICUBIC = 0,		//80		æ„Ÿè§‰å·®ä¸å¤šï¼Œæ¯”ä¸Šä¸Šç®—æ³•è¾¹ç¼˜è¦å¹³æ»‘ï¼Œæ¯”ä¸Šä¸€ç®—æ³•è¦é”åˆ©ã€‚	
+	GQ_GAUSS,			//80		ç›¸å¯¹äºä¸Šä¸€ç®—æ³•ï¼Œè¦å¹³æ»‘(ä¹Ÿå¯ä»¥è¯´æ˜¯æ¨¡ç³Š)ä¸€äº›ã€‚
+	GQ_BICUBLIN,		//87		åŒä¸Šã€‚
+	GQ_X,				//91		ä¸ä¸Šä¸€å›¾åƒï¼Œæˆ‘çœ‹ä¸å‡ºåŒºåˆ«ã€‚
+	GQ_BILINEAR,		//95		æ„Ÿè§‰ä¹Ÿå¾ˆä¸é”™ï¼Œæ¯”ä¸Šä¸€ä¸ªç®—æ³•è¾¹ç¼˜å¹³æ»‘ä¸€äº›ã€‚
+	GQ_AREA,			//116		ä¸ä¸Šä¸Šç®—æ³•ï¼Œæˆ‘çœ‹ä¸å‡ºåŒºåˆ«ã€‚
+	GQ_FAST_BILINEAR,	//228		å›¾åƒæ— æ˜æ˜¾å¤±çœŸï¼Œæ„Ÿè§‰æ•ˆæœå¾ˆä¸é”™
+	GQ_POINT			//427		ç»†èŠ‚æ¯”è¾ƒé”åˆ©ï¼Œå›¾åƒæ•ˆæœæ¯”ä¸Šå›¾ç•¥å·®ä¸€ç‚¹ç‚¹ã€‚
 };
 
 //#define _TraceMemory
@@ -204,7 +204,7 @@ enum GraphicQulityParameter
 #pragma comment(lib,"psapi.lib")
 
 #ifdef _DEBUG
-/// @brief ¸ú×Ùº¯ÊıÖ´ĞĞ¹ı³ÌµÄÒ»Ğ©ĞÅÏ¢µÄÀà,Ö÷ÒªÓÃÓÚµ÷ÊÔ
+/// @brief è·Ÿè¸ªå‡½æ•°æ‰§è¡Œè¿‡ç¨‹çš„ä¸€äº›ä¿¡æ¯çš„ç±»,ä¸»è¦ç”¨äºè°ƒè¯•
 class CTraceFunction
 {
 	explicit CTraceFunction(){};
@@ -278,7 +278,7 @@ struct LineTime
 
 #include <vector>
 using namespace  std;
-/// @brief ×·×ÙÃ¿Ò»ĞĞ´úÂëÔËĞĞµÄÊ±¼ä£¬ÓÃÓÚ×·²é´úÂëÖĞÄÄÒ»¶Î´úÂëÖ´ĞĞÊ±¼ä³¬³öÔ¤ÆÚ
+/// @brief è¿½è¸ªæ¯ä¸€è¡Œä»£ç è¿è¡Œçš„æ—¶é—´ï¼Œç”¨äºè¿½æŸ¥ä»£ç ä¸­å“ªä¸€æ®µä»£ç æ‰§è¡Œæ—¶é—´è¶…å‡ºé¢„æœŸ
 class CLineRunTime
 {
 	DWORD m_nTimeout;
@@ -355,7 +355,7 @@ public:
 	CRunlogA *pRunlog /*= nullptr*/;
 };
 
-/// @biref °ÑFFMPEGÏñËØ×ª»»ÎªD3DFomratÏñËØ
+/// @biref æŠŠFFMPEGåƒç´ è½¬æ¢ä¸ºD3DFomratåƒç´ 
 struct PixelConvert
 {
 private:
@@ -370,8 +370,65 @@ private:
 public:
 	int nImageSize;
 	byte *pImage ;
+	byte *pImageYUV = nullptr;
 	AVFrame *pFrameNew;
 	AVFrame *pSrcFrame;
+	AVFrame *pFrameFromDXVA = nullptr;
+	AVCodecID nCodecID = AV_CODEC_ID_H264;
+	int nAlignedWidth = 0;
+	int nAlignedHeight = 0;
+	void CopyFrameNV12toYV12(AVFrame *pFrameYV12, AVFrame *pAvFrameDXVA)
+	{
+		if (pAvFrameDXVA->format != AV_PIX_FMT_DXVA2_VLD)
+			return;	
+		IDirect3DSurface9* pSurface = (IDirect3DSurface9 *)pAvFrameDXVA->data[3];
+		D3DLOCKED_RECT lRect;
+		D3DSURFACE_DESC SurfaceDesc;
+		pSurface->GetDesc(&SurfaceDesc);
+		HRESULT hr = pSurface->LockRect(&lRect, nullptr, D3DLOCK_READONLY);
+		if (FAILED(hr))
+		{
+			DxTraceMsg("%s IDirect3DSurface9::LockRect failed:hr = %08.\n", __FUNCTION__, hr);
+			return;
+		}
+
+		byte *pSrcY = (byte *)lRect.pBits;
+		int nStrideY = lRect.Pitch;
+		int nWidth = SurfaceDesc.Width;
+		int nHeight = SurfaceDesc.Height;
+
+		int nPictureSize = lRect.Pitch*SurfaceDesc.Height;
+		byte *pNV12 = pFrameYV12->data[0];
+		byte *pDst = pNV12;
+		byte *pSrc = (byte *)lRect.pBits;
+		for (int i = 0; i < nAlignedHeight; i++)
+		{
+			memcpy(pDst, pSrc, nAlignedWidth);
+			pDst += nAlignedWidth;
+			pSrc += lRect.Pitch;
+		}
+		
+		UINT heithtUV = SurfaceDesc.Height >> 1;
+		UINT widthUV = nAlignedWidth>>1;
+		byte *pSrcUV = (byte *)lRect.pBits + nPictureSize;
+		byte* dstV = pFrameYV12->data[1];
+		byte* dstU = pFrameYV12->data[2];
+		// Â¸Â´Ã–Ã†VUÂ·Ã–ÃÂ¿
+		int nOffsetSrc = 0;
+		int nOffsetDst = 0;
+		for (int i = 0; i < heithtUV; i++)
+		{
+			for (int j = 0; j < widthUV; j++)
+			{
+				dstV[nOffsetDst + j] = pSrcUV[nOffsetSrc + 2 * j];
+				dstU[nOffsetDst + j] = pSrcUV[nOffsetSrc + 2 * j + 1];
+			}
+			nOffsetSrc += lRect.Pitch;
+			nOffsetDst += (nAlignedWidth/2);
+		}
+		pSurface->UnlockRect();
+		//pSrcFrame->format = AV_PIX_FMT_YUV420P;
+	}
 	//ConvertInfo(AVFrame *pSrcFrame,AVPixelFormat DestPixfmt = AV_PIX_FMT_YUV420P,GraphicQulityParameter nGQ = GQ_FAST_BILINEAR)
 	PixelConvert(AVFrame *pSrcFrame,D3DFORMAT nDestD3dFmt = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'),GraphicQulityParameter nGQ = GQ_BICUBIC)
 	{
@@ -383,11 +440,11 @@ public:
 			nDstAvFormat = AV_PIX_FMT_YUV420P;
 			break;
 		case D3DFMT_R5G6B5:
-			nDstAvFormat = AV_PIX_FMT_RGB565;	// ÒàÓĞ¿ÉÄÜÊÇ¡¢AV_PIX_FMT_BGR565LE¡¢AV_PIX_FMT_BGR565BE
+			nDstAvFormat = AV_PIX_FMT_RGB565;	// äº¦æœ‰å¯èƒ½æ˜¯ã€AV_PIX_FMT_BGR565LEã€AV_PIX_FMT_BGR565BE
 			break;
 		case D3DFMT_X1R5G5B5:
 		case D3DFMT_A1R5G5B5:
-			nDstAvFormat = AV_PIX_FMT_RGB555;	// ÒàÓĞ¿ÉÄÜÊÇAV_PIX_FMT_BGR555BE
+			nDstAvFormat = AV_PIX_FMT_RGB555;	// äº¦æœ‰å¯èƒ½æ˜¯AV_PIX_FMT_BGR555BE
 			break;
 		case D3DFMT_R8G8B8:
 			nDstAvFormat = AV_PIX_FMT_BGR24;
@@ -401,7 +458,24 @@ public:
 		}
 		
 		pFrameNew = av_frame_alloc();
-		nImageSize	 = av_image_get_buffer_size(nDstAvFormat, pSrcFrame->width,pSrcFrame->height,16); 
+
+		int align = 16;
+
+		// MPEG-2 needs higher alignment on Intel cards, and it doesn't seem to harm anything to do it for all cards.
+		if (nCodecID == AV_CODEC_ID_MPEG2VIDEO)
+			align <<= 1;
+		else if (nCodecID == AV_CODEC_ID_HEVC)
+			align = 32;
+
+		nAlignedWidth = pSrcFrame->width;
+		nAlignedHeight = pSrcFrame->height;
+		if (pSrcFrame->format == AV_PIX_FMT_DXVA2_VLD)
+		{
+			nAlignedWidth = FFALIGN(pSrcFrame->width, align);
+			nAlignedHeight = FFALIGN(pSrcFrame->height, align);
+		}
+		
+		nImageSize	 = av_image_get_buffer_size(nDstAvFormat, nAlignedWidth,nAlignedHeight,16); 
 		if (nImageSize < 0)
 		{
 			char szAvError[256] = {0};
@@ -409,21 +483,45 @@ public:
 			DxTraceMsg("%s av_image_get_buffer_size failed:%s.\n",__FUNCTION__,szAvError);
 			assert(false);
 		}
-		//pImage = new (std::nothrow) byte[nImageSize];
 		pImage = (byte *)_aligned_malloc(nImageSize, 16);
 		if (!pImage)
 		{
-			DxTraceMsg("%s Alloc memory failed @%s %d.\n", __FUNCTION__, __FUNCTION__, __LINE__);
+			DxTraceMsg("%s Alloc memory failed @%d.\n", __FUNCTION__,  __LINE__);
 			assert(false);
 			return;
 		}
 		DxTraceMsg("%s Image size = %d.\n",__FUNCTION__,nImageSize);
-		// °ÑÏÔÊ¾Í¼ÏñÓëYUVÖ¡¹ØÁª
-		av_image_fill_arrays(pFrameNew->data,pFrameNew->linesize, pImage, nDstAvFormat, pSrcFrame->width,pSrcFrame->height,16);
-		pFrameNew->width	 = pSrcFrame->width;
-		pFrameNew->height	 = pSrcFrame->height;
+		// æŠŠæ˜¾ç¤ºå›¾åƒä¸YUVå¸§å…³è”
+		av_image_fill_arrays(pFrameNew->data,pFrameNew->linesize, pImage, nDstAvFormat, nAlignedWidth,nAlignedHeight,16);
+		pFrameNew->width	 = nAlignedWidth;
+		pFrameNew->height	 = nAlignedHeight;
 		pFrameNew->format	 = nDstAvFormat;
-		this->pSrcFrame		 = pSrcFrame;
+		
+		if (pSrcFrame->format == AV_PIX_FMT_DXVA2_VLD)
+		{
+			if (!pFrameFromDXVA)
+			{
+				pFrameFromDXVA = av_frame_alloc();
+				int nYUVSize = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, nAlignedWidth , nAlignedHeight, 16);
+				pImageYUV = (byte *)_aligned_malloc(nYUVSize, 16);
+				if (!pImageYUV)
+				{
+					DxTraceMsg("%s Alloc memory failed @%d.\n", __FUNCTION__, __LINE__);
+					assert(false);
+					return;
+				}
+				av_image_fill_arrays(pFrameFromDXVA->data, pFrameFromDXVA->linesize, pImageYUV, AV_PIX_FMT_YUV420P, nAlignedWidth, nAlignedHeight, 16);
+				pFrameFromDXVA->width = nAlignedWidth;
+				pFrameFromDXVA->height = nAlignedHeight;
+				pFrameFromDXVA->format = AV_PIX_FMT_YUV420P;
+			}
+			CopyFrameNV12toYV12(pFrameFromDXVA,pSrcFrame);
+			this->pSrcFrame = pFrameFromDXVA;
+		}
+		else
+		{
+			this->pSrcFrame = pSrcFrame;
+		}
 		nGQP = nGQ;
 		switch(nGQP)
 		{
@@ -466,51 +564,51 @@ public:
 // 		nDstAvFormat = nDstFormat;
 // 		nSrcImageWidth = nImageWidth;
 // 		nSrcImageHeight = nImageHeight;
-		pConvertCtx = sws_getContext(pSrcFrame->width,					// src Width
-									pSrcFrame->height,					// src Height
-									(AVPixelFormat)pSrcFrame->format,	// src format
-									pSrcFrame->width,					// dst Width
-									pSrcFrame->height,					// dst Height
-									nDstAvFormat,						// dst format
+		pConvertCtx = sws_getContext(nAlignedWidth,				// src Width
+									nAlignedHeight,				// src Height
+									(AVPixelFormat)this->pSrcFrame->format,	// src format
+									nAlignedWidth,				// dst Width
+									nAlignedHeight,				// dst Height
+									nDstAvFormat,				// dst format
 									nScaleFlag, 
 									NULL, 
 									NULL, 
 									NULL);
 
 		/*		
-		sws_scale×ª»»º¯Êı¸÷ÖÖËã·¨×ª»»(ËõĞ¡)Ğ§ÂÊºÍ»­ÖÊ¶Ô±ÈÇé¿ö(ÏêÇéÇë²Î¿¼:http://blog.csdn.net/leixiaohua1020/article/details/12029505)
-		Ëã·¨				Ö¡ÂÊ	Í¼ÏñÖ÷¹Û¸ĞÊÜ
-		SWS_FAST_BILINEAR	228		Í¼ÏñÎŞÃ÷ÏÔÊ§Õæ£¬¸Ğ¾õĞ§¹ûºÜ²»´í¡£
-		SWS_BILINEAR		95		¸Ğ¾õÒ²ºÜ²»´í£¬±ÈÉÏÒ»¸öËã·¨±ßÔµÆ½»¬Ò»Ğ©¡£
-		SWS_BICUBIC			80		¸Ğ¾õ²î²»¶à£¬±ÈÉÏÉÏËã·¨±ßÔµÒªÆ½»¬£¬±ÈÉÏÒ»Ëã·¨ÒªÈñÀû¡£
-		SWS_X				91		ÓëÉÏÒ»Í¼Ïñ£¬ÎÒ¿´²»³öÇø±ğ¡£
-		SWS_POINT			427		Ï¸½Ú±È½ÏÈñÀû£¬Í¼ÏñĞ§¹û±ÈÉÏÍ¼ÂÔ²îÒ»µãµã¡£
-		SWS_AREA			116		ÓëÉÏÉÏËã·¨£¬ÎÒ¿´²»³öÇø±ğ¡£
-		SWS_BICUBLIN		87		Í¬ÉÏ¡£
-		SWS_GAUSS			80		Ïà¶ÔÓÚÉÏÒ»Ëã·¨£¬ÒªÆ½»¬(Ò²¿ÉÒÔËµÊÇÄ£ºı)Ò»Ğ©¡£
-		SWS_SINC			30		Ïà¶ÔÓÚÉÏÒ»Ëã·¨£¬Ï¸½ÚÒªÇåÎúÒ»Ğ©¡£
-		SWS_LANCZOS			70		Ïà¶ÔÓÚÉÏÒ»Ëã·¨£¬ÒªÆ½»¬(Ò²¿ÉÒÔËµÊÇÄ£ºı)Ò»µãµã£¬¼¸ºõÎŞÇø±ğ¡£
-		SWS_SPLINE			47		ºÍÉÏÒ»¸öËã·¨£¬ÎÒ¿´²»³öÇø±ğ¡£
+		sws_scaleè½¬æ¢å‡½æ•°å„ç§ç®—æ³•è½¬æ¢(ç¼©å°)æ•ˆç‡å’Œç”»è´¨å¯¹æ¯”æƒ…å†µ(è¯¦æƒ…è¯·å‚è€ƒ:http://blog.csdn.net/leixiaohua1020/article/details/12029505)
+		ç®—æ³•				å¸§ç‡	å›¾åƒä¸»è§‚æ„Ÿå—
+		SWS_FAST_BILINEAR	228		å›¾åƒæ— æ˜æ˜¾å¤±çœŸï¼Œæ„Ÿè§‰æ•ˆæœå¾ˆä¸é”™ã€‚
+		SWS_BILINEAR		95		æ„Ÿè§‰ä¹Ÿå¾ˆä¸é”™ï¼Œæ¯”ä¸Šä¸€ä¸ªç®—æ³•è¾¹ç¼˜å¹³æ»‘ä¸€äº›ã€‚
+		SWS_BICUBIC			80		æ„Ÿè§‰å·®ä¸å¤šï¼Œæ¯”ä¸Šä¸Šç®—æ³•è¾¹ç¼˜è¦å¹³æ»‘ï¼Œæ¯”ä¸Šä¸€ç®—æ³•è¦é”åˆ©ã€‚
+		SWS_X				91		ä¸ä¸Šä¸€å›¾åƒï¼Œæˆ‘çœ‹ä¸å‡ºåŒºåˆ«ã€‚
+		SWS_POINT			427		ç»†èŠ‚æ¯”è¾ƒé”åˆ©ï¼Œå›¾åƒæ•ˆæœæ¯”ä¸Šå›¾ç•¥å·®ä¸€ç‚¹ç‚¹ã€‚
+		SWS_AREA			116		ä¸ä¸Šä¸Šç®—æ³•ï¼Œæˆ‘çœ‹ä¸å‡ºåŒºåˆ«ã€‚
+		SWS_BICUBLIN		87		åŒä¸Šã€‚
+		SWS_GAUSS			80		ç›¸å¯¹äºä¸Šä¸€ç®—æ³•ï¼Œè¦å¹³æ»‘(ä¹Ÿå¯ä»¥è¯´æ˜¯æ¨¡ç³Š)ä¸€äº›ã€‚
+		SWS_SINC			30		ç›¸å¯¹äºä¸Šä¸€ç®—æ³•ï¼Œç»†èŠ‚è¦æ¸…æ™°ä¸€äº›ã€‚
+		SWS_LANCZOS			70		ç›¸å¯¹äºä¸Šä¸€ç®—æ³•ï¼Œè¦å¹³æ»‘(ä¹Ÿå¯ä»¥è¯´æ˜¯æ¨¡ç³Š)ä¸€ç‚¹ç‚¹ï¼Œå‡ ä¹æ— åŒºåˆ«ã€‚
+		SWS_SPLINE			47		å’Œä¸Šä¸€ä¸ªç®—æ³•ï¼Œæˆ‘çœ‹ä¸å‡ºåŒºåˆ«ã€‚
 
-		sws_scale×ª»»º¯Êı¸÷ÖÖËã·¨×ª»»(·Å´ó)Ğ§ÂÊºÍ»­ÖÊ¶Ô±ÈÇé¿ö
-		Ëã·¨				Ö¡ÂÊ	Í¼ÏñÖ÷¹Û¸ĞÊÜ
-		SWS_FAST_BILINEAR	103		Í¼ÏñÎŞÃ÷ÏÔÊ§Õæ£¬¸Ğ¾õĞ§¹ûºÜ²»´í¡£
-		SWS_BILINEAR		100		ºÍÉÏÍ¼¿´²»³öÇø±ğ¡£
-		SWS_BICUBIC			78		Ïà¶ÔÉÏÍ¼£¬¸Ğ¾õÏ¸½ÚÇåÎúÒ»µãµã¡£
-		SWS_X				106		ÓëÉÏÉÏÍ¼ÎŞÇø±ğ¡£
-		SWS_POINT			112		±ßÔµÓĞÃ÷ÏÔ¾â³İ¡£
-		SWS_AREA			114		±ßÔµÓĞ²»Ã÷ÏÔ¾â³İ¡£
-		SWS_BICUBLIN		95		ÓëÉÏÉÏÉÏÍ¼¼¸ºõÎŞÇø±ğ¡£
-		SWS_GAUSS			86		±ÈÉÏÍ¼±ßÔµÂÔÎ¢Çå³şÒ»µã¡£
-		SWS_SINC			20		ÓëÉÏÉÏÍ¼ÎŞÇø±ğ¡£
-		SWS_LANCZOS			64		ÓëÉÏÍ¼ÎŞÇø±ğ¡£
-		SWS_SPLINE			40		ÓëÉÏÍ¼ÎŞÇø±ğ¡£
-		½áÂÛºÍ½¨Òé:
-			Èç¹û¶ÔÍ¼ÏñµÄËõ·Å£¬Òª×·Çó¸ßĞ§£¬±ÈÈçËµÊÇÊÓÆµÍ¼ÏñµÄ´¦Àí£¬ÔÚ²»Ã÷È·ÊÇ·Å´ó»¹ÊÇËõĞ¡Ê±£¬
-		Ö±½ÓÊ¹ÓÃSWS_FAST_BILINEARËã·¨¼´¿É¡£Èç¹ûÃ÷È·ÊÇÒªËõĞ¡²¢ÏÔÊ¾£¬½¨ÒéÊ¹ÓÃPointËã·¨£¬Èç¹û
-		ÊÇÃ÷È·Òª·Å´ó²¢ÏÔÊ¾£¬ÆäÊµÊ¹ÓÃCImageµÄStrech¸ü¸ßĞ§¡£
-			µ±È»£¬Èç¹û²»¼ÆËÙ¶È×·Çó»­ÃæÖÊÁ¿¡£ÔÚÉÏÃæµÄËã·¨ÖĞ£¬Ñ¡ÔñÖ¡ÂÊ×îµÍµÄÄÇ¸ö¼´¿É£¬»­ÃæĞ§
-			¹ûÒ»°ãÊÇ×îºÃµÄ¡£
+		sws_scaleè½¬æ¢å‡½æ•°å„ç§ç®—æ³•è½¬æ¢(æ”¾å¤§)æ•ˆç‡å’Œç”»è´¨å¯¹æ¯”æƒ…å†µ
+		ç®—æ³•				å¸§ç‡	å›¾åƒä¸»è§‚æ„Ÿå—
+		SWS_FAST_BILINEAR	103		å›¾åƒæ— æ˜æ˜¾å¤±çœŸï¼Œæ„Ÿè§‰æ•ˆæœå¾ˆä¸é”™ã€‚
+		SWS_BILINEAR		100		å’Œä¸Šå›¾çœ‹ä¸å‡ºåŒºåˆ«ã€‚
+		SWS_BICUBIC			78		ç›¸å¯¹ä¸Šå›¾ï¼Œæ„Ÿè§‰ç»†èŠ‚æ¸…æ™°ä¸€ç‚¹ç‚¹ã€‚
+		SWS_X				106		ä¸ä¸Šä¸Šå›¾æ— åŒºåˆ«ã€‚
+		SWS_POINT			112		è¾¹ç¼˜æœ‰æ˜æ˜¾é”¯é½¿ã€‚
+		SWS_AREA			114		è¾¹ç¼˜æœ‰ä¸æ˜æ˜¾é”¯é½¿ã€‚
+		SWS_BICUBLIN		95		ä¸ä¸Šä¸Šä¸Šå›¾å‡ ä¹æ— åŒºåˆ«ã€‚
+		SWS_GAUSS			86		æ¯”ä¸Šå›¾è¾¹ç¼˜ç•¥å¾®æ¸…æ¥šä¸€ç‚¹ã€‚
+		SWS_SINC			20		ä¸ä¸Šä¸Šå›¾æ— åŒºåˆ«ã€‚
+		SWS_LANCZOS			64		ä¸ä¸Šå›¾æ— åŒºåˆ«ã€‚
+		SWS_SPLINE			40		ä¸ä¸Šå›¾æ— åŒºåˆ«ã€‚
+		ç»“è®ºå’Œå»ºè®®:
+			å¦‚æœå¯¹å›¾åƒçš„ç¼©æ”¾ï¼Œè¦è¿½æ±‚é«˜æ•ˆï¼Œæ¯”å¦‚è¯´æ˜¯è§†é¢‘å›¾åƒçš„å¤„ç†ï¼Œåœ¨ä¸æ˜ç¡®æ˜¯æ”¾å¤§è¿˜æ˜¯ç¼©å°æ—¶ï¼Œ
+		ç›´æ¥ä½¿ç”¨SWS_FAST_BILINEARç®—æ³•å³å¯ã€‚å¦‚æœæ˜ç¡®æ˜¯è¦ç¼©å°å¹¶æ˜¾ç¤ºï¼Œå»ºè®®ä½¿ç”¨Pointç®—æ³•ï¼Œå¦‚æœ
+		æ˜¯æ˜ç¡®è¦æ”¾å¤§å¹¶æ˜¾ç¤ºï¼Œå…¶å®ä½¿ç”¨CImageçš„Strechæ›´é«˜æ•ˆã€‚
+			å½“ç„¶ï¼Œå¦‚æœä¸è®¡é€Ÿåº¦è¿½æ±‚ç”»é¢è´¨é‡ã€‚åœ¨ä¸Šé¢çš„ç®—æ³•ä¸­ï¼Œé€‰æ‹©å¸§ç‡æœ€ä½çš„é‚£ä¸ªå³å¯ï¼Œç”»é¢æ•ˆ
+			æœä¸€èˆ¬æ˜¯æœ€å¥½çš„ã€‚
 		*/
 	}
 	~PixelConvert()
@@ -519,28 +617,51 @@ public:
 		{
 			//delete[]pImage;
 			_aligned_free(pImage);
-			pImage = NULL;
+			pImage = nullptr;
 		}
-		av_free(pFrameNew);
-		pFrameNew = NULL;
+		if (pImageYUV)
+		{
+			_aligned_free(pImageYUV);
+			pImageYUV = nullptr;
+		}
+		if (pFrameFromDXVA)
+		{
+			av_free(pFrameFromDXVA);
+			pFrameFromDXVA = nullptr;
+		}
+			
+		if (pFrameNew)
+		{
+
+			av_free(pFrameNew);
+			pFrameNew = nullptr;
+		}
 		sws_freeContext(pConvertCtx);
-		pConvertCtx = NULL;
+		pConvertCtx = nullptr;
 		DxTraceMsg("%s FreeImage size %d.\n",__FUNCTION__,nImageSize);
 	}
-	// ½øĞĞÏñËØ×ª»»
-	int inline ConvertPixel(AVFrame *pInputFrame = NULL, GraphicQulityParameter nGQ = GQ_BICUBIC)
+	// è¿›è¡Œåƒç´ è½¬æ¢
+	int inline ConvertPixel(AVFrame *pInputFrame = nullptr, GraphicQulityParameter nGQ = GQ_BICUBIC)
 	{
 		TraceFunction();
 		if (pInputFrame)
-			this->pSrcFrame = pInputFrame;
+		{
+			if (pInputFrame->format == AV_PIX_FMT_DXVA2_VLD && pFrameFromDXVA)
+			{
+				CopyFrameNV12toYV12(pFrameFromDXVA, pInputFrame);
+				this->pSrcFrame = pFrameFromDXVA;
+			}
+			else
+				this->pSrcFrame = pInputFrame;
+		}
 		if (!pImage)
 			return -1;
 		//DxTrace("@File:%s %s pSrcFrame(%d,%d)->LineSize(%d,%d,%d).\n", __FILE__, __FUNCTION__, pSrcFrame->width, pSrcFrame->height, pSrcFrame->linesize[0], pSrcFrame->linesize[1], pSrcFrame->linesize[2]);
 		if (nGQP != nGQ)
 		{
-			// ×ª»»Ëã·¨µ÷Õû
+			// è½¬æ¢ç®—æ³•è°ƒæ•´
 			sws_freeContext(pConvertCtx);
-			pConvertCtx = NULL;
+			pConvertCtx = nullptr;
 			nGQP = nGQ;
 			switch(nGQP)
 			{
@@ -579,22 +700,22 @@ public:
 				nScaleFlag = SWS_POINT;
 				break;
 			}
-			pConvertCtx = sws_getContext(pSrcFrame->width,					// src Width
-										pSrcFrame->height,					// src Height
+			pConvertCtx = sws_getContext(nAlignedWidth,					// src Width
+										nAlignedHeight,					// src Height
 										(AVPixelFormat)pSrcFrame->format,	// src format
-										pSrcFrame->width,					// dst Width
-										pSrcFrame->height,					// dst Height
+										nAlignedWidth,					// dst Width
+										nAlignedHeight,					// dst Height
 										nDstAvFormat,						// dst format
 										nScaleFlag, 
-										NULL, 
-										NULL, 
-										NULL);
+										nullptr,
+										nullptr,
+										nullptr);
 		}
 		return sws_scale(pConvertCtx,
 						(const byte * const *)pSrcFrame->data,
 						pSrcFrame->linesize,
 						0,
-						pSrcFrame->height,
+						nAlignedHeight,
 						pFrameNew->data,
 						pFrameNew->linesize);
 
@@ -608,7 +729,7 @@ public:
 typedef IDirect3D9* WINAPI pDirect3DCreate9(UINT);
 typedef HRESULT WINAPI pDirect3DCreate9Ex(UINT, IDirect3D9Ex**);
 
-// ¶¥µã½á¹¹
+// é¡¶ç‚¹ç»“æ„
 struct PolygonVertex
 {
 	float x, y, z, rhw;
@@ -820,9 +941,9 @@ struct OSDInfo
 
 typedef shared_ptr<OSDInfo> OSDInfoPtr;
 
-// ×¢Òâ:
-/// @brief IDirect3DSurface9¶ÔÏó·âÀà£¬ÓÃÓÚ´´½¨ºÍ¹ÜÀíIDirect3DSurface9¶ÔÏó£¬¿ÉÒÔÏÔÊ¾¶àÖÖÏóËØ¸ñÊ½µÄÍ¼Ïñ
-/// @remark Ê¹ÓÃCDxSurface¶ÔÏóÏÔÊ¾Í¼ÏóÊ±£¬±ØĞëÔÚ´´½¨Ïß³ÌÄÚÏÔÊ¾Í¼£¬·ñÔòµ±·¢ÉúDirectXÉè±¸¶ªÊ§Ê±£¬ÎŞ·¨ÖØÖÃDirectXµÄ×ÊÔ´
+// æ³¨æ„:
+/// @brief IDirect3DSurface9å¯¹è±¡å°ç±»ï¼Œç”¨äºåˆ›å»ºå’Œç®¡ç†IDirect3DSurface9å¯¹è±¡ï¼Œå¯ä»¥æ˜¾ç¤ºå¤šç§è±¡ç´ æ ¼å¼çš„å›¾åƒ
+/// @remark ä½¿ç”¨CDxSurfaceå¯¹è±¡æ˜¾ç¤ºå›¾è±¡æ—¶ï¼Œå¿…é¡»åœ¨åˆ›å»ºçº¿ç¨‹å†…æ˜¾ç¤ºå›¾ï¼Œå¦åˆ™å½“å‘ç”ŸDirectXè®¾å¤‡ä¸¢å¤±æ—¶ï¼Œæ— æ³•é‡ç½®DirectXçš„èµ„æº
 
 extern CD3D9Helper    g_pD3D9Helper;
 class CDxSurface
@@ -833,17 +954,17 @@ public:
 	list<D3DLineArrayPtr>	m_listLine;
 	map<long, map<long,OSDInfoPtr>> m_MapOSD;
 	CCriticalSectionAgent   m_csMapOSD;
-	long					m_nVtableAddr;		// Ğéº¯Êı±íµØÖ·£¬¸Ã±äÁ¿µØÖ·Î»ÖÃĞéº¯Êı±íÖ®ºó£¬½öÓÃÓÚÀà³õÊ¼»¯£¬Çë´ÒÒÆ¶¯¸Ã±äÁ¿µÄÎ»ÖÃ
+	long					m_nVtableAddr;		// è™šå‡½æ•°è¡¨åœ°å€ï¼Œè¯¥å˜é‡åœ°å€ä½ç½®è™šå‡½æ•°è¡¨ä¹‹åï¼Œä»…ç”¨äºç±»åˆå§‹åŒ–ï¼Œè¯·åŒ†ç§»åŠ¨è¯¥å˜é‡çš„ä½ç½®
 	D3DPRESENT_PARAMETERS	m_d3dpp;
-	CRITICAL_SECTION		m_csRender;			// äÖÈ¾ÁÙ½çÇø
-	CRITICAL_SECTION		m_csSnapShot;		// ½ØÍ¼ÁÙ½çÇø
+	CRITICAL_SECTION		m_csRender;			// æ¸²æŸ“ä¸´ç•ŒåŒº
+	CRITICAL_SECTION		m_csSnapShot;		// æˆªå›¾ä¸´ç•ŒåŒº
 	CCriticalSectionAgentPtr m_pCsListLine;
 	CCriticalSectionAgentPtr m_pCsMapPolygon;
-	bool					m_bD3DShared;		// IDirect3D9½Ó¿ÚÊÇ·ñÎª¹²Ïí 	
+	bool					m_bD3DShared;		// IDirect3D9æ¥å£æ˜¯å¦ä¸ºå…±äº« 	
 	/*HWND					m_hWnd;*/
 	DWORD					m_dwExStyle;
 	DWORD					m_dwStyle;
-	bool					m_bFullScreen;		// ÊÇ·ñÈ«ÆÁ,ÎªtrueÊ±£¬Ôò½øĞĞÈ«ÆÁ/´°¿ÚµÄÇĞ»»,ÇĞ»»Íê³Éºó,m_bSwitchScreen½«±»ÖÃÎªfalse
+	bool					m_bFullScreen;		// æ˜¯å¦å…¨å±,ä¸ºtrueæ—¶ï¼Œåˆ™è¿›è¡Œå…¨å±/çª—å£çš„åˆ‡æ¢,åˆ‡æ¢å®Œæˆå,m_bSwitchScreenå°†è¢«ç½®ä¸ºfalse
 	WINDOWPLACEMENT			m_WndPlace;
 	HMENU					m_hMenu;
 	D3DPOOL					m_nCurD3DPool;
@@ -853,7 +974,8 @@ public:
 	UINT					m_nRGBBufferSize = 0;
 	//				*m_pD3DXFont = nullptr;
 	IDirect3DSurface9		*m_pSurfaceYUVCache/* = NULL*/;
-	IDirect3DSurface9		*m_pSnapshotSurface;	/* = NULL*/;	//½ØÍ¼×¨ÓÃ±íÃæ
+	IDirect3DSurface9		*m_pSnapshotSurface;	/* = NULL*/;	//æˆªå›¾ä¸“ç”¨è¡¨é¢
+	shared_ptr<PixelConvert> m_pVideoScale = nullptr;
 	D3DFORMAT				m_nD3DFormat;
 	UINT					m_nVideoWidth;
 	UINT					m_nVideoHeight;
@@ -865,29 +987,31 @@ public:
 	HANDLE					m_hYUVCacheReady;
 	IDirect3D9				*m_pDirect3D9		/* = NULL*/;
 	IDirect3DDevice9		*m_pDirect3DDevice	/*= NULL*/;	
-	HANDLE					m_hEventSnapShot = nullptr;	// ½ØÍ¼ÇëÇóÊÂ¼ş
+	HANDLE					m_hEventSnapShot = nullptr;	// æˆªå›¾è¯·æ±‚äº‹ä»¶
 	WCHAR					*m_pszBackImageFileW;
 	HWND					m_hBackImageWnd;
-	bool					m_bSnapFlag;		// ½ØÍ¼ÊÂ¼ş±êÖ¾,Èô¸Ã±êÖ¾ÎªTRUE£¬¼´Ê¹´°¿Ú±»Òş²ØÒ²»á½øĞĞ»­ÃæäÖÈ¾
+	bool					m_bSnapFlag;		// æˆªå›¾äº‹ä»¶æ ‡å¿—,è‹¥è¯¥æ ‡å¿—ä¸ºTRUEï¼Œå³ä½¿çª—å£è¢«éšè—ä¹Ÿä¼šè¿›è¡Œç”»é¢æ¸²æŸ“
 	// AVFrame*				m_pAVFrame;
-	HANDLE					m_hEventFrameReady; // ½âÂëÊı¾İÒÑ¾­¾ÍĞ÷
-	HANDLE					m_hEventFrameCopied;// ½âÂëÊı¾İ¸´ÖÆÍê±Ï
+	HANDLE					m_hEventFrameReady; // è§£ç æ•°æ®å·²ç»å°±ç»ª
+	HANDLE					m_hEventFrameCopied;// è§£ç æ•°æ®å¤åˆ¶å®Œæ¯•
 	CRITICAL_SECTION		m_csExternDraw;
-	ExternDrawProc			m_pExternDraw;		// Íâ²¿»æÖÆ½Ó¿Ú£¬Ìá¹©Íâ²¿½Ó¿Ú£¬ÔÊĞíµ÷ÓÃ·½×ÔĞĞ»æÖÆÍ¼Ïñ
-	void*					m_pUserPtr;			// Íâ²¿µ÷ÓÃÕß×Ô¶¨ÒåÖ¸Õë
-	void*					m_pUserPtrEx;			// Íâ²¿µ÷ÓÃÕß×Ô¶¨ÒåÖ¸Õë
+	ExternDrawProc			m_pExternDraw;		// å¤–éƒ¨ç»˜åˆ¶æ¥å£ï¼Œæä¾›å¤–éƒ¨æ¥å£ï¼Œå…è®¸è°ƒç”¨æ–¹è‡ªè¡Œç»˜åˆ¶å›¾åƒ
+	void*					m_pUserPtr;			// å¤–éƒ¨è°ƒç”¨è€…è‡ªå®šä¹‰æŒ‡é’ˆ
+	void*					m_pUserPtrEx;			// å¤–éƒ¨è°ƒç”¨è€…è‡ªå®šä¹‰æŒ‡é’ˆ
+	int						m_nFrameWidth = 0;
+	int						m_nFrameHeight = 0;
 	
-	bool					m_bFullWnd;			// ÊÇ·ñÌîÂú´°¿Ú,ÎªTrueÊ±£¬ÔòÌî³äÕû¸ö´°¿Ú¿Í»§Çø£¬·ñÔòÖ»°´ÊÓÆµ±ÈÀıÏÔÊ¾	
-	HWND					m_hFullScreenWindow;// Î±È«ÆÁ´°¿Ú
-	// ½ØÍ¼Ïà¹Ø±äÁ¿
+	bool					m_bFullWnd;			// æ˜¯å¦å¡«æ»¡çª—å£,ä¸ºTrueæ—¶ï¼Œåˆ™å¡«å……æ•´ä¸ªçª—å£å®¢æˆ·åŒºï¼Œå¦åˆ™åªæŒ‰è§†é¢‘æ¯”ä¾‹æ˜¾ç¤º	
+	HWND					m_hFullScreenWindow;// ä¼ªå…¨å±çª—å£
+	// æˆªå›¾ç›¸å…³å˜é‡
 
-	D3DXIMAGE_FILEFORMAT	m_D3DXIFF;			// ½ØÍ¼ÀàĞÍ,Ä¬ÈÏÎªbmp¸ñÊ½
+	D3DXIMAGE_FILEFORMAT	m_D3DXIFF;			// æˆªå›¾ç±»å‹,é»˜è®¤ä¸ºbmpæ ¼å¼
  	WCHAR					m_szSnapShotPath[MAX_PATH];
-	bool					m_bEnableVsync;		// ÆôÓÃ´¹Ö±Í¬²½,Ä¬ÈÏÎªtrue,ÔÚĞèÒªÏÔÊ¾µÄÖ¡ÂÊ´óÓÚÏÔÊ¾Æ÷Êµ¼ÊÖ¡ÂÊÊ±,ĞèÒª½ûÓÃ´¹Ö±Í¬²½
+	bool					m_bEnableVsync;		// å¯ç”¨å‚ç›´åŒæ­¥,é»˜è®¤ä¸ºtrue,åœ¨éœ€è¦æ˜¾ç¤ºçš„å¸§ç‡å¤§äºæ˜¾ç¤ºå™¨å®é™…å¸§ç‡æ—¶,éœ€è¦ç¦ç”¨å‚ç›´åŒæ­¥
 
-	bool					m_bVideoScaleFixed;	// µ±m_bVideoScaleFixedÎªtrue,²¢ÇÒm_fWHScale = 0Ê±,ÔòÊ¹ÓÃÍ¼ÏñÔ­Ê¼±ÈÀı,±ÈÀıÖµÎªWidth/Height
-												// µ±m_bVideoScaleFixedÎªtrue,²¢ÇÒm_fWHScale ´óÓÚ0Ê±,ÔòÊ¹ÓÃdfWHScaleÌá¹©µÄ±ÈÀıÏÔÊ¾£¬Í¼Ïñ¿ÉÄÜ»á±»À­Éì±äĞÎ
-												// µ±m_bVideoScaleFixedÎªfalse,m_fWHScale²ÎÊı½«±»ºöÂÔ,´ËÊ±Ïñ½«ÌîÂú´°¿Ú¿Í»§Çø
+	bool					m_bVideoScaleFixed;	// å½“m_bVideoScaleFixedä¸ºtrue,å¹¶ä¸”m_fWHScale = 0æ—¶,åˆ™ä½¿ç”¨å›¾åƒåŸå§‹æ¯”ä¾‹,æ¯”ä¾‹å€¼ä¸ºWidth/Height
+												// å½“m_bVideoScaleFixedä¸ºtrue,å¹¶ä¸”m_fWHScale å¤§äº0æ—¶,åˆ™ä½¿ç”¨dfWHScaleæä¾›çš„æ¯”ä¾‹æ˜¾ç¤ºï¼Œå›¾åƒå¯èƒ½ä¼šè¢«æ‹‰ä¼¸å˜å½¢
+												// å½“m_bVideoScaleFixedä¸ºfalse,m_fWHScaleå‚æ•°å°†è¢«å¿½ç•¥,æ­¤æ—¶åƒå°†å¡«æ»¡çª—å£å®¢æˆ·åŒº
 	float					m_fWHScale;	
 	WNDPROC					m_pOldWndProc;
 	int						m_nDisplayAdapter;
@@ -895,11 +1019,11 @@ public:
 	static CCriticalSectionAgentPtr m_WndSurfaceMapcs;
 	static	int				m_nObjectCount;
 	static CCriticalSectionAgentPtr m_csObjectCount;
-	bool					m_bWndSubclass;		// ÊÇ·ñ×ÓÀà»¯ÏÔÊ¾´°¿Ú,ÎªtureÊ±£¬Ôò½«ÏÔÊ¾´°¿Ú×ÓÀà»¯,´ËÊ±´°¿ÚÏûÏ¢»áÏÈ±»CDxSurface::WndProcÓÅÏÈ´¦Àí,ÔÙÓÉ´°¿Úº¯Êı´¦Àí
+	bool					m_bWndSubclass;		// æ˜¯å¦å­ç±»åŒ–æ˜¾ç¤ºçª—å£,ä¸ºtureæ—¶ï¼Œåˆ™å°†æ˜¾ç¤ºçª—å£å­ç±»åŒ–,æ­¤æ—¶çª—å£æ¶ˆæ¯ä¼šå…ˆè¢«CDxSurface::WndProcä¼˜å…ˆå¤„ç†,å†ç”±çª—å£å‡½æ•°å¤„ç†
 	pDirect3DCreate9*		m_pDirect3DCreate9;
-	LPD3DXLINE              m_pD3DXLine = NULL; //Direct3DÏß¶ÔÏó  
-	//D3DXVECTOR2*            m_pLineArray = NULL; //Ïß¶Î¶¥µã 
-	CHAR					m_szAdapterID[64];	///< ÏÔ¿¨µÄGUID
+	LPD3DXLINE              m_pD3DXLine = NULL; //Direct3Dçº¿å¯¹è±¡  
+	//D3DXVECTOR2*            m_pLineArray = NULL; //çº¿æ®µé¡¶ç‚¹ 
+	CHAR					m_szAdapterID[64];	///< æ˜¾å¡çš„GUID
 public:
 		
 // 	explicit CDxSurface(IDirect3D9 *pD3D9)
@@ -920,8 +1044,8 @@ public:
 	CDxSurface()
 	{
 		// TraceFunction();
-		// ½èÖúÓÚm_nVtableAddr±äÁ¿£¬±Ü¿ª¶ÔĞéº¯Êı±íµÄ³õÊ¼»¯
-		// ½öÊÊÓÃÓÚÎ¢ÈíµÄVisual C++±àÒëÆ÷
+		// å€ŸåŠ©äºm_nVtableAddrå˜é‡ï¼Œé¿å¼€å¯¹è™šå‡½æ•°è¡¨çš„åˆå§‹åŒ–
+		// ä»…é€‚ç”¨äºå¾®è½¯çš„Visual C++ç¼–è¯‘å™¨
 		DeclareRunTime(5);
 		ZeroMemory(&m_nVtableAddr, sizeof(CDxSurface) - offsetof(CDxSurface,m_nVtableAddr));
 		m_csObjectCount->Lock();
@@ -1048,7 +1172,7 @@ public:
 	}
 	virtual IDirect3DSurface9* LoadImage(WCHAR *szFileName)
 	{
-		// ÒÔÏÂ´úÂë¼ÓÔØ±³¾°Í¼Æ¬
+		// ä»¥ä¸‹ä»£ç åŠ è½½èƒŒæ™¯å›¾ç‰‡
 		IDirect3DSurface9 *pSurfaceBackImage = nullptr;
 		D3DXIMAGE_INFO ImageInfo;
 		if (szFileName)
@@ -1066,14 +1190,14 @@ public:
 				if (SUCCEEDED(hr))
 				{
 					hr = D3DXLoadSurfaceFromFileW(
-						pSurfaceBackImage,					//Ä¿±ê±íÃæ
-						NULL,								//Ä¿±êµ÷É«°å
-						NULL,								//Ä¿±ê¾ØĞÎ,NULLÎª¼ÓÔØÕû¸ö±íÃæ
-						szFileName,							//ÎÄ¼ş
-						NULL,								//Ô´¾ØĞÎ,NULLÎª¸´ÖÆÕû¸öÍ¼Æ¬
-						D3DX_DEFAULT,						//¹ıÂË
-						D3DCOLOR_XRGB(0, 0, 0),				//Í¸Ã÷É«
-						&ImageInfo							//Ô´Í¼ÏñĞÅÏ¢
+						pSurfaceBackImage,					//ç›®æ ‡è¡¨é¢
+						NULL,								//ç›®æ ‡è°ƒè‰²æ¿
+						NULL,								//ç›®æ ‡çŸ©å½¢,NULLä¸ºåŠ è½½æ•´ä¸ªè¡¨é¢
+						szFileName,							//æ–‡ä»¶
+						NULL,								//æºçŸ©å½¢,NULLä¸ºå¤åˆ¶æ•´ä¸ªå›¾ç‰‡
+						D3DX_DEFAULT,						//è¿‡æ»¤
+						D3DCOLOR_XRGB(0, 0, 0),				//é€æ˜è‰²
+						&ImageInfo							//æºå›¾åƒä¿¡æ¯
 						);
 					if (SUCCEEDED(hr))
 					{
@@ -1149,8 +1273,8 @@ public:
 			delete []m_pRGBBuffer;
 	}
 
-	// ½ûÓÃ´¹Ö±Í¬²½,Ö»ÓĞÔÚ³õÊ¼»¯Ö®Ç°µ÷ÓÃ,²Å»áÓĞĞ§
-	// Ä¬ÈÏÇé¿öÏÂ£¬´¹Ö±Í¬²½±»ÆôÓÃ, ÔÚĞèÒªÏÔÊ¾µÄÖ¡ÂÊ´óÓÚÏÔÊ¾Æ÷Êµ¼ÊÖ¡ÂÊÊ±,ĞèÒª½ûÓÃ´¹Ö±Í¬²½
+	// ç¦ç”¨å‚ç›´åŒæ­¥,åªæœ‰åœ¨åˆå§‹åŒ–ä¹‹å‰è°ƒç”¨,æ‰ä¼šæœ‰æ•ˆ
+	// é»˜è®¤æƒ…å†µä¸‹ï¼Œå‚ç›´åŒæ­¥è¢«å¯ç”¨, åœ¨éœ€è¦æ˜¾ç¤ºçš„å¸§ç‡å¤§äºæ˜¾ç¤ºå™¨å®é™…å¸§ç‡æ—¶,éœ€è¦ç¦ç”¨å‚ç›´åŒæ­¥
 	bool	DisableVsync()
 	{
 		if (!m_bInitialized)
@@ -1161,9 +1285,9 @@ public:
 		else
 			return false;
 	}
-	/// @ÉèÖÃÍâ²¿DC»Øµ÷º¯Êı
-	/// @remark IDirect3DSurface9¿ÉÒÔ²úÉúÒ»¸öDCÖ¸Õë£¬Í¨¹ı»Øµ÷º¯Êı°Ñ´ËDCÖ¸Õë´«¸øÓÃ»§£¬ÓÃ»§Í¨¹ı´ËDC¿ÉÒÔÔÚIDirect3DSurface9ÉÏ×÷Í¼
-	/// µ«ÕâÖÖ·½Ê½Ğ§ÂÊ¼«µÍ£¬»áÃ÷ÏÔÍÏÂıÊÓÆµÏÔÊ¾µÄËÙ¶È
+	/// @è®¾ç½®å¤–éƒ¨DCå›è°ƒå‡½æ•°
+	/// @remark IDirect3DSurface9å¯ä»¥äº§ç”Ÿä¸€ä¸ªDCæŒ‡é’ˆï¼Œé€šè¿‡å›è°ƒå‡½æ•°æŠŠæ­¤DCæŒ‡é’ˆä¼ ç»™ç”¨æˆ·ï¼Œç”¨æˆ·é€šè¿‡æ­¤DCå¯ä»¥åœ¨IDirect3DSurface9ä¸Šä½œå›¾
+	/// ä½†è¿™ç§æ–¹å¼æ•ˆç‡æä½ï¼Œä¼šæ˜æ˜¾æ‹–æ…¢è§†é¢‘æ˜¾ç¤ºçš„é€Ÿåº¦
 	void SetExternDraw(void *pExternDrawProc,void *pUserPtr)
 	{
 		EnterCriticalSection(&m_csExternDraw);
@@ -1184,7 +1308,7 @@ public:
 		return true;
 	}
 	
-	// µ÷ÓÃÍâ²¿»æÖÆº¯Êı
+	// è°ƒç”¨å¤–éƒ¨ç»˜åˆ¶å‡½æ•°
 	virtual void ExternDrawCall(HWND hWnd, IDirect3DSurface9 * pBackSurface, RECT *pRect)
 	{
 		if (!m_pSurfaceRender)
@@ -1197,7 +1321,7 @@ public:
 				return;
 			switch (Desc.Format)
 			{//Direct3DSurface::GetDC() only supports D3DFMT_R5G6B5, D3DFMT_X1R5G5B5, D3DFMT_A1R5G5B5, D3DFMT_R8G8B8, D3DFMT_X8R8G8B8, and D3DFMT_A8R8G8B8.
-				// Íâ²¿Í¼Äã»æÖÆ½öÖ§³ÖÒÔÏÂÏñËØ¸ñÊ½
+				// å¤–éƒ¨å›¾ä½ ç»˜åˆ¶ä»…æ”¯æŒä»¥ä¸‹åƒç´ æ ¼å¼
 			case D3DFMT_R5G6B5:
 			case D3DFMT_X1R5G5B5:
 			case D3DFMT_A1R5G5B5:
@@ -1242,7 +1366,7 @@ public:
 		}
 	}
 
-	// Ìí¼ÓÒ»¸ö¶à±ßĞÎ
+	// æ·»åŠ ä¸€ä¸ªå¤šè¾¹å½¢
 	virtual long AddPolygon(POINT *pPtArray, int nCount, WORD *pInputIndexArray, D3DCOLOR nColor)
 	{
 		if (!m_pDirect3DDevice)
@@ -1302,14 +1426,14 @@ public:
 		else
 			return 0;
 	}
-	// Ìí¼ÓÒ»×éÏßÌõ×ø±ê
-	// ·µ»ØÖµÎªË÷ÌõË÷ÒıÖµ£¬É¾³ı¸ÃÏßÌõÊ±ĞèÒªÓÃµ½Õâ¸öË÷ÒıÖµ
-	// Ìí¼ÓÊ§°ÜÊ±·µ»Ø0
+	// æ·»åŠ ä¸€ç»„çº¿æ¡åæ ‡
+	// è¿”å›å€¼ä¸ºç´¢æ¡ç´¢å¼•å€¼ï¼Œåˆ é™¤è¯¥çº¿æ¡æ—¶éœ€è¦ç”¨åˆ°è¿™ä¸ªç´¢å¼•å€¼
+	// æ·»åŠ å¤±è´¥æ—¶è¿”å›0
 	virtual long AddD3DLineArray(POINT *pPointArray,int nCount,float fWidth,D3DCOLOR nColor)
 	{
 		if (!m_pD3DXLine)
 		{
-			// ´´½¨Direct3DÏß¶ÔÏó  
+			// åˆ›å»ºDirect3Dçº¿å¯¹è±¡  
 			if (FAILED(D3DXCreateLine(m_pDirect3DDevice, &m_pD3DXLine)))
 			{
 				return 0;
@@ -1330,7 +1454,7 @@ public:
 		m_pCsListLine->Unlock();
 		return (long)pLineArray.get();
 	}
-	// É¾³ı¶à±ßĞÎ
+	// åˆ é™¤å¤šè¾¹å½¢
 	void RemovePolygon(long nPolygonIndex)
 	{
 		m_pCsMapPolygon->Lock();
@@ -1342,8 +1466,8 @@ public:
 		m_pCsMapPolygon->Unlock();
 	}
 
-	// É¾³ıÏß¶Î
-	// nArrayIndexÎªAddD3DLineArray·µ»ØµÄË÷ÒıÖµ
+	// åˆ é™¤çº¿æ®µ
+	// nArrayIndexä¸ºAddD3DLineArrayè¿”å›çš„ç´¢å¼•å€¼
 	int  RemoveD3DLineArray(long nArrayIndex)
 	{
 		CAutoLock lock(m_pCsListLine->Get());
@@ -1438,14 +1562,14 @@ public:
 		return SUCCEEDED(m_pDirect3DDevice->Reset(&m_d3dpp));
 #endif
 	}
-	/// @brief È¡Í¼Ïñ³ß´çºÍÏóËØ¸ñÊ½ µÍ32Î»µÄµÍ16 bitÎª¿í¶È£¬¸ß16bitÎª¸ß¶È£¬¸ß32Î»ÎªÏóËØ¸ñÊ½
+	/// @brief å–å›¾åƒå°ºå¯¸å’Œè±¡ç´ æ ¼å¼ ä½32ä½çš„ä½16 bitä¸ºå®½åº¦ï¼Œé«˜16bitä¸ºé«˜åº¦ï¼Œé«˜32ä½ä¸ºè±¡ç´ æ ¼å¼
 	UINT64 GetVideoSizeAndFormat()
 	{
 		return MAKEUINT64(MAKELONG(m_nVideoWidth, m_nVideoHeight), m_nD3DFormat);
 	}
-	// @brief D3dDirect9ExÏÂ£¬¸Ã³ÉÔ±²»ÔÙÓĞĞ§
+	// @brief D3dDirect9Exä¸‹ï¼Œè¯¥æˆå‘˜ä¸å†æœ‰æ•ˆ
 	virtual bool RestoreDevice()
-	{// »Ö¸´Éè±¸£¬¼´ÓÃÔ­Ê¼²ÎÊıÖØ½¨×ÊÔ´
+	{// æ¢å¤è®¾å¤‡ï¼Œå³ç”¨åŸå§‹å‚æ•°é‡å»ºèµ„æº
 		TraceFunction();
 		if (!m_pDirect3D9 || !m_pDirect3DDevice)
 			return false;
@@ -1483,42 +1607,45 @@ public:
 		SafeRelease(m_pSnapshotSurface);
 		SafeRelease(m_pDirect3DDevice);
 	}
-	// ·¢ËÍ½ØÍ¼ÇëÇó£¬¼´ÖÃĞÅ½ØÍ¼ÊÂ¼ş
+	// å‘é€æˆªå›¾è¯·æ±‚ï¼Œå³ç½®ä¿¡æˆªå›¾äº‹ä»¶
 	/*void RequireSnapshot()
 	{
 		SetEvent(m_hEventSnapShot);
 		m_bSnapFlag = true;
 	}*/
 
-	// °Ñ½âÂëÖ¡pAvFrameÖĞµÄÍ¼Ïñ´«ËÍµ½½ØÍ¼±íÃæ
+	// æŠŠè§£ç å¸§pAvFrameä¸­çš„å›¾åƒä¼ é€åˆ°æˆªå›¾è¡¨é¢
 	void TransferSnapShotSurface(AVFrame *pAvFrame)
 	{
-		if (m_pSnapshotSurface && WaitForSingleObject(m_hEventSnapShot, 0) == WAIT_OBJECT_0)						// ÊÕµ½½ØÍ¼ÇëÇó
+		if (m_pSnapshotSurface && WaitForSingleObject(m_hEventSnapShot, 0) == WAIT_OBJECT_0)						// æ”¶åˆ°æˆªå›¾è¯·æ±‚
 		{
 			//ResetEvent(m_hEventCreateSurface);
-			// ²»ÄÜÊ¹ÓÃStretchRect°ÑÏÔ´æ±íÃæ¸´ÖÆµ½ÏµÍ³ÄÚ´æ±íÃæ
+			// ä¸èƒ½ä½¿ç”¨StretchRectæŠŠæ˜¾å­˜è¡¨é¢å¤åˆ¶åˆ°ç³»ç»Ÿå†…å­˜è¡¨é¢
 			// hr = m_pDirect3DDevice->StretchRect(m_pDirect3DSurfaceRender, &srcrt, m_pSnapshotSurface, &srcrt, D3DTEXF_LINEAR);
 			D3DLOCKED_RECT D3dRect;
 			D3DSURFACE_DESC desc;
 		
-			// FFMPEGÏñËØ±àÂë×Ö½ÚĞòÓëDirectXÏñËØµÄ×Ö½ÚĞòÏà·´,Òò´Ë
+			// FFMPEGåƒç´ ç¼–ç å­—èŠ‚åºä¸DirectXåƒç´ çš„å­—èŠ‚åºç›¸å,å› æ­¤
 			// D3DFMT_A8R8G8B8(A8:R8:G8:B8)==>AV_PIX_FMT_BGRA(B8:G8:R8:A8)
-#if _MSC_VER >= 1600
-			shared_ptr<PixelConvert> pVideoScale = make_shared<PixelConvert>(pAvFrame,D3DFMT_A8R8G8B8,GQ_BICUBIC);
-#else
-			shared_ptr<PixelConvert> pVideoScale (new PixelConvert(pAvFrame,D3DFMT_A8R8G8B8,GQ_BICUBIC));
-#endif
-			pVideoScale->ConvertPixel(pAvFrame);
+//#if _MSC_VER >= 1600
+			if (!m_pVideoScale)
+				m_pVideoScale = make_shared<PixelConvert>(pAvFrame,D3DFMT_A8R8G8B8,GQ_BICUBIC);
+//#else
+//			shared_ptr<PixelConvert> pVideoScale (new PixelConvert(pAvFrame,D3DFMT_A8R8G8B8,GQ_BICUBIC));
+//#endif
+			m_nFrameWidth = pAvFrame->width;
+			m_nFrameHeight = pAvFrame->height;
+			m_pVideoScale->ConvertPixel(pAvFrame);
 			m_pSnapshotSurface->GetDesc(&desc);
 			m_pSnapshotSurface->LockRect(&D3dRect, NULL, D3DLOCK_DONOTWAIT);
-			memcpy_s(D3dRect.pBits, D3dRect.Pitch*desc.Height, pVideoScale->pImage, pVideoScale->nImageSize);
+			memcpy_s(D3dRect.pBits, D3dRect.Pitch*desc.Height, m_pVideoScale->pImage, m_pVideoScale->nImageSize);
 			m_pSnapshotSurface->UnlockRect();
 			SetEvent(m_hEventFrameReady);
 			DxTraceMsg("%s Surface is Transfered.\n", __FUNCTION__);
 		}
 	}
 	
-	// ½âÂë×¥Í¼£¬°ÑSurfaceÖĞµÄÍ¼ÏñÊı¾İ±£´æµ½ÎÄ¼şÖĞ£¬´Ë½ØÍ¼µÃµ½µÄÍ¼ÏñÊÇÔ­Ê¼µÄÍ¼Ïñ
+	// è§£ç æŠ“å›¾ï¼ŒæŠŠSurfaceä¸­çš„å›¾åƒæ•°æ®ä¿å­˜åˆ°æ–‡ä»¶ä¸­ï¼Œæ­¤æˆªå›¾å¾—åˆ°çš„å›¾åƒæ˜¯åŸå§‹çš„å›¾åƒ
 	virtual bool SaveSurfaceToFileA(CHAR *szFilePath,D3DXIMAGE_FILEFORMAT D3DImageFormat = D3DXIFF_JPG)
 	{
 		if (!szFilePath || strlen(szFilePath) <= 0)
@@ -1529,7 +1656,7 @@ public:
 		return SaveSurfaceToFileW(szFilePathW, D3DImageFormat);
 	}
 	
-	// ½âÂë×¥Í¼£¬°ÑSurfaceÖĞµÄÍ¼ÏñÊı¾İ±£´æµ½ÎÄ¼şÖĞ£¬´Ë½ØÍ¼µÃµ½µÄÍ¼ÏñÊÇÔ­Ê¼µÄÍ¼Ïñ
+	// è§£ç æŠ“å›¾ï¼ŒæŠŠSurfaceä¸­çš„å›¾åƒæ•°æ®ä¿å­˜åˆ°æ–‡ä»¶ä¸­ï¼Œæ­¤æˆªå›¾å¾—åˆ°çš„å›¾åƒæ˜¯åŸå§‹çš„å›¾åƒ
 	virtual bool SaveSurfaceToFileW(WCHAR *szFilePath, D3DXIMAGE_FILEFORMAT D3DImageFormat = D3DXIFF_JPG)
 	{
 		if (!m_pDirect3DDevice ||
@@ -1560,10 +1687,10 @@ public:
 		}
 
 		wcscpy(m_szSnapShotPath, szFilePath);
-		// ½ØÍ¼Êı¾İÉĞÎ´¾ÍĞ÷,ÔòÖÃĞÅ½ØÍ¼ÊÂ¼ş
+		// æˆªå›¾æ•°æ®å°šæœªå°±ç»ª,åˆ™ç½®ä¿¡æˆªå›¾äº‹ä»¶
 		if (WaitForSingleObject(m_hEventFrameReady, 1000) == WAIT_TIMEOUT)
 			return false;
-		// ½ØÍ¼Êı¾İÒÑ¾ÍĞ÷			
+		// æˆªå›¾æ•°æ®å·²å°±ç»ª			
 		
 		hr = D3DXSaveSurfaceToFileW(szFilePath, m_D3DXIFF, m_pSnapshotSurface, NULL, NULL);
 		if (FAILED(hr))
@@ -1575,7 +1702,7 @@ public:
 		return true;
 	}
 	
-	// ÆÁÄ»×¥Í¼£¬°ÑÏÔÊ¾µ½ÆÁÄ»ÉÏµÄÍ¼Ïó£¬±£´æµ½ÎÄ¼şÖĞ,´Ë½ØÍ¼µÃµ½µÄÓĞ¿ÉÄÜ²»ÊÇÔ­Ê¼µÄÍ¼Ïñ£¬¿ÉÄÜÊÇ±»À­Éì»ò´¦Àí¹ıµÄÍ¼Ïñ 
+	// å±å¹•æŠ“å›¾ï¼ŒæŠŠæ˜¾ç¤ºåˆ°å±å¹•ä¸Šçš„å›¾è±¡ï¼Œä¿å­˜åˆ°æ–‡ä»¶ä¸­,æ­¤æˆªå›¾å¾—åˆ°çš„æœ‰å¯èƒ½ä¸æ˜¯åŸå§‹çš„å›¾åƒï¼Œå¯èƒ½æ˜¯è¢«æ‹‰ä¼¸æˆ–å¤„ç†è¿‡çš„å›¾åƒ 
 	virtual void CaptureScreen(TCHAR *szFilePath,D3DXIMAGE_FILEFORMAT D3DImageFormat = D3DXIFF_JPG)		
 	{
 		if (!m_pDirect3DDevice)
@@ -1656,10 +1783,10 @@ public:
 #endif
 	}
 	
-	// µ÷ÓÃInitD3DÖ®Ç°±ØĞëÏÈµ÷ÓÃAttachWndº¯Êı¹ØÁªÊÓÆµÏÔÊ¾´°¿Ú
-	// nD3DFormat ±ØĞëÎªÒÔÏÂ¸ñÊ½Ö®Ò»
-	// MAKEFOURCC('Y', 'V', '1', '2')	Ä¬ÈÏ¸ñÊ½,¿ÉÒÔºÜ·½±ãµØÓÉYUV420P×ª»»µÃµ½,¶øYUV420PÊÇFFMPEG½âÂëºóµÃµ½µÄÄ¬ÈÏÏñËØ¸ñÊ½
-	// MAKEFOURCC('N', 'V', '1', '2')	½öDXVAÓ²½âÂëÊ¹ÓÃ¸Ã¸ñÊ½
+	// è°ƒç”¨InitD3Dä¹‹å‰å¿…é¡»å…ˆè°ƒç”¨AttachWndå‡½æ•°å…³è”è§†é¢‘æ˜¾ç¤ºçª—å£
+	// nD3DFormat å¿…é¡»ä¸ºä»¥ä¸‹æ ¼å¼ä¹‹ä¸€
+	// MAKEFOURCC('Y', 'V', '1', '2')	é»˜è®¤æ ¼å¼,å¯ä»¥å¾ˆæ–¹ä¾¿åœ°ç”±YUV420Pè½¬æ¢å¾—åˆ°,è€ŒYUV420Pæ˜¯FFMPEGè§£ç åå¾—åˆ°çš„é»˜è®¤åƒç´ æ ¼å¼
+	// MAKEFOURCC('N', 'V', '1', '2')	ä»…DXVAç¡¬è§£ç ä½¿ç”¨è¯¥æ ¼å¼
 	// D3DFMT_R5G6B5
 	// D3DFMT_X1R5G5B5
 	// D3DFMT_A1R5G5B5
@@ -1702,14 +1829,14 @@ public:
 		m_d3dpp.PresentationInterval	= D3DPRESENT_INTERVAL_ONE;// D3DPRESENT_INTERVAL_IMMEDIATE;
 		m_d3dpp.hDeviceWindow			= hWnd;
 		m_d3dpp.MultiSampleQuality		= 0;
-		m_d3dpp.MultiSampleType			= D3DMULTISAMPLE_NONE;					// ÏÔÊ¾ÊÓÆµÊ±£¬²»ÒËÊ¹ÓÃ¶àÖØ²ÉÑù£¬·ñÔò½«µ¼ÖÂ»­Ãæ´íÂÒ
-		m_d3dpp.SwapEffect				= D3DSWAPEFFECT_DISCARD;				// Ö¸¶¨ÏµÍ³ÈçºÎ½«ºóÌ¨»º³åÇøµÄÄÚÈİ¸´ÖÆµ½Ç°Ì¨»º³åÇø D3DSWAPEFFECT_DISCARD:Çå³ıºóÌ¨»º´æµÄÄÚÈİ
+		m_d3dpp.MultiSampleType			= D3DMULTISAMPLE_NONE;					// æ˜¾ç¤ºè§†é¢‘æ—¶ï¼Œä¸å®œä½¿ç”¨å¤šé‡é‡‡æ ·ï¼Œå¦åˆ™å°†å¯¼è‡´ç”»é¢é”™ä¹±
+		m_d3dpp.SwapEffect				= D3DSWAPEFFECT_DISCARD;				// æŒ‡å®šç³»ç»Ÿå¦‚ä½•å°†åå°ç¼“å†²åŒºçš„å†…å®¹å¤åˆ¶åˆ°å‰å°ç¼“å†²åŒº D3DSWAPEFFECT_DISCARD:æ¸…é™¤åå°ç¼“å­˜çš„å†…å®¹
 #pragma warning(push)
 #pragma warning(disable:4800)
 		m_bFullScreen					= (bool)bIsWindowed;
 #pragma warning(pop)		
 
-		if (bIsWindowed)//´°¿ÚÄ£Ê½
+		if (bIsWindowed)//çª—å£æ¨¡å¼
 		{
 			if (m_dwStyle)
 				SetWindowLong(m_d3dpp.hDeviceWindow, GWL_STYLE, m_dwStyle);
@@ -1720,21 +1847,21 @@ public:
 				m_d3dpp.PresentationInterval	= D3DPRESENT_INTERVAL_IMMEDIATE;
 			else
 				m_d3dpp.PresentationInterval	= D3DPRESENT_INTERVAL_DEFAULT;
-			m_d3dpp.FullScreen_RefreshRateInHz	= 0;							// ÏÔÊ¾Æ÷Ë¢ĞÂÂÊ£¬´°¿ÚÄ£Ê½¸ÃÖµ±ØĞëÎª0
+			m_d3dpp.FullScreen_RefreshRateInHz	= 0;							// æ˜¾ç¤ºå™¨åˆ·æ–°ç‡ï¼Œçª—å£æ¨¡å¼è¯¥å€¼å¿…é¡»ä¸º0
 			
 			m_d3dpp.BackBufferHeight			= nVideoHeight;
 			m_d3dpp.BackBufferWidth				= nVideoWidth;
-			m_d3dpp.EnableAutoDepthStencil		= FALSE;							// ¹Ø±Õ×Ô¶¯Éî¶È»º´æ
+			m_d3dpp.EnableAutoDepthStencil		= FALSE;							// å…³é—­è‡ªåŠ¨æ·±åº¦ç¼“å­˜
 		}
 		else
 		{
-			//È«ÆÁÄ£Ê½
+			//å…¨å±æ¨¡å¼
 			m_d3dpp.PresentationInterval		= D3DPRESENT_INTERVAL_IMMEDIATE;
 			m_d3dpp.FullScreen_RefreshRateInHz	= d3ddm.RefreshRate;	
 			
 			m_d3dpp.EnableAutoDepthStencil		= FALSE;			
-			m_d3dpp.BackBufferWidth				= GetSystemMetrics(SM_CXSCREEN);		// »ñµÃÆÁÄ»¿í
-			m_d3dpp.BackBufferHeight			= GetSystemMetrics(SM_CYSCREEN);		// »ñµÃÆÁÄ»¸ß
+			m_d3dpp.BackBufferWidth				= GetSystemMetrics(SM_CXSCREEN);		// è·å¾—å±å¹•å®½
+			m_d3dpp.BackBufferHeight			= GetSystemMetrics(SM_CYSCREEN);		// è·å¾—å±å¹•é«˜
 
 			GetWindowPlacement(m_d3dpp.hDeviceWindow, &m_WndPlace ) ;
 			m_dwExStyle	 = GetWindowLong( m_d3dpp.hDeviceWindow, GWL_EXSTYLE ) ;
@@ -1743,21 +1870,21 @@ public:
 			m_hMenu		 = GetMenu( m_d3dpp.hDeviceWindow ) ;
 		}
 		/*
-		CreateDeviceµÄBehaviorFlags²ÎÊıÑ¡Ïî£º
-		D3DCREATE_ADAPTERGROUP_DEVICEÖ»¶ÔÖ÷ÏÔ¿¨ÓĞĞ§£¬ÈÃÉè±¸Çı¶¯Êä³ö¸øËüËùÓµÓĞµÄËùÓĞÏÔÊ¾Êä³ö
-		D3DCREATE_DISABLE_DRIVER_MANAGEMENT´úÌæÉè±¸Çı¶¯À´¹ÜÀí×ÊÔ´£¬ÕâÑùÔÚ·¢Éú×ÊÔ´²»×ãÊ±D3Dµ÷ÓÃ²»»áÊ§°Ü
-		D3DCREATE_DISABLE_PRINTSCREEN:²»×¢²á½ØÆÁ¿ì½İ¼ü£¬Ö»¶ÔDirect3D 9Ex
-		D3DCREATE_DISABLE_PSGP_THREADING£ºÇ¿ÖÆ¼ÆËã¹¤×÷±ØĞëÔÚÖ÷Ïß³ÌÉÏ£¬vistaÒÔÉÏÓĞĞ§
-		D3DCREATE_ENABLE_PRESENTSTATS£ºÔÊĞíGetPresentStatisticsÊÕ¼¯Í³¼ÆĞÅÏ¢Ö»¶ÔDirect3D 9Ex
-		D3DCREATE_FPU_PRESERVE£»Ç¿ÖÆD3DÓëÏß³ÌÊ¹ÓÃÏàÍ¬µÄ¸¡µã¾«¶È£¬»á½µµÍĞÔÄÜ
-		D3DCREATE_HARDWARE_VERTEXPROCESSING£ºÖ¸¶¨Ó²¼ş½øĞĞ¶¥µã´¦Àí£¬±ØĞë¸úËæD3DCREATE_PUREDEVICE
-		D3DCREATE_MIXED_VERTEXPROCESSING£ºÖ¸¶¨»ìºÏ¶¥µã´¦Àí
-		D3DCREATE_SOFTWARE_VERTEXPROCESSING£ºÖ¸¶¨´¿ÈíµÄ¶¥µã´¦Àí
-		D3DCREATE_MULTITHREADED£ºÒªÇóD3DÊÇÏß³Ì°²È«µÄ£¬¶àÏß³ÌÊ±
-		D3DCREATE_NOWINDOWCHANGES£ºÓµÓĞ²»¸Ä±ä´°¿Ú½¹µã
-		D3DCREATE_PUREDEVICE£ºÖ»ÊÔÍ¼Ê¹ÓÃ´¿Ó²¼şµÄäÖÈ¾
-		D3DCREATE_SCREENSAVER£ºÔÊĞí±»ÆÁ±£´ò¶ÏÖ»¶ÔDirect3D 9Ex
-		D3DCREATE_HARDWARE_VERTEXPROCESSING, D3DCREATE_MIXED_VERTEXPROCESSING, and D3DCREATE_SOFTWARE_VERTEXPROCESSINGÖĞÖÁÉÙÓĞÒ»¸öÒ»¶¨ÒªÉèÖÃ
+		CreateDeviceçš„BehaviorFlagså‚æ•°é€‰é¡¹ï¼š
+		D3DCREATE_ADAPTERGROUP_DEVICEåªå¯¹ä¸»æ˜¾å¡æœ‰æ•ˆï¼Œè®©è®¾å¤‡é©±åŠ¨è¾“å‡ºç»™å®ƒæ‰€æ‹¥æœ‰çš„æ‰€æœ‰æ˜¾ç¤ºè¾“å‡º
+		D3DCREATE_DISABLE_DRIVER_MANAGEMENTä»£æ›¿è®¾å¤‡é©±åŠ¨æ¥ç®¡ç†èµ„æºï¼Œè¿™æ ·åœ¨å‘ç”Ÿèµ„æºä¸è¶³æ—¶D3Dè°ƒç”¨ä¸ä¼šå¤±è´¥
+		D3DCREATE_DISABLE_PRINTSCREEN:ä¸æ³¨å†Œæˆªå±å¿«æ·é”®ï¼Œåªå¯¹Direct3D 9Ex
+		D3DCREATE_DISABLE_PSGP_THREADINGï¼šå¼ºåˆ¶è®¡ç®—å·¥ä½œå¿…é¡»åœ¨ä¸»çº¿ç¨‹ä¸Šï¼Œvistaä»¥ä¸Šæœ‰æ•ˆ
+		D3DCREATE_ENABLE_PRESENTSTATSï¼šå…è®¸GetPresentStatisticsæ”¶é›†ç»Ÿè®¡ä¿¡æ¯åªå¯¹Direct3D 9Ex
+		D3DCREATE_FPU_PRESERVEï¼›å¼ºåˆ¶D3Dä¸çº¿ç¨‹ä½¿ç”¨ç›¸åŒçš„æµ®ç‚¹ç²¾åº¦ï¼Œä¼šé™ä½æ€§èƒ½
+		D3DCREATE_HARDWARE_VERTEXPROCESSINGï¼šæŒ‡å®šç¡¬ä»¶è¿›è¡Œé¡¶ç‚¹å¤„ç†ï¼Œå¿…é¡»è·ŸéšD3DCREATE_PUREDEVICE
+		D3DCREATE_MIXED_VERTEXPROCESSINGï¼šæŒ‡å®šæ··åˆé¡¶ç‚¹å¤„ç†
+		D3DCREATE_SOFTWARE_VERTEXPROCESSINGï¼šæŒ‡å®šçº¯è½¯çš„é¡¶ç‚¹å¤„ç†
+		D3DCREATE_MULTITHREADEDï¼šè¦æ±‚D3Dæ˜¯çº¿ç¨‹å®‰å…¨çš„ï¼Œå¤šçº¿ç¨‹æ—¶
+		D3DCREATE_NOWINDOWCHANGESï¼šæ‹¥æœ‰ä¸æ”¹å˜çª—å£ç„¦ç‚¹
+		D3DCREATE_PUREDEVICEï¼šåªè¯•å›¾ä½¿ç”¨çº¯ç¡¬ä»¶çš„æ¸²æŸ“
+		D3DCREATE_SCREENSAVERï¼šå…è®¸è¢«å±ä¿æ‰“æ–­åªå¯¹Direct3D 9Ex
+		D3DCREATE_HARDWARE_VERTEXPROCESSING, D3DCREATE_MIXED_VERTEXPROCESSING, and D3DCREATE_SOFTWARE_VERTEXPROCESSINGä¸­è‡³å°‘æœ‰ä¸€ä¸ªä¸€å®šè¦è®¾ç½®
 		*/
 		if (FAILED(hr = m_pDirect3D9->CreateDevice(D3DADAPTER_DEFAULT,
 			D3DDEVTYPE_HAL,
@@ -1800,7 +1927,7 @@ public:
 		}
 		D3DSURFACE_DESC SrcSurfaceDesc;			
 		m_pSurfaceRender->GetDesc(&SrcSurfaceDesc);
-		// ±£´æ²ÎÊı
+		// ä¿å­˜å‚æ•°
 		m_nVideoWidth	 = nVideoWidth;
 		m_nVideoHeight	 = nVideoHeight;
 		m_nD3DFormat = nD3DFormat;		
@@ -1814,8 +1941,8 @@ _Failed:
 		return bSucceed;
 	}
 
-	// ´´½¨YUV»º´æ±íÃæ
-	// »òÊ¹ÓÃÓ²½âÂëÔò´´½¨
+	// åˆ›å»ºYUVç¼“å­˜è¡¨é¢
+	// æˆ–ä½¿ç”¨ç¡¬è§£ç åˆ™åˆ›å»º
 // 	virtual bool CreateSurfaceYUVCache(D3DFORMAT nD3DFormat = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'))
 // 	{
 // 		if (!m_pDirect3D9 || !m_pSurfaceRender)
@@ -1847,7 +1974,7 @@ _Failed:
 // 		if (!HandelDevLost())
 // 			return false;
 // 	
-// 		// HandelDevLostÈÔÎŞ·¨Ê¹ÓÃm_pDirect3DDevice£¬ÔòÖ±½Ó·µ»Øfalse
+// 		// HandelDevLostä»æ— æ³•ä½¿ç”¨m_pDirect3DDeviceï¼Œåˆ™ç›´æ¥è¿”å›false
 // 		if (!m_pDirect3DDevice)
 // 			return false;
 // 		HRESULT hr = -1;
@@ -1855,7 +1982,7 @@ _Failed:
 // 		switch (pAvFrame->format)
 // 		{
 // 		case  AV_PIX_FMT_DXVA2_VLD:
-// 		{// Ó²½âÂëÖ¡£¬¿ÉÒÔÖ±½ÓÏÔÊ¾
+// 		{// ç¡¬è§£ç å¸§ï¼Œå¯ä»¥ç›´æ¥æ˜¾ç¤º
 // 			IDirect3DSurface9* pRenderSurface = m_pSurfaceYUVCache;
 // 			IDirect3DSurface9* pSurface = (IDirect3DSurface9 *)pAvFrame->data[3];
 // 						
@@ -1877,15 +2004,15 @@ _Failed:
 // 				gpu_memcpy(DstRect.pBits, SrcRect.pBits, SrcRect.Pitch*DstSurfaceDesc.Height * 3 / 2);
 // 			else
 // 			{
-// 				// Y·ÖÁ¿Í¼Ïñ
+// 				// Yåˆ†é‡å›¾åƒ
 // 				uint8_t *pSrcY = (uint8_t*)SrcRect.pBits;
-// 				// UV·ÖÁ¿Í¼Ïñ
+// 				// UVåˆ†é‡å›¾åƒ
 // 				uint8_t *pSrcUV = (uint8_t*)SrcRect.pBits + SrcRect.Pitch * DstSurfaceDesc.Height;
 // 
 // 				uint8_t *pDstY = (uint8_t *)DstRect.pBits;
 // 				uint8_t *pDstUV = (uint8_t *)DstRect.pBits + DstRect.Pitch*DXVASurfaceDesc.Height;
 // 
-// 				// ¸´ÖÆY·ÖÁ¿
+// 				// å¤åˆ¶Yåˆ†é‡
 // 				for (UINT i = 0; i < DXVASurfaceDesc.Height; i++)
 // 					gpu_memcpy(&pDstY[i*DstRect.Pitch], &pSrcY[i*SrcRect.Pitch], DXVASurfaceDesc.Width);
 // 				for (UINT i = 0; i < DXVASurfaceDesc.Height / 2; i++)
@@ -1904,7 +2031,7 @@ _Failed:
 // 		}
 // 		case AV_PIX_FMT_YUV420P:
 // 		case AV_PIX_FMT_YUVJ420P:
-// 		{// Èí½âÂëÖ¡£¬Ö»Ö§³ÖYUV420P¸ñÊ½		
+// 		{// è½¯è§£ç å¸§ï¼Œåªæ”¯æŒYUV420Pæ ¼å¼		
 // 			
 // 			D3DLOCKED_RECT d3d_rect;
 // 			D3DSURFACE_DESC Desc;
@@ -2033,7 +2160,7 @@ _Failed:
 #define RectHeight(rt)	(rt.bottom - rt.top)
 	WINDOWPLACEMENT	m_windowedPWP;
 	HWND	m_hParentWnd;
-	// ÔİÊ±²»ÒªÊ¹ÓÃÕâ¸ö¹¦ÄÜ£¬ÒòÎªÄ¿Ç°ÉĞÎ´ÕÒµ½È«ÆÁ»»»Ø´°¿ÚÄ£Ê½µÄ·½·¨
+	// æš‚æ—¶ä¸è¦ä½¿ç”¨è¿™ä¸ªåŠŸèƒ½ï¼Œå› ä¸ºç›®å‰å°šæœªæ‰¾åˆ°å…¨å±æ¢å›çª—å£æ¨¡å¼çš„æ–¹æ³•
 	inline void SwitchFullScreen(HWND hWnd = NULL)
 	{
 		CAutoLock lock(&m_csRender);
@@ -2087,8 +2214,8 @@ _Failed:
 	}
 	*/
 	
-	// ´¦ÀíÉè±¸¶ªÊ§
-	// m_bManualReset	Ä¬ÈÏÎªfalse,Ö»´¦Àí±»¶¯µÄÉè±¸¶ªÊ§,ÎªtrueÊ±£¬ÔòÊÇÖ÷¶¯ÖÆÔìÉè±¸¶ªÊ§,ÒÔ±ãÊÊÓ¦´°¿Ú³ß´ç±ä»¯£¬ÈçÈ«ÆÁ·Å´óµÈ
+	// å¤„ç†è®¾å¤‡ä¸¢å¤±
+	// m_bManualReset	é»˜è®¤ä¸ºfalse,åªå¤„ç†è¢«åŠ¨çš„è®¾å¤‡ä¸¢å¤±,ä¸ºtrueæ—¶ï¼Œåˆ™æ˜¯ä¸»åŠ¨åˆ¶é€ è®¾å¤‡ä¸¢å¤±,ä»¥ä¾¿é€‚åº”çª—å£å°ºå¯¸å˜åŒ–ï¼Œå¦‚å…¨å±æ”¾å¤§ç­‰
 	virtual bool HandelDevLost()
 	{
 		HRESULT hr = S_OK;
@@ -2134,23 +2261,23 @@ _Failed:
 		int nVideoHeight = min(pFrame420P->height,nDescHeight);
 		int nSize = nVideoHeight * nStride;
 		int nHalfSize = (nSize) >> 1;	
-		byte *pDestY = pDest;										// Y·ÖÁ¿ÆğÊ¼µØÖ·
-		byte *pDestV = pDest + nSize;								// U·ÖÁ¿ÆğÊ¼µØÖ·
+		byte *pDestY = pDest;										// Yåˆ†é‡èµ·å§‹åœ°å€
+		byte *pDestV = pDest + nSize;								// Uåˆ†é‡èµ·å§‹åœ°å€
 		int nSizeofV = nHalfSize>>1;
-		byte *pDestU = pDestV + (size_t)(nHalfSize >> 1);			// V·ÖÁ¿ÆğÊ¼µØÖ·
+		byte *pDestU = pDestV + (size_t)(nHalfSize >> 1);			// Våˆ†é‡èµ·å§‹åœ°å€
 		int nSizoefU = nHalfSize>>1;
 		
 
-		// YUV420PµÄUºÍV·ÖÁ¿¶Ôµ÷£¬±ã³ÉÎªYV12¸ñÊ½
-		// ¸´ÖÆY·ÖÁ¿
+		// YUV420Pçš„Uå’ŒVåˆ†é‡å¯¹è°ƒï¼Œä¾¿æˆä¸ºYV12æ ¼å¼
+		// å¤åˆ¶Yåˆ†é‡
 //  		for (int i = 0; i < nVideoHeight; i++)
 // 			gpu_memcpy(pDestY + i * nStride, /*nSize * 3 / 2 - i*nStride,*/ pFrame420P->data[0] + i * pFrame420P->linesize[0], pFrame420P->width);
 // 
-// 		// ¸´ÖÆYUV420PµÄU·ÖÁ¿µ½Ä¿´åµÄYV12µÄU·ÖÁ¿
+// 		// å¤åˆ¶YUV420Pçš„Uåˆ†é‡åˆ°ç›®æ‘çš„YV12çš„Uåˆ†é‡
 //  		for (int i = 0; i < nVideoHeight / 2; i++)
 // 			gpu_memcpy(pDestU + i * nStride / 2,/* nSizoefU - i*nStride / 2,*/ pFrame420P->data[1] + i * pFrame420P->linesize[1], pFrame420P->width / 2);
 // 
-// 		// ¸´ÖÆYUV420PµÄV·ÖÁ¿µ½Ä¿´åµÄYV12µÄV·ÖÁ¿
+// 		// å¤åˆ¶YUV420Pçš„Våˆ†é‡åˆ°ç›®æ‘çš„YV12çš„Våˆ†é‡
 //  		for (int i = 0; i < nVideoHeight / 2; i++)
 // 			gpu_memcpy(pDestV + i * nStride / 2, /*nSizeofV - i*nStride / 2,*/ pFrame420P->data[2] + i * pFrame420P->linesize[2], pFrame420P->width / 2);
 		
@@ -2158,11 +2285,11 @@ _Failed:
 		for (int i = 0; i < nVideoHeight; i++)
 			memcpy(pDestY + i * nStride, /*nSize * 3 / 2 - i*nStride,*/ pFrame420P->data[0] + i * pFrame420P->linesize[0], pFrame420P->width);
 
-		// ¸´ÖÆYUV420PµÄU·ÖÁ¿µ½Ä¿´åµÄYV12µÄU·ÖÁ¿
+		// å¤åˆ¶YUV420Pçš„Uåˆ†é‡åˆ°ç›®æ‘çš„YV12çš„Uåˆ†é‡
 		for (int i = 0; i < nVideoHeight / 2; i++)
 			memcpy(pDestU + i * nStride / 2,/* nSizoefU - i*nStride / 2,*/ pFrame420P->data[1] + i * pFrame420P->linesize[1], pFrame420P->width / 2);
 
-		// ¸´ÖÆYUV420PµÄV·ÖÁ¿µ½Ä¿´åµÄYV12µÄV·ÖÁ¿
+		// å¤åˆ¶YUV420Pçš„Våˆ†é‡åˆ°ç›®æ‘çš„YV12çš„Våˆ†é‡
 		for (int i = 0; i < nVideoHeight / 2; i++)
 			memcpy(pDestV + i * nStride / 2, /*nSizeofV - i*nStride / 2,*/ pFrame420P->data[2] + i * pFrame420P->linesize[2], pFrame420P->width / 2);
 	}
@@ -2187,7 +2314,7 @@ _Failed:
 		if (!HandelDevLost())
 			return false;
 		SaveRunTime();
-		// HandelDevLostÈÔÎŞ·¨Ê¹ÓÃm_pDirect3DDevice£¬ÔòÖ±½Ó·µ»Øfalse
+		// HandelDevLostä»æ— æ³•ä½¿ç”¨m_pDirect3DDeviceï¼Œåˆ™ç›´æ¥è¿”å›false
 		if (!m_pDirect3DDevice)
 			return false;
 		HRESULT hr = -1;
@@ -2198,7 +2325,7 @@ _Failed:
 		switch(pAvFrame->format)
 		{
 		case  AV_PIX_FMT_DXVA2_VLD:
-			{// Ó²½âÂëÖ¡£¬¿ÉÒÔÖ±½ÓÏÔÊ¾
+			{// ç¡¬è§£ç å¸§ï¼Œå¯ä»¥ç›´æ¥æ˜¾ç¤º
 				IDirect3DSurface9* pRenderSurface = m_pSurfaceRender;	
 				IDirect3DSurface9* pSurface = (IDirect3DSurface9 *)pAvFrame->data[3];
 				if (m_bD3DShared)
@@ -2227,15 +2354,15 @@ _Failed:
 						gpu_memcpy(DstRect.pBits, SrcRect.pBits, SrcRect.Pitch*DstSurfaceDesc.Height * 3 / 2);
 					else
 					{
-						// Y·ÖÁ¿Í¼Ïñ
+						// Yåˆ†é‡å›¾åƒ
 						uint8_t *pSrcY = (uint8_t*)SrcRect.pBits;
-						// UV·ÖÁ¿Í¼Ïñ
+						// UVåˆ†é‡å›¾åƒ
 						uint8_t *pSrcUV = (uint8_t*)SrcRect.pBits + SrcRect.Pitch * DstSurfaceDesc.Height;
 
 						uint8_t *pDstY = (uint8_t *)DstRect.pBits;
 						uint8_t *pDstUV = (uint8_t *)DstRect.pBits + DstRect.Pitch*DXVASurfaceDesc.Height;
 
-						// ¸´ÖÆY·ÖÁ¿
+						// å¤åˆ¶Yåˆ†é‡
 						for (UINT i = 0; i < DXVASurfaceDesc.Height; i++)
 							gpu_memcpy(&pDstY[i*DstRect.Pitch], &pSrcY[i*SrcRect.Pitch], DXVASurfaceDesc.Width);
 						for (UINT i = 0; i < DXVASurfaceDesc.Height / 2; i++)
@@ -2250,7 +2377,7 @@ _Failed:
 						return false;
 					}
 				}
-				// ´¦Àí½ØÍ¼ÇëÇó
+				// å¤„ç†æˆªå›¾è¯·æ±‚
 				//TransferSnapShotSurface(pAvFrame);
 				
 #ifdef _DEBUG
@@ -2261,7 +2388,7 @@ _Failed:
 			}
 		case AV_PIX_FMT_YUV420P:
 		case AV_PIX_FMT_YUVJ420P:		
-			{// Èí½âÂëÖ¡£¬Ö»Ö§³ÖYUV420P¸ñÊ½		
+			{// è½¯è§£ç å¸§ï¼Œåªæ”¯æŒYUV420Pæ ¼å¼		
 				SaveRunTime();
 				//TransferSnapShotSurface(pAvFrame);
 				D3DLOCKED_RECT d3d_rect;
@@ -2358,7 +2485,7 @@ _Failed:
 		}
 		hr = m_pDirect3DDevice->StretchRect(m_pSurfaceRender, &srcrt, pBackSurface, &dstrt, D3DTEXF_LINEAR);
 
-		// ´¦ÀíÍâ²¿·Ö»æÖÆ½Ó¿Ú
+		// å¤„ç†å¤–éƒ¨åˆ†ç»˜åˆ¶æ¥å£
 		ExternDrawCall(hWnd, pBackSurface, pRenderRt);
 	
 		pBackSurface->Release();
@@ -2379,10 +2506,10 @@ _Failed:
 			return HandelDevLost();
 
 	}
-	// ÉèÖÃÊÇÒÔ¹Ì¶¨±È±ãÏÔÊ¾ÊÓÆµ
-	// µ±bScaleFixedÎªtrue,²¢ÇÒdfWHScale = 0Ê±,ÔòÊ¹ÓÃÍ¼ÏñÔ­Ê¼±ÈÀı,±ÈÀıÖµÎªWidth/Height
-	// µ±bScaleFixedÎªtrue,²¢ÇÒdfWHScale ´óÓÚ0Ê±,ÔòÊ¹ÓÃdfWHScaleÌá¹©µÄ±ÈÀıÏÔÊ¾£¬Í¼Ïñ¿ÉÄÜ»á±»À­Éì±äĞÎ
-	// µ±bScaleFixedÎªfalse,dfWHScale²ÎÊı½«±»ºöÂÔ,´ËÊ±Ïñ×Ô¶¯ÌîÂú´°¿Ú¿Í»§Çø
+	// è®¾ç½®æ˜¯ä»¥å›ºå®šæ¯”ä¾¿æ˜¾ç¤ºè§†é¢‘
+	// å½“bScaleFixedä¸ºtrue,å¹¶ä¸”dfWHScale = 0æ—¶,åˆ™ä½¿ç”¨å›¾åƒåŸå§‹æ¯”ä¾‹,æ¯”ä¾‹å€¼ä¸ºWidth/Height
+	// å½“bScaleFixedä¸ºtrue,å¹¶ä¸”dfWHScale å¤§äº0æ—¶,åˆ™ä½¿ç”¨dfWHScaleæä¾›çš„æ¯”ä¾‹æ˜¾ç¤ºï¼Œå›¾åƒå¯èƒ½ä¼šè¢«æ‹‰ä¼¸å˜å½¢
+	// å½“bScaleFixedä¸ºfalse,dfWHScaleå‚æ•°å°†è¢«å¿½ç•¥,æ­¤æ—¶åƒè‡ªåŠ¨å¡«æ»¡çª—å£å®¢æˆ·åŒº
 	void SetScaleFixed(bool bSaleFixed = true,float fWHScale = 0.0f)
 	{
 		m_bVideoScaleFixed = bSaleFixed;
@@ -2395,9 +2522,9 @@ _Failed:
 		return m_bVideoScaleFixed;
 	}
 /*
-	// ÉèÖÃÏÔÊ¾´°¿ÚÊÇ·ñÒª±»×ÓÀà»¯
-	// bWndSubclassÎªture£¬ÔòAttachWndÊ±»áÏÔÊ¾´°¿Ú½øĞĞ×ÓÀà»¯£¬·ñÔò²»»áÖ´ĞĞ×ÓÀà»¯²Ù×÷
-	// ´Ëº¯Êı±ØĞëÔÚAttachWndÇ°Ö´ĞĞ²ÅÓĞĞ§
+	// è®¾ç½®æ˜¾ç¤ºçª—å£æ˜¯å¦è¦è¢«å­ç±»åŒ–
+	// bWndSubclassä¸ºtureï¼Œåˆ™AttachWndæ—¶ä¼šæ˜¾ç¤ºçª—å£è¿›è¡Œå­ç±»åŒ–ï¼Œå¦åˆ™ä¸ä¼šæ‰§è¡Œå­ç±»åŒ–æ“ä½œ
+	// æ­¤å‡½æ•°å¿…é¡»åœ¨AttachWndå‰æ‰§è¡Œæ‰æœ‰æ•ˆ
 	inline void SetWndSubclass(bool bWndSubclass = true)
 	{
 		m_bWndSubclass = bWndSubclass;
@@ -2453,7 +2580,7 @@ _Failed:
 // 
 // 				AVFrame *pAvFrame = (AVFrame *)lParam;
 // 				CDxSurface *pSurface = (CDxSurface *)wParam;
-// 				if (!pSurface->IsInited())		// D3DÉè±¸ÉĞÎ´´´½¨,ËµÃ÷Î´³õÊ¼»¯
+// 				if (!pSurface->IsInited())		// D3Dè®¾å¤‡å°šæœªåˆ›å»º,è¯´æ˜æœªåˆå§‹åŒ–
 // 				{
 // 					if (!pSurface->InitD3D(pAvFrame->width,pAvFrame->height))
 // 					{
@@ -2465,7 +2592,7 @@ _Failed:
 // 				break;
 // 			}
 		case WM_LBUTTONDBLCLK:
-			{// ÇĞ»»´°¿ÚÄ£Ê½,Òª´Óm_WndSurfaceMapÉ¾³ı´°¿Ú¾ä±ú
+			{// åˆ‡æ¢çª—å£æ¨¡å¼,è¦ä»m_WndSurfaceMapåˆ é™¤çª—å£å¥æŸ„
 				CAutoLock lock(m_WndSurfaceMapcs->Get());
 				WndSurfaceMap::iterator itFind = m_WndSurfaceMap.find(hWnd);
 				if (itFind == m_WndSurfaceMap.end())					
@@ -2497,8 +2624,8 @@ _Failed:
 	}
 */
 public:
-	// 1.¼ì²éÖ¸¶¨µÄ±íÃæÏñËØ¸ñÊ½£¬ÊÇ·ñÔÚÖ¸¶¨µÄÊÊÅäÆ÷ÀàĞÍ¡¢ÊÊÅäÆ÷ÏñËØ¸ñÊ½ÏÂ¿ÉÓÃ¡£
-	// GetAdapterDisplayMode,CheckDeviceTypeµÄÓ¦ÓÃ
+	// 1.æ£€æŸ¥æŒ‡å®šçš„è¡¨é¢åƒç´ æ ¼å¼ï¼Œæ˜¯å¦åœ¨æŒ‡å®šçš„é€‚é…å™¨ç±»å‹ã€é€‚é…å™¨åƒç´ æ ¼å¼ä¸‹å¯ç”¨ã€‚
+	// GetAdapterDisplayMode,CheckDeviceTypeçš„åº”ç”¨
 	bool GetBackBufferFormat(D3DDEVTYPE deviceType,BOOL bWindow, D3DFORMAT &fmt)
 	{
 		if(m_pDirect3D9 == NULL)
@@ -2511,8 +2638,8 @@ public:
 		return true;
 	}
 
-	// 2.¸ù¾İÊÊÅäÆ÷ÀàĞÍ£¬»ñÈ¡¶¥µãÔËËã(±ä»»ºÍ¹âÕÕÔËËã)µÄ¸ñÊ½
-	// D3DCAPS9½á¹¹Ìå£¬GetDeviceCapsµÄÓ¦ÓÃ
+	// 2.æ ¹æ®é€‚é…å™¨ç±»å‹ï¼Œè·å–é¡¶ç‚¹è¿ç®—(å˜æ¢å’Œå…‰ç…§è¿ç®—)çš„æ ¼å¼
+	// D3DCAPS9ç»“æ„ä½“ï¼ŒGetDeviceCapsçš„åº”ç”¨
 	bool GetDisplayVertexType(D3DDEVTYPE deviceType, int &nVertexType)
 	{
 		if(m_pDirect3D9 == NULL)
@@ -2537,8 +2664,8 @@ public:
 		return szGuidStringA;
 	}
 
-	// 3.Êä³öÏÔ¿¨ĞÅÏ¢,DescriptionÃèÊö£¬³§ÉÌĞÍºÅ£¬Dircet3DµÄÇı¶¯Driver°æ±¾ºÅ£¬ÏÔ¿¨µÄÎ¨Ò»±êÊ¶ºÅ£ºDeviceIdentifier
-	// GetAdapterCount()£¬GetAdapterIdentifierµÄÊ¹ÓÃ¡£
+	// 3.è¾“å‡ºæ˜¾å¡ä¿¡æ¯,Descriptionæè¿°ï¼Œå‚å•†å‹å·ï¼ŒDircet3Dçš„é©±åŠ¨Driverç‰ˆæœ¬å·ï¼Œæ˜¾å¡çš„å”¯ä¸€æ ‡è¯†å·ï¼šDeviceIdentifier
+	// GetAdapterCount()ï¼ŒGetAdapterIdentifierçš„ä½¿ç”¨ã€‚
 	void PrintDisplayInfo()
 	{
 		if (m_pDirect3D9 == NULL)
@@ -2572,8 +2699,8 @@ public:
 		}
 	}
 
-	// 4.Êä³öÖ¸¶¨Adapter£¬ÏÔ¿¨ÏñËØÄ£Ê½(²»»áÓë»º´æ±íÃæ¸ñÊ½×ö¼æÈİ¿¼ÂÇ)µÄÏÔ¿¨ÊÊÅäÆ÷Ä£Ê½ĞÅÏ¢
-	// GetAdapterModeCount,EnumAdapterModesµÄÊ¹ÓÃ
+	// 4.è¾“å‡ºæŒ‡å®šAdapterï¼Œæ˜¾å¡åƒç´ æ¨¡å¼(ä¸ä¼šä¸ç¼“å­˜è¡¨é¢æ ¼å¼åšå…¼å®¹è€ƒè™‘)çš„æ˜¾å¡é€‚é…å™¨æ¨¡å¼ä¿¡æ¯
+	// GetAdapterModeCount,EnumAdapterModesçš„ä½¿ç”¨
 	void PrintDisplayModeInfo(D3DFORMAT fmt)
 	{
 		if(m_pDirect3D9 == NULL)
@@ -2581,11 +2708,11 @@ public:
 			DxTraceMsg("%s Direct3D9 not initialized.\n",__FUNCTION__);
 			return;
 		}
-		// ÏÔ¿¨ÊÊÅäÆ÷Ä£Ê½µÄ¸öÊı£¬Ö÷ÒªÊÇ·Ö±æÂÊµÄ²îÒì
+		// æ˜¾å¡é€‚é…å™¨æ¨¡å¼çš„ä¸ªæ•°ï¼Œä¸»è¦æ˜¯åˆ†è¾¨ç‡çš„å·®å¼‚
 		DWORD nAdapterModeCount=m_pDirect3D9->GetAdapterModeCount(D3DADAPTER_DEFAULT, fmt);
 		if(nAdapterModeCount == 0)
 		{
-			DxTraceMsg("%s D3DFMT_¸ñÊ½£º%x²»Ö§³Ö", __FUNCTION__,fmt);
+			DxTraceMsg("%s D3DFMT_æ ¼å¼ï¼š%xä¸æ”¯æŒ", __FUNCTION__,fmt);
 		}
 		for(DWORD i = 0; i < nAdapterModeCount; i++)
 		{
@@ -2599,8 +2726,8 @@ public:
 		}
 	}
 
-	// 5.¶ÔÓÚÖ¸¶¨µÄ×ÊÔ´ÀàĞÍ£¬¼ì²é×ÊÔ´µÄÊ¹ÓÃ·½Ê½£¬×ÊÔ´ÏñËØ¸ñÊ½£¬ÔÚÄ¬ÈÏµÄÏÔ¿¨ÊÊÅäÆ÷ÏÂÊÇ·ñÖ§³Ö
-	// GetAdapterDisplayMode£¬CheckDeviceFormatµÄÊ¹ÓÃ
+	// 5.å¯¹äºæŒ‡å®šçš„èµ„æºç±»å‹ï¼Œæ£€æŸ¥èµ„æºçš„ä½¿ç”¨æ–¹å¼ï¼Œèµ„æºåƒç´ æ ¼å¼ï¼Œåœ¨é»˜è®¤çš„æ˜¾å¡é€‚é…å™¨ä¸‹æ˜¯å¦æ”¯æŒ
+	// GetAdapterDisplayModeï¼ŒCheckDeviceFormatçš„ä½¿ç”¨
 	bool CheckResourceFormat(DWORD nSrcUsage,D3DRESOURCETYPE srcType, D3DFORMAT srcFmt)
 	{
 		if(m_pDirect3D9 == NULL)
@@ -2613,11 +2740,11 @@ public:
 		return false;
 	}
 
-	// 6.¶ÔÖ¸¶¨µÄ±íÃæÏñËØ¸ñÊ½£¬´°¿ÚÄ£Ê½£¬ºÍÏÔ¿¨ÏñËØÄ£Ê½£»¼ì²é¶ÔÖ¸¶¨µÄ¶àÖØ²ÉÑùÀàĞÍÖ§³Ö²»£¬ÇÒ·µ»ØÖÊÁ¿Ë®Æ½µÈ¼¶
-	// CheckDeviceMultiSampleTypeµÄÓ¦ÓÃ
+	// 6.å¯¹æŒ‡å®šçš„è¡¨é¢åƒç´ æ ¼å¼ï¼Œçª—å£æ¨¡å¼ï¼Œå’Œæ˜¾å¡åƒç´ æ¨¡å¼ï¼›æ£€æŸ¥å¯¹æŒ‡å®šçš„å¤šé‡é‡‡æ ·ç±»å‹æ”¯æŒä¸ï¼Œä¸”è¿”å›è´¨é‡æ°´å¹³ç­‰çº§
+	// CheckDeviceMultiSampleTypeçš„åº”ç”¨
 	bool CheckMultiSampleType(D3DFORMAT surfaceFmt,BOOL bWindow, D3DMULTISAMPLE_TYPE &eSampleType, DWORD *pQualityLevel)
 	{
-		//±äÁ¿MultiSampleTypeµÄÖµÉèÎªD3DMULTISAMPLE_NONMASKABLE£¬¾Í±ØĞëÉè¶¨³ÉÔ±±äÁ¿MultiSampleQualityµÄÖÊÁ¿µÈ¼¶Öµ
+		//å˜é‡MultiSampleTypeçš„å€¼è®¾ä¸ºD3DMULTISAMPLE_NONMASKABLEï¼Œå°±å¿…é¡»è®¾å®šæˆå‘˜å˜é‡MultiSampleQualityçš„è´¨é‡ç­‰çº§å€¼
 		for (int i = eSampleType;i >= D3DMULTISAMPLE_NONE;i --)
 		{
 			if( SUCCEEDED(m_pDirect3D9->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT/*caps.AdapterOrdinal*/,
@@ -2635,8 +2762,8 @@ public:
 		return false;
 	}
 
-	// 7.¸ù¾İÏÔ¿¨ÊÊÅäÆ÷ºÍÄ¿±ê»º´æÀàĞÍ£¬¼ì²éÖ¸¶¨Éî¶È»º´æµÄ¸ñÊ½ÊÇ·ñÖ§³Ö
-	// CheckDepthStencilMatchµÄÓ¦ÓÃ
+	// 7.æ ¹æ®æ˜¾å¡é€‚é…å™¨å’Œç›®æ ‡ç¼“å­˜ç±»å‹ï¼Œæ£€æŸ¥æŒ‡å®šæ·±åº¦ç¼“å­˜çš„æ ¼å¼æ˜¯å¦æ”¯æŒ
+	// CheckDepthStencilMatchçš„åº”ç”¨
 	bool CheckDepthBufferFormt(D3DFORMAT targetBufferFmt, D3DFORMAT depthFmt)
 	{
 		if(m_pDirect3D9 == NULL)
@@ -2651,7 +2778,7 @@ public:
 
 	bool TestDxCheck(HWND hWnd,int nWidth,int nHeight)
 	{
-		// 1.CheckDeviceFormat,ÏÔ¿¨Ä£Ê½ºÍ±íÃæ»á×ö¼æÈİ´¦Àí
+		// 1.CheckDeviceFormat,æ˜¾å¡æ¨¡å¼å’Œè¡¨é¢ä¼šåšå…¼å®¹å¤„ç†
 		D3DFORMAT backBufferFormat = D3DFMT_A8R8G8B8;
 		BOOL bIsWindowed = FALSE;
 		D3DDEVTYPE deviceType = D3DDEVTYPE_HAL;
@@ -2669,16 +2796,16 @@ public:
 			DxTraceMsg("%s GetDisplayVertexType - failed.\n", __FUNCTION__);
 			return false;
 		}
-		// 3.ÏÔÊ¾ÏÔ¿¨µÄĞÅÏ¢
+		// 3.æ˜¾ç¤ºæ˜¾å¡çš„ä¿¡æ¯
 		PrintDisplayInfo();
 
 		D3DDISPLAYMODE d3ddm;
 		if(FAILED(m_pDirect3D9->GetAdapterDisplayMode(D3DADAPTER_DEFAULT,&d3ddm)))
 			return false;
-		// 4.Êä³öÏÔ¿¨ÊÊÅäÆ÷Ä£Ê½ĞÅÏ¢,²»»áÓë»º´æ±íÃæ¸ñÊ½×ö¼æÈİ¿¼ÂÇ
+		// 4.è¾“å‡ºæ˜¾å¡é€‚é…å™¨æ¨¡å¼ä¿¡æ¯,ä¸ä¼šä¸ç¼“å­˜è¡¨é¢æ ¼å¼åšå…¼å®¹è€ƒè™‘
 		PrintDisplayModeInfo(d3ddm.Format);
 
-		// 5.ÏÔ¿¨Ä£Ê½ºÍ×ÊÔ´±íÃæ»á×ö¼æÈİ´¦Àí
+		// 5.æ˜¾å¡æ¨¡å¼å’Œèµ„æºè¡¨é¢ä¼šåšå…¼å®¹å¤„ç†
 		int nUsageTexture = D3DUSAGE_WRITEONLY;
 		D3DFORMAT fmtTexture = D3DFMT_A8R8G8B8;
 
@@ -2689,15 +2816,15 @@ public:
 			return false;
 		}
 
-		// 6.²ÉÑùÎÆÀí
-		D3DMULTISAMPLE_TYPE eSampleType = D3DMULTISAMPLE_16_SAMPLES;// ²âÊÔ½á¹û±¾»úÖ»ÊÇÖ§³Ö4,2ÀàĞÍµÄ²ÉÑùÎÆÀí
+		// 6.é‡‡æ ·çº¹ç†
+		D3DMULTISAMPLE_TYPE eSampleType = D3DMULTISAMPLE_16_SAMPLES;// æµ‹è¯•ç»“æœæœ¬æœºåªæ˜¯æ”¯æŒ4,2ç±»å‹çš„é‡‡æ ·çº¹ç†
 		DWORD dwQualityLevel = 0;
 		if(!CheckMultiSampleType(d3ddm.Format, bIsWindowed,  eSampleType,&dwQualityLevel))
 		{
 			eSampleType = D3DMULTISAMPLE_NONE;
 		}
 
-		// 7.Éî¶È»º´æ¼ì²â
+		// 7.æ·±åº¦ç¼“å­˜æ£€æµ‹
 		D3DFORMAT depthStencilFmt = D3DFMT_D24X8/*D3DFMT_D15S1*/;
 		if(!CheckDepthBufferFormt(d3ddm.Format, depthStencilFmt))
 		{
@@ -2712,7 +2839,7 @@ public:
 		d3dpp.BackBufferFormat          = backBufferFormat;
 		d3dpp.BackBufferCount           = 1;
 		d3dpp.MultiSampleType           = eSampleType;				//D3DMULTISAMPLE_NONE;
-		d3dpp.MultiSampleQuality        = dwQualityLevel;				// ²»ÄÜÓÃdwQualityLevel
+		d3dpp.MultiSampleQuality        = dwQualityLevel;				// ä¸èƒ½ç”¨dwQualityLevel
 		d3dpp.SwapEffect                = D3DSWAPEFFECT_DISCARD;
 		d3dpp.hDeviceWindow             = hWnd;
 		d3dpp.Windowed                  = bIsWindowed;
@@ -2726,8 +2853,8 @@ public:
 };
 
 //#include "d3dfont.h"
-// CDxSurfaceExÀà£¬½öÏŞÓÚWindows Vista¼°ÒÔÉÏ²Ù×÷ÏµÍ³ÏÂÊ¹ÓÃ
-// ÆäĞÔÄÜÓëÎÈ¶¨ĞÔ±ÈCDxSurfaceÒªÇ¿£¬Î¬»¤Ò²¸ü·½±ã
+// CDxSurfaceExç±»ï¼Œä»…é™äºWindows VistaåŠä»¥ä¸Šæ“ä½œç³»ç»Ÿä¸‹ä½¿ç”¨
+// å…¶æ€§èƒ½ä¸ç¨³å®šæ€§æ¯”CDxSurfaceè¦å¼ºï¼Œç»´æŠ¤ä¹Ÿæ›´æ–¹ä¾¿
 
 class CDxSurfaceEx :public CDxSurface
 {
@@ -2757,7 +2884,7 @@ public:
 		DeclareRunTime(5);
 
 		m_nCordinateMode = Coordinte_Video;
-		// ÊÍ·ÅÓÉ»ùÀà´´½¨µÄDirect3D9¶ÔÏó
+		// é‡Šæ”¾ç”±åŸºç±»åˆ›å»ºçš„Direct3D9å¯¹è±¡
 		//SafeRelease(m_pDirect3D9);
 		m_pDirect3DCreate9Ex = g_pD3D9Helper.m_pDirect3DCreate9Ex;	
 		m_pDirect3D9Ex = g_pD3D9Helper.m_pDirect3D9Ex;
@@ -2773,7 +2900,7 @@ public:
 	}
 #endif
 
-	// ²Î¿¼ÎÄµµ£ºhttps://docs.microsoft.com/en-us/windows/win32/gdi/capturing-an-image
+	// å‚è€ƒæ–‡æ¡£ï¼šhttps://docs.microsoft.com/en-us/windows/win32/gdi/capturing-an-image
 	int CopySurface(HDC hDC, int nWidth, int nHeight)
 	{
 		HDC hdcMemDC = NULL;
@@ -2875,7 +3002,7 @@ public:
 
 		hr = m_pDirect3DDeviceEx->GetRenderTargetData(pBackSurface, m_pRGBSurface);
 		D3DLOCKED_RECT rgbRect;
-		// A ·½°¸£¬ºÄÊ±30+ms,cpuÕ¼ÓÃ15-18%
+		// A æ–¹æ¡ˆï¼Œè€—æ—¶30+ms,cpuå ç”¨15-18%
 		/*LPD3DXBUFFER pD3DXBuffer = nullptr;		
 		if (FAILED(D3DXSaveSurfaceToFileInMemory(&pD3DXBuffer, D3DXIFF_DIB, m_pRGBSurface, NULL, NULL)))
 			return FALSE;
@@ -2892,7 +3019,7 @@ public:
 		memcpy(m_pRGBBuffer, pImageBuffer, m_nRGBBufferSize);
 		pD3DXBuffer->Release();*/
 
-		// B ·½°¸ ¿ÉÖ±½Ó»ñÈ¡RGBÊı¾İ£¬ºÄÊ±20-23ms×óÓÒ CPUÕ¼ÓÃ10-15%
+		// B æ–¹æ¡ˆ å¯ç›´æ¥è·å–RGBæ•°æ®ï¼Œè€—æ—¶20-23mså·¦å³ CPUå ç”¨10-15%
 		/*
 		HDC hDC = nullptr;
 		m_pRGBSurface->GetDC(&hDC);
@@ -2901,7 +3028,7 @@ public:
 		m_pRGBSurface->ReleaseDC(hDC);
 		*/
 
-		// ·½°¸ C Ö»ÄÜ»ñÈ¡X8R8G8B8Êı¾İ£¬ºÄÊ±10-12ms,CPUÕ¼ÓÃ4-6%
+		// æ–¹æ¡ˆ C åªèƒ½è·å–X8R8G8B8æ•°æ®ï¼Œè€—æ—¶10-12ms,CPUå ç”¨4-6%
 		hr = m_pRGBSurface->LockRect(&rgbRect, NULL, D3DLOCK_NO_DIRTY_UPDATE | D3DLOCK_READONLY);
 		if (FAILED(hr))
 			return FALSE;
@@ -2917,7 +3044,7 @@ public:
 		nBuffersize = m_nRGBBufferSize;
 		*ppBuffer = m_pRGBBuffer;
 
-		// ·½°¸D ÏêÏ¸¼ûIPCPlayer.cpp line[3516~3535]
+		// æ–¹æ¡ˆD è¯¦ç»†è§IPCPlayer.cpp line[3516~3535]
 		return TRUE;
 	}
 
@@ -3010,7 +3137,7 @@ public:
 	}
 	virtual IDirect3DSurface9* LoadImage(WCHAR *szFileName)
 	{
-		// ÒÔÏÂ´úÂë¼ÓÔØ±³¾°Í¼Æ¬
+		// ä»¥ä¸‹ä»£ç åŠ è½½èƒŒæ™¯å›¾ç‰‡
 		IDirect3DSurface9 *pSurfaceBackImage = nullptr;
 		D3DXIMAGE_INFO ImageInfo;
 		if (szFileName)
@@ -3028,14 +3155,14 @@ public:
 				if (SUCCEEDED(hr))
 				{
 					hr = D3DXLoadSurfaceFromFileW(
-						pSurfaceBackImage,					//Ä¿±ê±íÃæ
-						NULL,								//Ä¿±êµ÷É«°å
-						NULL,								//Ä¿±ê¾ØĞÎ,NULLÎª¼ÓÔØÕû¸ö±íÃæ
-						szFileName,							//ÎÄ¼ş
-						NULL,								//Ô´¾ØĞÎ,NULLÎª¸´ÖÆÕû¸öÍ¼Æ¬
-						D3DX_DEFAULT,						//¹ıÂË
-						D3DCOLOR_ARGB(0,0, 255, 255),		//Í¸Ã÷É«
-						&ImageInfo							//Ô´Í¼ÏñĞÅÏ¢
+						pSurfaceBackImage,					//ç›®æ ‡è¡¨é¢
+						NULL,								//ç›®æ ‡è°ƒè‰²æ¿
+						NULL,								//ç›®æ ‡çŸ©å½¢,NULLä¸ºåŠ è½½æ•´ä¸ªè¡¨é¢
+						szFileName,							//æ–‡ä»¶
+						NULL,								//æºçŸ©å½¢,NULLä¸ºå¤åˆ¶æ•´ä¸ªå›¾ç‰‡
+						D3DX_DEFAULT,						//è¿‡æ»¤
+						D3DCOLOR_ARGB(0,0, 255, 255),		//é€æ˜è‰²
+						&ImageInfo							//æºå›¾åƒä¿¡æ¯
 						);
 					if (SUCCEEDED(hr))
 					{
@@ -3102,10 +3229,10 @@ public:
 		return true;
 	}
 
-	// µ÷ÓÃInitD3DÖ®Ç°±ØĞëÏÈµ÷ÓÃAttachWndº¯Êı¹ØÁªÊÓÆµÏÔÊ¾´°¿Ú
-	// nD3DFormat ±ØĞëÎªÒÔÏÂ¸ñÊ½Ö®Ò»
-	// MAKEFOURCC('Y', 'V', '1', '2')	Ä¬ÈÏ¸ñÊ½,¿ÉÒÔºÜ·½±ãµØÓÉYUV420P×ª»»µÃµ½,¶øYUV420PÊÇFFMPEG½âÂëºóµÃµ½µÄÄ¬ÈÏÏñËØ¸ñÊ½
-	// MAKEFOURCC('N', 'V', '1', '2')	½öDXVAÓ²½âÂëÊ¹ÓÃ¸Ã¸ñÊ½
+	// è°ƒç”¨InitD3Dä¹‹å‰å¿…é¡»å…ˆè°ƒç”¨AttachWndå‡½æ•°å…³è”è§†é¢‘æ˜¾ç¤ºçª—å£
+	// nD3DFormat å¿…é¡»ä¸ºä»¥ä¸‹æ ¼å¼ä¹‹ä¸€
+	// MAKEFOURCC('Y', 'V', '1', '2')	é»˜è®¤æ ¼å¼,å¯ä»¥å¾ˆæ–¹ä¾¿åœ°ç”±YUV420Pè½¬æ¢å¾—åˆ°,è€ŒYUV420Pæ˜¯FFMPEGè§£ç åå¾—åˆ°çš„é»˜è®¤åƒç´ æ ¼å¼
+	// MAKEFOURCC('N', 'V', '1', '2')	ä»…DXVAç¡¬è§£ç ä½¿ç”¨è¯¥æ ¼å¼
 	// D3DFMT_R5G6B5
 	// D3DFMT_X1R5G5B5
 	// D3DFMT_A1R5G5B5
@@ -3125,7 +3252,7 @@ public:
 		assert(nVideoWidth != 0 || nVideoHeight != 0);
 
 		RECT rtOld,rtZoom;
-		bool bZoomWnd = false;			// ÊÇ·ñĞèÒªÀ©´ó´°¿Ú,DirectX²»ÄÜÔÚ´°¿ÚÏñËØÃæ»ıÎª0µÄ´°¿ÚÉÏ¹¤×÷
+		bool bZoomWnd = false;			// æ˜¯å¦éœ€è¦æ‰©å¤§çª—å£,DirectXä¸èƒ½åœ¨çª—å£åƒç´ é¢ç§¯ä¸º0çš„çª—å£ä¸Šå·¥ä½œ
 		GetWindowRect(hWnd, &rtOld);
 		rtZoom = rtOld;
 		if (RectWidth(rtZoom) == 0)
@@ -3152,7 +3279,7 @@ public:
 				::MoveWindow(hWnd, rtRestore.left, rtRestore.top, RectWidth(rtRestore), RectHeight(rtRestore), false);
 			}
 		};
-		// ´´½¨³É¹¦ºó£¬»Ö¸´´°¿ÚÔ­Ê¼³ß´ç
+		// åˆ›å»ºæˆåŠŸåï¼Œæ¢å¤çª—å£åŸå§‹å°ºå¯¸
 		//_RestoreWnd RestoreWnd(hWnd, rtOld);
 		if (bZoomWnd)
 			::MoveWindow(hWnd, rtZoom.left, rtZoom.top, RectWidth(rtZoom), RectHeight(rtZoom), false);
@@ -3189,7 +3316,7 @@ public:
 		else		
 			vp = D3DCREATE_SOFTWARE_VERTEXPROCESSING;
 		/*
-		caps.DevCapsµÄÈ¡Öµ¼°º¬Òå
+		caps.DevCapsçš„å–å€¼åŠå«ä¹‰
 		D3DDEVCAPS_CANBLTSYSTONONLOCAL		Device supports blits from system-memory textures to nonlocal video-memory textures.
 		D3DDEVCAPS_CANRENDERAFTERFLIP		Device can queue rendering commands after a page flip. Applications do not change their behavior if this flag is set; this capability means that the device is relatively fast.
 		D3DDEVCAPS_DRAWPRIMITIVES2			Device can support at least a DirectX 5-compliant driver.
@@ -3201,7 +3328,7 @@ public:
 		D3DDEVCAPS_HWTRANSFORMANDLIGHT		Device can support transformation and lighting in hardware.
 		D3DDEVCAPS_NPATCHES					Device supports N patches.
 		D3DDEVCAPS_PUREDEVICE				Device can support rasterization, transform, lighting, and shading in hardware.
-		D3DDEVCAPS_QUINTICRTPATCHES			Device supports quintic B¨¦zier curves and B-splines.
+		D3DDEVCAPS_QUINTICRTPATCHES			Device supports quintic BÃ©zier curves and B-splines.
 		D3DDEVCAPS_RTPATCHES				Device supports rectangular and triangular patches.
 		D3DDEVCAPS_RTPATCHHANDLEZERO		When this device capability is set, the hardware architecture does not require caching of any information, and uncached patches (handle zero) will be drawn as efficiently as cached ones. Note that setting D3DDEVCAPS_RTPATCHHANDLEZERO does not mean that a patch with handle zero can be drawn. A handle-zero patch can always be drawn whether this cap is set or not.
 		D3DDEVCAPS_SEPARATETEXTUREMEMORIES	Device is texturing from separate memory pools.
@@ -3226,13 +3353,13 @@ public:
 		m_d3dpp.Windowed				= bIsWindowed;
 		m_d3dpp.hDeviceWindow			= hWnd;
 		m_d3dpp.MultiSampleQuality		= 0;
-		m_d3dpp.MultiSampleType			= D3DMULTISAMPLE_NONE;					// ÏÔÊ¾ÊÓÆµÊ±£¬²»ÒËÊ¹ÓÃ¶àÖØ²ÉÑù£¬·ñÔò½«µ¼ÖÂ»­Ãæ´íÂÒ
+		m_d3dpp.MultiSampleType			= D3DMULTISAMPLE_NONE;					// æ˜¾ç¤ºè§†é¢‘æ—¶ï¼Œä¸å®œä½¿ç”¨å¤šé‡é‡‡æ ·ï¼Œå¦åˆ™å°†å¯¼è‡´ç”»é¢é”™ä¹±
 #pragma warning(push)
 #pragma warning(disable:4800)
 		m_bFullScreen					= (bool)bIsWindowed;
 #pragma warning(pop)		
 
-		if (bIsWindowed)//´°¿ÚÄ£Ê½
+		if (bIsWindowed)//çª—å£æ¨¡å¼
 		{
 			if (m_dwStyle)
 				SetWindowLong(m_d3dpp.hDeviceWindow, GWL_STYLE, m_dwStyle);
@@ -3246,22 +3373,22 @@ public:
 			else
 				m_d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_DEFAULT;
 						
-			m_d3dpp.FullScreen_RefreshRateInHz	= 0;							// ÏÔÊ¾Æ÷Ë¢ĞÂÂÊ£¬´°¿ÚÄ£Ê½¸ÃÖµ±ØĞëÎª0
-			m_d3dpp.SwapEffect					= D3DSWAPEFFECT_DISCARD;		// Ö¸¶¨ÏµÍ³ÈçºÎ½«ºóÌ¨»º³åÇøµÄÄÚÈİ¸´ÖÆµ½Ç°Ì¨»º³åÇø D3DSWAPEFFECT_DISCARD:Çå³ıºóÌ¨»º´æµÄÄÚÈİ
+			m_d3dpp.FullScreen_RefreshRateInHz	= 0;							// æ˜¾ç¤ºå™¨åˆ·æ–°ç‡ï¼Œçª—å£æ¨¡å¼è¯¥å€¼å¿…é¡»ä¸º0
+			m_d3dpp.SwapEffect					= D3DSWAPEFFECT_DISCARD;		// æŒ‡å®šç³»ç»Ÿå¦‚ä½•å°†åå°ç¼“å†²åŒºçš„å†…å®¹å¤åˆ¶åˆ°å‰å°ç¼“å†²åŒº D3DSWAPEFFECT_DISCARD:æ¸…é™¤åå°ç¼“å­˜çš„å†…å®¹
 			m_d3dpp.BackBufferHeight			= nVideoHeight;
 			m_d3dpp.BackBufferWidth				= nVideoWidth;
-			m_d3dpp.EnableAutoDepthStencil		= FALSE;							// ¹Ø±Õ×Ô¶¯Éî¶È»º´æ
+			m_d3dpp.EnableAutoDepthStencil		= FALSE;							// å…³é—­è‡ªåŠ¨æ·±åº¦ç¼“å­˜
 			m_d3dpp.MultiSampleType				= D3DMULTISAMPLE_NONE;
 		}
 		else
 		{
-			//È«ÆÁÄ£Ê½
+			//å…¨å±æ¨¡å¼
 			m_d3dpp.PresentationInterval		= D3DPRESENT_INTERVAL_IMMEDIATE;
 			//m_d3dpp.FullScreen_RefreshRateInHz	= d3ddm.RefreshRate;	
 			m_d3dpp.SwapEffect					= D3DSWAPEFFECT_DISCARD; 
 			m_d3dpp.EnableAutoDepthStencil		= FALSE;			
-			m_d3dpp.BackBufferWidth				= GetSystemMetrics(SM_CXSCREEN);		// »ñµÃÆÁÄ»¿í
-			m_d3dpp.BackBufferHeight			= GetSystemMetrics(SM_CYSCREEN);		// »ñµÃÆÁÄ»¸ß
+			m_d3dpp.BackBufferWidth				= GetSystemMetrics(SM_CXSCREEN);		// è·å¾—å±å¹•å®½
+			m_d3dpp.BackBufferHeight			= GetSystemMetrics(SM_CYSCREEN);		// è·å¾—å±å¹•é«˜
 
 			GetWindowPlacement(m_d3dpp.hDeviceWindow, &m_WndPlace ) ;
 			m_dwExStyle	 = GetWindowLong( m_d3dpp.hDeviceWindow, GWL_EXSTYLE ) ;
@@ -3270,29 +3397,29 @@ public:
 			m_hMenu		 = GetMenu( m_d3dpp.hDeviceWindow ) ;
 		}
 		/*
-		CreateDeviceµÄBehaviorFlags²ÎÊıÑ¡Ïî£º
-		D3DCREATE_ADAPTERGROUP_DEVICE		Ö»¶ÔÖ÷ÏÔ¿¨ÓĞĞ§£¬ÈÃÉè±¸Çı¶¯Êä³ö¸øËüËùÓµÓĞµÄËùÓĞÏÔÊ¾Êä³ö
-		D3DCREATE_DISABLE_DRIVER_MANAGEMENT	´úÌæÉè±¸Çı¶¯À´¹ÜÀí×ÊÔ´£¬ÕâÑùÔÚ·¢Éú×ÊÔ´²»×ãÊ±D3Dµ÷ÓÃ²»»áÊ§°Ü
-		D3DCREATE_DISABLE_PRINTSCREEN:		²»×¢²á½ØÆÁ¿ì½İ¼ü£¬Ö»¶ÔDirect3D 9Ex
-		D3DCREATE_DISABLE_PSGP_THREADING£º	Ç¿ÖÆ¼ÆËã¹¤×÷±ØĞëÔÚÖ÷Ïß³ÌÉÏ£¬vistaÒÔÉÏÓĞĞ§
-		D3DCREATE_ENABLE_PRESENTSTATS£º		ÔÊĞíGetPresentStatisticsÊÕ¼¯Í³¼ÆĞÅÏ¢Ö»¶ÔDirect3D 9Ex
-		D3DCREATE_FPU_PRESERVE£»				Ç¿ÖÆD3DÓëÏß³ÌÊ¹ÓÃÏàÍ¬µÄ¸¡µã¾«¶È£¬»á½µµÍĞÔÄÜ
-		D3DCREATE_HARDWARE_VERTEXPROCESSING£ºÖ¸¶¨Ó²¼ş½øĞĞ¶¥µã´¦Àí£¬±ØĞë¸úËæD3DCREATE_PUREDEVICE
-		D3DCREATE_MIXED_VERTEXPROCESSING£º	Ö¸¶¨»ìºÏ¶¥µã´¦Àí
-		D3DCREATE_SOFTWARE_VERTEXPROCESSING£ºÖ¸¶¨´¿ÈíµÄ¶¥µã´¦Àí
-		D3DCREATE_MULTITHREADED£º			ÒªÇóD3DÊÇÏß³Ì°²È«µÄ£¬¶àÏß³ÌÊ±
-		D3DCREATE_NOWINDOWCHANGES£º			ÓµÓĞ²»¸Ä±ä´°¿Ú½¹µã
-		D3DCREATE_PUREDEVICE£º				Ö»ÊÔÍ¼Ê¹ÓÃ´¿Ó²¼şµÄäÖÈ¾
-		D3DCREATE_SCREENSAVER£º				ÔÊĞí±»ÆÁ±£´ò¶ÏÖ»¶ÔDirect3D 9Ex
-		D3DCREATE_HARDWARE_VERTEXPROCESSING, D3DCREATE_MIXED_VERTEXPROCESSING, and D3DCREATE_SOFTWARE_VERTEXPROCESSINGÖĞÖÁÉÙÓĞÒ»¸öÒ»¶¨ÒªÉèÖÃ
+		CreateDeviceçš„BehaviorFlagså‚æ•°é€‰é¡¹ï¼š
+		D3DCREATE_ADAPTERGROUP_DEVICE		åªå¯¹ä¸»æ˜¾å¡æœ‰æ•ˆï¼Œè®©è®¾å¤‡é©±åŠ¨è¾“å‡ºç»™å®ƒæ‰€æ‹¥æœ‰çš„æ‰€æœ‰æ˜¾ç¤ºè¾“å‡º
+		D3DCREATE_DISABLE_DRIVER_MANAGEMENT	ä»£æ›¿è®¾å¤‡é©±åŠ¨æ¥ç®¡ç†èµ„æºï¼Œè¿™æ ·åœ¨å‘ç”Ÿèµ„æºä¸è¶³æ—¶D3Dè°ƒç”¨ä¸ä¼šå¤±è´¥
+		D3DCREATE_DISABLE_PRINTSCREEN:		ä¸æ³¨å†Œæˆªå±å¿«æ·é”®ï¼Œåªå¯¹Direct3D 9Ex
+		D3DCREATE_DISABLE_PSGP_THREADINGï¼š	å¼ºåˆ¶è®¡ç®—å·¥ä½œå¿…é¡»åœ¨ä¸»çº¿ç¨‹ä¸Šï¼Œvistaä»¥ä¸Šæœ‰æ•ˆ
+		D3DCREATE_ENABLE_PRESENTSTATSï¼š		å…è®¸GetPresentStatisticsæ”¶é›†ç»Ÿè®¡ä¿¡æ¯åªå¯¹Direct3D 9Ex
+		D3DCREATE_FPU_PRESERVEï¼›				å¼ºåˆ¶D3Dä¸çº¿ç¨‹ä½¿ç”¨ç›¸åŒçš„æµ®ç‚¹ç²¾åº¦ï¼Œä¼šé™ä½æ€§èƒ½
+		D3DCREATE_HARDWARE_VERTEXPROCESSINGï¼šæŒ‡å®šç¡¬ä»¶è¿›è¡Œé¡¶ç‚¹å¤„ç†ï¼Œå¿…é¡»è·ŸéšD3DCREATE_PUREDEVICE
+		D3DCREATE_MIXED_VERTEXPROCESSINGï¼š	æŒ‡å®šæ··åˆé¡¶ç‚¹å¤„ç†
+		D3DCREATE_SOFTWARE_VERTEXPROCESSINGï¼šæŒ‡å®šçº¯è½¯çš„é¡¶ç‚¹å¤„ç†
+		D3DCREATE_MULTITHREADEDï¼š			è¦æ±‚D3Dæ˜¯çº¿ç¨‹å®‰å…¨çš„ï¼Œå¤šçº¿ç¨‹æ—¶
+		D3DCREATE_NOWINDOWCHANGESï¼š			æ‹¥æœ‰ä¸æ”¹å˜çª—å£ç„¦ç‚¹
+		D3DCREATE_PUREDEVICEï¼š				åªè¯•å›¾ä½¿ç”¨çº¯ç¡¬ä»¶çš„æ¸²æŸ“
+		D3DCREATE_SCREENSAVERï¼š				å…è®¸è¢«å±ä¿æ‰“æ–­åªå¯¹Direct3D 9Ex
+		D3DCREATE_HARDWARE_VERTEXPROCESSING, D3DCREATE_MIXED_VERTEXPROCESSING, and D3DCREATE_SOFTWARE_VERTEXPROCESSINGä¸­è‡³å°‘æœ‰ä¸€ä¸ªä¸€å®šè¦è®¾ç½®
 		*/
 		if (m_pDirect3DDeviceEx)
 			SafeRelease(m_pDirect3DDeviceEx);
 
-		// ¼ì²éÊÇ·ñÄÜ¹»ÆôÓÃ¶àÖØ²ÉÑù
+		// æ£€æŸ¥æ˜¯å¦èƒ½å¤Ÿå¯ç”¨å¤šé‡é‡‡æ ·
 		// hr = m_pDirect3D9Ex->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, d3ddm.Format, FALSE, D3DMULTISAMPLE_4_SAMPLES, NULL);
 		DWORD dwQualityLevel = 0, dwQualityLevelDepth = 0;
-//		²éÑ¯¿¹¾â³İµÄ¼¶±ğ
+//		æŸ¥è¯¢æŠ—é”¯é½¿çš„çº§åˆ«
 // 		for (int i = D3DMULTISAMPLE_16_SAMPLES; i > D3DMULTISAMPLE_NONE; --i)
 // 		{
 // 			if (SUCCEEDED(m_pDirect3D9Ex->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT,
@@ -3371,14 +3498,14 @@ public:
 		//hr = m_pDirect3DDeviceEx->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_ANISOTROPIC);
 		hr = m_pDirect3DDeviceEx->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS,TRUE);
 		hr = m_pDirect3DDeviceEx->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
-		// ±£´æ²ÎÊı
+		// ä¿å­˜å‚æ•°
 		m_nVideoWidth	 = nVideoWidth;
 		m_nVideoHeight	 = nVideoHeight;
 		m_nD3DFormat	 = nD3DFormat;		
 		bSucceed		 = true;
 		m_bInitialized	 = true;
 		{
-			// ÒÔÏÂ´úÂë¼ÓÔØ±³¾°Í¼Æ¬
+			// ä»¥ä¸‹ä»£ç åŠ è½½èƒŒæ™¯å›¾ç‰‡
 			IDirect3DSurface9 *pSurfaceBackImage = nullptr;
 			D3DXIMAGE_INFO ImageInfo;
 			if (m_pszBackImageFileW)
@@ -3396,14 +3523,14 @@ public:
 					if (SUCCEEDED(hr))
 					{
 						hr = D3DXLoadSurfaceFromFileW(
-							pSurfaceBackImage,					//Ä¿±ê±íÃæ
-							NULL,								//Ä¿±êµ÷É«°å
-							NULL,								//Ä¿±ê¾ØĞÎ,NULLÎª¼ÓÔØÕû¸ö±íÃæ
-							m_pszBackImageFileW,				//ÎÄ¼ş
-							NULL,								//Ô´¾ØĞÎ,NULLÎª¸´ÖÆÕû¸öÍ¼Æ¬
-							D3DX_DEFAULT,						//¹ıÂË
-							D3DCOLOR_XRGB(0, 0, 0),				//Í¸Ã÷É«
-							&ImageInfo							//Ô´Í¼ÏñĞÅÏ¢
+							pSurfaceBackImage,					//ç›®æ ‡è¡¨é¢
+							NULL,								//ç›®æ ‡è°ƒè‰²æ¿
+							NULL,								//ç›®æ ‡çŸ©å½¢,NULLä¸ºåŠ è½½æ•´ä¸ªè¡¨é¢
+							m_pszBackImageFileW,				//æ–‡ä»¶
+							NULL,								//æºçŸ©å½¢,NULLä¸ºå¤åˆ¶æ•´ä¸ªå›¾ç‰‡
+							D3DX_DEFAULT,						//è¿‡æ»¤
+							D3DCOLOR_XRGB(0, 0, 0),				//é€æ˜è‰²
+							&ImageInfo							//æºå›¾åƒä¿¡æ¯
 							);
 						if (SUCCEEDED(hr))
 						{
@@ -3439,7 +3566,7 @@ _Failed:
 // 		return 0;
 // 	}
 	
-	// ¾ØÕóË³×ªĞı×ª90¶È
+	// çŸ©é˜µé¡ºè½¬æ—‹è½¬90åº¦
 	void MatrixRocate90(byte *pSrc, byte *pDest, int nWidth, int nHeight, int nStride)
 	{
 		int nRowPos = 0;
@@ -3447,7 +3574,7 @@ _Failed:
 		{
 			int nColPos = 0;
 			for (int nCol = nHeight-1; nCol >=0 ; nCol--)
-			{// Ëã·¨ÓÅ»¯£¬°Ñ³Ë·¨ÔËËã×ª»»Îª¼Ó·¨ÔËËã£¬ÔËËãËÙ¶È¿ÉÌá¸ßÔ¼5~10±¶
+			{// ç®—æ³•ä¼˜åŒ–ï¼ŒæŠŠä¹˜æ³•è¿ç®—è½¬æ¢ä¸ºåŠ æ³•è¿ç®—ï¼Œè¿ç®—é€Ÿåº¦å¯æé«˜çº¦5~10å€
 				//pDest[nRow*nStride + nCol] = pSrc[nCol*nWidth + nRow];
 				pDest[nRowPos + nCol] = pSrc[nColPos + nRow];
 				nColPos += nWidth;
@@ -3456,7 +3583,7 @@ _Failed:
 		}
 	}
 
-	// ¾ØÕóË³Ê±ÕëĞı×ª270¶È£¬¼´ÄæÊ±ÕëĞı×ª90¶È
+	// çŸ©é˜µé¡ºæ—¶é’ˆæ—‹è½¬270åº¦ï¼Œå³é€†æ—¶é’ˆæ—‹è½¬90åº¦
 	void MatrixRocate270(byte *pSrc, byte *pDest, int nWidth, int nHeight,int nStride)
 	{
 		int nRowPos = 0;
@@ -3464,7 +3591,7 @@ _Failed:
 		{
 			int nColPos = 0;
 			for (int nCol = 0; nCol < nHeight; nCol++)
-			{// Ëã·¨ÓÅ»¯£¬°Ñ³Ë·¨ÔËËã×ª»»Îª¼Ó·¨ÔËËã£¬ÔËËãËÙ¶È¿ÉÌá¸ßÔ¼5~10±¶
+			{// ç®—æ³•ä¼˜åŒ–ï¼ŒæŠŠä¹˜æ³•è¿ç®—è½¬æ¢ä¸ºåŠ æ³•è¿ç®—ï¼Œè¿ç®—é€Ÿåº¦å¯æé«˜çº¦5~10å€
 				//pDest[nRow*nStride + nCol] = pSrc[nCol*nWidth + nRow];
 				pDest[nRowPos + nCol] = pSrc[nColPos + nRow];
 				nColPos += nWidth;
@@ -3473,7 +3600,7 @@ _Failed:
 		}
 	}
 
-	// ¾ØÕóË³Ê±ÕëĞı×ª180¶È
+	// çŸ©é˜µé¡ºæ—¶é’ˆæ—‹è½¬180åº¦
 	void MatrixRocate180(byte *pSrc, byte *pDest, int nWidth, int nHeight, int nStride)
 	{
 		int nDstRowPos = 0;
@@ -3483,7 +3610,7 @@ _Failed:
 			int nDstColPos = 0;
 			int nSrcColPos = nWidth;
 			for (int nCol = 0; nCol < nWidth; nCol++)
-			{// Ëã·¨ÓÅ»¯£¬°Ñ³Ë·¨ÔËËã×ª»»Îª¼Ó¼õ·¨ÔËËã£¬ÔËËãËÙ¶È¿ÉÌá¸ßÔ¼5~10±¶
+			{// ç®—æ³•ä¼˜åŒ–ï¼ŒæŠŠä¹˜æ³•è¿ç®—è½¬æ¢ä¸ºåŠ å‡æ³•è¿ç®—ï¼Œè¿ç®—é€Ÿåº¦å¯æé«˜çº¦5~10å€
 				//pDest[nRow*nStride + nCol] = pSrc[(nHeight - nRow)*nWidth + nWidth - nCol];
 				pDest[nDstRowPos + nCol] = pSrc[nSrcRowPos + nWidth - nCol];
 				//nDstColPos += nWidth;
@@ -3493,13 +3620,13 @@ _Failed:
 		}
 	}
 
-	// YUV420Í¼ÏñË³Ê±ÕëĞı×ª90¶È,²¢×ªÎªYV12Í¼Ïñ
-	// pSrcYUV		YUV420Í¼ÏñYUV·ÖÁ¿µÄµØÖ·
-	// pDestYUV		×ª»»ºóYV12Í¼ÏñYUV·ÖÁ¿µÄµØÖ·
-	// nLinesize	YUV420Í¼ÏñµÄÃ¿¸ö·ÖÁ¿µÄÊı¾İ³¤¶È
-	// nWidth		YUV420Í¼ÏñµÄ¿í¶È
-	// nHeight		YUV420Í¼ÏñµÄ¸ß¶È
-	// nStride		YV12Êı¾İÄ¿±êÊı¾İÃ¿Ò»ĞĞÊı¾İµÄ²½³¤
+	// YUV420å›¾åƒé¡ºæ—¶é’ˆæ—‹è½¬90åº¦,å¹¶è½¬ä¸ºYV12å›¾åƒ
+	// pSrcYUV		YUV420å›¾åƒYUVåˆ†é‡çš„åœ°å€
+	// pDestYUV		è½¬æ¢åYV12å›¾åƒYUVåˆ†é‡çš„åœ°å€
+	// nLinesize	YUV420å›¾åƒçš„æ¯ä¸ªåˆ†é‡çš„æ•°æ®é•¿åº¦
+	// nWidth		YUV420å›¾åƒçš„å®½åº¦
+	// nHeight		YUV420å›¾åƒçš„é«˜åº¦
+	// nStride		YV12æ•°æ®ç›®æ ‡æ•°æ®æ¯ä¸€è¡Œæ•°æ®çš„æ­¥é•¿
 	
 	void YUV420Rocate90(byte *pSrcYUV[4], byte *pDestYUV[4], int nLinesize[4], int nWidth, int nHeight,int nStride)
 	{
@@ -3507,14 +3634,14 @@ _Failed:
 		MatrixRocate90(pSrcYUV[1], pDestYUV[2], nLinesize[1], nHeight / 2, nStride/2);
 		MatrixRocate90(pSrcYUV[2], pDestYUV[1], nLinesize[2], nHeight / 2,nStride/2);
 	}
-	// YUV420Í¼ÏñË³Ê±ÕëĞı×ª270¶È£¬¼´ÄæÊ±ÕëĞı×ª90£¬²¢×ªÎªYV12Í¼Ïñ
+	// YUV420å›¾åƒé¡ºæ—¶é’ˆæ—‹è½¬270åº¦ï¼Œå³é€†æ—¶é’ˆæ—‹è½¬90ï¼Œå¹¶è½¬ä¸ºYV12å›¾åƒ
 	void YUV420Rocate270(byte *pSrcYUV[4], byte *pDestYUV[4], int nLinesize[4], int nWidth, int nHeight,int nStride)
 	{
 		MatrixRocate270(pSrcYUV[0], pDestYUV[0], nLinesize[0], nHeight,nStride);
 		MatrixRocate270(pSrcYUV[1], pDestYUV[2], nLinesize[2], nHeight / 2,nStride/2);
 		MatrixRocate270(pSrcYUV[2], pDestYUV[1], nLinesize[1], nHeight / 2,nStride/2);
 	}
-	// YUV420Í¼ÏñĞı×ª180¶È£¬²¢×ªÎªYV12Í¼Ïñ
+	// YUV420å›¾åƒæ—‹è½¬180åº¦ï¼Œå¹¶è½¬ä¸ºYV12å›¾åƒ
 	void YUV420Rocate180(byte *pSrcYUV[4], byte *pDestYUV[4], int nLinesize[4], int nWidth, int nHeight, int nStride)
 	{
 		MatrixRocate180(pSrcYUV[0], pDestYUV[0], nLinesize[0], nHeight, nStride);
@@ -3531,11 +3658,11 @@ _Failed:
 		return m_pDirect3D9Ex;
 	}
 
-	// D3dDirect9ExÏÂ,È¡´úResetDevice()º¯Êı
+	// D3dDirect9Exä¸‹,å–ä»£ResetDevice()å‡½æ•°
 	bool  ResetDevice()
 	{
 		HRESULT hr = S_OK;
-		// Ê¹ÓÃD3d9DeviceExÊ±£¬ÎŞĞëÖØĞÂ´´½¨±íÃæ×ÊÔ´
+		// ä½¿ç”¨D3d9DeviceExæ—¶ï¼Œæ— é¡»é‡æ–°åˆ›å»ºè¡¨é¢èµ„æº
 		if (!m_d3dpp.Windowed)
 		{
 			D3DDISPLAYMODEEX	DispMode;
@@ -3558,7 +3685,7 @@ _Failed:
 		return true;
 	}
 
-	// D3dDirect9ExÏÂ£¬¸Ã³ÉÔ±²»ÔÙÓĞĞ§
+	// D3dDirect9Exä¸‹ï¼Œè¯¥æˆå‘˜ä¸å†æœ‰æ•ˆ
 	virtual bool RestoreDevice()
 	{
 		return true;
@@ -3588,8 +3715,8 @@ _Failed:
 				}
 			}
 			break;
-		case S_PRESENT_OCCLUDED:	// ´°¿Ú±»ÆäËü´°¿ÚÄ£Ê½µÄ»­ÃæÕÚµ²»òÈ«ÆÁ»­Ãæ±»×îĞ¡»¯,ÈôÎªÈ«ÆÁ´°¿Ú£¬
-			// Ôò´ËÊ±¿ÉÍ£Ö¹äÖÈ¾£¬Ö±½Óµ½ÊÕµ½WM_ACTIVATEAPPÊ±£¬¿ÉÖØĞÂ¿ªÊ¼ÑİÈ¾
+		case S_PRESENT_OCCLUDED:	// çª—å£è¢«å…¶å®ƒçª—å£æ¨¡å¼çš„ç”»é¢é®æŒ¡æˆ–å…¨å±ç”»é¢è¢«æœ€å°åŒ–,è‹¥ä¸ºå…¨å±çª—å£ï¼Œ
+			// åˆ™æ­¤æ—¶å¯åœæ­¢æ¸²æŸ“ï¼Œç›´æ¥åˆ°æ”¶åˆ°WM_ACTIVATEAPPæ—¶ï¼Œå¯é‡æ–°å¼€å§‹æ¼”æŸ“
 			{
 				DxTraceMsg("%s The window is occluded.\n",__FUNCTION__);
 			}
@@ -3600,20 +3727,20 @@ _Failed:
 				return ResetDevice();
 			}
 			break;
-		case D3DERR_DEVICENOTRESET:	// Éè±¸¶ªÊ§,µ«²»ÔÙĞèÒªÖØĞÂ´´½¨ËùÓĞ×ÊÔ´
+		case D3DERR_DEVICENOTRESET:	// è®¾å¤‡ä¸¢å¤±,ä½†ä¸å†éœ€è¦é‡æ–°åˆ›å»ºæ‰€æœ‰èµ„æº
 			{
 				DxTraceMsg("%s The device is not Reset.\n",__FUNCTION__);
 				return ResetDevice();
 			}
 			break;
-		case D3DERR_DEVICEHUNG:		// ĞèÒª¸´Î»IDirect3DDeviceEx¶ÔÏó,µ«²»ĞèÒªÖØ½¨IDirect3DEx¶ÔÏó
+		case D3DERR_DEVICEHUNG:		// éœ€è¦å¤ä½IDirect3DDeviceExå¯¹è±¡,ä½†ä¸éœ€è¦é‡å»ºIDirect3DExå¯¹è±¡
 			{
 				DxTraceMsg("%s The device is hung.\n",__FUNCTION__);
 				DxCleanup();
 				return InitD3D(m_d3dpp.hDeviceWindow,m_nVideoWidth,m_nVideoHeight,m_bFullScreen);	
 			}
 			break;
-		case D3DERR_DEVICEREMOVED:	// ĞèÒªÖØĞÂ´´½¨IDirect3DEx¶ÔÏó
+		case D3DERR_DEVICEREMOVED:	// éœ€è¦é‡æ–°åˆ›å»ºIDirect3DExå¯¹è±¡
 			{
 				DxTraceMsg("%s if the device has been removed.\n",__FUNCTION__);
 				DxCleanup();
@@ -3647,14 +3774,14 @@ _Failed:
 			return false;
 			//SaveRunTime();
 		}
-		// HandelDevLostÈÔÎŞ·¨Ê¹ÓÃm_pDirect3DDevice£¬ÔòÖ±½Ó·µ»Øfalse
+		// HandelDevLostä»æ— æ³•ä½¿ç”¨m_pDirect3DDeviceï¼Œåˆ™ç›´æ¥è¿”å›false
 		if (!m_pDirect3DDeviceEx)
 			return false;
 		
 		switch(pAvFrame->format)
 		{
 		case  AV_PIX_FMT_DXVA2_VLD:
-			{// Ó²½âÂëÖ¡£¬¿ÉÒÔÖ±½ÓÏÔÊ¾
+			{// ç¡¬è§£ç å¸§ï¼Œå¯ä»¥ç›´æ¥æ˜¾ç¤º
 				if (m_bD3DShared)
 				{	
 					m_pSurfaceRender = (IDirect3DSurface9 *)pAvFrame->data[3];
@@ -3678,15 +3805,15 @@ _Failed:
 						gpu_memcpy(DstRect.pBits, SrcRect.pBits, SrcRect.Pitch*DstSurfaceDesc.Height * 3 / 2);
 					else
 					{
-						// Y·ÖÁ¿Í¼Ïñ
+						// Yåˆ†é‡å›¾åƒ
 						uint8_t *pSrcY = (uint8_t*)SrcRect.pBits;
-						// UV·ÖÁ¿Í¼Ïñ
+						// UVåˆ†é‡å›¾åƒ
 						uint8_t *pSrcUV = (uint8_t*)SrcRect.pBits + SrcRect.Pitch * SrcSurfaceDesc.Height;
 
 						uint8_t *pDstY = (uint8_t *)DstRect.pBits;
 						uint8_t *pDstUV = (uint8_t *)DstRect.pBits + DstRect.Pitch*DstSurfaceDesc.Height;
 
-						// ¸´ÖÆY·ÖÁ¿
+						// å¤åˆ¶Yåˆ†é‡
 						for (UINT i = 0; i < SrcSurfaceDesc.Height; i++)
 							gpu_memcpy(&pDstY[i*DstRect.Pitch], &pSrcY[i*SrcRect.Pitch], SrcSurfaceDesc.Width);
 						for (UINT i = 0; i < SrcSurfaceDesc.Height/2; i++)
@@ -3703,9 +3830,9 @@ _Failed:
 					}
 				}
 
-				// ´¦Àí½ØÍ¼ÇëÇó
+				// å¤„ç†æˆªå›¾è¯·æ±‚
 				TransferSnapShotSurface(pAvFrame);
-				// ´¦ÀíÍâ²¿·Ö»æÖÆ½Ó¿Ú
+				// å¤„ç†å¤–éƒ¨åˆ†ç»˜åˆ¶æ¥å£
 // 				ExternDrawCall(hWnd,pRenderRt);
 // 
 // 				IDirect3DSurface9 * pBackSurface = NULL;
@@ -3734,7 +3861,7 @@ _Failed:
 				break;
 			}
 		default:		
-			{// Èí½âÂëÖ¡£¬Ö»Ö§³ÖYUV420P¸ñÊ½
+			{// è½¯è§£ç å¸§ï¼Œåªæ”¯æŒYUV420Pæ ¼å¼
 				//SaveRunTime();
 				TransferSnapShotSurface(pAvFrame);
 				D3DLOCKED_RECT d3d_rect;
@@ -3768,9 +3895,9 @@ _Failed:
 						int nSize = Desc.Height * nStride;
 						int nHalfSize = (nSize) >> 1;
 						
-						pData[0] = pDest;										// Y·ÖÁ¿ÆğÊ¼µØÖ·
-						pData[1] = pDest + nSize;								// U·ÖÁ¿ÆğÊ¼µØÖ·
-						pData[2] = pData[1] + (size_t)(nHalfSize >> 1);			// V·ÖÁ¿ÆğÊ¼µØÖ·
+						pData[0] = pDest;										// Yåˆ†é‡èµ·å§‹åœ°å€
+						pData[1] = pDest + nSize;								// Uåˆ†é‡èµ·å§‹åœ°å€
+						pData[2] = pData[1] + (size_t)(nHalfSize >> 1);			// Våˆ†é‡èµ·å§‹åœ°å€
 						switch (nRocate)
 						{
 						case 1:
@@ -3809,7 +3936,7 @@ _Failed:
 					return false;
 				}
 				//SaveRunTime();
-				// ´¦ÀíÍâ²¿·Ö»æÖÆ½Ó¿Ú
+				// å¤„ç†å¤–éƒ¨åˆ†ç»˜åˆ¶æ¥å£
 // 				ExternDrawCall(hWnd,pRenderRt);
 // 				SaveRunTime();
 // 				IDirect3DSurface9 * pBackSurface = NULL;	
@@ -3866,8 +3993,8 @@ _Failed:
 // 		}
 	}
 
-	// Ìí¼ÓÒ»¸ö¶à±ßĞÎ
-	// ²Ù×÷³É¹¦Ê±£¬·µ»Ø¶à±ßĞÎµÄË÷ÒıÖµ£¬Ê§°Ü·µ»Ø0
+	// æ·»åŠ ä¸€ä¸ªå¤šè¾¹å½¢
+	// æ“ä½œæˆåŠŸæ—¶ï¼Œè¿”å›å¤šè¾¹å½¢çš„ç´¢å¼•å€¼ï¼Œå¤±è´¥è¿”å›0
 	virtual long AddPolygon(POINT *pPtArray, int nCount, WORD *pInputIndexArray, D3DCOLOR nColor)
 	{
 		if (!m_pDirect3DDeviceEx)
@@ -3928,14 +4055,14 @@ __Failure:
 			return 0;
 	}
 
-	// Ìí¼ÓÒ»×éÏßÌõ×ø±ê
-	// ·µ»ØÖµÎªË÷ÌõË÷ÒıÖµ£¬É¾³ı¸ÃÏßÌõÊ±ĞèÒªÓÃµ½Õâ¸öË÷ÒıÖµ
-	// Ìí¼ÓÊ§°ÜÊ±·µ»Ø0
+	// æ·»åŠ ä¸€ç»„çº¿æ¡åæ ‡
+	// è¿”å›å€¼ä¸ºç´¢æ¡ç´¢å¼•å€¼ï¼Œåˆ é™¤è¯¥çº¿æ¡æ—¶éœ€è¦ç”¨åˆ°è¿™ä¸ªç´¢å¼•å€¼
+	// æ·»åŠ å¤±è´¥æ—¶è¿”å›0
 	virtual long AddD3DLineArray(POINT *pPointArray, int nCount, float fWidth, D3DCOLOR nColor)
 	{
 		if (!m_pD3DXLine)
 		{
-			// ´´½¨Direct3DÏß¶ÔÏó  
+			// åˆ›å»ºDirect3Dçº¿å¯¹è±¡  
 			if (FAILED(D3DXCreateLine(m_pDirect3DDeviceEx, &m_pD3DXLine)))
 			{
 				return 0;
@@ -3992,7 +4119,7 @@ __Failure:
 
 		hr = m_pDirect3DDeviceEx->StretchRect(m_pSurfaceRender, &srcrt, pBackSurface, &dstrt, D3DTEXF_LINEAR);
 		
-		// ´¦ÀíÍâ²¿·Ö»æÖÆ½Ó¿Ú
+		// å¤„ç†å¤–éƒ¨åˆ†ç»˜åˆ¶æ¥å£
 		ExternDrawCall(hWnd, pBackSurface,pRenderRt);
 		SafeRelease(pBackSurface);
 		
@@ -4030,8 +4157,8 @@ __Failure:
 		}
 	}
 
-	// 1.¼ì²éÖ¸¶¨µÄ±íÃæÏñËØ¸ñÊ½£¬ÊÇ·ñÔÚÖ¸¶¨µÄÊÊÅäÆ÷ÀàĞÍ¡¢ÊÊÅäÆ÷ÏñËØ¸ñÊ½ÏÂ¿ÉÓÃ¡£
-	// GetAdapterDisplayMode,CheckDeviceTypeµÄÓ¦ÓÃ
+	// 1.æ£€æŸ¥æŒ‡å®šçš„è¡¨é¢åƒç´ æ ¼å¼ï¼Œæ˜¯å¦åœ¨æŒ‡å®šçš„é€‚é…å™¨ç±»å‹ã€é€‚é…å™¨åƒç´ æ ¼å¼ä¸‹å¯ç”¨ã€‚
+	// GetAdapterDisplayMode,CheckDeviceTypeçš„åº”ç”¨
 	bool GetBackBufferFormat(D3DDEVTYPE deviceType, BOOL bWindow, D3DFORMAT &fmt)
 	{
 		if (m_pDirect3D9 == NULL)
@@ -4044,8 +4171,8 @@ __Failure:
 		return true;
 	}
 
-	// 2.¸ù¾İÊÊÅäÆ÷ÀàĞÍ£¬»ñÈ¡¶¥µãÔËËã(±ä»»ºÍ¹âÕÕÔËËã)µÄ¸ñÊ½
-	// D3DCAPS9½á¹¹Ìå£¬GetDeviceCapsµÄÓ¦ÓÃ
+	// 2.æ ¹æ®é€‚é…å™¨ç±»å‹ï¼Œè·å–é¡¶ç‚¹è¿ç®—(å˜æ¢å’Œå…‰ç…§è¿ç®—)çš„æ ¼å¼
+	// D3DCAPS9ç»“æ„ä½“ï¼ŒGetDeviceCapsçš„åº”ç”¨
 	bool GetDisplayVertexType(D3DDEVTYPE deviceType, int &nVertexType)
 	{
 		if (m_pDirect3D9 == NULL)
@@ -4063,8 +4190,8 @@ __Failure:
 
 
 
-	// 3.Êä³öÏÔ¿¨ĞÅÏ¢,DescriptionÃèÊö£¬³§ÉÌĞÍºÅ£¬Dircet3DµÄÇı¶¯Driver°æ±¾ºÅ£¬ÏÔ¿¨µÄÎ¨Ò»±êÊ¶ºÅ£ºDeviceIdentifier
-	// GetAdapterCount()£¬GetAdapterIdentifierµÄÊ¹ÓÃ¡£
+	// 3.è¾“å‡ºæ˜¾å¡ä¿¡æ¯,Descriptionæè¿°ï¼Œå‚å•†å‹å·ï¼ŒDircet3Dçš„é©±åŠ¨Driverç‰ˆæœ¬å·ï¼Œæ˜¾å¡çš„å”¯ä¸€æ ‡è¯†å·ï¼šDeviceIdentifier
+	// GetAdapterCount()ï¼ŒGetAdapterIdentifierçš„ä½¿ç”¨ã€‚
 	void PrintDisplayInfo()
 	{
 		if (m_pDirect3D9Ex == NULL)
@@ -4098,8 +4225,8 @@ __Failure:
 		}
 	}
 
-	// 4.Êä³öÖ¸¶¨Adapter£¬ÏÔ¿¨ÏñËØÄ£Ê½(²»»áÓë»º´æ±íÃæ¸ñÊ½×ö¼æÈİ¿¼ÂÇ)µÄÏÔ¿¨ÊÊÅäÆ÷Ä£Ê½ĞÅÏ¢
-	// GetAdapterModeCount,EnumAdapterModesµÄÊ¹ÓÃ
+	// 4.è¾“å‡ºæŒ‡å®šAdapterï¼Œæ˜¾å¡åƒç´ æ¨¡å¼(ä¸ä¼šä¸ç¼“å­˜è¡¨é¢æ ¼å¼åšå…¼å®¹è€ƒè™‘)çš„æ˜¾å¡é€‚é…å™¨æ¨¡å¼ä¿¡æ¯
+	// GetAdapterModeCount,EnumAdapterModesçš„ä½¿ç”¨
 	void PrintDisplayModeInfo(D3DFORMAT fmt)
 	{
 		if (m_pDirect3D9Ex == NULL)
@@ -4107,11 +4234,11 @@ __Failure:
 			DxTraceMsg("%s Direct3D9 not initialized.\n", __FUNCTION__);
 			return;
 		}
-		// ÏÔ¿¨ÊÊÅäÆ÷Ä£Ê½µÄ¸öÊı£¬Ö÷ÒªÊÇ·Ö±æÂÊµÄ²îÒì
+		// æ˜¾å¡é€‚é…å™¨æ¨¡å¼çš„ä¸ªæ•°ï¼Œä¸»è¦æ˜¯åˆ†è¾¨ç‡çš„å·®å¼‚
 		DWORD nAdapterModeCount = m_pDirect3D9Ex->GetAdapterModeCount(D3DADAPTER_DEFAULT, fmt);
 		if (nAdapterModeCount == 0)
 		{
-			DxTraceMsg("%s D3DFMT_¸ñÊ½£º%x²»Ö§³Ö", __FUNCTION__, fmt);
+			DxTraceMsg("%s D3DFMT_æ ¼å¼ï¼š%xä¸æ”¯æŒ", __FUNCTION__, fmt);
 		}
 		for (DWORD i = 0; i < nAdapterModeCount; i++)
 		{
@@ -4125,8 +4252,8 @@ __Failure:
 		}
 	}
 
-	// 5.¶ÔÓÚÖ¸¶¨µÄ×ÊÔ´ÀàĞÍ£¬¼ì²é×ÊÔ´µÄÊ¹ÓÃ·½Ê½£¬×ÊÔ´ÏñËØ¸ñÊ½£¬ÔÚÄ¬ÈÏµÄÏÔ¿¨ÊÊÅäÆ÷ÏÂÊÇ·ñÖ§³Ö
-	// GetAdapterDisplayMode£¬CheckDeviceFormatµÄÊ¹ÓÃ
+	// 5.å¯¹äºæŒ‡å®šçš„èµ„æºç±»å‹ï¼Œæ£€æŸ¥èµ„æºçš„ä½¿ç”¨æ–¹å¼ï¼Œèµ„æºåƒç´ æ ¼å¼ï¼Œåœ¨é»˜è®¤çš„æ˜¾å¡é€‚é…å™¨ä¸‹æ˜¯å¦æ”¯æŒ
+	// GetAdapterDisplayModeï¼ŒCheckDeviceFormatçš„ä½¿ç”¨
 	bool CheckResourceFormat(DWORD nSrcUsage, D3DRESOURCETYPE srcType, D3DFORMAT srcFmt)
 	{
 		if (m_pDirect3D9 == NULL)
@@ -4139,11 +4266,11 @@ __Failure:
 		return false;
 	}
 
-	// 6.¶ÔÖ¸¶¨µÄ±íÃæÏñËØ¸ñÊ½£¬´°¿ÚÄ£Ê½£¬ºÍÏÔ¿¨ÏñËØÄ£Ê½£»¼ì²é¶ÔÖ¸¶¨µÄ¶àÖØ²ÉÑùÀàĞÍÖ§³Ö²»£¬ÇÒ·µ»ØÖÊÁ¿Ë®Æ½µÈ¼¶
-	// CheckDeviceMultiSampleTypeµÄÓ¦ÓÃ
+	// 6.å¯¹æŒ‡å®šçš„è¡¨é¢åƒç´ æ ¼å¼ï¼Œçª—å£æ¨¡å¼ï¼Œå’Œæ˜¾å¡åƒç´ æ¨¡å¼ï¼›æ£€æŸ¥å¯¹æŒ‡å®šçš„å¤šé‡é‡‡æ ·ç±»å‹æ”¯æŒä¸ï¼Œä¸”è¿”å›è´¨é‡æ°´å¹³ç­‰çº§
+	// CheckDeviceMultiSampleTypeçš„åº”ç”¨
 	bool CheckMultiSampleType(D3DFORMAT surfaceFmt, BOOL bWindow, D3DMULTISAMPLE_TYPE &eSampleType, DWORD *pQualityLevel)
 	{
-		//±äÁ¿MultiSampleTypeµÄÖµÉèÎªD3DMULTISAMPLE_NONMASKABLE£¬¾Í±ØĞëÉè¶¨³ÉÔ±±äÁ¿MultiSampleQualityµÄÖÊÁ¿µÈ¼¶Öµ
+		//å˜é‡MultiSampleTypeçš„å€¼è®¾ä¸ºD3DMULTISAMPLE_NONMASKABLEï¼Œå°±å¿…é¡»è®¾å®šæˆå‘˜å˜é‡MultiSampleQualityçš„è´¨é‡ç­‰çº§å€¼
 		for (int i = eSampleType; i >= D3DMULTISAMPLE_NONE; i--)
 		{
 			if (SUCCEEDED(m_pDirect3D9Ex->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT/*caps.AdapterOrdinal*/,
@@ -4161,8 +4288,8 @@ __Failure:
 		return false;
 	}
 
-	// 7.¸ù¾İÏÔ¿¨ÊÊÅäÆ÷ºÍÄ¿±ê»º´æÀàĞÍ£¬¼ì²éÖ¸¶¨Éî¶È»º´æµÄ¸ñÊ½ÊÇ·ñÖ§³Ö
-	// CheckDepthStencilMatchµÄÓ¦ÓÃ
+	// 7.æ ¹æ®æ˜¾å¡é€‚é…å™¨å’Œç›®æ ‡ç¼“å­˜ç±»å‹ï¼Œæ£€æŸ¥æŒ‡å®šæ·±åº¦ç¼“å­˜çš„æ ¼å¼æ˜¯å¦æ”¯æŒ
+	// CheckDepthStencilMatchçš„åº”ç”¨
 	bool CheckDepthBufferFormt(D3DFORMAT targetBufferFmt, D3DFORMAT depthFmt)
 	{
 		if (m_pDirect3D9 == NULL)
@@ -4174,7 +4301,7 @@ __Failure:
 			return true;
 		return false;
 	}
-	// ½âÂë×¥Í¼£¬°ÑSurfaceÖĞµÄÍ¼ÏñÊı¾İ±£´æµ½ÎÄ¼şÖĞ£¬´Ë½ØÍ¼µÃµ½µÄÍ¼ÏñÊÇÔ­Ê¼µÄÍ¼Ïñ
+	// è§£ç æŠ“å›¾ï¼ŒæŠŠSurfaceä¸­çš„å›¾åƒæ•°æ®ä¿å­˜åˆ°æ–‡ä»¶ä¸­ï¼Œæ­¤æˆªå›¾å¾—åˆ°çš„å›¾åƒæ˜¯åŸå§‹çš„å›¾åƒ
 	virtual bool SaveSurfaceToFileW(WCHAR *szFilePath, D3DXIMAGE_FILEFORMAT D3DImageFormat = D3DXIFF_JPG)
 	{
 		if (!m_pDirect3DDeviceEx ||
@@ -4205,10 +4332,10 @@ __Failure:
 		}
 
 		wcscpy(m_szSnapShotPath, szFilePath);
-		// ½ØÍ¼Êı¾İÉĞÎ´¾ÍĞ÷,ÔòÖÃĞÅ½ØÍ¼ÊÂ¼ş
+		// æˆªå›¾æ•°æ®å°šæœªå°±ç»ª,åˆ™ç½®ä¿¡æˆªå›¾äº‹ä»¶
 		if (WaitForSingleObject(m_hEventFrameReady, 1000) == WAIT_TIMEOUT)
 			return false;
-		// ½ØÍ¼Êı¾İÒÑ¾ÍĞ÷			
+		// æˆªå›¾æ•°æ®å·²å°±ç»ª			
 
 		hr = D3DXSaveSurfaceToFileW(szFilePath, m_D3DXIFF, m_pSnapshotSurface, NULL, NULL);
 		if (FAILED(hr))

@@ -451,7 +451,7 @@ extern "C" {
 /// │                  │                │
 /// └───────────────────────────────────┘
 /// @remark 1.边界的上下左右位置不可错位,并且边界不能小于0,否则将返回IPC_Error_InvalidParameters			
- int ipcplay_SetBorderRect(IN IPC_PLAYHANDLE hPlayHandle, HWND hWnd, LPRECT pRectBorder = nullptr, bool bPercent = false);
+ int ipcplay_SetBorderRect(IN IPC_PLAYHANDLE hPlayHandle, HWND hWnd, LPRECT pRectBorder = nullptr, bool bPercent = false, bool bSkipVideoSize = false);
 
 /// @brief 移除显示边界，显示所有视频图像
 /// @param [in]		hPlayHandle		由ipcplay_OpenFile或ipcplay_OpenStream返回的播放句柄

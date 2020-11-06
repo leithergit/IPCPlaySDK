@@ -169,6 +169,9 @@
     <ClInclude Include="AutoLock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="VideoDecoder\moreuuids.h">
+      <Filter>VideoDecoder</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Audio">

@@ -1,12 +1,14 @@
-
+ï»¿
 #include "VideoDecoder.h"
 #include <Shlwapi.h>
 #include "libavcodec/dxva2.h"
 #include "gpu_memcpy_sse4.h"
 #include <ppl.h>
 #include <assert.h>
+#include <dxva2api.h>
+#include "moreuuids.h"
 //#include <VersionHelpers.h>
-//#include <VersionHelpers.h> // Windows SDK 8.1 ²ÅÓĞà¸
+//#include <VersionHelpers.h> // Windows SDK 8.1 æ‰æœ‰å–”
 
 #pragma comment ( lib, "d3d9.lib" )
 #pragma comment ( lib, "d3dx9.lib" )
@@ -216,7 +218,7 @@ CVideoDecoder::~CVideoDecoder(void)
 
 STDMETHODIMP CVideoDecoder::DestroyDXVADecoder(bool bFull, bool bNoAVCodec)
 {
-	//m_pCallback->ReleaseAllDXVAResources();	// ÊÍ·Å×îºóÒ»Ö¡
+	//m_pCallback->ReleaseAllDXVAResources();	// é‡Šæ”¾æœ€åä¸€å¸§
 	for (int i = 0; i < m_NumSurfaces; i++) 
 	{
 		SafeRelease(m_pSurfaces[i].pSurface);
@@ -270,7 +272,7 @@ STDMETHODIMP CVideoDecoder::FreeD3DResources()
 
 STDMETHODIMP CVideoDecoder::LoadDXVA2Functions()
 {
-	if (!IsWindowsVistaOrGreater())		// ±ØĞëÒªWindows Vista¼°ÒÔÉÏµÄ²Ù×÷ÏµÍ³
+	if (!IsWindowsVistaOrGreater())		// å¿…é¡»è¦Windows VistaåŠä»¥ä¸Šçš„æ“ä½œç³»ç»Ÿ
 		return E_FAIL;
 	m_dxva.dxva2lib = ::LoadLibraryA("dxva2.dll");
 	if (m_dxva.dxva2lib == nullptr) 
@@ -558,7 +560,7 @@ HRESULT CVideoDecoder::InitDxva(IDirect3D9Ex  *pD3D, IDirect3DDevice9Ex *pD3DDev
 		return E_FAIL;
 	}
 
-	// ĞèÒª±àĞ´CopyFrameYUV420P_SSE4_MTµÈº¯Êım_nCodecId == AV_CODEC_ID_H264
+	// éœ€è¦ç¼–å†™CopyFrameYUV420P_SSE4_MTç­‰å‡½æ•°m_nCodecId == AV_CODEC_ID_H264
 	if (CopyFrameNV12 == nullptr ||
 		CopyFrameYUV420P == nullptr) 
 	{
@@ -742,8 +744,8 @@ HRESULT CVideoDecoder::SetD3DDeviceManager(IDirect3DDeviceManager9 *pDevManager)
 			goto done;
 		}
 
-		/* 2019.01.13 Ôİ½û²âÊÔ´úÂë by lee
-		// ²âÊÔÊÇ·ñÄÜ´´½¨DXVA½âÂëäÖÈ¾¶ÔÏó
+		/* 2019.01.13 æš‚ç¦æµ‹è¯•ä»£ç  by lee
+		// æµ‹è¯•æ˜¯å¦èƒ½åˆ›å»ºDXVAè§£ç æ¸²æŸ“å¯¹è±¡
 		LPDIRECT3DSURFACE9 pSurfaces[DXVA2_MAX_SURFACES] = { 0 };
 		UINT numSurfaces = max(config.ConfigMinRenderTargetBuffCount, 1);
 		hr = m_pDXVADecoderService->CreateSurface(m_dwSurfaceWidth, m_dwSurfaceHeight, numSurfaces, output, D3DPOOL_DEFAULT, 0, DXVA2_VideoDecoderRenderTarget, pSurfaces, nullptr);
@@ -752,7 +754,7 @@ HRESULT CVideoDecoder::SetD3DDeviceManager(IDirect3DDeviceManager9 *pDevManager)
 			goto done;
 		}
 
-		// ²âÊÔÊÇ·ñÄÜ´´½¨DXVA½âÂëÆ÷
+		// æµ‹è¯•æ˜¯å¦èƒ½åˆ›å»ºDXVAè§£ç å™¨
 		IDirectXVideoDecoder *decoder = nullptr;
 		hr = m_pDXVADecoderService->CreateVideoDecoder(input, &desc, &config, pSurfaces, numSurfaces, &decoder);
 
@@ -774,10 +776,10 @@ HRESULT CVideoDecoder::SetD3DDeviceManager(IDirect3DDeviceManager9 *pDevManager)
 		int i = 0;
 		while (i < DXVA2_MAX_SURFACES)
 		{
-			// Î£ÏÕµÄºê¶¨Òå
-			// ÔÚºê¶¨ÒåµÄ²ÎÊıÖĞ£¬¾¡Á¿²»ÒªÊ¹ÓÃÀàËÆ++£¬--Ö®ÀàµÄ²Ù×÷·û£¬ÒòÎªÕâÀà
-			// ²Ù×÷·û¿ÉÄÜ»áÔÚºê¶¨ÒåÖĞ±»Õ¹¿ª¶à´Î£¬´Ó¶øÖ´ĞĞ¶à´Î£¬µ¼ÖÂ´úÂëÖ´ĞĞ´íÎó
-			SafeRelease(pSurfaces[i]);		// ²»Òª°ÑiĞ´³Éi++
+			// å±é™©çš„å®å®šä¹‰
+			// åœ¨å®å®šä¹‰çš„å‚æ•°ä¸­ï¼Œå°½é‡ä¸è¦ä½¿ç”¨ç±»ä¼¼++ï¼Œ--ä¹‹ç±»çš„æ“ä½œç¬¦ï¼Œå› ä¸ºè¿™ç±»
+			// æ“ä½œç¬¦å¯èƒ½ä¼šåœ¨å®å®šä¹‰ä¸­è¢«å±•å¼€å¤šæ¬¡ï¼Œä»è€Œæ‰§è¡Œå¤šæ¬¡ï¼Œå¯¼è‡´ä»£ç æ‰§è¡Œé”™è¯¯
+			SafeRelease(pSurfaces[i]);		// ä¸è¦æŠŠiå†™æˆi++
 			i++;
 		}
 		*/
