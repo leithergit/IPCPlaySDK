@@ -4672,8 +4672,8 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 					WaitForMultipleObjects(2, pThis->m_hAudioFrameEvent, TRUE, pThis->m_nDecodeDelay);
 			}
 			dfRenderStartTime = GetExactTime();
-			pThis->RenderFrame(pAvFrame);
-
+			
+			pThis->RenderFrame(pAvFrame,pDecodec.get());
 #ifdef _DEBUG
 // 			RenderTime.Stat(MMTimeSpan(dwFrameTimeInput));
 // 			if (RenderTime.IsFull())

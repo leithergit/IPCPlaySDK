@@ -1,5 +1,5 @@
-
-// DvoIPCPlayDemoDlg.cpp : ÊµÏÖÎÄ¼ş
+ï»¿
+// DvoIPCPlayDemoDlg.cpp : å®ç°æ–‡ä»¶
 //
 
 #include "stdafx.h"
@@ -33,20 +33,20 @@ enum _SubItem
 
 #define  ID_PLAYEVENT 1024
 #define _PlayInterval 250
-// ÓÃÓÚÓ¦ÓÃ³ÌĞò¡°¹ØÓÚ¡±²Ëµ¥ÏîµÄ CAboutDlg ¶Ô»°¿ò
+// ç”¨äºåº”ç”¨ç¨‹åºâ€œå…³äºâ€èœå•é¡¹çš„ CAboutDlg å¯¹è¯æ¡†
 
 class CAboutDlg : public CDialogEx
 {
 public:
 	CAboutDlg();
 
-	// ¶Ô»°¿òÊı¾İ
+	// å¯¹è¯æ¡†æ•°æ®
 	enum { IDD = IDD_ABOUTBOX };
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV æ”¯æŒ
 
-	// ÊµÏÖ
+	// å®ç°
 protected:
 	DECLARE_MESSAGE_MAP()
 };
@@ -64,7 +64,7 @@ BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
 
 
-// CDvoIPCPlayDemoDlg ¶Ô»°¿ò
+// CDvoIPCPlayDemoDlg å¯¹è¯æ¡†
 
 #define _Row	1
 #define _Col	1
@@ -93,24 +93,24 @@ CIPCPlayDemoDlg::CIPCPlayDemoDlg(CWnd* pParent /*=NULL*/)
 	m_bRefreshPlayer = true;
 	InitializeCriticalSection(&m_csYUVFrame);
 	/*
-	IPC_CODEC	nVideoCodec;	///< ÊÓÆµ±àÂë¸ñÊ½,@see IPC_CODEC
-	IPC_CODEC	nAudioCodec;	///< ÒôÆµ±àÂë¸ñÊ½,@see IPC_CODEC
-	USHORT		nVideoWidth;	///< ÊÓÆµÍ¼Ïñ¿í¶È
-	USHORT		nVideoHeight;	///< ÊÓÆµÍ¼Ïñ¸ß¶È
-	BOOL		bAudioEnabled;	///< ÊÇ·ñÒÑ¿ªÆôÒôÆµ
-	UINT		nTotalFrames;	///< ÊÓÆµ×ÜÖ¡Êı,Ö»ÓĞÎÄ¼ş²¥·ÅÊ±²ÅÓĞĞ§
-	time_t		tTotalTime;		///< ÎÄ¼ş×ÜÊ±³¤(µ¥Î»:ºÁÃë),Ö»ÓĞÎÄ¼ş²¥·ÅÊ±²ÅÓĞĞ§
-	UINT		nCurFrameID;	///< µ±Ç°²¥·ÅÊÓÆµµÄÖ¡ID,Ö»ÓĞÎÄ¼ş²¥·ÅÊ±²ÅÓĞĞ§,nSDKVersion<IPC_IPC_SDK_VERSION_2015_12_16ÎŞĞ§
-	time_t		tFirstFrameTime;///< ÊÕµ½µÄµÚÒ»Ö¡µÄÊ±¼ä(µ¥Î»:ºÁÃë)
-	time_t		tCurFrameTime;	///< ·µ»Øµ±Ç°²¥·ÅÊÓÆµµÄÖ¡Ïà¶ÔÆğµãµÄÊ±¼ä(µ¥Î»:ºÁÃë)
-	time_t		tTimeEplased;	///< ÒÑ²¥·ÅÊ±¼ä(µ¥Î»:ºÁÃë)
-	USHORT		nFPS;			///< ÎÄ¼ş»òÂëÁ÷ÖĞÊÓÆµµÄÔ­Ê¼Ö¡ÂÊ
-	USHORT		nPlayFPS;		///< µ±Ç°²¥·ÅµÄÖ¡ÂÊ
-	WORD		nCacheSize;		///< ²¥·Å»º´æ
-	WORD		nCacheSize2;	///< ÒôÆµ»º´æ
-	float		fPlayRate;		///< ²¥·ÅËÙÂÊ,Ö»ÓĞÎÄ¼ş²¥·ÅÊ±²ÅÓĞĞ§
-	long		nSDKVersion;	///< SDK°æ±¾,ÏêÏ¸¶¨Òå²Î¼û@see IPC_MEDIAINFO
-	bool		bFilePlayFinished;///< ÎÄ¼ş²¥·ÅÍê³É±êÖ¾,ÎªtrueÊ±£¬²¥·Å½áÊø£¬ÎªfalseÊ±£¬ÔòÎ´½áÊø
+	IPC_CODEC	nVideoCodec;	///< è§†é¢‘ç¼–ç æ ¼å¼,@see IPC_CODEC
+	IPC_CODEC	nAudioCodec;	///< éŸ³é¢‘ç¼–ç æ ¼å¼,@see IPC_CODEC
+	USHORT		nVideoWidth;	///< è§†é¢‘å›¾åƒå®½åº¦
+	USHORT		nVideoHeight;	///< è§†é¢‘å›¾åƒé«˜åº¦
+	BOOL		bAudioEnabled;	///< æ˜¯å¦å·²å¼€å¯éŸ³é¢‘
+	UINT		nTotalFrames;	///< è§†é¢‘æ€»å¸§æ•°,åªæœ‰æ–‡ä»¶æ’­æ”¾æ—¶æ‰æœ‰æ•ˆ
+	time_t		tTotalTime;		///< æ–‡ä»¶æ€»æ—¶é•¿(å•ä½:æ¯«ç§’),åªæœ‰æ–‡ä»¶æ’­æ”¾æ—¶æ‰æœ‰æ•ˆ
+	UINT		nCurFrameID;	///< å½“å‰æ’­æ”¾è§†é¢‘çš„å¸§ID,åªæœ‰æ–‡ä»¶æ’­æ”¾æ—¶æ‰æœ‰æ•ˆ,nSDKVersion<IPC_IPC_SDK_VERSION_2015_12_16æ— æ•ˆ
+	time_t		tFirstFrameTime;///< æ”¶åˆ°çš„ç¬¬ä¸€å¸§çš„æ—¶é—´(å•ä½:æ¯«ç§’)
+	time_t		tCurFrameTime;	///< è¿”å›å½“å‰æ’­æ”¾è§†é¢‘çš„å¸§ç›¸å¯¹èµ·ç‚¹çš„æ—¶é—´(å•ä½:æ¯«ç§’)
+	time_t		tTimeEplased;	///< å·²æ’­æ”¾æ—¶é—´(å•ä½:æ¯«ç§’)
+	USHORT		nFPS;			///< æ–‡ä»¶æˆ–ç æµä¸­è§†é¢‘çš„åŸå§‹å¸§ç‡
+	USHORT		nPlayFPS;		///< å½“å‰æ’­æ”¾çš„å¸§ç‡
+	WORD		nCacheSize;		///< æ’­æ”¾ç¼“å­˜
+	WORD		nCacheSize2;	///< éŸ³é¢‘ç¼“å­˜
+	float		fPlayRate;		///< æ’­æ”¾é€Ÿç‡,åªæœ‰æ–‡ä»¶æ’­æ”¾æ—¶æ‰æœ‰æ•ˆ
+	long		nSDKVersion;	///< SDKç‰ˆæœ¬,è¯¦ç»†å®šä¹‰å‚è§@see IPC_MEDIAINFO
+	bool		bFilePlayFinished;///< æ–‡ä»¶æ’­æ”¾å®Œæˆæ ‡å¿—,ä¸ºtrueæ—¶ï¼Œæ’­æ”¾ç»“æŸï¼Œä¸ºfalseæ—¶ï¼Œåˆ™æœªç»“æŸ
 	byte		nReserver1[3];
 	UINT		nReserver2[2];
 	*/
@@ -196,6 +196,7 @@ BEGIN_MESSAGE_MAP(CIPCPlayDemoDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_OSD, &CIPCPlayDemoDlg::OnBnClickedButtonOsd)
 	ON_BN_CLICKED(IDC_BUTTON_OSD2, &CIPCPlayDemoDlg::OnBnClickedButtonOsd2)
 	ON_BN_CLICKED(IDC_BUTTON_REMOVEOSD, &CIPCPlayDemoDlg::OnBnClickedButtonRemoveosd)
+	ON_BN_CLICKED(IDC_BUTTON_MERGESCREENS, &CIPCPlayDemoDlg::OnBnClickedButtonMergescreens)
 END_MESSAGE_MAP()
 
 
@@ -210,7 +211,7 @@ CFile *CIPCPlayDemoDlg::m_pVldReport = NULL;
 	return 0;
 }
 
-// CDvoIPCPlayDemoDlg ÏûÏ¢´¦Àí³ÌĞò
+// CDvoIPCPlayDemoDlg æ¶ˆæ¯å¤„ç†ç¨‹åº
  
 void CIPCPlayDemoDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 {
@@ -240,9 +241,9 @@ BOOL CIPCPlayDemoDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	// ½«¡°¹ØÓÚ...¡±²Ëµ¥ÏîÌí¼Óµ½ÏµÍ³²Ëµ¥ÖĞ¡£
+	// å°†â€œå…³äº...â€èœå•é¡¹æ·»åŠ åˆ°ç³»ç»Ÿèœå•ä¸­ã€‚
 
-	// IDM_ABOUTBOX ±ØĞëÔÚÏµÍ³ÃüÁî·¶Î§ÄÚ¡£
+	// IDM_ABOUTBOX å¿…é¡»åœ¨ç³»ç»Ÿå‘½ä»¤èŒƒå›´å†…ã€‚
 	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
 
@@ -262,25 +263,25 @@ BOOL CIPCPlayDemoDlg::OnInitDialog()
 	CenterWindow(this);
 	m_bitmapMask.LoadBitmap(IDB_BITMAP_MASK);
 
-	// ÉèÖÃ´Ë¶Ô»°¿òµÄÍ¼±ê¡£  µ±Ó¦ÓÃ³ÌĞòÖ÷´°¿Ú²»ÊÇ¶Ô»°¿òÊ±£¬¿ò¼Ü½«×Ô¶¯
-	//  Ö´ĞĞ´Ë²Ù×÷
-	SetIcon(m_hIcon, TRUE);			// ÉèÖÃ´óÍ¼±ê
-	SetIcon(m_hIcon, FALSE);		// ÉèÖÃĞ¡Í¼±ê
+	// è®¾ç½®æ­¤å¯¹è¯æ¡†çš„å›¾æ ‡ã€‚  å½“åº”ç”¨ç¨‹åºä¸»çª—å£ä¸æ˜¯å¯¹è¯æ¡†æ—¶ï¼Œæ¡†æ¶å°†è‡ªåŠ¨
+	//  æ‰§è¡Œæ­¤æ“ä½œ
+	SetIcon(m_hIcon, TRUE);			// è®¾ç½®å¤§å›¾æ ‡
+	SetIcon(m_hIcon, FALSE);		// è®¾ç½®å°å›¾æ ‡
 
 	m_pPlayerInfo =make_shared<PlayerInfo>();
 	m_wndStatus.SubclassDlgItem(IDC_STATIC_STATUS, this);
 
 	
 
-	SendDlgItemMessage(IDC_COMBO_PICTYPE, CB_SETCURSEL, 1, 0);		// Ä¬ÈÏÊ¹ÓÃJPG½ØÍ¼
-	SendDlgItemMessage(IDC_COMBO_PLAYSPEED, CB_SETCURSEL, 8, 0);	// Ä¬ÈÏ²¥·ÅËÙ¶ÈÎª1X
+	SendDlgItemMessage(IDC_COMBO_PICTYPE, CB_SETCURSEL, 1, 0);		// é»˜è®¤ä½¿ç”¨JPGæˆªå›¾
+	SendDlgItemMessage(IDC_COMBO_PLAYSPEED, CB_SETCURSEL, 8, 0);	// é»˜è®¤æ’­æ”¾é€Ÿåº¦ä¸º1X
 	//m_wndBrowseCtrl.SubclassDlgItem(IDC_MFCEDITBROWSE, this);
 	m_wndStreamInfo.SubclassDlgItem(IDC_LIST_STREAMINFO, this);
 	m_wndStreamInfo.SetExtendedStyle(m_wndStreamInfo.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 	int nCol = 0;
 
-	m_wndStreamInfo.InsertColumn(nCol++, _T("ÏîÄ¿"), LVCFMT_LEFT, 60);
-	m_wndStreamInfo.InsertColumn(nCol++, _T("ÄÚÈİ"), LVCFMT_LEFT, 130);
+	m_wndStreamInfo.InsertColumn(nCol++, _T("é¡¹ç›®"), LVCFMT_LEFT, 60);
+	m_wndStreamInfo.InsertColumn(nCol++, _T("å†…å®¹"), LVCFMT_LEFT, 130);
 	m_nDiapplayCard = 128;
 	ipcplay_GetDisplayAdapterInfo(m_DisplayCard, m_nDiapplayCard);
 	if (m_nDiapplayCard > 0)
@@ -295,18 +296,18 @@ BOOL CIPCPlayDemoDlg::OnInitDialog()
 
 	int nItem = 0;
 	ZeroMemory(m_szListText, sizeof(ListItem) * 16);
-	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("ÊÓÆµĞÅÏ¢"));
-	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("ÒôÆµ±àÂë"));
-	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("Âë      ÂÊ"));
-	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("Ö¡      ÂÊ"));
-	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("ÊÓÆµ»º´æ"));
-	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("ÒôÆµ»º´æ"));
-	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("ÂëÁ÷×Ü³¤"));
-	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("Á¬½ÓÊ±³¤"));
-	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("²¥·ÅÊ±³¤"));
-	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("Â¼ÏñÎÄ¼ş"));
-	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("Â¼Ïñ³¤¶È"));
-	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("Â¼ÏñÊ±³¤"));
+	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("è§†é¢‘ä¿¡æ¯"));
+	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("éŸ³é¢‘ç¼–ç "));
+	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("ç       ç‡"));
+	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("å¸§      ç‡"));
+	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("è§†é¢‘ç¼“å­˜"));
+	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("éŸ³é¢‘ç¼“å­˜"));
+	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("ç æµæ€»é•¿"));
+	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("è¿æ¥æ—¶é•¿"));
+	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("æ’­æ”¾æ—¶é•¿"));
+	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("å½•åƒæ–‡ä»¶"));
+	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("å½•åƒé•¿åº¦"));
+	_tcscpy_s(m_szListText[nItem++].szItemName, 32, _T("å½•åƒæ—¶é•¿"));
 	m_wndStreamInfo.SetItemCount(nItem);
 	SendDlgItemMessage(IDC_COMBO_STREAM, CB_SETCURSEL, 0, 0);
 	SendDlgItemMessage(IDC_COMBO_ROCATE, CB_SETCURSEL, 0, 0);
@@ -326,7 +327,7 @@ BOOL CIPCPlayDemoDlg::OnInitDialog()
 		IDC_SLIDER_ZOOMSCALE,
 		IDC_SLIDER_VOLUME,
 		IDC_SLIDER_PLAYER};
-	// ÉèÖÃ»¬¶¯¿éµÄÈ¡Éá·¶Î§
+	// è®¾ç½®æ»‘åŠ¨å—çš„å–èˆèŒƒå›´
 	for (int i = 0; i < sizeof(nSliderIDArray) / sizeof(UINT); i++)
 	{
 		EnableDlgItem(nSliderIDArray[i], false);
@@ -455,9 +456,9 @@ BOOL CIPCPlayDemoDlg::OnInitDialog()
 			pSubMenu->CheckMenuRadioItem(ID_RENDER_D3D, ID_RENDER_DDRAW, ID_RENDER_D3D, MF_CHECKED | MF_BYCOMMAND);
 
 	}
-
+	CheckDlgButton(IDC_CHECK_FITWINDOW,BST_CHECKED);
 	
-	return TRUE;  // ³ı·Ç½«½¹µãÉèÖÃµ½¿Ø¼ş£¬·ñÔò·µ»Ø TRUE
+	return TRUE;  // é™¤éå°†ç„¦ç‚¹è®¾ç½®åˆ°æ§ä»¶ï¼Œå¦åˆ™è¿”å› TRUE
 }
 
 void CIPCPlayDemoDlg::SaveWndPosition(UINT *nDlgItemIDArray, UINT nItemCount, DockType nDock, RECT rtDialogClientRect)
@@ -473,12 +474,12 @@ void CIPCPlayDemoDlg::SaveWndPosition(UINT *nDlgItemIDArray, UINT nItemCount, Do
 		switch (wndPos.Dock)
 		{
 		default:
-		case DockTop:		// ÎŞĞë±ä¶¯
+		case DockTop:		// æ— é¡»å˜åŠ¨
 		{
 			wndPos.DockDistance[0] = wndPos.rect.top - rtDialogClientRect.top;
 			break;
 		}
-		case DockLeft:		// ÎŞĞë±ä¶¯
+		case DockLeft:		// æ— é¡»å˜åŠ¨
 		{
 			wndPos.DockDistance[0] = wndPos.rect.left - rtDialogClientRect.left;
 			break;
@@ -618,19 +619,19 @@ void CIPCPlayDemoDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	}
 }
 
-// Èç¹ûÏò¶Ô»°¿òÌí¼Ó×îĞ¡»¯°´Å¥£¬ÔòĞèÒªÏÂÃæµÄ´úÂë
-//  À´»æÖÆ¸ÃÍ¼±ê¡£  ¶ÔÓÚÊ¹ÓÃÎÄµµ/ÊÓÍ¼Ä£ĞÍµÄ MFC Ó¦ÓÃ³ÌĞò£¬
-//  Õâ½«ÓÉ¿ò¼Ü×Ô¶¯Íê³É¡£
+// å¦‚æœå‘å¯¹è¯æ¡†æ·»åŠ æœ€å°åŒ–æŒ‰é’®ï¼Œåˆ™éœ€è¦ä¸‹é¢çš„ä»£ç 
+//  æ¥ç»˜åˆ¶è¯¥å›¾æ ‡ã€‚  å¯¹äºä½¿ç”¨æ–‡æ¡£/è§†å›¾æ¨¡å‹çš„ MFC åº”ç”¨ç¨‹åºï¼Œ
+//  è¿™å°†ç”±æ¡†æ¶è‡ªåŠ¨å®Œæˆã€‚
 
 void CIPCPlayDemoDlg::OnPaint()
 {
 	if (IsIconic())
 	{
-		CPaintDC dc(this); // ÓÃÓÚ»æÖÆµÄÉè±¸ÉÏÏÂÎÄ
+		CPaintDC dc(this); // ç”¨äºç»˜åˆ¶çš„è®¾å¤‡ä¸Šä¸‹æ–‡
 
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
 
-		// Ê¹Í¼±êÔÚ¹¤×÷Çø¾ØĞÎÖĞ¾ÓÖĞ
+		// ä½¿å›¾æ ‡åœ¨å·¥ä½œåŒºçŸ©å½¢ä¸­å±…ä¸­
 		int cxIcon = GetSystemMetrics(SM_CXICON);
 		int cyIcon = GetSystemMetrics(SM_CYICON);
 		CRect rt;
@@ -638,13 +639,13 @@ void CIPCPlayDemoDlg::OnPaint()
 		int x = (rt.Width() - cxIcon + 1) / 2;
 		int y = (rt.Height() - cyIcon + 1) / 2;
 
-		// »æÖÆÍ¼±ê
+		// ç»˜åˆ¶å›¾æ ‡
 		dc.DrawIcon(x, y, m_hIcon);
 		
 	}
 	else
 	{
-		CPaintDC dc(this); // ÓÃÓÚ»æÖÆµÄÉè±¸ÉÏÏÂÎÄ
+		CPaintDC dc(this); // ç”¨äºç»˜åˆ¶çš„è®¾å¤‡ä¸Šä¸‹æ–‡
 		CRect rt;
 // 		m_pVideoWndFrame->GetClientRect(&rt);
 // 		ClientToScreen(&rt);
@@ -722,8 +723,8 @@ void CIPCPlayDemoDlg::OnPaint()
 	}
 }
 
-//µ±ÓÃ»§ÍÏ¶¯×îĞ¡»¯´°¿ÚÊ±ÏµÍ³µ÷ÓÃ´Ëº¯ÊıÈ¡µÃ¹â±ê
-//ÏÔÊ¾¡£
+//å½“ç”¨æˆ·æ‹–åŠ¨æœ€å°åŒ–çª—å£æ—¶ç³»ç»Ÿè°ƒç”¨æ­¤å‡½æ•°å–å¾—å…‰æ ‡
+//æ˜¾ç¤ºã€‚
 HCURSOR CIPCPlayDemoDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
@@ -744,8 +745,8 @@ void CIPCPlayDemoDlg::OnSize(UINT nType, int cx, int cy)
 			switch (wndPos.Dock)
 			{
 			default:
-			case DockTop:		// ÎŞĞë±ä¶¯
-			case DockLeft:		// ÎŞĞë±ä¶¯
+			case DockTop:		// æ— é¡»å˜åŠ¨
+			case DockLeft:		// æ— é¡»å˜åŠ¨
 				break;
 			case DockBottom:
 			{
@@ -846,7 +847,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonConnect()
 	int nError = 0;
 	if (!IsValidIPAddress(szIPAddress))
 	{
-		AfxMessageBox(_T("ÇëÊäÈëÒ»¸öÓĞĞ§µÄÏà»úIP"), MB_OK | MB_ICONSTOP);
+		AfxMessageBox(_T("è¯·è¾“å…¥ä¸€ä¸ªæœ‰æ•ˆçš„ç›¸æœºIP"), MB_OK | MB_ICONSTOP);
 		return;
 	}
 	m_pPlayContext =make_shared<PlayerContext>();
@@ -878,7 +879,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonDisconnect()
 	{
 		HWND hWnd = m_pPlayContext->hWndView;
 		m_pPlayContext.reset();
-		SetDlgItemText(IDC_BUTTON_PLAYSTREAM, _T("²¥·ÅÂëÁ÷"));
+		SetDlgItemText(IDC_BUTTON_PLAYSTREAM, _T("æ’­æ”¾ç æµ"));
 		EnableDlgItem(IDC_BUTTON_DISCONNECT, false);
 		EnableDlgItem(IDC_BUTTON_PLAYSTREAM, false);
 		EnableDlgItem(IDC_BUTTON_RECORD, false);
@@ -913,7 +914,7 @@ void __stdcall CIPCPlayDemoDlg::ExternDCDraw(HWND hWnd, HDC hDc, RECT rt, void *
 	CBitmap *pOldMapMemory;
 	CBitmap mapMemory;
 	mapMemory.CreateCompatibleBitmap(&dc, nWidth, nHeight);
-	pOldMapMemory = MemDC.SelectObject(&mapMemory);//¼ÓÔØ¼æÈİÎ»Í¼£¬Ö»ÓĞÖÆ¶¨ÁË¡°×À²¼¡±³ß´çÖ®ºó£¬Äã²ÅÄÜÔÚÄÚ´æDCÉÏÃæ»æÍ¼
+	pOldMapMemory = MemDC.SelectObject(&mapMemory);//åŠ è½½å…¼å®¹ä½å›¾ï¼Œåªæœ‰åˆ¶å®šäº†â€œæ¡Œå¸ƒâ€å°ºå¯¸ä¹‹åï¼Œä½ æ‰èƒ½åœ¨å†…å­˜DCä¸Šé¢ç»˜å›¾
 
 
 	MemDC.MoveTo(rt.left, rt.right);
@@ -982,7 +983,7 @@ void __stdcall CIPCPlayDemoDlg::ExternDCDraw(HWND hWnd, HDC hDc, RECT rt, void *
 // 		//bFlag = (bFlag == true) ? false : true;
 // 	}
 
-	// ÔËĞĞÁ¿´ó¸±Ôö¼Ó
+	// è¿è¡Œé‡å¤§å‰¯å¢åŠ 
 	//bStatus = dc.StretchBlt(0, 0, nWidth, nHeight, &MemDC, 0, 0,nWidth,nHeight, SRCPAINT);
 	MemDC.SelectObject(pOldMapMemory);
 	ImageDC.DeleteDC();
@@ -999,7 +1000,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlaystream()
 
 static TCHAR *szCodecString[] =
 {
-	_T("Î´Öª"),
+	_T("æœªçŸ¥"),
 	_T("H.264"),
 	_T("MJPEG"),
 	_T("H.265"),
@@ -1034,7 +1035,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonRecord()
 // 					&nError);
 // 				if (hStreamHandle == -1)
 // 				{
-// 					m_wndStatus.SetWindowText(_T("Á¬½ÓÂëÁ÷Ê§°Ü,ÎŞ·¨Â¼Ïñ"));
+// 					m_wndStatus.SetWindowText(_T("è¿æ¥ç æµå¤±è´¥,æ— æ³•å½•åƒ"));
 // 					m_wndStatus.SetAlarmGllitery();
 // 					return;
 // 				}
@@ -1061,20 +1062,20 @@ void CIPCPlayDemoDlg::OnBnClickedButtonRecord()
 // 				nStream,
 // 				tNow.Format(_T("%y%m%d%H%M%S")));
 // 			m_pPlayContext->StartRecord();
-// 			SetDlgItemText(IDC_BUTTON_RECORD, _T("Í£Ö¹Â¼Ïñ"));
+// 			SetDlgItemText(IDC_BUTTON_RECORD, _T("åœæ­¢å½•åƒ"));
 // 		}
 // 		else
 // 		{
 // 			m_pPlayContext->StopRecord();
 // 			if (!m_pPlayContext->hPlayer[0] && m_pPlayContext->hStream != -1)
-// 			{// Î´²¥·ÅÂëÁ÷,²¢ÇÒÂëÁ÷ÓĞĞ§,ÔòÒª¶Ï¿ªÂëÁ÷
+// 			{// æœªæ’­æ”¾ç æµ,å¹¶ä¸”ç æµæœ‰æ•ˆ,åˆ™è¦æ–­å¼€ç æµ
 // 				DVO2_NET_StopRealPlay(m_pPlayContext->hStream);
 // 				m_pPlayContext->hStream = -1;
 // 				EnableDlgItem(IDC_COMBO_STREAM, true);
 // 			}
 // 			TraceMsgA("%s LastVideoFrameID = %d\tLastAudioFrameID = %d.\n", __FUNCTION__, m_pPlayContext->nVideoFrameID, m_pPlayContext->nAudioFrameID);
 // 			TraceMsgA("%s VideoFrameCount = %d\tAudioFrameCount = %d.\n", __FUNCTION__, m_pPlayContext->pStreamInfo->nVideoFrameCount, m_pPlayContext->pStreamInfo->nAudioFrameCount );
-// 			SetDlgItemText(IDC_BUTTON_RECORD, _T("¿ªÊ¼Â¼Ïñ"));
+// 			SetDlgItemText(IDC_BUTTON_RECORD, _T("å¼€å§‹å½•åƒ"));
 // 		}
 // 	}
 }
@@ -1087,15 +1088,15 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 	UINT bIsStreamPlay = IsDlgButtonChecked(IDC_CHECK_STREAMPLAY);
 	if (!m_pPlayContext)
 	{
-		// sws_setColorspaceDetails()ÉèÖÃÍ¼Ïñ²ÎÊı
+		// sws_setColorspaceDetails()è®¾ç½®å›¾åƒå‚æ•°
 		TCHAR szText[1024] = { 0 };		
 		int nFreePanel = 0;		
 		DWORD dwFlags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT|OFN_HIDEREADONLY | OFN_FILEMUSTEXIST;
-		TCHAR  szFilter[] = _T("Â¼ÏñÊÓÆµÎÄ¼ş (*.mp4)|*.mp4|H.264Â¼ÏñÎÄ¼ş(*.H264)|*.H264|H.265Â¼ÏñÎÄ¼ş(*.H265)|*.H265|All Files (*.*)|*.*||");
+		TCHAR  szFilter[] = _T("å½•åƒè§†é¢‘æ–‡ä»¶ (*.mp4)|*.mp4|H.264å½•åƒæ–‡ä»¶(*.H264)|*.H264|H.265å½•åƒæ–‡ä»¶(*.H265)|*.H265|All Files (*.*)|*.*||");
 		TCHAR szExportLog[MAX_PATH] = { 0 };
 		CTime tNow = CTime::GetCurrentTime();		
 		CFileDialog OpenDataBase(TRUE, _T("*.mp4"), _T(""), dwFlags, (LPCTSTR)szFilter);
-		OpenDataBase.m_ofn.lpstrTitle = _T("ÇëÑ¡Ôñ²¥·ÅµÄÎÄ¼ş");
+		OpenDataBase.m_ofn.lpstrTitle = _T("è¯·é€‰æ‹©æ’­æ”¾çš„æ–‡ä»¶");
 		CString strFilePath;
 		RocateAngle nRocate = (RocateAngle)SendDlgItemMessage(IDC_COMBO_ROCATE, CB_GETCURSEL);
 						
@@ -1107,10 +1108,10 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 				CFile fpMedia((LPCTSTR)strFilePath, CFile::modeRead);
 				IPC_MEDIAINFO MediaHeader;
 				if (fpMedia.Read(&MediaHeader, sizeof(IPC_MEDIAINFO)) < sizeof(IPC_MEDIAINFO) ||
-					(MediaHeader.nMediaTag != IPC_TAG &&	// Í·±êÖ¾ ¹Ì¶¨Îª   0x44564F4D ¼´×Ö·û´®"MOVD"
+					(MediaHeader.nMediaTag != IPC_TAG &&	// å¤´æ ‡å¿— å›ºå®šä¸º   0x44564F4D å³å­—ç¬¦ä¸²"MOVD"
 					MediaHeader.nMediaTag != GSJ_TAG))
 				{
-					m_wndStatus.SetWindowText(_T("Ö¸¶¨µÄÎÄ¼ş²»ÊÇÒ»¸öÓĞĞ§µÄIPCÂ¼ÏñÎÄ¼ş"));
+					m_wndStatus.SetWindowText(_T("æŒ‡å®šçš„æ–‡ä»¶ä¸æ˜¯ä¸€ä¸ªæœ‰æ•ˆçš„IPCå½•åƒæ–‡ä»¶"));
 					m_wndStatus.SetAlarmGllitery();
 					return;
 				}
@@ -1140,7 +1141,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 						m_pPlayContext->hPlayer[0] = ipcplay_OpenFile(nullptr, (CHAR *)(LPCTSTR)strFilePath, NULL, m_pPlayContext.get(), bEnableLog ? "ipcplaysdk" : NULL);
 					if (!m_pPlayContext->hPlayer[0])
 					{
-						_stprintf_s(szText, 1024, _T("ÎŞ·¨´ò¿ª%sÎÄ¼ş."), strFilePath);
+						_stprintf_s(szText, 1024, _T("æ— æ³•æ‰“å¼€%sæ–‡ä»¶."), strFilePath);
 						m_wndStatus.SetWindowText(szText);
 						m_wndStatus.SetAlarmGllitery();
 						m_pPlayContext.reset();
@@ -1151,7 +1152,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 					PlayerInfo pi;
 					if (ipcplay_GetPlayerInfo(m_pPlayContext->hPlayer[0], &pi) != IPC_Succeed)
 					{
-						m_wndStatus.SetWindowText(_T("»ñÈ¡ÎÄ¼şĞÅÏ¢Ê§°Ü."));
+						m_wndStatus.SetWindowText(_T("è·å–æ–‡ä»¶ä¿¡æ¯å¤±è´¥."));
 						m_wndStatus.SetAlarmGllitery();
 					}
 
@@ -1176,7 +1177,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 						ipcplay_SetDecodeDelay(m_pPlayContext->hPlayer[0], 0);
 					if (ipcplay_Start(m_pPlayContext->hPlayer[0], !bEnableAudio, bFitWindow, bEnableHaccel) != IPC_Succeed)
 					{
-						m_wndStatus.SetWindowText(_T("ÎŞ·¨Æô¶¯²¥·ÅÆ÷"));
+						m_wndStatus.SetWindowText(_T("æ— æ³•å¯åŠ¨æ’­æ”¾å™¨"));
 						m_wndStatus.SetAlarmGllitery();
 						m_pPlayContext.reset();
 						return;
@@ -1189,12 +1190,12 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 				}
 				else
 				{
-					// ´´½¨ÎÄ¼ş½âÎö¾ä±ú
-					// Ò»°ãÔÚÁ÷Ã½Ìå·şÎñ¶Ë´´½¨,ÓÃÓÚÏò¿Í»§¶ËÌá¹©Ã½ÌåÁ÷Êı¾İ
+					// åˆ›å»ºæ–‡ä»¶è§£æå¥æŸ„
+					// ä¸€èˆ¬åœ¨æµåª’ä½“æœåŠ¡ç«¯åˆ›å»º,ç”¨äºå‘å®¢æˆ·ç«¯æä¾›åª’ä½“æµæ•°æ®
 					m_pPlayContext->hPlayer[0] = ipcplay_OpenFile(NULL, (CHAR *)(LPCTSTR)strFilePath);					
 					if (!m_pPlayContext->hPlayer[0])
 					{
-						_stprintf_s(szText, 1024, _T("ÎŞ·¨´ò¿ª%sÎÄ¼ş."), strFilePath);
+						_stprintf_s(szText, 1024, _T("æ— æ³•æ‰“å¼€%sæ–‡ä»¶."), strFilePath);
 						m_wndStatus.SetWindowText(szText);
 						m_wndStatus.SetAlarmGllitery();
 						m_pPlayContext.reset();
@@ -1203,7 +1204,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 					PlayerInfo pi;
 					if (ipcplay_GetPlayerInfo(m_pPlayContext->hPlayer[0], &pi) != IPC_Succeed)
 					{
-						m_wndStatus.SetWindowText(_T("»ñÈ¡ÎÄ¼şĞÅÏ¢Ê§°Ü."));
+						m_wndStatus.SetWindowText(_T("è·å–æ–‡ä»¶ä¿¡æ¯å¤±è´¥."));
 						m_wndStatus.SetAlarmGllitery();
 					}
 
@@ -1216,13 +1217,13 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 					_stprintf_s(szPlayText, 64, _T("%02d:%02d:%02d"), nHour, nMinute, nSecond);
 					SetDlgItemText(IDC_STATIC_TOTALTIME, szPlayText);			
 
-					// ´´½¨ÎÄ¼şÁ÷²¥·Å¾ä±ú
-					// Ò»°ãÔÚ¿Í»§¶Ë´´½¨,ÓÃÓÚ²¥·Å·şÎñ¶Ë·¢ËÍµÄÃ½ÌåÁ÷Êı¾İ
-					// ÉèÖÃ½ÏĞ¡µÄ²¥·Å»º´æ,ÒÆ¶¯½ø¶ÈÌõÊ±,¿ÉÒÔ¼°Ê±¸üĞÂ
+					// åˆ›å»ºæ–‡ä»¶æµæ’­æ”¾å¥æŸ„
+					// ä¸€èˆ¬åœ¨å®¢æˆ·ç«¯åˆ›å»º,ç”¨äºæ’­æ”¾æœåŠ¡ç«¯å‘é€çš„åª’ä½“æµæ•°æ®
+					// è®¾ç½®è¾ƒå°çš„æ’­æ”¾ç¼“å­˜,ç§»åŠ¨è¿›åº¦æ¡æ—¶,å¯ä»¥åŠæ—¶æ›´æ–°
 					m_pPlayContext->hPlayerStream = ipcplay_OpenStream(m_pPlayContext->hWndView, (byte*)&MediaHeader, sizeof(IPC_MEDIAINFO),4);
 					if (!m_pPlayContext->hPlayerStream)
 					{
-						m_wndStatus.SetWindowText(_T("ÎŞ·¨´ò¿ªÁ÷²¥·ÅÆ÷."));
+						m_wndStatus.SetWindowText(_T("æ— æ³•æ‰“å¼€æµæ’­æ”¾å™¨."));
 						m_wndStatus.SetAlarmGllitery();
 						m_pPlayContext.reset();
 						return;
@@ -1230,12 +1231,12 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 					
 					if (ipcplay_Start(m_pPlayContext->hPlayerStream, !bEnableAudio, bFitWindow) != IPC_Succeed)
 					{
-						m_wndStatus.SetWindowText(_T("ÎŞ·¨Æô¶¯Á÷Ã½Ìå²¥·ÅÆ÷"));
+						m_wndStatus.SetWindowText(_T("æ— æ³•å¯åŠ¨æµåª’ä½“æ’­æ”¾å™¨"));
 						m_wndStatus.SetAlarmGllitery();
 						m_pPlayContext.reset();
 						return;
 					}
-					// ´´½¨¶ÁÎÄ¼şÖ¡Ïß³Ì
+					// åˆ›å»ºè¯»æ–‡ä»¶å¸§çº¿ç¨‹
 					m_bThreadStream = true;
 					m_hThreadSendStream = (HANDLE)CreateThread(NULL, 0, ThreadSendStream, this, 0, NULL);
 					m_hThreadPlayStream = (HANDLE)CreateThread(NULL, 0, ThreadPlayStream, this, 0, NULL);
@@ -1244,7 +1245,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 				nCurSpeedIndex = SendDlgItemMessage(IDC_COMBO_PLAYSPEED, CB_GETCURSEL);
 				if (nCurSpeedIndex <= 0 && nCurSpeedIndex > 16)
 				{
-					m_wndStatus.SetWindowText(_T("ÎŞĞ§µÄ²¥·ÅËÙ¶È,ÏÖÒÔÔ­Ê¼ËÙ¶È²¥·Å."));
+					m_wndStatus.SetWindowText(_T("æ— æ•ˆçš„æ’­æ”¾é€Ÿåº¦,ç°ä»¥åŸå§‹é€Ÿåº¦æ’­æ”¾."));
 					m_wndStatus.SetAlarmGllitery();
 					nCurSpeedIndex = 8;
 				}
@@ -1305,7 +1306,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 				}
 				ipcplay_SetRate(m_pPlayContext->hPlayer[0], fPlayRate);
 				m_pPlayContext->pThis = this;
-				SetDlgItemText(IDC_BUTTON_PLAYFILE, _T("Í£Ö¹²¥·Å"));
+				SetDlgItemText(IDC_BUTTON_PLAYFILE, _T("åœæ­¢æ’­æ”¾"));
 				bEnableWnd = false;
 				m_dfLastUpdate = GetExactTime();
 			}
@@ -1333,10 +1334,10 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPlayfile()
 			m_hThreadSendStream = NULL;
 		}
 		m_pPlayContext.reset();
-		SetDlgItemText(IDC_BUTTON_PLAYFILE, _T("²¥·ÅÎÄ¼ş"));
+		SetDlgItemText(IDC_BUTTON_PLAYFILE, _T("æ’­æ”¾æ–‡ä»¶"));
 		m_dfLastUpdate = 0.0f;
 	}
-	// ½ûÓÃËùÓĞÆäËüÂëÁ÷²¥·ÅÏà¹Ø°´Å¥
+	// ç¦ç”¨æ‰€æœ‰å…¶å®ƒç æµæ’­æ”¾ç›¸å…³æŒ‰é’®
 	EnableDlgItem(IDC_BUTTON_DISCONNECT, bEnableWnd);
 	EnableDlgItem(IDC_CHECK_STREAMPLAY, bEnableWnd);
 	EnableDlgItem(IDC_BUTTON_PLAYSTREAM, bEnableWnd);
@@ -1444,7 +1445,7 @@ LRESULT CIPCPlayDemoDlg::OnUpdateStreamInfo(WPARAM w, LPARAM l)
 	PlayerInfo fpi;
 	int nResult = ipcplay_GetPlayerInfo(m_pPlayContext->hPlayer[0], &fpi);
 	if (nResult == IPC_Succeed ||
-		nResult == IPC_Error_SummaryNotReady ||	// ÎÄ¼ş²¥·Å¸ÅÒªĞÅÏ¢ÉĞÎ´×ö×¼±¸ºÃ
+		nResult == IPC_Error_SummaryNotReady ||	// æ–‡ä»¶æ’­æ”¾æ¦‚è¦ä¿¡æ¯å°šæœªåšå‡†å¤‡å¥½
 		nResult == IPC_Error_FileNotExist)
 	{
 		if (fpi.nVideoCodec >= CODEC_UNKNOWN && fpi.nVideoCodec <= CODEC_AAC)
@@ -1493,9 +1494,9 @@ LRESULT CIPCPlayDemoDlg::OnUpdateStreamInfo(WPARAM w, LPARAM l)
 	}
 	else
 	{
-		_tcscpy_s(m_szListText[Item_RecFile].szItemText, 256, _T("ÔİÎ´Â¼Ïñ"));
+		_tcscpy_s(m_szListText[Item_RecFile].szItemText, 256, _T("æš‚æœªå½•åƒ"));
 		_tcscpy_s(m_szListText[Item_RecTime].szItemText, 256, _T("00:00:00"));
-		_tcscpy_s(m_szListText[Item_FileLength].szItemText, 256, _T("ÔİÎ´Â¼Ïñ"));
+		_tcscpy_s(m_szListText[Item_FileLength].szItemText, 256, _T("æš‚æœªå½•åƒ"));
 	}
 	m_dfLastUpdate = GetExactTime();
 	m_wndStreamInfo.Invalidate();
@@ -1542,7 +1543,7 @@ void CIPCPlayDemoDlg::OnBnClickedCheckEnableaudio()
 		bool bEnable = (bool)IsDlgButtonChecked(IDC_CHECK_DISABLEAUDIO);
 		if (ipcplay_EnableAudio(m_pPlayContext->hPlayer[0], !bEnable) != IPC_Succeed)
 		{
-			m_wndStatus.SetWindowText(_T("¿ª¹ØÒôÆµÊ§°Ü."));
+			m_wndStatus.SetWindowText(_T("å¼€å…³éŸ³é¢‘å¤±è´¥."));
 			m_wndStatus.SetAlarmGllitery();
 		}
 	}
@@ -1559,7 +1560,7 @@ void CIPCPlayDemoDlg::OnBnClickedCheckFitwindow()
 // 				continue;
 			if (ipcplay_FitWindow(m_pPlayContext->hPlayer[0], bFitWindow) != IPC_Succeed)
 			{
-				m_wndStatus.SetWindowText(_T("µ÷ÕûÊÓÆµÏÔÊ¾·½Ê½Ê§°Ü."));
+				m_wndStatus.SetWindowText(_T("è°ƒæ•´è§†é¢‘æ˜¾ç¤ºæ–¹å¼å¤±è´¥."));
 				m_wndStatus.SetAlarmGllitery();
 				return;
 			}
@@ -1656,7 +1657,7 @@ void CIPCPlayDemoDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 					SaveRunTime();
 					CAutoLock lock(&m_csListStream);
 					m_listStream.clear();
-					bUpdate = false;		// Á÷²¥·ÅÎŞ·¨Í¨¹ıÕâÖÖ·½Ê½Ë¢ĞÂ»­Ãæ
+					bUpdate = false;		// æµæ’­æ”¾æ— æ³•é€šè¿‡è¿™ç§æ–¹å¼åˆ·æ–°ç”»é¢
 				}
 				SaveRunTime();
 				ipcplay_SeekFrame(m_pPlayContext->hPlayer[0], nSeekFrame, bUpdate);
@@ -1691,7 +1692,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonSnapshot()
 		{
 			if (!CreateDirectory(szPath,NULL))
 			{
-				m_wndStatus.SetWindowText(_T("ÎŞ·¨´´½¨±£´æ½ØÍ¼ÎÄ¼şµÄÄ¿Â¼,ÇëÈ·Ö÷ÊÇ·ñÓĞ×ã¹»µÄÈ¨ÏŞ."));
+				m_wndStatus.SetWindowText(_T("æ— æ³•åˆ›å»ºä¿å­˜æˆªå›¾æ–‡ä»¶çš„ç›®å½•,è¯·ç¡®ä¸»æ˜¯å¦æœ‰è¶³å¤Ÿçš„æƒé™."));
 				m_wndStatus.SetAlarmGllitery();
 				return;
 			}
@@ -1704,11 +1705,11 @@ void CIPCPlayDemoDlg::OnBnClickedButtonSnapshot()
 		int nPicType = SendDlgItemMessage(IDC_COMBO_PICTYPE, CB_GETCURSEL);
 		if (nPicType > 3 || nPicType < 0)
 		{
-			m_wndStatus.SetWindowText(_T("²»Ö§³ÖµÄÍ¼Æ¬¸ñÊ½,ÇëÑ¡ÔñÕıÈ·µÄÍ¼Æ¬¸ñÊ½."));
+			m_wndStatus.SetWindowText(_T("ä¸æ”¯æŒçš„å›¾ç‰‡æ ¼å¼,è¯·é€‰æ‹©æ­£ç¡®çš„å›¾ç‰‡æ ¼å¼."));
 			m_wndStatus.SetAlarmGllitery();
 			return;
 		}
-		// Éú³ÉÎÄ¼şÃû
+		// ç”Ÿæˆæ–‡ä»¶å
 		_stprintf_s(szFileName, 64,
 			_T("\\SnapShot_%04d%02d%02d_%02d%02d%02d_%03d.%s"),
 			systime.wYear, systime.wMonth, systime.wDay,
@@ -1718,19 +1719,19 @@ void CIPCPlayDemoDlg::OnBnClickedButtonSnapshot()
 		if (ipcplay_SnapShot(m_pPlayContext->hPlayer[0], szPath, (SNAPSHOT_FORMAT)nPicType) == IPC_Succeed)
 		{
 			TCHAR szText[1024];
-			_stprintf_s(szText, 1024, _T("ÒÑ¾­Éú³É½ØÍ¼:%s."), szPath);
+			_stprintf_s(szText, 1024, _T("å·²ç»ç”Ÿæˆæˆªå›¾:%s."), szPath);
 			m_wndStatus.SetWindowText(szText);
 			m_wndStatus.SetOkGllitery();
 		}
 		else
 		{
-			m_wndStatus.SetWindowText(_T("²¥·ÅÆ÷ÉĞÎ´Æô¶¯,ÎŞ·¨½ØÍ¼."));
+			m_wndStatus.SetWindowText(_T("æ’­æ”¾å™¨å°šæœªå¯åŠ¨,æ— æ³•æˆªå›¾."));
 			m_wndStatus.SetAlarmGllitery();
 		}
 	}
 	else
 	{
-		m_wndStatus.SetWindowText(_T("²¥·ÅÆ÷ÉĞÎ´Æô¶¯."));
+		m_wndStatus.SetWindowText(_T("æ’­æ”¾å™¨å°šæœªå¯åŠ¨."));
 		m_wndStatus.SetAlarmGllitery();
 	}
 }
@@ -1744,7 +1745,7 @@ void CIPCPlayDemoDlg::OnCbnSelchangeComboPlayspeed()
 		int nCurSecl = SendDlgItemMessage(IDC_COMBO_PLAYSPEED, CB_GETCURSEL);
 		if (nCurSecl <= 0 && nCurSecl > 16)
 		{
-			m_wndStatus.SetWindowText(_T("ÎŞĞ§µÄ²¥·ÅËÙ¶È."));
+			m_wndStatus.SetWindowText(_T("æ— æ•ˆçš„æ’­æ”¾é€Ÿåº¦."));
 			m_wndStatus.SetAlarmGllitery();
 			return;
 		}
@@ -1810,7 +1811,7 @@ void CIPCPlayDemoDlg::OnCbnSelchangeComboPlayspeed()
 	}
 	else
 	{
-		m_wndStatus.SetWindowText(_T("²¥·ÅÆ÷ÉĞÎ´Æô¶¯."));
+		m_wndStatus.SetWindowText(_T("æ’­æ”¾å™¨å°šæœªå¯åŠ¨."));
 		m_wndStatus.SetAlarmGllitery();
 	}
 }
@@ -1829,13 +1830,13 @@ void CIPCPlayDemoDlg::OnBnClickedButtonPause()
 			ipcplay_Pause(m_pPlayContext->hPlayer[0]);
 		m_bPuased = !m_bPuased;
 		if (m_bPuased)
-			SetDlgItemText(IDC_BUTTON_PAUSE, _T("¼ÌĞø²¥·Å"));
+			SetDlgItemText(IDC_BUTTON_PAUSE, _T("ç»§ç»­æ’­æ”¾"));
 		else
-			SetDlgItemText(IDC_BUTTON_PAUSE, _T("ÔİÍ£²¥·Å"));
+			SetDlgItemText(IDC_BUTTON_PAUSE, _T("æš‚åœæ’­æ”¾"));
 	}
 	else
 	{
-		m_wndStatus.SetWindowText(_T("²¥·ÅÆ÷ÉĞÎ´Æô¶¯."));
+		m_wndStatus.SetWindowText(_T("æ’­æ”¾å™¨å°šæœªå¯åŠ¨."));
 		m_wndStatus.SetAlarmGllitery();
 	}
 }
@@ -1950,7 +1951,7 @@ void CIPCPlayDemoDlg::OnLvnGetdispinfoListStreaminfo(NMHDR *pNMHDR, LRESULT *pRe
 
 void CIPCPlayDemoDlg::OnBnClickedButtonStopbackword()
 {
-	// ²½½ø5Ãë
+	// æ­¥è¿›5ç§’
 	int nTotalFrames = 0;
 	PlayerInfo pi;
 	UINT bIsStreamPlay = IsDlgButtonChecked(IDC_CHECK_STREAMPLAY);
@@ -1973,7 +1974,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonStopbackword()
 			ipcplay_ClearCache(m_pPlayContext->hPlayerStream);
 			CAutoLock lock(&m_csListStream);
 			m_listStream.clear();
-			bUpdate = false;		// Á÷²¥·ÅÎŞ·¨Í¨¹ıÕâÖÖ·½Ê½Ë¢ĞÂ»­Ãæ
+			bUpdate = false;		// æµæ’­æ”¾æ— æ³•é€šè¿‡è¿™ç§æ–¹å¼åˆ·æ–°ç”»é¢
 		}
 
 		ipcplay_SeekTime(m_pPlayContext->hPlayer[0], nSeekTime, bUpdate);
@@ -1983,7 +1984,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonStopbackword()
 
 void CIPCPlayDemoDlg::OnBnClickedButtonStopforword()
 {
-	// ²½½ø5Ãë
+	// æ­¥è¿›5ç§’
 	int nTotalFrames = 0;
 	PlayerInfo pi;
 	UINT bIsStreamPlay = IsDlgButtonChecked(IDC_CHECK_STREAMPLAY);
@@ -2006,7 +2007,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonStopforword()
 			ipcplay_ClearCache(m_pPlayContext->hPlayerStream);
 			CAutoLock lock(&m_csListStream);
 			m_listStream.clear();
-			bUpdate = false;		// Á÷²¥·ÅÎŞ·¨Í¨¹ıÕâÖÖ·½Ê½Ë¢ĞÂ»­Ãæ
+			bUpdate = false;		// æµæ’­æ”¾æ— æ³•é€šè¿‡è¿™ç§æ–¹å¼åˆ·æ–°ç”»é¢
 		}
 
 		ipcplay_SeekTime(m_pPlayContext->hPlayer[0], nSeekTime, bUpdate);
@@ -2016,7 +2017,7 @@ void CIPCPlayDemoDlg::OnBnClickedButtonStopforword()
 
 void CIPCPlayDemoDlg::OnBnClickedButtonSeeknextframe()
 {
-	// ²½½ø5Ãë
+	// æ­¥è¿›5ç§’
 	int nTotalFrames = 0;
 	PlayerInfo pi;
 	UINT bIsStreamPlay = IsDlgButtonChecked(IDC_CHECK_STREAMPLAY);
@@ -2109,7 +2110,7 @@ void CIPCPlayDemoDlg::OnFileAddrenderwnd()
 	}
 	else
 	{
-		m_wndStatus.SetWindowText(_T("²¥·ÅÆ÷ÉĞÎ´Æô¶¯."));
+		m_wndStatus.SetWindowText(_T("æ’­æ”¾å™¨å°šæœªå¯åŠ¨."));
 		m_wndStatus.SetAlarmGllitery();
 	}
 }
@@ -2135,7 +2136,7 @@ void CIPCPlayDemoDlg::OnBnClickedCheckDisplayrgb()
 	{
 		if (!m_pPlayContext->hPlayer[0])
 		{
-			AfxMessageBox(_T("ÉĞÎ´²¥·ÅÍ¼ÏñÏñ"));
+			AfxMessageBox(_T("å°šæœªæ’­æ”¾å›¾åƒåƒ"));
 			return;
 		}
 		if (!m_pDisplayRGB24)
@@ -2239,7 +2240,7 @@ void CIPCPlayDemoDlg::OnBnClickedCheckEnabletransparent()
 		int nPanel = m_pVideoWndFrame->GetCurPanel();
 		if (nPanel == -1)
 		{
-			AfxMessageBox(_T("ÇëÑ¡ÔñÒ»¸ö´°¸ñ."));
+			AfxMessageBox(_T("è¯·é€‰æ‹©ä¸€ä¸ªçª—æ ¼."));
 			return;
 		}
 		
@@ -2279,7 +2280,7 @@ void CIPCPlayDemoDlg::OnFileDrawline()
 {
 	if (!m_pPlayContext->hPlayer[0])
 	{
-		AfxMessageBox(_T("ÉĞÎ´²¥·ÅÍ¼ÏñÏñ"));
+		AfxMessageBox(_T("å°šæœªæ’­æ”¾å›¾åƒåƒ"));
 		return;
 	}
 	POINT ptArray[2] = { 0 };
@@ -2338,7 +2339,7 @@ void CIPCPlayDemoDlg::OnEnableOpassist()
 {
 	if (!m_pPlayContext || !m_pPlayContext->hPlayer[0])
 	{
-		AfxMessageBox(_T("ÉĞÎ´²¥·ÅÍ¼ÏñÏñ"));
+		AfxMessageBox(_T("å°šæœªæ’­æ”¾å›¾åƒåƒ"));
 		return;
 	}
 	CMenu *pSubMenu = GetMenu()->GetSubMenu(0);
@@ -2354,8 +2355,8 @@ void CIPCPlayDemoDlg::OnEnableOpassist()
 		int nWidth = 200;
 		int nHeight = 150;
 
-		int nThickVerical = 10;		// ´¹Ö±·½Ïòºñ¶È
-		int nThickHorizontal = 20;		// Ë®Æ½·½Ïòºñ¶È
+		int nThickVerical = 10;		// å‚ç›´æ–¹å‘åšåº¦
+		int nThickHorizontal = 20;		// æ°´å¹³æ–¹å‘åšåº¦
 
 		int nDistanceV = 100;
 		int nDistanceH = 100;
@@ -2471,7 +2472,7 @@ void CIPCPlayDemoDlg::OnBnClickedCheckNodecodedelay()
 
 void CIPCPlayDemoDlg::OnBnClickedButtonOsd()
 {
-	// ÕıÔÚ²¥·ÅÖĞ
+	// æ­£åœ¨æ’­æ”¾ä¸­
 	if (m_pPlayContext && m_pPlayContext->hPlayer[0])
 	{
 		IPC_PLAYHANDLE &hHandlePlay = m_pPlayContext->hPlayer[0];
@@ -2489,31 +2490,31 @@ void CIPCPlayDemoDlg::OnBnClickedButtonOsd()
 				long nTextHandle = 0;
 				COLORREF nColor = FontDlg.GetColor();
 
-				if (ipcplay_DrawOSDText(hFontHandle,			// ×ÖÌå¾ä±ú£¬Ò»¸ö×ÖÌå¾ä±úÓÃÊä³ö¶à¸öµş¼ÓÎÄ±¾
-										_T("OSD ×ÖÄ»²âÊÔ"),		// ÎÄ±¾ÄÚÈİ
-										-1,						// ÎÄ±¾³¤¶È£¬Îª-1Ê±Ôò×Ô¶¯¼ÆËã³¤¶È
-										rtPosition,				// ÎÄ±¾Êä³öÎ»ÖÃ
-										DT_LEFT|DT_TOP,				// Êä³ö¸ñÊ½Ñ¡Ôñ
-										IPC_ARGB(0xFF/*×ÖÌåÍ¸Ã÷¶È£¬0~FF,0xFFÎªÍêÈ«²»Í¸Ã÷*/, GetRValue(nColor), GetGValue(nColor), GetBValue(nColor)), 
+				if (ipcplay_DrawOSDText(hFontHandle,			// å­—ä½“å¥æŸ„ï¼Œä¸€ä¸ªå­—ä½“å¥æŸ„ç”¨è¾“å‡ºå¤šä¸ªå åŠ æ–‡æœ¬
+										_T("OSD å­—å¹•æµ‹è¯•"),		// æ–‡æœ¬å†…å®¹
+										-1,						// æ–‡æœ¬é•¿åº¦ï¼Œä¸º-1æ—¶åˆ™è‡ªåŠ¨è®¡ç®—é•¿åº¦
+										rtPosition,				// æ–‡æœ¬è¾“å‡ºä½ç½®
+										DT_LEFT|DT_TOP,				// è¾“å‡ºæ ¼å¼é€‰æ‹©
+										IPC_ARGB(0xFF/*å­—ä½“é€æ˜åº¦ï¼Œ0~FF,0xFFä¸ºå®Œå…¨ä¸é€æ˜*/, GetRValue(nColor), GetGValue(nColor), GetBValue(nColor)), 
 										&nTextHandle) != IPC_Succeed)
-					AfxMessageBox(_T("µş¼ÓÎÄ×ÖÊ§°Ü"));
+					AfxMessageBox(_T("å åŠ æ–‡å­—å¤±è´¥"));
 				else
 				{
 					m_pPlayContext->nTextHandle[m_pPlayContext->nTextCount++] = nTextHandle;
 				}
 			}
 			else
-				AfxMessageBox(_T("´´½¨OSD×ÖÌåÊ§°Ü"));
+				AfxMessageBox(_T("åˆ›å»ºOSDå­—ä½“å¤±è´¥"));
 		}
 	}
 	else
-		AfxMessageBox(_T("ÉĞÎ´¿ªÊ¼²¥·Å"));
+		AfxMessageBox(_T("å°šæœªå¼€å§‹æ’­æ”¾"));
 }
 
 void CIPCPlayDemoDlg::OnBnClickedButtonRemoveosd()
 {
-	// ÒÆ¶¯ÎÄ±¾Ê±£¬¿ÉÑ¡ÔñÖ»ÒÆ³ıÎÄ±¾£¬µ«±£Áô×ÖÌå£¬ÒÔ±¸ºóºó£¬µ«ÕâÑİÊ¾Ê±»á°Ñ×ÖÌåºÍÎÄ±¾Ò»Í¬ÒÆ³ı
-	// ÕıÔÚ²¥·ÅÖĞ
+	// ç§»åŠ¨æ–‡æœ¬æ—¶ï¼Œå¯é€‰æ‹©åªç§»é™¤æ–‡æœ¬ï¼Œä½†ä¿ç•™å­—ä½“ï¼Œä»¥å¤‡ååï¼Œä½†è¿™æ¼”ç¤ºæ—¶ä¼šæŠŠå­—ä½“å’Œæ–‡æœ¬ä¸€åŒç§»é™¤
+	// æ­£åœ¨æ’­æ”¾ä¸­
 	if (m_pPlayContext && m_pPlayContext->hPlayer[0])
 	{
 		int nResult = 0;
@@ -2543,10 +2544,56 @@ void CIPCPlayDemoDlg::OnBnClickedButtonRemoveosd()
 		}
 	}
 	else
-		AfxMessageBox(_T("ÉĞÎ´¿ªÊ¼²¥·Å"));
+		AfxMessageBox(_T("å°šæœªå¼€å§‹æ’­æ”¾"));
 }
 
 void CIPCPlayDemoDlg::OnBnClickedButtonOsd2()
 {
 
+}
+
+void CIPCPlayDemoDlg::OnBnClickedButtonMergescreens()
+{
+	if (m_pPlayContext && m_pPlayContext->hPlayer[0])
+	{
+		IPC_PLAYHANDLE &hHandlePlay = m_pPlayContext->hPlayer[0];
+		m_pVideoWndFrame->AdjustPanels(4);
+		PlayerInfo pi;
+		ipcplay_GetPlayerInfo(hHandlePlay, &pi);
+		pi.nVideoWidth;
+		pi.nVideoHeight;
+		RECT rtBorder[4] = { 0 };
+		int i = 0;
+		rtBorder[i].left = 0;
+		rtBorder[i].right = pi.nVideoWidth / 2;
+		rtBorder[i].top = 0;
+		rtBorder[i].bottom = pi.nVideoHeight / 2;
+		i++;
+		rtBorder[i].left = pi.nVideoWidth / 2;
+		rtBorder[i].right = 0;
+		rtBorder[i].top = 0;
+		rtBorder[i].bottom = pi.nVideoHeight / 2;
+		i++;
+		rtBorder[i].left = 0;
+		rtBorder[i].bottom = 0;
+		rtBorder[i].right = pi.nVideoWidth / 2;
+		rtBorder[i].top = pi.nVideoHeight / 2;
+		i++;
+		rtBorder[i].right = 0;
+		rtBorder[i].bottom = 0;
+		rtBorder[i].left = pi.nVideoWidth / 2;
+		rtBorder[i].top = pi.nVideoHeight / 2;
+
+		HWND hWndArray[4] = { 0 };
+		for (int i = 0; i < 4; i++)
+			hWndArray[i] = m_pVideoWndFrame->GetPanelWnd(i);
+		ipcplay_SetBorderRect(hHandlePlay,hWndArray[0], &rtBorder[0]);
+		for (int i = 1; i < 4; i++)
+		{
+			ipcplay_AddWindow(hHandlePlay, hWndArray[i], &rtBorder[i]);
+		}
+		
+	}
+	else
+		AfxMessageBox(_T("å°šæœªå¼€å§‹æ’­æ”¾"));
 }

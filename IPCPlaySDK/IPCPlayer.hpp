@@ -573,7 +573,7 @@ private:
 	double dfTRender = 0.0f;
 #endif
 	/// @brief 渲染一帧
-	void RenderFrame(AVFrame *pAvFrame)
+	void RenderFrame(AVFrame *pAvFrame, CVideoDecoder *pDecoder = nullptr)
 	{
 		if (!m_hRenderWnd)
 			return;
@@ -597,9 +597,23 @@ private:
 #ifndef _WIN64
 			Safe_Delete(m_pDDraw);
 #endif
+			AVCodecID nCodecID = pDecoder->m_nCodecId;
 			m_nVideoWidth = pAvFrame->width;
 			m_nVideoHeight = pAvFrame->height;
 			InitizlizeDx();
+
+			if (m_bD3dShared && 
+				m_pDxSurface &&
+				pDecoder)
+			{
+				pDecoder->SetD3DShared(m_pDxSurface->GetD3D9(), m_pDxSurface->GetD3DDevice());
+				m_pDxSurface->SetD3DShared(true);
+				// Ê¹ÓÃµ¥Ïß³Ì½âÂë,¶àÏß³Ì½âÂëÔÚÄ³´Ë±È½ÏÂýµÄCPUÉÏ¿ÉÄÜ»áÌá¸ßÐ§¹û£¬µ«ÏÖÔÚI5 2GHZÒÔÉÏµÄCPUÉÏµÄ¶àÏß³Ì½âÂëÐ§¹û²¢²»Ã÷ÏÔ·´¶ø»áÕ¼ÓÃ¸ü¶àµÄÄÚ´æ
+				pDecoder->SetDecodeThreads(1);
+				// ³õÊ¼»¯½âÂëÆ÷	
+				pDecoder->DestroyDecoder();
+				pDecoder->InitDecoder(nCodecID, m_nVideoWidth, m_nVideoHeight, m_bEnableHaccel);
+			}
 		}
 		
 		if (m_bFitWindow)

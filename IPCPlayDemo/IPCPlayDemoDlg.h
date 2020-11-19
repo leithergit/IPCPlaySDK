@@ -1,5 +1,5 @@
-
-// IPCPlayDemoDlg.h : Í·ÎÄ¼ş
+ï»¿
+// IPCPlayDemoDlg.h : å¤´æ–‡ä»¶
 //
 
 #pragma once
@@ -28,17 +28,17 @@ using namespace std;
 
 struct MSG_HEAD
 {
-	byte  Magic1[4];  // 	ËÄ×Ö½Ú ¹Ì¶¨ÄÚÈİ£¨0xF5£¬0x5A£¬0xA5£¬0x5F£©
-	UINT32	Pktlen;		//	ÀàĞÍU32 Êı¾İ°ü×Ü³¤¶È¡£
-	UINT16	Version;	//  ÀàĞÍU16 Ğ­Òé°æ±¾ºÅ£¬¸ß8Î»ÎªÖ÷°æ±¾ºÅ£¬µÍ8Î»Îª×Ó°æ±¾ºÅ¡£
-	UINT16	Hwtype;		//	ÀàĞÍU16 Ó²¼şÀàĞÍ(±£Áô)
-	UINT32	Sn;		    //  ÀàĞÍU32 Ö¡ĞòÁĞºÅ(±£Áô)
-	UINT16	CmdType;	//	ÀàĞÍU16 ±íÊ¾ÃüÁîÀàĞÍ
-	UINT16 CmdSubType;	//	ÀàĞÍU16 ±íÊ¾ÃüÁî×ÓÀàĞÍ
-	UINT16 DataType;	//  ÀàĞÍU16 Êı¾İ°üÀàĞÍ1£ºÃüÁî°ü£¬2£ºÊÓÆµ°ü£¬3£ºÒôÆµ°ü
-	UINT16 Rev1;		//	ÀàĞÍU16 ±£Áô×Ö¶Î
-	UINT32 Rev2;		//	ÀàĞÍU32 ±£Áô×Ö¶Î
-	UINT32 Rev3;		//	ÀàĞÍU32 ±£Áô×Ö¶Î
+	byte  Magic1[4];  // 	å››å­—èŠ‚ å›ºå®šå†…å®¹ï¼ˆ0xF5ï¼Œ0x5Aï¼Œ0xA5ï¼Œ0x5Fï¼‰
+	UINT32	Pktlen;		//	ç±»å‹U32 æ•°æ®åŒ…æ€»é•¿åº¦ã€‚
+	UINT16	Version;	//  ç±»å‹U16 åè®®ç‰ˆæœ¬å·ï¼Œé«˜8ä½ä¸ºä¸»ç‰ˆæœ¬å·ï¼Œä½8ä½ä¸ºå­ç‰ˆæœ¬å·ã€‚
+	UINT16	Hwtype;		//	ç±»å‹U16 ç¡¬ä»¶ç±»å‹(ä¿ç•™)
+	UINT32	Sn;		    //  ç±»å‹U32 å¸§åºåˆ—å·(ä¿ç•™)
+	UINT16	CmdType;	//	ç±»å‹U16 è¡¨ç¤ºå‘½ä»¤ç±»å‹
+	UINT16 CmdSubType;	//	ç±»å‹U16 è¡¨ç¤ºå‘½ä»¤å­ç±»å‹
+	UINT16 DataType;	//  ç±»å‹U16 æ•°æ®åŒ…ç±»å‹1ï¼šå‘½ä»¤åŒ…ï¼Œ2ï¼šè§†é¢‘åŒ…ï¼Œ3ï¼šéŸ³é¢‘åŒ…
+	UINT16 Rev1;		//	ç±»å‹U16 ä¿ç•™å­—æ®µ
+	UINT32 Rev2;		//	ç±»å‹U32 ä¿ç•™å­—æ®µ
+	UINT32 Rev3;		//	ç±»å‹U32 ä¿ç•™å­—æ®µ
 };
 
 #define _MaxTimeCount	125
@@ -116,32 +116,32 @@ struct TimeTrace
 #define WM_UPDATE_PLAYINFO		(WM_USER + 1025)
 #define WM_UPDATEYUV			(WM_USER + 1026)
 
-#define _Frame_PERIOD			30.0f		///< Ò»¸öÖ¡ÂÊÇø¼ä
+#define _Frame_PERIOD			30.0f		///< ä¸€ä¸ªå¸§ç‡åŒºé—´
 struct FrameInfo
 {
-	time_t  tRecvTime;				///< ÊÕµ½Ö¡µÄÊ±¼ä µ¥Î»ºÁÃë
+	time_t  tRecvTime;				///< æ”¶åˆ°å¸§çš„æ—¶é—´ å•ä½æ¯«ç§’
 	int		nFrameSize;
 };
 
-/// @brief ½âÎöIPCË½ÓĞÖ¡½á¹¹Ìå
+/// @brief è§£æIPCç§æœ‰å¸§ç»“æ„ä½“
 struct FrameParser
 {
-	IPCFrameHeaderEx	*pHeaderEx;		///< IPCË½ÓĞÂ¼ÏñµÄÖ¡Êı¾İ
-	UINT				nFrameSize;		///< pFrameµÄÊı¾İ³¤¶È
-	byte				*pLawFrame;		///< Ô­Ê¼ÂëÁ÷Êı¾İ
-	UINT				nLawFrameSize;	///< Ô­Ê¼ÂëÁ÷Êı¾İ³¤¶È
+	IPCFrameHeaderEx	*pHeaderEx;		///< IPCç§æœ‰å½•åƒçš„å¸§æ•°æ®
+	UINT				nFrameSize;		///< pFrameçš„æ•°æ®é•¿åº¦
+	byte				*pLawFrame;		///< åŸå§‹ç æµæ•°æ®
+	UINT				nLawFrameSize;	///< åŸå§‹ç æµæ•°æ®é•¿åº¦
 };
 
 struct StreamInfo
 {
 	UINT	nFrameID;
-	bool	bRecvIFrame;		///< ÊÇ·ñÊÕµ½µÚ¸öIÖ¡
+	bool	bRecvIFrame;		///< æ˜¯å¦æ”¶åˆ°ç¬¬ä¸ªIå¸§
 	int		nVideoFrameCount;
 	int		nAudioFrameCount;
-	__int64 nVideoBytes;		///< ÊÕµ½ÊÓÆµ×Ü×Ö½ÚÊı
-	__int64 nAudioBytes;		///< ÊÕµ½ÒôÆµ×Ü×Ö½ÚÊı
-	time_t  tFirstTime;			///< ½ÓÊÕÊı¾İµÄÆğÊ¼Ê±¼ä	µ¥Î»ºÁÃë
-	time_t	tLastTime;			///< ×îºóÒ»´Î½ÓÊÕÊı¾İÊ±¼ä µ¥Î»ºÁÃë
+	__int64 nVideoBytes;		///< æ”¶åˆ°è§†é¢‘æ€»å­—èŠ‚æ•°
+	__int64 nAudioBytes;		///< æ”¶åˆ°éŸ³é¢‘æ€»å­—èŠ‚æ•°
+	time_t  tFirstTime;			///< æ¥æ”¶æ•°æ®çš„èµ·å§‹æ—¶é—´	å•ä½æ¯«ç§’
+	time_t	tLastTime;			///< æœ€åä¸€æ¬¡æ¥æ”¶æ•°æ®æ—¶é—´ å•ä½æ¯«ç§’
 	CRITICAL_SECTION	csFrameList;
 	list<FrameInfo>FrameInfoList;
 	StreamInfo()
@@ -169,7 +169,7 @@ struct StreamInfo
 			return 1;
 	}
 
-	int	GetVideoCodeRate(int nUnit = 1024)	///< È¡µÃÊÓÆµÂëÂÊ(Kbps)
+	int	GetVideoCodeRate(int nUnit = 1024)	///< å–å¾—è§†é¢‘ç ç‡(Kbps)
 	{
 		time_t tSpan = 25;
 		CAutoLock lock(&csFrameList);
@@ -235,7 +235,7 @@ public:
 	int				nFontCount;
 	long			nTextHandle[64];
 	int				nTextCount;
-	IPC_PLAYHANDLE	hPlayerStream;		// Á÷²¥·Å¾ä±ú
+	IPC_PLAYHANDLE	hPlayerStream;		// æµæ’­æ”¾å¥æŸ„
 	TimeTrace		*m_pInputStreamTimeTrace ;
 	double			m_dfLastInputstream ;
 	CSocketClient *pClient;
@@ -383,16 +383,16 @@ enum DockType
 	DockBottom,
 	DockLeft,
 	DockRigth,
-	DockCenter	//¾ÓÖĞ
+	DockCenter	//å±…ä¸­
 };
 
 struct WndPostionInfo
 {
 	HWND	hWnd;
 	UINT	nID;
-	DockType Dock;			// Í£¿¿ÀàĞÍ
-	UINT DockDistance[4];	// Í£¿¿¾àÀë
-	RECT rect;				// Ô­Ê¼´óĞ¡
+	DockType Dock;			// åœé ç±»å‹
+	UINT DockDistance[4];	// åœé è·ç¦»
+	RECT rect;				// åŸå§‹å¤§å°
 };
 
 struct YUVFrame
@@ -489,27 +489,27 @@ public:
 	}
 };
 typedef shared_ptr<SubClassInfo> SubClassInfoPtr;
-// CIPCPlayDemoDlg ¶Ô»°¿ò
+// CIPCPlayDemoDlg å¯¹è¯æ¡†
 //#include "TransparentWnd.h"
 
 class CIPCPlayDemoDlg : public CDialogEx
 {
-	// ¹¹Ôì
+	// æ„é€ 
 public:
-	CIPCPlayDemoDlg(CWnd* pParent = NULL);	// ±ê×¼¹¹Ôìº¯Êı
+	CIPCPlayDemoDlg(CWnd* pParent = NULL);	// æ ‡å‡†æ„é€ å‡½æ•°
 
-	// ¶Ô»°¿òÊı¾İ
+	// å¯¹è¯æ¡†æ•°æ®
 	enum { IDD = IDD_IPCPLAYDEMO_DIALOG };
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV Ö§³Ö
+	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV æ”¯æŒ
 
 
-	// ÊµÏÖ
+	// å®ç°
 protected:
 	HICON m_hIcon;
 
-	// Éú³ÉµÄÏûÏ¢Ó³Éäº¯Êı
+	// ç”Ÿæˆçš„æ¶ˆæ¯æ˜ å°„å‡½æ•°
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
@@ -520,10 +520,10 @@ public:
 	bool		m_bEnableDDraw = false;
 	CListCtrl	m_wndStreamInfo;
 	CMFCEditBrowseCtrl	m_wndBrowseCtrl;
-	int			m_nListWidth;			// List¿Ø¼şµÄ¿í¶È
-	int			m_nListTop;				// List¿í¶ÈµÄTop×ø±ê
+	int			m_nListWidth;			// Listæ§ä»¶çš„å®½åº¦
+	int			m_nListTop;				// Listå®½åº¦çš„Topåæ ‡
 	TCHAR		m_szRecordPath[MAX_PATH];
-	int			m_nMonitorCount;		//  µ±Ç°ÒÑ¾­Á¬½ÓÏÔÊ¾Æ÷µÄÊıÁ¿
+	int			m_nMonitorCount;		//  å½“å‰å·²ç»è¿æ¥æ˜¾ç¤ºå™¨çš„æ•°é‡
 	CVideoFrame *m_pVideoWndFrame/* = NULL*/;
 	CGlliteryStatic m_wndStatus;
 	double	m_dfLastUpdate;
@@ -540,7 +540,7 @@ public:
 	afx_msg void OnBnClickedButtonRecord();
 	afx_msg void OnBnClickedButtonPlayfile();
 	list<shared_ptr<PlayerContext>>m_listPlayer;
-	// Ïà»úÊµÊ±ÂëÁ÷²¶×½»Øµ÷º¯Êı
+	// ç›¸æœºå®æ—¶ç æµæ•æ‰å›è°ƒå‡½æ•°
 	static void  __stdcall StreamCallBack(/*IN USER_HANDLE  lUserID,*/
 		/*IN REAL_HANDLE lStreamHandle,*/
 		IN int         nErrorType,
@@ -576,14 +576,14 @@ public:
 	vector<WndPostionInfo> m_vWndPostionInfo;
 	void SaveWndPosition(UINT *nDlgItemIDArray, UINT nItemCount, DockType nDock, RECT rtDialogClientRect);
 
-	/// @brief		½âÂëºóYVUÊı¾İ»Øµ÷º¯Êı¶¨Òå
-	/// @param [in]		hPlayHandle	ÓÉipcplay_OpenFile»òipcplay_OpenStream·µ»ØµÄ²¥·Å¾ä±ú
-	/// @param [in]		pYUV		YUVÊı¾İÖ¸Õë
-	/// @param [in]		nSize		YUVÊı¾İµÄ³¤¶È
-	/// @param [in]		nWidth		YUVÍ¼ÏñµÄ¿í¶È
-	/// @param [in]		nHeight		YUVÍ¼ÏñµÄ¸ß¶È
-	/// @param [in]		nTime		²úÉúYUVÊı¾İµÄÊ±¼ä
-	/// @param [in]		pUserPtr	ÓÃ»§×Ô¶¨ÒåÖ¸Õë
+	/// @brief		è§£ç åYVUæ•°æ®å›è°ƒå‡½æ•°å®šä¹‰
+	/// @param [in]		hPlayHandle	ç”±ipcplay_OpenFileæˆ–ipcplay_OpenStreamè¿”å›çš„æ’­æ”¾å¥æŸ„
+	/// @param [in]		pYUV		YUVæ•°æ®æŒ‡é’ˆ
+	/// @param [in]		nSize		YUVæ•°æ®çš„é•¿åº¦
+	/// @param [in]		nWidth		YUVå›¾åƒçš„å®½åº¦
+	/// @param [in]		nHeight		YUVå›¾åƒçš„é«˜åº¦
+	/// @param [in]		nTime		äº§ç”ŸYUVæ•°æ®çš„æ—¶é—´
+	/// @param [in]		pUserPtr	ç”¨æˆ·è‡ªå®šä¹‰æŒ‡é’ˆ
 	CFile *m_pYUVFile = nullptr;
 
 	//list<YUVFramePtr> m_listYUVFrame;
@@ -689,7 +689,7 @@ public:
 		void *pUserPtr)
 	{
 		CIPCPlayDemoDlg *pThis = (CIPCPlayDemoDlg *)pUserPtr;
-		// ÒÔÏÂ´úÂëÆ¬¶ÎÓÃÓÚ°ÑÒ»Ö¡YUV±£´æÊı¾İ±£´æµ½ÎÄ¼şÖĞ
+		// ä»¥ä¸‹ä»£ç ç‰‡æ®µç”¨äºæŠŠä¸€å¸§YUVä¿å­˜æ•°æ®ä¿å­˜åˆ°æ–‡ä»¶ä¸­
 		// 		if (pThis->m_pYUVFile)
 		// 		{
 		// 			pThis->m_pYUVFile->Write(pYUV, nYUVSize);
@@ -721,7 +721,7 @@ public:
 	byte *m_pRGBBuffer;
 	long  m_nRGBSize;
 
-	/// @brief		½âÂëºóYVUÊı¾İ»Øµ÷
+	/// @brief		è§£ç åYVUæ•°æ®å›è°ƒ
 	static void __stdcall YUVFilterProc(IPC_PLAYHANDLE hPlayHandle,
 		const unsigned char* pY,
 		const unsigned char* pU,
@@ -747,7 +747,7 @@ public:
 		// 				assert(false);
 		// 				return;
 		// 			}
-		// 			//¹¹Ôì±íÃæ  
+		// 			//æ„é€ è¡¨é¢  
 		// 			DDSURFACEDESC2 ddsd = { 0 };
 		// 			FormatYV12::Build(ddsd, pi.nVideoWidth, pi.nVideoHeight);
 		// 			pThis->m_pDDraw = make_shared<CDirectDraw>();
@@ -763,7 +763,7 @@ public:
 		// 		//g_pVca->ProcessYuv(pY, pU, pV, nStrideY, nStrideUV, nWidth, nHeight);
 		// 
 		// 		pThis->m_pDDraw->Draw(*pThis->m_pYUVImage,true);
-		// todo:°ÑYUVÊı¾İÕûºÏÎªYV12Êı¾İ£¬²¢½»¸øVCAÒıÇæ½øĞĞ·ÖÎö£¬°Ñ·ÖÎö½»¸øVCA RenderäÖÈ¾£¬ÔÙ°ÑäÖÈ¾½á¹û»¹µ½pY,pU,pVµ±ÖĞ
+		// todo:æŠŠYUVæ•°æ®æ•´åˆä¸ºYV12æ•°æ®ï¼Œå¹¶äº¤ç»™VCAå¼•æ“è¿›è¡Œåˆ†æï¼ŒæŠŠåˆ†æäº¤ç»™VCA Renderæ¸²æŸ“ï¼Œå†æŠŠæ¸²æŸ“ç»“æœè¿˜åˆ°pY,pU,pVå½“ä¸­
 
 	}
 
@@ -772,7 +772,7 @@ public:
 		if (!m_pPlayContext || !m_pPlayContext->hPlayer[0])
 			return 0l;
 		if (!m_hFullScreen)
-		{// ÇĞµ½È«ÆÁ
+		{// åˆ‡åˆ°å…¨å±
 			m_hFullScreen = (HWND)W;
 			HWND hDesktop = ::GetDesktopWindow();
 			m_nOriMonitorIndex = GetMonitorIndexFromWnd(m_hWnd);
@@ -787,7 +787,7 @@ public:
 			ShowWindow(SW_HIDE);
 		}
 		else
-		{// ÇĞ»Ø´°¿Ú
+		{// åˆ‡å›çª—å£
 			m_FullScreen.Restore();
 			::SetParent(m_hFullScreen, m_pVideoWndFrame->GetSafeHwnd());
 			ipcplay_Reset(m_pPlayContext->hPlayer[0], m_hFullScreen);
@@ -822,9 +822,9 @@ public:
 	};
 	typedef shared_ptr<DvoStream> DvoStreamPtr;
 	CRITICAL_SECTION m_csListStream;
-	list<DvoStreamPtr> m_listStream;	// Á÷²¥·Å¶ÓÁĞ
-	// ·¢ËÍÊı¾İÁ÷
-	// ÕâÀïÖ»ÊÇ°ÑÊı¾İ·ÅÈëÁ÷²¥·Å¶ÓÁĞÀ´Ä£Äâ·¢ËÍ²Ù×÷
+	list<DvoStreamPtr> m_listStream;	// æµæ’­æ”¾é˜Ÿåˆ—
+	// å‘é€æ•°æ®æµ
+	// è¿™é‡Œåªæ˜¯æŠŠæ•°æ®æ”¾å…¥æµæ’­æ”¾é˜Ÿåˆ—æ¥æ¨¡æ‹Ÿå‘é€æ“ä½œ
 	int SendStream(byte *pFrameBuffer, int nFrameSize)
 	{
 		CAutoLock lock(&m_csListStream);
@@ -832,8 +832,8 @@ public:
 		m_listStream.push_back(pStream);
 		return m_listStream.size();
 	}
-	// ½ÓÊÕÊı¾İÁ÷
-	// ÕâÀïÖ»ÊÇ´ÓÁ÷¶ÓÁĞÖĞÈ¡³öÊı¾İÀ´Ä£Äâ½ÓÊÕ²Ù×÷
+	// æ¥æ”¶æ•°æ®æµ
+	// è¿™é‡Œåªæ˜¯ä»æµé˜Ÿåˆ—ä¸­å–å‡ºæ•°æ®æ¥æ¨¡æ‹Ÿæ¥æ”¶æ“ä½œ
 	int RecvStream(DvoStreamPtr &pStream, bool &bRecved)
 	{
 		CAutoLock lock(&m_csListStream);
@@ -848,8 +848,8 @@ public:
 		return m_listStream.size();
 	}
 
-	// ½âÂëÂ¼ÏñÎÄ¼şÏß³Ì,Ò»°ãÔÚ·şÎñ¶Ë,°ÑÒ»Ö¡ÊıµÄ½âÎö³öÀ´ºó·Åµ½Á÷¶ÓÁĞÖĞ
-	// ÔÚÊµ¼ÊµÄÁ÷Ã½Ìå·şÎñÆ÷ÖĞ£¬Ó¦¸ÃÊÇ°ÑÊı¾İÖ±½Ó·¢ËÍµ½²¥·Å¿Í»§¶ËÈ¥
+	// è§£ç å½•åƒæ–‡ä»¶çº¿ç¨‹,ä¸€èˆ¬åœ¨æœåŠ¡ç«¯,æŠŠä¸€å¸§æ•°çš„è§£æå‡ºæ¥åæ”¾åˆ°æµé˜Ÿåˆ—ä¸­
+	// åœ¨å®é™…çš„æµåª’ä½“æœåŠ¡å™¨ä¸­ï¼Œåº”è¯¥æ˜¯æŠŠæ•°æ®ç›´æ¥å‘é€åˆ°æ’­æ”¾å®¢æˆ·ç«¯å»
 	static  DWORD WINAPI ThreadSendStream(void *p)
 	{
 		CIPCPlayDemoDlg *pThis = (CIPCPlayDemoDlg *)p;
@@ -866,7 +866,7 @@ public:
 		int nFrames = 0;
 		while (pThis->m_bThreadStream)
 		{
-			// ¶ÁÈ¡ÏÂÒ»Ö¡
+			// è¯»å–ä¸‹ä¸€å¸§
 			if (nStreamListSize < 8)
 			{
 				int nFrameType = 0;
@@ -888,8 +888,8 @@ public:
 		}
 		return 0;
 	}
-	// Á÷²¥·ÅÏß³Ì,´ÓÁ÷¶ÓÁĞÖĞÈ¡³öÊı¾İ½øĞĞ²¥·Å
-	// Êµ¼Ê¿ª·¢ÖĞ£¬Ó¦¸ÃÊÇ´Ó·şÎñ¶Ë½ÓÊı¾İ½øĞĞ²¥·Å
+	// æµæ’­æ”¾çº¿ç¨‹,ä»æµé˜Ÿåˆ—ä¸­å–å‡ºæ•°æ®è¿›è¡Œæ’­æ”¾
+	// å®é™…å¼€å‘ä¸­ï¼Œåº”è¯¥æ˜¯ä»æœåŠ¡ç«¯æ¥æ•°æ®è¿›è¡Œæ’­æ”¾
 	static  DWORD WINAPI ThreadPlayStream(void *p)
 	{
 		CIPCPlayDemoDlg *pThis = (CIPCPlayDemoDlg *)p;
@@ -980,7 +980,7 @@ public:
 	{
 		if (!m_pPlayContext || !m_pPlayContext->hPlayer[0])
 		{
-			AfxMessageBox(_T("ÉĞÎ´²¥·ÅÍ¼ÏñÏñ"));
+			AfxMessageBox(_T("å°šæœªæ’­æ”¾å›¾åƒåƒ"));
 			return 0;
 		}
 		m_ptStop.x = LOWORD(L);
@@ -1033,4 +1033,5 @@ public:
 	afx_msg void OnBnClickedButtonOsd();
 	afx_msg void OnBnClickedButtonOsd2();
 	afx_msg void OnBnClickedButtonRemoveosd();
+	afx_msg void OnBnClickedButtonMergescreens();
 };

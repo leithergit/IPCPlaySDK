@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <windows.h>
 #include <tchar.h>
 #include <d3d9.h>
@@ -192,14 +192,14 @@ typedef void(*CopyFrameProc)(const BYTE *pSourceData, BYTE *pY, BYTE *pUV, size_
 extern CopyFrameProc CopyFrameNV12;
 extern CopyFrameProc CopyFrameYUV420P;
 
-/// @brief ×Ô¶¯×¢²áFFmpeg½âÂë¿âÀà
+/// @brief è‡ªåŠ¨æ³¨å†ŒFFmpegè§£ç åº“ç±»
 class CAvRegister
 {
 public:
 	CAvRegister()
 	{
 		// av_register_all();
-		// È¥³ı×¢ÊÍ¿ÉÉèÖÃFFMPEGµÄÈÕÖ¾Êä³ö»Øµ÷£¬±ãÓÚ¹Û¿´ÈÕÖ¾
+		// å»é™¤æ³¨é‡Šå¯è®¾ç½®FFMPEGçš„æ—¥å¿—è¾“å‡ºå›è°ƒï¼Œä¾¿äºè§‚çœ‹æ—¥å¿—
 		// av_log_set_callback(ff_log_callback);	
 	}
 	static void ff_log_callback(void*avcl, int level, const char*fmt, va_list vl)
@@ -214,7 +214,7 @@ public:
 	}
 };
 
-// @brief ÓÃÓÚÂëÁ÷Ì½²âµÄÊÓÆµÂëÁ÷¶ÓÁĞ½á¹¹
+// @brief ç”¨äºç æµæ¢æµ‹çš„è§†é¢‘ç æµé˜Ÿåˆ—ç»“æ„
 struct AvQueue
 {
 	AvQueue(void *popaque,int nBufferSize)
@@ -235,7 +235,7 @@ struct AvQueue
 	uint8_t *pAvBuffer;
 };
 
-/// @beief ÊÓÆµ½âÂëÀà Ö÷Òª·â×°ÁËFFmpegµÄ½âÂë¿âºÍ»ªÎªº£Ë¼H.265Èí½â¿â
+/// @beief è§†é¢‘è§£ç ç±» ä¸»è¦å°è£…äº†FFmpegçš„è§£ç åº“å’Œåä¸ºæµ·æ€H.265è½¯è§£åº“
 class CVideoDecoder
 {
 public:
@@ -458,11 +458,11 @@ public:
 #endif
 	virtual ~CVideoDecoder(void);
 
-	/// @brief			ÂëÁ÷Ì½²â
-	/// @param [in]		read_packet		¶ÁÈ¡ÂëÁ÷»Øµ÷º¯Êı
-	/// @retval			0	²Ù×÷³É¹¦
-	/// @retval			-1	²Ù×÷Ê§°Ü	
-	/// @remark			ÓÃÓÚÌ½²âÂëÁ÷µÄÀàĞÍ£¬³ß´çµÈĞÅÏ¢
+	/// @brief			ç æµæ¢æµ‹
+	/// @param [in]		read_packet		è¯»å–ç æµå›è°ƒå‡½æ•°
+	/// @retval			0	æ“ä½œæˆåŠŸ
+	/// @retval			-1	æ“ä½œå¤±è´¥	
+	/// @remark			ç”¨äºæ¢æµ‹ç æµçš„ç±»å‹ï¼Œå°ºå¯¸ç­‰ä¿¡æ¯
 
 	int ProbeStream(void *Opaque,int(*read_packet)(void *opaque, uint8_t *buf, int buf_size), int nFrameBufferSize =1024*512 )
 	{
@@ -584,14 +584,14 @@ public:
 		m_pD3DDev = pD3DDev;
 		m_bD3DShared = true;
 	}
-	/// @brief ÉèÖÃ½âÂëÏß³ÌÊıÁ¿£¬Ò»Çé¿öÏÂ½¨ÒéÊ¹ÓÃµ¥Ïß³Ì½âÂë£¬Ö»ÓĞÔÚÄÇĞ©CPUĞÔÄÜ½ÏµÍµÄ»úÆ÷ÉÏÊ¹ÓÃ¶àÏß³Ì½âÂë
+	/// @brief è®¾ç½®è§£ç çº¿ç¨‹æ•°é‡ï¼Œä¸€æƒ…å†µä¸‹å»ºè®®ä½¿ç”¨å•çº¿ç¨‹è§£ç ï¼Œåªæœ‰åœ¨é‚£äº›CPUæ€§èƒ½è¾ƒä½çš„æœºå™¨ä¸Šä½¿ç”¨å¤šçº¿ç¨‹è§£ç 
 	void SetDecodeThreads(int nThreads = 1)
 	{
 		m_nDecodeThreadCount = nThreads;
 	}
-	/// @brief ³õÊ¼»¯½âÂëÆ÷
-	/// @brief ²»¿ÉÓëLoadDecodingFileº¯ÊıÍ¬Ê±µ÷ÓÃ£¬¶şÕßÖ»ÄÜÑ¡Ò»
-	/// µ±nCodec²»ÎªAV_CODEC_ID_NONEÊ±£¬nWidthºÍnHeight²»¿ÉÎª0
+	/// @brief åˆå§‹åŒ–è§£ç å™¨
+	/// @brief ä¸å¯ä¸LoadDecodingFileå‡½æ•°åŒæ—¶è°ƒç”¨ï¼ŒäºŒè€…åªèƒ½é€‰ä¸€
+	/// å½“nCodecä¸ä¸ºAV_CODEC_ID_NONEæ—¶ï¼ŒnWidthå’ŒnHeightä¸å¯ä¸º0
 	bool InitDecoder(AVCodecID nCodec = AV_CODEC_ID_NONE, int nWidth = 0,int nHeight = 0,bool bEnableHaccel = false)
 	{
 		AVCodecID nCodecID = nCodec;
@@ -614,13 +614,13 @@ public:
 				return false;
 			}
 			m_pAVCtx->flags = 0;
-// 			m_pAVCtx->time_base.num = 1; //ÕâÁ½ĞĞ£ºÒ»ÃëÖÓ25Ö¡
+// 			m_pAVCtx->time_base.num = 1; //è¿™ä¸¤è¡Œï¼šä¸€ç§’é’Ÿ25å¸§
 // 			m_pAVCtx->time_base.den = fps; // 25;
 			//142*6=852
-			m_pAVCtx->bit_rate = 0; //³õÊ¼»¯Îª0
-			m_pAVCtx->frame_number = 1; //Ã¿°üÒ»¸öÊÓÆµÖ¡
+			m_pAVCtx->bit_rate = 0; //åˆå§‹åŒ–ä¸º0
+			m_pAVCtx->frame_number = 1; //æ¯åŒ…ä¸€ä¸ªè§†é¢‘å¸§
 			m_pAVCtx->codec_type = AVMEDIA_TYPE_VIDEO;// CODEC_TYPE_VIDEO;
-			m_pAVCtx->width = nWidth; //ÕâÁ½ĞĞ£ºÊÓÆµµÄ¿í¶ÈºÍ¸ß¶È
+			m_pAVCtx->width = nWidth; //è¿™ä¸¤è¡Œï¼šè§†é¢‘çš„å®½åº¦å’Œé«˜åº¦
 			m_pAVCtx->height = nHeight;
 		}
 		else
@@ -683,7 +683,7 @@ public:
 				//assert(false);
 				return false;
 			}
-			// ¼ì²éÊÇ·ñÖ§³ÖÓ²½âÂë
+			// æ£€æŸ¥æ˜¯å¦æ”¯æŒç¡¬è§£ç 
 			if (!CodecIsSupported(nCodecID))
 			{
 				bEnableHaccel = false;
@@ -724,7 +724,7 @@ public:
 
 
 private:
-	/// @brief ³õÊ¼»¯FFMPEG½âÂëÆ÷
+	/// @brief åˆå§‹åŒ–FFMPEGè§£ç å™¨
 	int InitFFmpegDecoder(bool bEnableHaccel = false)
 	{
 		if (!m_pAVCtx)
@@ -776,7 +776,7 @@ private:
 		}
 		return 0;
 	}
-	/// @brief Ïú»ÙFFmpeg½âÂëÆ÷
+	/// @brief é”€æ¯FFmpegè§£ç å™¨
 	int DestroyFFmpegDecoder()
 	{
 		m_pAVCodec = nullptr;
@@ -816,7 +816,7 @@ private:
 		return 0;
 	}
 #ifdef __HisiLicon
-	/// ³õÊ¼»¯»ªÎªº£Ë¼H.265½âÂëÆ÷
+	/// åˆå§‹åŒ–åä¸ºæµ·æ€H.265è§£ç å™¨
 	int InitHisiliconDecoder()
 	{
 		if (!m_pAVCtx)
@@ -849,7 +849,7 @@ private:
 		}
 		return 0;
 	}
-	/// @brief Ïú»Ù»ªÎªº£Ë¼H.265½âÂëÆ÷
+	/// @brief é”€æ¯åä¸ºæµ·æ€H.265è§£ç å™¨
 	int DestroyHisiliconDecoder()
 	{
 		if (m_hDecoder265)
@@ -882,8 +882,8 @@ public:
 		return buffers;
 	}
 
-	/// @brief ¼ÓÔØÒª½âÂëµÄÎÄ¼ş£¬Í¬Ê±³õÊ¼»¯½âÂëÆ÷
-	/// @remark²»¿ÉÓëInitDecoderÍ¬Ê±µ÷ÓÃ£¬¶şÕßÖ»ÄÜÑ¡Ò»
+	/// @brief åŠ è½½è¦è§£ç çš„æ–‡ä»¶ï¼ŒåŒæ—¶åˆå§‹åŒ–è§£ç å™¨
+	/// @remarkä¸å¯ä¸InitDecoderåŒæ—¶è°ƒç”¨ï¼ŒäºŒè€…åªèƒ½é€‰ä¸€
 	bool LoadDecodingFile(char *szFilePath, bool bEnableHaccel = false)
 	{
 		UINT nAdapter = D3DADAPTER_DEFAULT;
@@ -962,7 +962,7 @@ public:
 		m_bInInit = true;
 		return true;
 	}
-	/// @brief Ïú»Ù½âÂëÆ÷
+	/// @brief é”€æ¯è§£ç å™¨
 	STDMETHODIMP DestroyDecoder()
 	{
 		if (m_nManufacturer == FFMPEG)
@@ -973,7 +973,7 @@ public:
 #endif
 		return S_OK;
 	}
-	/// @brief ¸ù¾İ±àÂë¸ñÊ½£¬È¡µÃÖ¸¶¨Á£¶ÈµÄ×Ö½Ú¶ÔÆëÊı
+	/// @brief æ ¹æ®ç¼–ç æ ¼å¼ï¼Œå–å¾—æŒ‡å®šç²’åº¦çš„å­—èŠ‚å¯¹é½æ•°
 	static DWORD GetAlignedDimension(AVCodecID nCodecID, DWORD dim)
 	{
 		int align = DXVA2_SURFACE_BASE_ALIGN;
@@ -988,16 +988,16 @@ public:
 	}
 
 public:
-	/// @ÎªÓ²½âÂë³õÊ¼»¯D3D¶ÔÏó
+	/// @ä¸ºç¡¬è§£ç åˆå§‹åŒ–D3Då¯¹è±¡
 	HRESULT InitD3D(UINT &nAdapter /*= D3DADAPTER_DEFAULT*/);
 
-	/// @ÎªÓ²½âÂë³õÊ¼»¯D3D¶ÔÏó
+	/// @ä¸ºç¡¬è§£ç åˆå§‹åŒ–D3Då¯¹è±¡
 	HRESULT InitDxva(IDirect3D9Ex  *pD3D, IDirect3DDevice9Ex *pD3DDev);
 
-	/// @brief °ÑDXVAÓ²½âÂë¹ı³ÌÍ¬FFMpeg½âÂë¿â¹ØÁª
+	/// @brief æŠŠDXVAç¡¬è§£ç è¿‡ç¨‹åŒFFMpegè§£ç åº“å…³è”
 	HRESULT AdditionaDecoderInit();
 
-	/// @brief ²âÊÔÖ¸¶¨µÄ±àÂë¸ñÊ½ÊÇÖ§³ÖÓ²½âÂë£¨ÔÚ±¾»ú£©
+	/// @brief æµ‹è¯•æŒ‡å®šçš„ç¼–ç æ ¼å¼æ˜¯æ”¯æŒç¡¬è§£ç ï¼ˆåœ¨æœ¬æœºï¼‰
 	bool CodecIsSupported(AVCodecID nCodec)
 	{
 		if (!IsWindowsVistaOrGreater())
@@ -1051,8 +1051,8 @@ public:
 			avcodec_flush_buffers(m_pAVCtx);
 		
 	}
-	/// @brief ½âÂë
-	/// ÒÔÏÂ×¢ÊÍÕª×ÔÓÚffmpegµÄ½âÂëº¯Êıavcodec_decode_video2£¬²¢ÓĞËùÉ¾¼õ
+	/// @brief è§£ç 
+	/// ä»¥ä¸‹æ³¨é‡Šæ‘˜è‡ªäºffmpegçš„è§£ç å‡½æ•°avcodec_decode_video2ï¼Œå¹¶æœ‰æ‰€åˆ å‡
 	/**
 	* Decode the video frame of size avpkt->size from avpkt->data into picture.
 	* Some decoders may support multiple frames in a single AVPacket, such
@@ -1149,14 +1149,14 @@ public:
 		return -1;
 #endif
 	}
-	/// @brief ÒÆ¶¯µ½Ö¸¶¨Ö¡£¬Ö»Ö§³ÖffmpegÎÄ¼ş½âÂë
+	/// @brief ç§»åŠ¨åˆ°æŒ‡å®šå¸§ï¼Œåªæ”¯æŒffmpegæ–‡ä»¶è§£ç 
 	inline int SeekFrame(int64_t timestamp, int flags)
 	{
 		if (!m_pFormatCtx)
 			return -1;
 		return av_seek_frame(m_pFormatCtx, m_nVideoIndex, timestamp, flags);
 	}
-	/// @brief ¶ÁÈ¡Ò»Ö¡£¬Ö»Ö§³ÖffmpegÎÄ¼ş½âÂë
+	/// @brief è¯»å–ä¸€å¸§ï¼Œåªæ”¯æŒffmpegæ–‡ä»¶è§£ç 
 	inline int ReadFrame(AVPacket *pkt)
 	{
 		if (!m_pFormatCtx)
@@ -1165,7 +1165,7 @@ public:
 	}
 
 public:
-	long					m_nVtableAddr;		// Ğéº¯Êı±íµØÖ·£¬¸Ã±äÁ¿µØÖ·Î»ÖÃĞéº¯Êı±íÖ®ºó£¬½öÓÃÓÚÀà³õÊ¼»¯£¬Çë´ÒÒÆ¶¯¸Ã±äÁ¿µÄÎ»ÖÃ
+	long					m_nVtableAddr;		// è™šå‡½æ•°è¡¨åœ°å€ï¼Œè¯¥å˜é‡åœ°å€ä½ç½®è™šå‡½æ•°è¡¨ä¹‹åï¼Œä»…ç”¨äºç±»åˆå§‹åŒ–ï¼Œè¯·åŒ†ç§»åŠ¨è¯¥å˜é‡çš„ä½ç½®
 	struct
 	{
 		HMODULE dxva2lib;
@@ -1214,14 +1214,14 @@ public:
 	LPDIRECT3DSURFACE9	m_pDirect3DSurfaceRender;
 	D3DPRESENT_PARAMETERS m_d3dpp;
 	static	CAvRegister AvRegister;
-	// ÊµÊ±Á÷²¥·ÅÏà¹Ø±äÁ¿
+	// å®æ—¶æµæ’­æ”¾ç›¸å…³å˜é‡
 	uint8_t				*m_pAvBuffer = nullptr;
 	int					m_nAvBufferSize = 512*1024;
 	
 	AVInputFormat *m_pInputFormatCtx = nullptr;
 private:
 	Decoder_Manufacturer m_nManufacturer = FFMPEG;
-	// º£Ë¼265½âÂëÆ÷Ïà¹Ø±äÁ¿
+	// æµ·æ€265è§£ç å™¨ç›¸å…³å˜é‡
 	IH265DEC_HANDLE m_hDecoder265;
 	IHW265D_INIT_PARAM m_stInitParam;
 	IH265DEC_INARGS m_stInArgs;
@@ -1230,3 +1230,4 @@ private:
 };
 
 CVideoDecoder *CreateDecoderDXVA2();
+typedef std::tr1::shared_ptr<CVideoDecoder> CVideoDecoderPtr;
