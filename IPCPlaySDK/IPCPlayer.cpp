@@ -1,7 +1,7 @@
 ﻿#include "IPCPlayer.hpp"
 
 extern bool g_bEnableDDraw;
-extern SharedMemory *g_pSharedMemory;
+extern SharedMemory* g_pSharedMemory;
 //extern HANDLE g_hHAccelMutexArray[10];
 
 map<string, DxSurfaceList>g_DxSurfacePool;	// ÓÃÓÚ»º´æDxSurface¶ÔÏó
@@ -54,7 +54,7 @@ CIPCPlayer::CIPCPlayer()
 	m_hInputFrameEvent = CreateEvent(nullptr, false, false, nullptr);
 }
 
-CIPCPlayer::CIPCPlayer(HWND hWnd, CHAR *szFileName, char *szLogFile)
+CIPCPlayer::CIPCPlayer(HWND hWnd, CHAR* szFileName, char* szLogFile)
 {
 #if _DEBUG
 	g_csPlayerHandles.Lock();
@@ -159,7 +159,7 @@ CIPCPlayer::CIPCPlayer(HWND hWnd, CHAR *szFileName, char *szLogFile)
 					}
 					else
 					{
-						
+
 						m_nVideoWidth = m_pMediaHeader->nVideoWidth;
 						m_nVideoHeight = m_pMediaHeader->nVideoHeight;
 					}
@@ -236,13 +236,13 @@ CIPCPlayer::CIPCPlayer(HWND hWnd, CHAR *szFileName, char *szLogFile)
 					{
 						m_nVideoWidth = m_pMediaHeader->nVideoWidth;
 						m_nVideoHeight = m_pMediaHeader->nVideoHeight;
-// 						if (!m_nVideoWidth || !m_nVideoHeight)
-// 						{
-// 							// 								OutputMsg("%s %d(%s):Invalid Mdeia File Header.\n", __FILE__, __LINE__, __FUNCTION__);
-// 							// 								ClearOnException();
-// 							// 								throw std::exception("Invalid Mdeia File Header.");
-// 							m_nVideoCodec = CODEC_UNKNOWN;
-// 						}
+						// 						if (!m_nVideoWidth || !m_nVideoHeight)
+						// 						{
+						// 							// 								OutputMsg("%s %d(%s):Invalid Mdeia File Header.\n", __FILE__, __LINE__, __FUNCTION__);
+						// 							// 								ClearOnException();
+						// 							// 								throw std::exception("Invalid Mdeia File Header.");
+						// 							m_nVideoCodec = CODEC_UNKNOWN;
+						// 						}
 					}
 					if (m_pMediaHeader->nFps == 0)
 						m_nVideoFPS = 25;
@@ -269,7 +269,7 @@ CIPCPlayer::CIPCPlayer(HWND hWnd, CHAR *szFileName, char *szLogFile)
 			// 					throw std::exception("_beginthreadex ThreadGetFileSummary Failed.");
 			// 				}
 			m_nParserBufferSize = m_nMaxFrameSize * 4;
-			m_pParserBuffer = (byte *)_aligned_malloc(m_nParserBufferSize, 16);
+			m_pParserBuffer = (byte*)_aligned_malloc(m_nParserBufferSize, 16);
 		}
 		else
 		{
@@ -281,7 +281,7 @@ CIPCPlayer::CIPCPlayer(HWND hWnd, CHAR *szFileName, char *szLogFile)
 
 }
 
-CIPCPlayer::CIPCPlayer(HWND hWnd, int nBufferSize, char *szLogFile)
+CIPCPlayer::CIPCPlayer(HWND hWnd, int nBufferSize, char* szLogFile)
 {
 #if _DEBUG
 	g_csPlayerHandles.Lock();
@@ -339,11 +339,11 @@ CIPCPlayer::CIPCPlayer(HWND hWnd, int nBufferSize, char *szLogFile)
 
 	AddRenderWindow(hWnd, nullptr);
 	m_hInputFrameEvent = CreateEvent(nullptr, false, false, nullptr);
-	
+
 #ifndef _WIN64
 	m_bEnableDDraw = g_bEnableDDraw;
 #endif
-	
+
 	m_hRenderWnd = hWnd;
 	m_nDecodeDelay = -1;
 	// #endif
@@ -352,10 +352,10 @@ CIPCPlayer::CIPCPlayer(HWND hWnd, int nBufferSize, char *szLogFile)
 
 CIPCPlayer::~CIPCPlayer()
 {
-//#ifdef _DEBUG
-//	OutputMsg("%s \tReady to Free a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
-//#endif
-	//StopPlay(0);
+	//#ifdef _DEBUG
+	//	OutputMsg("%s \tReady to Free a \tObject:%d.\n", __FUNCTION__, m_nObjIndex);
+	//#endif
+		//StopPlay(0);
 
 	if (m_pParserBuffer)
 	{
@@ -424,8 +424,8 @@ CIPCPlayer::~CIPCPlayer()
 	{
 		//PutDxSurfacePool(m_pDxSurface);
 		Safe_Delete(m_pDxSurface);
-// 		delete m_pDxSurface;
-// 		m_pDxSurface = nullptr;
+		// 		delete m_pDxSurface;
+		// 		m_pDxSurface = nullptr;
 	}
 	/*
 	Ê¹ÓÃCCriticalSectionAgentÀà´úÀí£¬²»ÔÙÖ±½Óµ÷ÓÃDeleteCriticalSectionº¯Êý
@@ -457,7 +457,7 @@ __int64 CIPCPlayer::LargerFileSeek(HANDLE hFile, __int64 nOffset64, DWORD MoveMe
 	return Offset.QuadPart;
 }
 
-bool CIPCPlayer::IsIPCVideoFrame(IPCFrameHeader *pFrameHeader, bool &bIFrame, int nSDKVersion)
+bool CIPCPlayer::IsIPCVideoFrame(IPCFrameHeader* pFrameHeader, bool& bIFrame, int nSDKVersion)
 {
 	bIFrame = false;
 	if (nSDKVersion >= IPC_IPC_SDK_VERSION_2015_12_16 && nSDKVersion != IPC_IPC_SDK_GSJ_HEADER)
@@ -494,14 +494,14 @@ bool CIPCPlayer::IsIPCVideoFrame(IPCFrameHeader *pFrameHeader, bool &bIFrame, in
 	}
 }
 
-int CIPCPlayer::GetFrame(IPCFrameHeader *pFrame, bool bFirstFrame)
+int CIPCPlayer::GetFrame(IPCFrameHeader* pFrame, bool bFirstFrame)
 {
 	if (!m_hVideoFile)
 		return IPC_Error_FileNotOpened;
 	LARGE_INTEGER liFileSize;
 	if (!GetFileSizeEx(m_hVideoFile, &liFileSize))
 		return GetLastError();
-	byte *pBuffer = _New byte[m_nMaxFrameSize];
+	byte* pBuffer = _New byte[m_nMaxFrameSize];
 	shared_ptr<byte>TempBuffPtr(pBuffer);
 	DWORD nMoveMothod = FILE_BEGIN;
 	__int64 nMoveOffset = sizeof(IPC_MEDIAINFO);
@@ -524,12 +524,12 @@ int CIPCPlayer::GetFrame(IPCFrameHeader *pFrame, bool bFirstFrame)
 		return GetLastError();
 	}
 	nDataLength = nBytesRead;
-	char *szKey1 = "MOVD";
-	char *szKey2 = "IMWH";
-	int nOffset = KMP_StrFind(pBuffer, nDataLength, (byte *)szKey1, 4);
+	char* szKey1 = "MOVD";
+	char* szKey2 = "IMWH";
+	int nOffset = KMP_StrFind(pBuffer, nDataLength, (byte*)szKey1, 4);
 	if (nOffset < 0)
 	{
-		nOffset = KMP_StrFind(pBuffer, nDataLength, (byte *)szKey2, 4);
+		nOffset = KMP_StrFind(pBuffer, nDataLength, (byte*)szKey2, 4);
 		if (nOffset < 0)
 			return IPC_Error_MaxFrameSizeNotEnough;
 	}
@@ -600,14 +600,14 @@ int CIPCPlayer::GetFrame(IPCFrameHeader *pFrame, bool bFirstFrame)
 		return IPC_Error_MaxFrameSizeNotEnough;
 }
 
-int CIPCPlayer::GetLastFrameID(int &nLastFrameID)
+int CIPCPlayer::GetLastFrameID(int& nLastFrameID)
 {
 	if (!m_hVideoFile)
 		return IPC_Error_FileNotOpened;
 	LARGE_INTEGER liFileSize;
 	if (!GetFileSizeEx(m_hVideoFile, &liFileSize))
 		return GetLastError();
-	byte *pBuffer = _New byte[m_nMaxFrameSize];
+	byte* pBuffer = _New byte[m_nMaxFrameSize];
 	shared_ptr<byte>TempBuffPtr(pBuffer);
 
 	if (liFileSize.QuadPart >= m_nMaxFrameSize &&
@@ -622,26 +622,26 @@ int CIPCPlayer::GetLastFrameID(int &nLastFrameID)
 		return GetLastError();
 	}
 	nDataLength = nBytesRead;
-	char *szKey1 = "MOVD";		// ÐÂ°æµÄIPCÂ¼ÏñÎÄ¼þÍ·
-	char *szKey2 = "IMWH";		// ÀÏ°æ±¾µÄIPCÂ¼ÏñÎÄ¼þ£¬Ê¹ÓÃÁË¸ßÊÓ½ÝµÄÎÄ¼þÍ·
-	int nOffset = KMP_StrFind(pBuffer, nDataLength, (byte *)szKey1, 4);
+	char* szKey1 = "MOVD";		// ÐÂ°æµÄIPCÂ¼ÏñÎÄ¼þÍ·
+	char* szKey2 = "IMWH";		// ÀÏ°æ±¾µÄIPCÂ¼ÏñÎÄ¼þ£¬Ê¹ÓÃÁË¸ßÊÓ½ÝµÄÎÄ¼þÍ·
+	int nOffset = KMP_StrFind(pBuffer, nDataLength, (byte*)szKey1, 4);
 	if (nOffset < 0)
 	{
-		nOffset = KMP_StrFind(pBuffer, nDataLength, (byte *)szKey2, 4);
+		nOffset = KMP_StrFind(pBuffer, nDataLength, (byte*)szKey2, 4);
 		if (nOffset < 0)
 			return IPC_Error_MaxFrameSizeNotEnough;
 		else if (nOffset < offsetof(IPCFrameHeader, nFrameTag))
 		{
 			pBuffer += (nOffset + 4);
 			nDataLength -= (nOffset + 4);
-			nOffset = KMP_StrFind(pBuffer, nDataLength, (byte *)szKey2, 4);
+			nOffset = KMP_StrFind(pBuffer, nDataLength, (byte*)szKey2, 4);
 		}
 	}
 	else if (nOffset < offsetof(IPCFrameHeader, nFrameTag))
 	{
 		pBuffer += (nOffset + 4);
 		nDataLength -= (nOffset + 4);
-		nOffset = KMP_StrFind(pBuffer, nDataLength, (byte *)szKey1, 4);
+		nOffset = KMP_StrFind(pBuffer, nDataLength, (byte*)szKey1, 4);
 	}
 	nOffset -= offsetof(IPCFrameHeader, nFrameTag);	// »ØÍËµ½Ö¡Í·
 	if (nOffset < 0)
@@ -709,7 +709,7 @@ int CIPCPlayer::GetLastFrameID(int &nLastFrameID)
 		return IPC_Error_MaxFrameSizeNotEnough;
 }
 
-CDxSurfaceEx *CIPCPlayer::GetDxSurfaceFromPool(int nWidth, int  nHeight)
+CDxSurfaceEx* CIPCPlayer::GetDxSurfaceFromPool(int nWidth, int  nHeight)
 {
 	char szResolution[32] = { 0 };
 	sprintf_s(szResolution, 16, "%d*%d", nWidth, nHeight);
@@ -718,10 +718,10 @@ CDxSurfaceEx *CIPCPlayer::GetDxSurfaceFromPool(int nWidth, int  nHeight)
 	auto PoolFinder = g_DxSurfacePool.find(strResolutoin);
 	if (PoolFinder != g_DxSurfacePool.end())
 	{
-		DxSurfaceList &ItemList = PoolFinder->second;
+		DxSurfaceList& ItemList = PoolFinder->second;
 		if (ItemList.size() > 0)
 		{
-			CDxSurfaceEx *pSurface = (CDxSurfaceEx*)ItemList.front();
+			CDxSurfaceEx* pSurface = (CDxSurfaceEx*)ItemList.front();
 			ItemList.pop_front();
 			return pSurface;
 		}
@@ -729,7 +729,7 @@ CDxSurfaceEx *CIPCPlayer::GetDxSurfaceFromPool(int nWidth, int  nHeight)
 	return nullptr;
 }
 
-void CIPCPlayer::PutDxSurfacePool(CDxSurfaceEx *pSurface)
+void CIPCPlayer::PutDxSurfacePool(CDxSurfaceEx* pSurface)
 {
 	if (!pSurface)
 		return;
@@ -750,17 +750,17 @@ void CIPCPlayer::PutDxSurfacePool(CDxSurfaceEx *pSurface)
 	}
 }
 
-bool CIPCPlayer::InitizlizeDx(AVFrame *pAvFrame )
+bool CIPCPlayer::InitizlizeDx(AVFrame* pAvFrame)
 {
 	DeclareRunTime(10);
-// Ê¹ÓÃm_hRenderWndÎª¿ÕÊ±£¬ÔòÊ¹ÓÃm_pWndDxInitµÄ´°¿Ú
-// 	if (!m_hRenderWnd)
-// 		return true;
-	//		¿ÉÄÜ´æÔÚÖ»½âÂë²»ÏÔÊ¾Í¼ÏñµÄÇé¿ö
-	// 		if (!m_hRenderWnd)
-	// 			return false;
-	// ³õÊ¼ÏÔÊ¾×é¼þ
-	//if (GetOsMajorVersion() < Win7MajorVersion)
+	// Ê¹ÓÃm_hRenderWndÎª¿ÕÊ±£¬ÔòÊ¹ÓÃm_pWndDxInitµÄ´°¿Ú
+	// 	if (!m_hRenderWnd)
+	// 		return true;
+		//		¿ÉÄÜ´æÔÚÖ»½âÂë²»ÏÔÊ¾Í¼ÏñµÄÇé¿ö
+		// 		if (!m_hRenderWnd)
+		// 			return false;
+		// ³õÊ¼ÏÔÊ¾×é¼þ
+		//if (GetOsMajorVersion() < Win7MajorVersion)
 #ifndef _WIN64
 	if (m_bEnableDDraw)
 	{
@@ -809,10 +809,10 @@ bool CIPCPlayer::InitizlizeDx(AVFrame *pAvFrame )
 #endif
 	{
 		SaveRunTime();
-// 		m_pDxSurface = GetDxSurfaceFromPool(m_nVideoWidth, m_nVideoHeight);
-// 		if (m_pDxSurface)
-// 			return true;
-// 		else
+		// 		m_pDxSurface = GetDxSurfaceFromPool(m_nVideoWidth, m_nVideoHeight);
+		// 		if (m_pDxSurface)
+		// 			return true;
+		// 		else
 		if (!m_pDxSurface)
 			m_pDxSurface = _New CDxSurfaceEx;
 
@@ -822,10 +822,10 @@ bool CIPCPlayer::InitizlizeDx(AVFrame *pAvFrame )
 			OutputMsg("%s Failed in new a CDxSurfaceEx to m_pDxSurface.\n", __FUNCTION__);
 			return false;
 		}
-		
+
 		SaveRunTime();
 		//m_pSimpleWnd = make_shared<CSimpleWnd>(m_nVideoWidth, m_nVideoHeight);
-		DxSurfaceInitInfo &InitInfo = m_DxInitInfo;
+		DxSurfaceInitInfo& InitInfo = m_DxInitInfo;
 		InitInfo.nSize = sizeof(DxSurfaceInitInfo);
 		if (m_bEnableHaccel)
 		{
@@ -847,17 +847,17 @@ bool CIPCPlayer::InitizlizeDx(AVFrame *pAvFrame )
 		}
 		SaveRunTime();
 		InitInfo.bWindowed = TRUE;
-// 			if (!m_pWndDxInit->GetSafeHwnd())
-// 				InitInfo.hPresentWnd = m_hRenderWnd;
-// 			else
-		//InitInfo.hPresentWnd = m_pWndDxInit->GetSafeHwnd();
-		/// ¼¯ÖÐÊ¹ÓÃÍ¬Ò»¸ö´°¿Ú×÷d3d³õÊ¼»¯£¬ÓÐ¿ÉÄÜÊÇÔì³É¶àÏÔÆ÷ÊÓÆµÏÔÊ¾Ê±¿¨¶ÙµÄÔ­Òò
-		/// 2018.11.30 ÔÚÕâÀï×÷Ò»¸ö²âÊÔ£¬Ê¹ÓÃÔ­Ê¼ÊäÈë´°¿Ú½øÐÐÏÔÊ¾£¬²¢¸ù¾Ý´°¿ÚËùÔÚÏÔÊ¾Æ÷Á¬½ÓµÄÏÔ¿¨ÐòºÅ£¬¾ö¶¨ÓÃÄÄÒ»¿éÏÔ¿¨À´×÷d3d³õÊ¼»¯
+		// 			if (!m_pWndDxInit->GetSafeHwnd())
+		// 				InitInfo.hPresentWnd = m_hRenderWnd;
+		// 			else
+				//InitInfo.hPresentWnd = m_pWndDxInit->GetSafeHwnd();
+				/// ¼¯ÖÐÊ¹ÓÃÍ¬Ò»¸ö´°¿Ú×÷d3d³õÊ¼»¯£¬ÓÐ¿ÉÄÜÊÇÔì³É¶àÏÔÆ÷ÊÓÆµÏÔÊ¾Ê±¿¨¶ÙµÄÔ­Òò
+				/// 2018.11.30 ÔÚÕâÀï×÷Ò»¸ö²âÊÔ£¬Ê¹ÓÃÔ­Ê¼ÊäÈë´°¿Ú½øÐÐÏÔÊ¾£¬²¢¸ù¾Ý´°¿ÚËùÔÚÏÔÊ¾Æ÷Á¬½ÓµÄÏÔ¿¨ÐòºÅ£¬¾ö¶¨ÓÃÄÄÒ»¿éÏÔ¿¨À´×÷d3d³õÊ¼»¯
 		if (m_hRenderWnd)
 			InitInfo.hPresentWnd = m_hRenderWnd;
 		else
 			InitInfo.hPresentWnd = m_pWndDxInit->GetSafeHwnd();
-			
+
 		SaveRunTime();
 		if (m_nRocateAngle == Rocate90 ||
 			m_nRocateAngle == Rocate270 ||
@@ -889,20 +889,20 @@ bool CIPCPlayer::InitizlizeDx(AVFrame *pAvFrame )
 		SaveRunTime();
 		m_pDxSurface->SetCoordinateMode(m_nCoordinate);
 		m_pDxSurface->SetExternDraw(m_pDCCallBack, m_pDCCallBackParam);
-			
+
 		SaveRunTime();
 		return true;
-		
+
 	}
 }
 
 
-int CIPCPlayer::AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent )
+int CIPCPlayer::AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent)
 {
 	if (!hRenderWnd)
 		return IPC_Error_InvalidParameters;
-// 	if (hRenderWnd == m_hRenderWnd)
-// 		return IPC_Succeed;
+	// 	if (hRenderWnd == m_hRenderWnd)
+	// 		return IPC_Succeed;
 	LineLockAgent(m_cslistRenderWnd);
 	if (!m_hRenderWnd)
 	{
@@ -911,7 +911,7 @@ int CIPCPlayer::AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent
 #ifndef _WIN64
 	if (m_bEnableDDraw)
 	{
-		if (m_listRenderUnit.size() >= 3)
+		if (m_listRenderUnit.size() >= _MaxRendWindows - 1)
 			return IPC_Error_RenderWndOverflow;
 		auto itFind = find_if(m_listRenderUnit.begin(), m_listRenderUnit.end(), UnitFinder(hRenderWnd));
 		if (itFind != m_listRenderUnit.end())
@@ -922,7 +922,7 @@ int CIPCPlayer::AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent
 	else
 #endif
 	{
-		if (m_listRenderWnd.size() >= 4)
+		if (m_listRenderWnd.size() >= _MaxRendWindows)
 			return IPC_Error_RenderWndOverflow;
 		auto itFind = find_if(m_listRenderWnd.begin(), m_listRenderWnd.end(), WndFinder(hRenderWnd));
 		if (itFind != m_listRenderWnd.end())
@@ -932,7 +932,7 @@ int CIPCPlayer::AddRenderWindow(HWND hRenderWnd, LPRECT pRtRender, bool bPercent
 		}
 
 		m_listRenderWnd.push_back(make_shared<RenderWnd>(hRenderWnd, pRtRender, bPercent));
-		OutputMsg("%s size of m_listRenderWnd = %d.\n", __FUNCTION__,m_listRenderWnd.size());
+		OutputMsg("%s size of m_listRenderWnd = %d.\n", __FUNCTION__, m_listRenderWnd.size());
 	}
 
 	return IPC_Succeed;
@@ -948,12 +948,12 @@ bool CIPCPlayer::TryEnableHAccelOnAdapter(CHAR* szAdapterID, int nBuffer)
 	HMONITOR hMonitor = MonitorFromWindow(m_hRenderWnd, MONITOR_DEFAULTTONEAREST);
 	if (!hMonitor)
 		return false;
-	
+
 	MONITORINFOEX mi;
 	mi.cbSize = sizeof(MONITORINFOEX);
 	if (!GetMonitorInfo(hMonitor, &mi))
 		return false;
-	
+
 	for (int i = 0; i < g_pD3D9Helper.m_nAdapterCount; i++)
 	{
 		bool bFound = false;
@@ -968,14 +968,14 @@ bool CIPCPlayer::TryEnableHAccelOnAdapter(CHAR* szAdapterID, int nBuffer)
 		if (bFound)
 		{// ÕÒµ½ÏÔÊ¾Æ÷ËùÔÚµÄÏÔÎ´
 			m_nDisplayAdapter = i;
-			OutputMsg("%s Wnd[%08X] is on Monitor:[%s],it's connected on Adapter[%i]:%s.\n", 
-					__FUNCTION__, 
-					m_hRenderWnd, 
-					mi.szDevice, i, 
-					g_pD3D9Helper.m_AdapterArray[i].Description);
+			OutputMsg("%s Wnd[%08X] is on Monitor:[%s],it's connected on Adapter[%i]:%s.\n",
+				__FUNCTION__,
+				m_hRenderWnd,
+				mi.szDevice, i,
+				g_pD3D9Helper.m_AdapterArray[i].Description);
 			WCHAR szGuidW[64] = { 0 };
-			
-			StringFromGUID2(g_pD3D9Helper.m_AdapterArray[i].DeviceIdentifier, szGuidW, 64);		
+
+			StringFromGUID2(g_pD3D9Helper.m_AdapterArray[i].DeviceIdentifier, szGuidW, 64);
 			WCHAR szAdapterMutexName[64] = { 0 };
 			HANDLE hMutexAdapter = nullptr;
 			for (int k = 0; k < g_pSharedMemory->nAdapterCount; k++)
@@ -985,7 +985,7 @@ bool CIPCPlayer::TryEnableHAccelOnAdapter(CHAR* szAdapterID, int nBuffer)
 
 				if (wcscmp(g_pSharedMemory->HAccelArray[k].szAdapterGuid, szGuidW) != 0)
 					continue;
-				
+
 				if (WaitForSingleObject(g_pSharedMemory->HAccelArray[k].hMutex, 100) == WAIT_TIMEOUT)
 					break;
 				if (g_pSharedMemory->HAccelArray[k].nOpenCount < g_pSharedMemory->HAccelArray[k].nMaxHaccel)
@@ -993,10 +993,10 @@ bool CIPCPlayer::TryEnableHAccelOnAdapter(CHAR* szAdapterID, int nBuffer)
 					g_pSharedMemory->HAccelArray[k].nOpenCount++;
 					WideCharToMultiByte(CP_ACP, NULL, szGuidW, wcslen(szGuidW), szAdapterID, nBuffer, NULL, NULL);
 					ReleaseMutex(g_pSharedMemory->HAccelArray[k].hMutex);
-					OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s is %d.\n", 
-						__FUNCTION__, 
-						mi.szDevice, 
-						g_pD3D9Helper.m_AdapterArray[k].Description, 
+					OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s is %d.\n",
+						__FUNCTION__,
+						mi.szDevice,
+						g_pD3D9Helper.m_AdapterArray[k].Description,
 						g_pSharedMemory->HAccelArray[k].nOpenCount);
 					return true;
 				}
@@ -1004,10 +1004,10 @@ bool CIPCPlayer::TryEnableHAccelOnAdapter(CHAR* szAdapterID, int nBuffer)
 				{
 					ZeroMemory(szAdapterID, nBuffer);
 					ReleaseMutex(g_pSharedMemory->HAccelArray[k].hMutex);
-					OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s has reached up limit %d.\n", 
-						__FUNCTION__, 
-						mi.szDevice, 
-						g_pD3D9Helper.m_AdapterArray[k].Description, 
+					OutputMsg("%s HAccels On:Monitor:%s,Adapter:%s has reached up limit %d.\n",
+						__FUNCTION__,
+						mi.szDevice,
+						g_pD3D9Helper.m_AdapterArray[k].Description,
 						g_pSharedMemory->HAccelArray[k].nOpenCount);
 					return false;
 				}
@@ -1059,15 +1059,15 @@ int CIPCPlayer::RemoveRenderWindow(HWND hRenderWnd)
 			else
 				m_hRenderWnd = nullptr;
 		}
-		OutputMsg("%s size of m_listRenderWnd = %d.\n", __FUNCTION__,m_listRenderWnd.size());
+		OutputMsg("%s size of m_listRenderWnd = %d.\n", __FUNCTION__, m_listRenderWnd.size());
 		return IPC_Succeed;
 	}
-	
+
 	return IPC_Succeed;
 }
 
 // »ñÈ¡ÏÔÊ¾Í¼Ïñ´°¿ÚµÄÊýÁ¿
-int CIPCPlayer::GetRenderWindows(HWND* hWndArray, int &nSize)
+int CIPCPlayer::GetRenderWindows(HWND* hWndArray, int& nSize)
 {
 	if (!hWndArray && !nSize)
 		return IPC_Error_InvalidParameters;
@@ -1096,11 +1096,11 @@ int CIPCPlayer::GetRenderWindows(HWND* hWndArray, int &nSize)
 
 // ÉèÖÃÁ÷²¥·ÅÍ·
 // ÔÚÁ÷²¥·ÅÊ±£¬²¥·ÅÖ®Ç°£¬±ØÐëÏÈÉèÖÃÁ÷Í·
-int CIPCPlayer::SetStreamHeader(CHAR *szStreamHeader, int nHeaderSize)
+int CIPCPlayer::SetStreamHeader(CHAR* szStreamHeader, int nHeaderSize)
 {
 	if (nHeaderSize != sizeof(IPC_MEDIAINFO))
 		return IPC_Error_InvalidParameters;
-	IPC_MEDIAINFO *pMediaHeader = (IPC_MEDIAINFO *)szStreamHeader;
+	IPC_MEDIAINFO* pMediaHeader = (IPC_MEDIAINFO*)szStreamHeader;
 	if (pMediaHeader->nMediaTag != IPC_TAG)
 		return IPC_Error_InvalidParameters;
 	m_pMediaHeader = make_shared<IPC_MEDIAINFO>();
@@ -1151,7 +1151,7 @@ int CIPCPlayer::SetStreamHeader(CHAR *szStreamHeader, int nHeaderSize)
 		return IPC_Error_InsufficentMemory;
 }
 
-int CIPCPlayer::SetBorderRect(HWND hWnd, LPRECT pRectBorder, bool bPercent,bool bSkipVideoSize )
+int CIPCPlayer::SetBorderRect(HWND hWnd, LPRECT pRectBorder, bool bPercent, bool bSkipVideoSize)
 {
 	RECT rtVideo = { 0 };
 	// 		rtVideo.left = rtBorder.left;
@@ -1181,13 +1181,13 @@ int CIPCPlayer::SetBorderRect(HWND hWnd, LPRECT pRectBorder, bool bPercent,bool 
 	return IPC_Succeed;
 }
 
-int CIPCPlayer::SetSwitcherCallBack(WORD nScreenWnd, HWND hWnd,void *pVideoSwitchCB , void *pUserPtr)
+int CIPCPlayer::SetSwitcherCallBack(WORD nScreenWnd, HWND hWnd, void* pVideoSwitchCB, void* pUserPtr)
 {
 	byte nScreen = HIBYTE(nScreenWnd);
 	byte nWnd = LOBYTE(nScreenWnd);
-	if (nScreen > 15 || nWnd>64)
+	if (nScreen > 15 || nWnd > 64)
 		return IPC_Error_InvalidParameters;
-	
+
 	if (pVideoSwitchCB &&
 		pUserPtr)
 	{
@@ -1200,7 +1200,7 @@ int CIPCPlayer::SetSwitcherCallBack(WORD nScreenWnd, HWND hWnd,void *pVideoSwitc
 		auto itFind = m_MapSwitcher.find(nScreenWnd);
 		if (itFind == m_MapSwitcher.end())
 		{
-			m_MapSwitcher.insert(pair<WORD,SwitcherPtrListAgent*>(nScreenWnd, pSwitcherListAgent));
+			m_MapSwitcher.insert(pair<WORD, SwitcherPtrListAgent*>(nScreenWnd, pSwitcherListAgent));
 		}
 		//m_csMapSwitcher.Unlock();
 
@@ -1209,7 +1209,7 @@ int CIPCPlayer::SetSwitcherCallBack(WORD nScreenWnd, HWND hWnd,void *pVideoSwitc
 	else
 		return IPC_Error_InvalidParameters;
 }
-int CIPCPlayer::StartPlay(bool bEnaleAudio , bool bEnableHaccel , bool bFitWindow)
+int CIPCPlayer::StartPlay(bool bEnaleAudio, bool bEnableHaccel, bool bFitWindow)
 {
 #ifdef _DEBUG
 	OutputMsg("%s \tObject:%d Time = %d.\n", __FUNCTION__, m_nObjIndex, timeGetTime() - m_nLifeTime);
@@ -1253,13 +1253,13 @@ int CIPCPlayer::StartPlay(bool bEnaleAudio , bool bEnableHaccel , bool bFitWindo
 	m_bStopFlag = false;
 	// Æô¶¯Á÷²¥·ÅÏß³Ì
 	m_bThreadDecodeRun = true;
-// 	if (m_pStreamParser)
-// 	{
-// 		m_bStreamParserRun = true;
-// 		m_hThreadStreamParser = (HANDLE)_beginthreadex(nullptr, 256 * 1024, ThreadStreamParser, this, 0, 0);
-// 	}
-// 	m_pDecodeHelperPtr = make_shared<DecodeHelper>();
-// 	m_hQueueTimer = m_TimeQueue.CreateTimer(TimerCallBack, this, 0, 20);
+	// 	if (m_pStreamParser)
+	// 	{
+	// 		m_bStreamParserRun = true;
+	// 		m_hThreadStreamParser = (HANDLE)_beginthreadex(nullptr, 256 * 1024, ThreadStreamParser, this, 0, 0);
+	// 	}
+	// 	m_pDecodeHelperPtr = make_shared<DecodeHelper>();
+	// 	m_hQueueTimer = m_TimeQueue.CreateTimer(TimerCallBack, this, 0, 20);
 	m_hRenderAsyncEvent = CreateEvent(nullptr, false, false, nullptr);
 	if (m_bAsyncRender)
 	{
@@ -1276,7 +1276,7 @@ int CIPCPlayer::StartPlay(bool bEnaleAudio , bool bEnableHaccel , bool bFitWindo
 		ResumeThread(m_hThreadDecode);
 
 	}
-		
+
 	//m_hThreadReander = (HANDLE)_beginthreadex(nullptr, 256*1024, ThreadRender, this, 0, 0);
 
 	if (!m_hThreadDecode)
@@ -1296,7 +1296,7 @@ int CIPCPlayer::StartPlay(bool bEnaleAudio , bool bEnableHaccel , bool bFitWindo
 	return IPC_Succeed;
 }
 
-int CIPCPlayer::StartSyncPlay(bool bFitWindow,CIPCPlayer *pSyncSource,int nVideoFPS )
+int CIPCPlayer::StartSyncPlay(bool bFitWindow, CIPCPlayer* pSyncSource, int nVideoFPS)
 {
 #ifdef _DEBUG
 	OutputMsg("%s \tObject:%d Time = %d.\n", __FUNCTION__, m_nObjIndex, timeGetTime() - m_nLifeTime);
@@ -1319,7 +1319,7 @@ int CIPCPlayer::StartSyncPlay(bool bFitWindow,CIPCPlayer *pSyncSource,int nVideo
 	}
 	m_bPause = false;
 	m_bFitWindow = bFitWindow;
-	
+
 	m_bEnableHaccel = false;
 	m_bPlayerInialized = false;
 
@@ -1331,7 +1331,7 @@ int CIPCPlayer::StartSyncPlay(bool bFitWindow,CIPCPlayer *pSyncSource,int nVideo
 	m_bStopFlag = false;
 	// Æô¶¯Á÷²¥·ÅÏß³Ì
 	m_bThreadDecodeRun = true;
-	
+
 	m_hThreadDecode = (HANDLE)_beginthreadex(nullptr, 256 * 1024, ThreadSyncDecode, this, 0, 0);
 	//m_hThreadAsyncReander = (HANDLE)_beginthreadex(nullptr, 256 * 1024, ThreadAsyncRender, this, 0, 0);
 
@@ -1366,7 +1366,7 @@ int CIPCPlayer::GetFileHeader()
 		return 0;
 	}
 
-	if (!ReadFile(m_hVideoFile, (void *)m_pMediaHeader.get(), sizeof(IPC_MEDIAINFO), &dwBytesRead, nullptr))
+	if (!ReadFile(m_hVideoFile, (void*)m_pMediaHeader.get(), sizeof(IPC_MEDIAINFO), &dwBytesRead, nullptr))
 	{
 		CloseHandle(m_hVideoFile);
 		return GetLastError();
@@ -1411,7 +1411,7 @@ int CIPCPlayer::GetFileHeader()
 			m_nVideoHeight = m_pMediaHeader->nVideoHeight;
 			//if (!m_nVideoWidth || !m_nVideoHeight)
 				//return IPC_Error_MediaFileHeaderError;
-				m_nVideoCodec = CODEC_UNKNOWN;
+			m_nVideoCodec = CODEC_UNKNOWN;
 		}
 		if (m_pMediaHeader->nFps == 0)
 			m_nVideoFPS = 25;
@@ -1428,7 +1428,7 @@ int CIPCPlayer::GetFileHeader()
 	return IPC_Succeed;
 }
 
-int CIPCPlayer::InputStream(unsigned char *szFrameData, int nFrameSize, UINT nCacheSize, bool bThreadInside /*ÊÇ·ñÄÚ²¿Ïß³Ìµ÷ÓÃ±êÖ¾*/)
+int CIPCPlayer::InputStream(unsigned char* szFrameData, int nFrameSize, UINT nCacheSize, bool bThreadInside /*ÊÇ·ñÄÚ²¿Ïß³Ìµ÷ÓÃ±êÖ¾*/)
 {
 	if (!szFrameData || nFrameSize < sizeof(IPCFrameHeader))
 		return IPC_Error_InvalidFrame;
@@ -1450,7 +1450,7 @@ int CIPCPlayer::InputStream(unsigned char *szFrameData, int nFrameSize, UINT nCa
 		}
 	}
 
-	IPCFrameHeader *pHeaderEx = (IPCFrameHeader *)szFrameData;
+	IPCFrameHeader* pHeaderEx = (IPCFrameHeader*)szFrameData;
 	if (m_nSDKVersion >= IPC_IPC_SDK_VERSION_2015_12_16 && m_nSDKVersion != IPC_IPC_SDK_GSJ_HEADER)
 	{
 		switch (pHeaderEx->nType)
@@ -1553,7 +1553,7 @@ int CIPCPlayer::InputStream(unsigned char *szFrameData, int nFrameSize, UINT nCa
 	return IPC_Succeed;
 }
 
-int CIPCPlayer::InputStream(IN byte *pFrameData, IN int nFrameType, IN int nFrameLength, int nFrameNum, time_t nFrameTime)
+int CIPCPlayer::InputStream(IN byte* pFrameData, IN int nFrameType, IN int nFrameLength, int nFrameNum, time_t nFrameTime)
 {
 	if (m_bStopFlag)
 		return IPC_Error_PlayerHasStop;
@@ -1638,7 +1638,7 @@ int CIPCPlayer::InputStream(IN byte *pFrameData, IN int nFrameType, IN int nFram
 }
 
 // ÊäÈëÎ´½âÎöÂëÁ÷
-int CIPCPlayer::InputStream(IN byte *pData, IN int nLength)
+int CIPCPlayer::InputStream(IN byte* pData, IN int nLength)
 {
 	//TraceFunction();
 	if (!pData || !nLength)
@@ -1650,7 +1650,7 @@ int CIPCPlayer::InputStream(IN byte *pData, IN int nLength)
 		if (m_dfFirstFrameTime == 0.0f)
 			m_dfFirstFrameTime = GetExactTime();
 #endif
-		CAutoLock lock(&m_csVideoCache,false,__FILE__,__FUNCTION__,__LINE__);
+		CAutoLock lock(&m_csVideoCache, false, __FILE__, __FUNCTION__, __LINE__);
 		if (m_listVideoCache.size() >= m_nMaxFrameCache)
 			return IPC_Error_FrameCacheIsFulled;
 		lock.Unlock();
@@ -1680,7 +1680,7 @@ int CIPCPlayer::InputStream(IN byte *pData, IN int nLength)
 	else
 		return IPC_Error_StreamParserNotStarted;
 }
-int CIPCPlayer::InputDHStream(byte *pBuffer, int nLength)
+int CIPCPlayer::InputDHStream(byte* pBuffer, int nLength)
 {
 	if (!pBuffer || !nLength)
 		return IPC_Error_InvalidParameters;
@@ -1688,9 +1688,9 @@ int CIPCPlayer::InputDHStream(byte *pBuffer, int nLength)
 	{
 		m_pDHStreamParser = make_shared<DhStreamParser>();
 	}
-	
+
 	m_pDHStreamParser->InputData(pBuffer, nLength);
-	DH_FRAME_INFO *pDHFrame = nullptr;
+	DH_FRAME_INFO* pDHFrame = nullptr;
 	do
 	{
 		pDHFrame = m_pDHStreamParser->GetNextFrame();
@@ -1710,7 +1710,7 @@ int CIPCPlayer::InputDHStream(byte *pBuffer, int nLength)
 		}
 		else
 			return nStatus;
-		
+
 	} while (true);
 	return IPC_Succeed;
 }
@@ -1732,7 +1732,7 @@ bool CIPCPlayer::StopPlay(DWORD nTimeout)
 		SetEvent(m_hRenderAsyncEvent);
 
 	//m_csMapSwitcher.Lock();
-	for (auto it = m_MapSwitcher.begin(); it != m_MapSwitcher.end();it ++)
+	for (auto it = m_MapSwitcher.begin(); it != m_MapSwitcher.end(); it++)
 	{
 		it->second->cs.Lock();
 		if (it->second->list.size())
@@ -1759,7 +1759,7 @@ bool CIPCPlayer::StopPlay(DWORD nTimeout)
 	for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end();)
 		it = m_listRenderWnd.erase(it);
 	m_cslistRenderWnd.Unlock();
-	
+
 	m_bPause = false;
 	DWORD dwThreadExitCode = 0;
 	if (m_hThreadFileParser)
@@ -1871,12 +1871,12 @@ bool CIPCPlayer::StopPlay(DWORD nTimeout)
 		m_pFrameOffsetTable = nullptr;
 	}
 
-	if (m_hRenderAsyncEvent &&!m_pSyncPlayer)
+	if (m_hRenderAsyncEvent && !m_pSyncPlayer)
 	{
 		CloseHandle(m_hRenderAsyncEvent);
 		m_hRenderAsyncEvent = nullptr;
 	}
-	m_pDHStreamParser = nullptr;	
+	m_pDHStreamParser = nullptr;
 	m_pStreamParser = nullptr;
 	m_hThreadDecode = nullptr;
 	m_hThreadFileParser = nullptr;
@@ -1885,7 +1885,7 @@ bool CIPCPlayer::StopPlay(DWORD nTimeout)
 	return true;
 }
 
-int  CIPCPlayer::EnableHaccel(IN bool bEnableHaccel )
+int  CIPCPlayer::EnableHaccel(IN bool bEnableHaccel)
 {
 	if (m_hThreadDecode)
 		return IPC_Error_PlayerHasStart;
@@ -1932,7 +1932,7 @@ bool  CIPCPlayer::IsSupportHaccel(IN IPC_CODEC nCodec)
 		return false;
 }
 
-int CIPCPlayer::GetPlayerInfo(PlayerInfo *pPlayInfo)
+int CIPCPlayer::GetPlayerInfo(PlayerInfo* pPlayInfo)
 {
 	if (!pPlayInfo)
 		return IPC_Error_InvalidParameters;
@@ -1949,7 +1949,7 @@ int CIPCPlayer::GetPlayerInfo(PlayerInfo *pPlayInfo)
 		pPlayInfo->nPlayFPS = m_nPlayFPS;
 		pPlayInfo->nCacheSize = m_nVideoCache;
 		pPlayInfo->nCacheSize2 = m_nAudioCache;
-		pPlayInfo->bD3DReady = (m_pDxSurface != nullptr)?(m_pDxSurface->m_pDirect3DDeviceEx != nullptr):false;
+		pPlayInfo->bD3DReady = (m_pDxSurface != nullptr) ? (m_pDxSurface->m_pDirect3DDeviceEx != nullptr) : false;
 		if (!m_bIpcStream)
 		{
 			pPlayInfo->bFilePlayFinished = m_bFilePlayFinished;
@@ -1967,12 +1967,12 @@ int CIPCPlayer::GetPlayerInfo(PlayerInfo *pPlayInfo)
 				if (m_pMediaHeader->nCameraType == 1)	// °²Ñ¶Ê¿Ïà»ú
 				{
 					pPlayInfo->tCurFrameTime = (m_tCurFrameTimeStamp - m_FirstFrame.nTimestamp) / (1000 * 1000);
-					pPlayInfo->tFirstFrameTime = m_tFirstFrameTime/(1000*1000);
+					pPlayInfo->tFirstFrameTime = m_tFirstFrameTime / (1000 * 1000);
 				}
 				else
 				{
 					pPlayInfo->tCurFrameTime = (m_tCurFrameTimeStamp - m_FirstFrame.nTimestamp) / 1000;
-					pPlayInfo->nCurFrameID = pPlayInfo->tCurFrameTime*m_nVideoFPS / 1000;
+					pPlayInfo->nCurFrameID = pPlayInfo->tCurFrameTime * m_nVideoFPS / 1000;
 					pPlayInfo->tFirstFrameTime = m_tFirstFrameTime;
 				}
 			}
@@ -1986,7 +1986,7 @@ int CIPCPlayer::GetPlayerInfo(PlayerInfo *pPlayInfo)
 		return IPC_Error_PlayerNotStart;
 }
 
-int CIPCPlayer::SnapShot(IN CHAR *szFileName, IN SNAPSHOT_FORMAT nFileFormat)
+int CIPCPlayer::SnapShot(IN CHAR* szFileName, IN SNAPSHOT_FORMAT nFileFormat)
 {
 	if (!szFileName || !strlen(szFileName))
 		return -1;
@@ -2039,7 +2039,7 @@ int CIPCPlayer::SnapShot(IN CHAR *szFileName, IN SNAPSHOT_FORMAT nFileFormat)
 		return IPC_Error_PlayerNotStart;
 }
 
-void CIPCPlayer::ProcessSnapshotRequire(AVFrame *pAvFrame)
+void CIPCPlayer::ProcessSnapshotRequire(AVFrame* pAvFrame)
 {
 	if (!pAvFrame)
 		return;
@@ -2082,7 +2082,7 @@ int CIPCPlayer::SetRate(IN float fPlayRate)
 	DEVMODE   dm;
 	dm.dmSize = sizeof(DEVMODE);
 	::EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dm);
-	m_fPlayInterval = (int)(1000 / (m_nVideoFPS*fPlayRate));
+	m_fPlayInterval = (int)(1000 / (m_nVideoFPS * fPlayRate));
 	/// marked by xionggao.lee @2016.03.23
 	// 		float nMinPlayInterval = ((float)1000) / dm.dmDisplayFrequency;
 	// 		if (m_fPlayInterval < nMinPlayInterval)
@@ -2093,7 +2093,7 @@ int CIPCPlayer::SetRate(IN float fPlayRate)
 	return IPC_Succeed;
 }
 
-int CIPCPlayer::SeekFrame(IN int nFrameID, bool bUpdate )
+int CIPCPlayer::SeekFrame(IN int nFrameID, bool bUpdate)
 {
 	if (!m_bSummaryIsReady)
 		return IPC_Error_SummaryNotReady;
@@ -2159,7 +2159,7 @@ int CIPCPlayer::SeekFrame(IN int nFrameID, bool bUpdate )
 		DWORD nBufferSize = m_pFrameOffsetTable[m_nFrametoRead].nFrameSize;
 		LONGLONG nOffset = m_pFrameOffsetTable[m_nFrametoRead].nOffset;
 
-		byte *pBuffer = _New byte[nBufferSize + 1];
+		byte* pBuffer = _New byte[nBufferSize + 1];
 		if (!pBuffer)
 			return IPC_Error_InsufficentMemory;
 
@@ -2176,9 +2176,9 @@ int CIPCPlayer::SeekFrame(IN int nFrameID, bool bUpdate )
 			OutputMsg("%s ReadFile Failed,Error = %d.\n", __FUNCTION__, GetLastError());
 			return GetLastError();
 		}
-		AVPacket *pAvPacket = (AVPacket *)av_malloc(sizeof(AVPacket));
+		AVPacket* pAvPacket = (AVPacket*)av_malloc(sizeof(AVPacket));
 		shared_ptr<AVPacket>AvPacketPtr(pAvPacket, av_free);
-		AVFrame *pAvFrame = av_frame_alloc();
+		AVFrame* pAvFrame = av_frame_alloc();
 		shared_ptr<AVFrame>AvFramePtr(pAvFrame, av_free);
 		av_init_packet(pAvPacket);
 		m_nCurVideoFrame = Frame(pBuffer)->nFrameID;
@@ -2212,7 +2212,7 @@ int CIPCPlayer::AsyncSeekTime(IN time_t tTimeOffset, bool bUpdate)
 {
 	if (!m_bAsyncRender)
 		return IPC_Error_NotAsyncPlayer;
-	if (!m_hThreadDecode )
+	if (!m_hThreadDecode)
 		return IPC_Error_PlayerNotStart;
 	if (!m_nVideoWidth || !m_nVideoHeight)
 	{
@@ -2220,7 +2220,7 @@ int CIPCPlayer::AsyncSeekTime(IN time_t tTimeOffset, bool bUpdate)
 	}
 	if (!InitizlizeDx())
 		return IPC_Error_DxError;
-	
+
 	LineLockAgent(m_cslistAVFrame);
 	if (m_listAVFrame.size() < 1)
 		return IPC_Error_InvalidTimeOffset;
@@ -2294,7 +2294,7 @@ int CIPCPlayer::AsyncSeekTime(IN time_t tTimeOffset, bool bUpdate)
 				return IPC_Error_InvalidTimeOffset;
 		}
 	}
-	
+
 }
 
 int CIPCPlayer::SeekTime(IN time_t tTimeOffset, bool bUpdate)
@@ -2321,7 +2321,7 @@ int CIPCPlayer::SeekTime(IN time_t tTimeOffset, bool bUpdate)
 	return SeekFrame(nFrameID, bUpdate);
 }
 
-int CIPCPlayer::GetFrame(INOUT byte **pBuffer, OUT UINT &nBufferSize)
+int CIPCPlayer::GetFrame(INOUT byte** pBuffer, OUT UINT& nBufferSize)
 {
 	if (!m_hVideoFile)
 		return IPC_Error_NotFilePlayer;
@@ -2333,7 +2333,7 @@ int CIPCPlayer::GetFrame(INOUT byte **pBuffer, OUT UINT &nBufferSize)
 	DWORD nBytesRead = 0;
 	FrameParser Parser;
 	CAutoLock lock(&m_csParser, false, __FILE__, __FUNCTION__, __LINE__);
-	byte *pFrameBuffer = &m_pParserBuffer[m_nParserOffset];
+	byte* pFrameBuffer = &m_pParserBuffer[m_nParserOffset];
 	if (!ParserFrame(&pFrameBuffer, m_nParserDataLength, &Parser))
 	{
 		// ²ÐÁôÊý¾Ý³¤ÎªnDataLength
@@ -2352,7 +2352,7 @@ int CIPCPlayer::GetFrame(INOUT byte **pBuffer, OUT UINT &nBufferSize)
 		}
 	}
 	m_nParserOffset += Parser.nFrameSize;
-	*pBuffer = (byte *)Parser.pHeaderEx;
+	*pBuffer = (byte*)Parser.pHeaderEx;
 	nBufferSize = Parser.nFrameSize;
 	return IPC_Succeed;
 }
@@ -2379,7 +2379,7 @@ int CIPCPlayer::SeekNextFrame()
 		DWORD nBufferSize = m_pFrameOffsetTable[m_nCurVideoFrame].nFrameSize;
 		LONGLONG nOffset = m_pFrameOffsetTable[m_nCurVideoFrame].nOffset;
 
-		byte *pBuffer = _New byte[nBufferSize + 1];
+		byte* pBuffer = _New byte[nBufferSize + 1];
 		if (!pBuffer)
 			return IPC_Error_InsufficentMemory;
 
@@ -2396,9 +2396,9 @@ int CIPCPlayer::SeekNextFrame()
 			OutputMsg("%s ReadFile Failed,Error = %d.\n", __FUNCTION__, GetLastError());
 			return GetLastError();
 		}
-		AVPacket *pAvPacket = (AVPacket *)av_malloc(sizeof(AVPacket));
+		AVPacket* pAvPacket = (AVPacket*)av_malloc(sizeof(AVPacket));
 		shared_ptr<AVPacket>AvPacketPtr(pAvPacket, av_free);
-		AVFrame *pAvFrame = av_frame_alloc();
+		AVFrame* pAvFrame = av_frame_alloc();
 		shared_ptr<AVFrame>AvFramePtr(pAvFrame, av_free);
 		av_init_packet(pAvPacket);
 		pAvPacket->size = Frame(pBuffer)->nLength;
@@ -2435,7 +2435,7 @@ int CIPCPlayer::SeekNextFrame()
 }
 
 #ifndef _WIN64
-int CIPCPlayer::EnableAudio(bool bEnable )
+int CIPCPlayer::EnableAudio(bool bEnable)
 {
 	// TraceFunction();
 	// 		if (m_fPlayRate != 1.0f)
@@ -2511,7 +2511,7 @@ int CIPCPlayer::EnableAudio(bool bEnable )
 #endif
 void CIPCPlayer::Refresh()
 {
-	LineLockAgent(m_cslistRenderWnd);				
+	LineLockAgent(m_cslistRenderWnd);
 	if (m_listRenderWnd.size() > 0)
 	{
 		for (auto it = m_listRenderWnd.begin(); it != m_listRenderWnd.end(); it++)
@@ -2551,7 +2551,7 @@ void CIPCPlayer::SetBackgroundImage(LPCWSTR szImageFilePath)
 }
 
 // Ìí¼ÓÏßÌõÊ§°ÜÊ±£¬·µ»Ø0£¬·ñÔò·µ»ØÏßÌõ×éµÄ¾ä±ú
-long CIPCPlayer::AddLineArray(POINT *pPointArray, int nCount, float fWidth, D3DCOLOR nColor)
+long CIPCPlayer::AddLineArray(POINT* pPointArray, int nCount, float fWidth, D3DCOLOR nColor)
 {
 	if (m_pDxSurface)
 	{
@@ -2577,7 +2577,7 @@ int	CIPCPlayer::RemoveLineArray(long nIndex)
 	}
 }
 
-long CIPCPlayer::AddPolygon(POINT *pPointArray, int nCount, WORD *pVertexIndex, DWORD nColor)
+long CIPCPlayer::AddPolygon(POINT* pPointArray, int nCount, WORD* pVertexIndex, DWORD nColor)
 {
 	if (m_pDxSurface)
 		return m_pDxSurface->AddPolygon(pPointArray, nCount, pVertexIndex, nColor);
@@ -2599,7 +2599,7 @@ int CIPCPlayer::RemovePolygon(long nIndex)
 	}
 }
 
-int CIPCPlayer::SetCallBack(IPC_CALLBACK nCallBackType, IN void *pUserCallBack, IN void *pUserPtr)
+int CIPCPlayer::SetCallBack(IPC_CALLBACK nCallBackType, IN void* pUserCallBack, IN void* pUserPtr)
 {
 	switch (nCallBackType)
 	{
@@ -2663,7 +2663,7 @@ int CIPCPlayer::SetCallBack(IPC_CALLBACK nCallBackType, IN void *pUserCallBack, 
 		m_pCaptureRGB = (CaptureRGB)pUserCallBack;
 		m_pUserCaptureRGB = pUserPtr;
 	}
-		break;
+	break;
 	default:
 		return IPC_Error_InvalidParameters;
 		break;
@@ -2671,7 +2671,7 @@ int CIPCPlayer::SetCallBack(IPC_CALLBACK nCallBackType, IN void *pUserCallBack, 
 	return IPC_Succeed;
 }
 
-int CIPCPlayer::GetFileSummary(volatile bool &bWorking)
+int CIPCPlayer::GetFileSummary(volatile bool& bWorking)
 {
 	//#ifdef _DEBUG
 	double dfTimeStart = GetExactTime();
@@ -2688,10 +2688,10 @@ int CIPCPlayer::GetFileSummary(volatile bool &bWorking)
 	if (!m_pFrameOffsetTable)
 	{
 		m_pFrameOffsetTable = _New FileFrameInfo[m_nTotalFrames];
-		ZeroMemory(m_pFrameOffsetTable, sizeof(FileFrameInfo)*m_nTotalFrames);
+		ZeroMemory(m_pFrameOffsetTable, sizeof(FileFrameInfo) * m_nTotalFrames);
 	}
 
-	byte *pBuffer = _New byte[nBufferSize];
+	byte* pBuffer = _New byte[nBufferSize];
 	while (!pBuffer)
 	{
 		if (nBufferSize <= 1024 * 512)
@@ -2704,14 +2704,14 @@ int CIPCPlayer::GetFileSummary(volatile bool &bWorking)
 		pBuffer = _New byte[nBufferSize];
 	}
 	shared_ptr<byte>BufferPtr(pBuffer);
-	byte *pFrame = nullptr;
+	byte* pFrame = nullptr;
 	int nFrameSize = 0;
 	int nVideoFrames = 0;
 	int nAudioFrames = 0;
 	LONG nSeekOffset = 0;
 	DWORD nBytesRead = 0;
 	DWORD nDataLength = 0;
-	byte *pFrameBuffer = nullptr;
+	byte* pFrameBuffer = nullptr;
 	FrameParser Parser;
 	int nFrameOffset = sizeof(IPC_MEDIAINFO);
 	bool bIFrame = false;
@@ -2748,7 +2748,7 @@ int CIPCPlayer::GetFileSummary(volatile bool &bWorking)
 			}
 			if (bFirstBlockIsFilled)
 			{
-				if (InputStream((byte *)Parser.pHeader, Parser.nFrameSize, (UINT)nMaxCache, true) == IPC_Error_FrameCacheIsFulled &&
+				if (InputStream((byte*)Parser.pHeader, Parser.nFrameSize, (UINT)nMaxCache, true) == IPC_Error_FrameCacheIsFulled &&
 					bWorking)
 				{
 					m_nSummaryOffset = nFrameOffset;
@@ -2783,7 +2783,7 @@ int CIPCPlayer::GetFileSummary(volatile bool &bWorking)
 						m_pFrameOffsetTable[nVideoFrames].bIFrame = bIFrame;
 						// ¸ù¾ÝÖ¡IDºÍÎÄ¼þ²¥·Å¼ä¸ôÀ´¾«È·µ÷ÕûÃ¿Ò»Ö¡µÄ²¥·ÅÊ±¼ä
 						if (m_nSDKVersion >= IPC_IPC_SDK_VERSION_2015_12_16 && m_nSDKVersion != IPC_IPC_SDK_GSJ_HEADER)
-							m_pFrameOffsetTable[nVideoFrames].tTimeStamp = nVideoFrames*m_nFileFrameInterval * 1000;
+							m_pFrameOffsetTable[nVideoFrames].tTimeStamp = nVideoFrames * m_nFileFrameInterval * 1000;
 						else
 							m_pFrameOffsetTable[nVideoFrames].tTimeStamp = Parser.pHeader->nTimestamp;
 					}
@@ -2822,7 +2822,7 @@ int CIPCPlayer::GetFileSummary(volatile bool &bWorking)
 	return IPC_Succeed;
 }
 
-bool CIPCPlayer::ParserFrame(INOUT byte **ppBuffer,	INOUT DWORD &nDataSize,	FrameParser* pFrameParser)
+bool CIPCPlayer::ParserFrame(INOUT byte** ppBuffer, INOUT DWORD& nDataSize, FrameParser* pFrameParser)
 {
 	int nOffset = 0;
 	if (nDataSize < sizeof(IPCFrameHeaderEx))
@@ -2830,18 +2830,18 @@ bool CIPCPlayer::ParserFrame(INOUT byte **ppBuffer,	INOUT DWORD &nDataSize,	Fram
 	if (Frame(*ppBuffer)->nFrameTag != IPC_TAG &&
 		Frame(*ppBuffer)->nFrameTag != GSJ_TAG)
 	{
-		static char *szKey1 = "MOVD";
-		static char *szKey2 = "IMWH";
-		nOffset = KMP_StrFind(*ppBuffer, nDataSize, (byte *)szKey1, 4);
+		static char* szKey1 = "MOVD";
+		static char* szKey2 = "IMWH";
+		nOffset = KMP_StrFind(*ppBuffer, nDataSize, (byte*)szKey1, 4);
 		if (nOffset < 0)
-			nOffset = KMP_StrFind(*ppBuffer, nDataSize, (byte *)szKey2, 4);
+			nOffset = KMP_StrFind(*ppBuffer, nDataSize, (byte*)szKey2, 4);
 		nOffset -= offsetof(IPCFrameHeader, nFrameTag);
 	}
 
 	if (nOffset < 0)
 		return false;
 
-	byte *pFrameBuff = *ppBuffer;
+	byte* pFrameBuff = *ppBuffer;
 	if (m_nSDKVersion < IPC_IPC_SDK_VERSION_2015_12_16 || m_nSDKVersion == IPC_IPC_SDK_GSJ_HEADER)
 	{// ¾É°æÎÄ¼þ
 		// Ö¡Í·ÐÅÏ¢²»ÍêÕû
@@ -2853,7 +2853,7 @@ bool CIPCPlayer::ParserFrame(INOUT byte **ppBuffer,	INOUT DWORD &nDataSize,	Fram
 			return false;
 		if (pFrameParser)
 		{
-			pFrameParser->pHeader = (IPCFrameHeader *)(pFrameBuff);
+			pFrameParser->pHeader = (IPCFrameHeader*)(pFrameBuff);
 			bool bIFrame = false;
 			// 				if (IsIPCVideoFrame(pFrameParser->pHeaderEx, bIFrame,m_nSDKVersion))
 			// 					OutputMsg("Frame ID:%d\tType = Video:%d.\n", pFrameParser->pHeaderEx->nFrameID, pFrameParser->pHeaderEx->nType);
@@ -2880,7 +2880,7 @@ bool CIPCPlayer::ParserFrame(INOUT byte **ppBuffer,	INOUT DWORD &nDataSize,	Fram
 
 		if (pFrameParser)
 		{
-			pFrameParser->pHeaderEx = (IPCFrameHeaderEx *)pFrameBuff;
+			pFrameParser->pHeaderEx = (IPCFrameHeaderEx*)pFrameBuff;
 			bool bIFrame = false;
 			// 				if (IsIPCVideoFrame(pFrameParser->pHeaderEx, bIFrame,m_nSDKVersion))
 			// 					OutputMsg("Frame ID:%d\tType = Video:%d.\n", pFrameParser->pHeaderEx->nFrameID, pFrameParser->pHeaderEx->nType);
@@ -2898,9 +2898,9 @@ bool CIPCPlayer::ParserFrame(INOUT byte **ppBuffer,	INOUT DWORD &nDataSize,	Fram
 }
 
 ///< @brief ÊÓÆµÎÄ¼þ½âÎöÏß³Ì
-UINT __stdcall CIPCPlayer::ThreadFileParser(void *p)
+UINT __stdcall CIPCPlayer::ThreadFileParser(void* p)
 {// ÈôÖ¸¶¨ÁËÓÐÐ§µÄ´°¿Ú¾ä±ú£¬Ôò°Ñ½âÎöºóµÄÎÄ¼þÊý¾Ý·ÅÈë²¥·Å¶ÓÁÐ£¬·ñÔò²»·ÅÈë²¥·Å¶ÓÁÐ
-	CIPCPlayer* pThis = (CIPCPlayer *)p;
+	CIPCPlayer* pThis = (CIPCPlayer*)p;
 	LONGLONG nSeekOffset = 0;
 	DWORD nBufferSize = pThis->m_nMaxFrameSize * 4;
 	DWORD nBytesRead = 0;
@@ -2916,7 +2916,7 @@ UINT __stdcall CIPCPlayer::ThreadFileParser(void *p)
 		return 0;
 	}
 
-	byte *pBuffer = _New byte[nBufferSize];
+	byte* pBuffer = _New byte[nBufferSize];
 	shared_ptr<byte>BufferPtr(pBuffer);
 	FrameParser Parser;
 	pThis->m_tLastFrameTime = 0;
@@ -3018,7 +3018,7 @@ UINT __stdcall CIPCPlayer::ThreadFileParser(void *p)
 		else
 			pThis->m_bFilePlayFinished = false;
 		nDataLength += nBytesRead;
-		byte *pFrameBuffer = pBuffer;
+		byte* pFrameBuffer = pBuffer;
 
 		bool bIFrame = false;
 		bool bFrameInput = true;
@@ -3034,7 +3034,7 @@ UINT __stdcall CIPCPlayer::ThreadFileParser(void *p)
 				bFrameInput = false;
 				if (!pThis->ParserFrame(&pFrameBuffer, nDataLength, &Parser))
 					break;
-				nInputResult = pThis->InputStream((byte *)Parser.pHeader, Parser.nFrameSize, 0);
+				nInputResult = pThis->InputStream((byte*)Parser.pHeader, Parser.nFrameSize, 0);
 				switch (nInputResult)
 				{
 				case IPC_Succeed:
@@ -3050,7 +3050,7 @@ UINT __stdcall CIPCPlayer::ThreadFileParser(void *p)
 			}
 			else
 			{
-				nInputResult = pThis->InputStream((byte *)Parser.pHeader, Parser.nFrameSize,0);
+				nInputResult = pThis->InputStream((byte*)Parser.pHeader, Parser.nFrameSize, 0);
 				switch (nInputResult)
 				{
 				case IPC_Succeed:
@@ -3104,46 +3104,46 @@ int CIPCPlayer::EnableStreamParser(IPC_CODEC nCodec)
 }
 
 ///< @brief ÊÓÆµÁ÷½âÎöÏß³Ì
-UINT __stdcall CIPCPlayer::ThreadStreamParser(void *p)
+UINT __stdcall CIPCPlayer::ThreadStreamParser(void* p)
 {
-	CIPCPlayer* pThis = (CIPCPlayer *)p;
+	CIPCPlayer* pThis = (CIPCPlayer*)p;
 	return 0;
-// 	int nBufferLength = 0;
-// 	bool bGetFrame = false;
-// 	bool bSleeped = false;
-// 	list<AVPacketPtr> listFrame;
-// 	while (pThis->m_bStreamParserRun)
-// 	{
-// 		bSleeped = false;
-// 		if (pThis->m_pStreamParser->ParserFrame(listFrame) > 0)
-// 		{
-// 			for (auto it = listFrame.begin(); pThis->m_bStreamParserRun && it != listFrame.end();)
-// 			{
-// 				bSleeped = false;
-// 				
-// 				if (pThis->InputStream((*it)->data, IPC_I_FRAME, (*it)->size, 0, 0) == IPC_Succeed)
-// 				{
-// 					it = listFrame.erase(it);
-// 					pThis->m_pStreamParser->SetFrameCahceFulled(false);
-// 				}
-// 				else
-// 				{
-// 					pThis->m_pStreamParser->SetFrameCahceFulled(true);
-// 					bSleeped = true;
-// 					Sleep(10);
-// 					continue;
-// 				}
-// 			}
-// 		}
-// 		if (!bSleeped)
-// 			Sleep(10);
-// 	}
-// 	
-// 	return 0;
+	// 	int nBufferLength = 0;
+	// 	bool bGetFrame = false;
+	// 	bool bSleeped = false;
+	// 	list<AVPacketPtr> listFrame;
+	// 	while (pThis->m_bStreamParserRun)
+	// 	{
+	// 		bSleeped = false;
+	// 		if (pThis->m_pStreamParser->ParserFrame(listFrame) > 0)
+	// 		{
+	// 			for (auto it = listFrame.begin(); pThis->m_bStreamParserRun && it != listFrame.end();)
+	// 			{
+	// 				bSleeped = false;
+	// 				
+	// 				if (pThis->InputStream((*it)->data, IPC_I_FRAME, (*it)->size, 0, 0) == IPC_Succeed)
+	// 				{
+	// 					it = listFrame.erase(it);
+	// 					pThis->m_pStreamParser->SetFrameCahceFulled(false);
+	// 				}
+	// 				else
+	// 				{
+	// 					pThis->m_pStreamParser->SetFrameCahceFulled(true);
+	// 					bSleeped = true;
+	// 					Sleep(10);
+	// 					continue;
+	// 				}
+	// 			}
+	// 		}
+	// 		if (!bSleeped)
+	// 			Sleep(10);
+	// 	}
+	// 	
+	// 	return 0;
 }
 
 // Ì½²âÊÓÆµÂëÁ÷ÀàÐÍ,ÒªÇó±ØÐëÊäÈëIÖ¡
-bool CIPCPlayer::ProbeStream(byte *szFrameBuffer, int nBufferLength)
+bool CIPCPlayer::ProbeStream(byte* szFrameBuffer, int nBufferLength)
 {
 	shared_ptr<CVideoDecoder>pDecodec = make_shared<CVideoDecoder>();
 	if (!m_pStreamProbe)
@@ -3201,39 +3201,39 @@ bool CIPCPlayer::ProbeStream(byte *szFrameBuffer, int nBufferLength)
 }
 
 /// @brief °ÑNV12Í¼Ïñ×ª»»ÎªYUV420PÍ¼Ïñ
-void CIPCPlayer::CopyNV12ToYUV420P(byte *pYV12, byte *pNV12[2], int src_pitch[2], unsigned width, unsigned height)
+void CIPCPlayer::CopyNV12ToYUV420P(byte* pYV12, byte* pNV12[2], int src_pitch[2], unsigned width, unsigned height)
 {
-	byte* dstV = pYV12 + width*height;
-	byte* dstU = pYV12 + width*height / 4;
+	byte* dstV = pYV12 + width * height;
+	byte* dstU = pYV12 + width * height / 4;
 	UINT heithtUV = height / 2;
 	UINT widthUV = width / 2;
-	byte *pSrcUV = pNV12[1];
-	byte *pSrcY = pNV12[0];
-	int &nYpitch = src_pitch[0];
-	int &nUVpitch = src_pitch[1];
+	byte* pSrcUV = pNV12[1];
+	byte* pSrcY = pNV12[0];
+	int& nYpitch = src_pitch[0];
+	int& nUVpitch = src_pitch[1];
 
 	// ¸´ÖÆY·ÖÁ¿
 	for (int i = 0; i < height; i++)
-		memcpy(pYV12 + i*width, pSrcY + i*nYpitch, width);
+		memcpy(pYV12 + i * width, pSrcY + i * nYpitch, width);
 
 	// ¸´ÖÆVU·ÖÁ¿
 	for (int i = 0; i < heithtUV; i++)
 	{
 		for (int j = 0; j < width; j++)
 		{
-			dstU[i*widthUV + j] = pSrcUV[i*nUVpitch + 2 * j];
-			dstV[i*widthUV + j] = pSrcUV[i*nUVpitch + 2 * j + 1];
+			dstU[i * widthUV + j] = pSrcUV[i * nUVpitch + 2 * j];
+			dstV[i * widthUV + j] = pSrcUV[i * nUVpitch + 2 * j + 1];
 		}
 	}
 }
 
 /// @brief °ÑDxvaÓ²½âÂëNV12Ö¡×ª»»³ÉYV12Í¼Ïñ
-void CIPCPlayer::CopyDxvaFrame(byte *pYuv420, AVFrame *pAvFrameDXVA)
+void CIPCPlayer::CopyDxvaFrame(byte* pYuv420, AVFrame* pAvFrameDXVA)
 {
 	if (pAvFrameDXVA->format != AV_PIX_FMT_DXVA2_VLD)
 		return;
 
-	IDirect3DSurface9* pSurface = (IDirect3DSurface9 *)pAvFrameDXVA->data[3];
+	IDirect3DSurface9* pSurface = (IDirect3DSurface9*)pAvFrameDXVA->data[3];
 	D3DLOCKED_RECT lRect;
 	D3DSURFACE_DESC SurfaceDesc;
 	pSurface->GetDesc(&SurfaceDesc);
@@ -3245,42 +3245,42 @@ void CIPCPlayer::CopyDxvaFrame(byte *pYuv420, AVFrame *pAvFrameDXVA)
 	}
 
 	// Y·ÖÁ¿Í¼Ïñ
-	byte *pSrcY = (byte *)lRect.pBits;
+	byte* pSrcY = (byte*)lRect.pBits;
 
 	// UV·ÖÁ¿Í¼Ïñ
 	//byte *pSrcUV = (byte *)lRect.pBits + lRect.Pitch * SurfaceDesc.Height;
-	byte *pSrcUV = (byte *)lRect.pBits + lRect.Pitch * pAvFrameDXVA->height;
+	byte* pSrcUV = (byte*)lRect.pBits + lRect.Pitch * pAvFrameDXVA->height;
 
 	byte* dstY = pYuv420;
-	byte* dstV = pYuv420 + pAvFrameDXVA->width*pAvFrameDXVA->height;
-	byte* dstU = pYuv420 + pAvFrameDXVA->width*pAvFrameDXVA->height / 4;
+	byte* dstV = pYuv420 + pAvFrameDXVA->width * pAvFrameDXVA->height;
+	byte* dstU = pYuv420 + pAvFrameDXVA->width * pAvFrameDXVA->height / 4;
 
 	UINT heithtUV = pAvFrameDXVA->height / 2;
 	UINT widthUV = pAvFrameDXVA->width / 2;
 
 	// ¸´ÖÆY·ÖÁ¿
 	for (int i = 0; i < pAvFrameDXVA->height; i++)
-		memcpy(&dstY[i*pAvFrameDXVA->width], &pSrcY[i*lRect.Pitch], pAvFrameDXVA->width);
+		memcpy(&dstY[i * pAvFrameDXVA->width], &pSrcY[i * lRect.Pitch], pAvFrameDXVA->width);
 
 	// ¸´ÖÆVU·ÖÁ¿
 	for (int i = 0; i < heithtUV; i++)
 	{
 		for (int j = 0; j < widthUV; j++)
 		{
-			dstU[i*widthUV + j] = pSrcUV[i*lRect.Pitch + 2 * j];
-			dstV[i*widthUV + j] = pSrcUV[i*lRect.Pitch + 2 * j + 1];
+			dstU[i * widthUV + j] = pSrcUV[i * lRect.Pitch + 2 * j];
+			dstV[i * widthUV + j] = pSrcUV[i * lRect.Pitch + 2 * j + 1];
 		}
 	}
 
 	pSurface->UnlockRect();
 }
 
-void CIPCPlayer::CopyDxvaFrameYV12(byte **ppYV12, int &nStrideY, int &nWidth, int &nHeight, AVFrame *pAvFrameDXVA)
+void CIPCPlayer::CopyDxvaFrameYV12(byte** ppYV12, int& nStrideY, int& nWidth, int& nHeight, AVFrame* pAvFrameDXVA)
 {
 	if (pAvFrameDXVA->format != AV_PIX_FMT_DXVA2_VLD)
 		return;
 
-	IDirect3DSurface9* pSurface = (IDirect3DSurface9 *)pAvFrameDXVA->data[3];
+	IDirect3DSurface9* pSurface = (IDirect3DSurface9*)pAvFrameDXVA->data[3];
 	D3DLOCKED_RECT lRect;
 	D3DSURFACE_DESC SurfaceDesc;
 	pSurface->GetDesc(&SurfaceDesc);
@@ -3292,22 +3292,23 @@ void CIPCPlayer::CopyDxvaFrameYV12(byte **ppYV12, int &nStrideY, int &nWidth, in
 	}
 
 	// Y·ÖÁ¿Í¼Ïñ
-	byte *pSrcY = (byte *)lRect.pBits;
+	byte* pSrcY = (byte*)lRect.pBits;
 	nStrideY = lRect.Pitch;
 	nWidth = SurfaceDesc.Width;
 	nHeight = SurfaceDesc.Height;
 
-	int nPictureSize = lRect.Pitch*SurfaceDesc.Height;
+	int nPictureSize = lRect.Pitch * SurfaceDesc.Height;
 	int nYUVSize = nPictureSize * 3 / 2;
-	*ppYV12 = (byte *)_aligned_malloc(nYUVSize, 32);
+	if (!*ppYV12)
+		*ppYV12 = (byte*)_aligned_malloc(nYUVSize, 32);
 #ifdef _DEBUG
-	ZeroMemory(*ppYV12, nYUVSize);
+	// ZeroMemory(*ppYV12, nYUVSize);
 #endif
 	memcpy(*ppYV12, lRect.pBits, nPictureSize);
 
 	UINT heithtUV = SurfaceDesc.Height >> 1;
 	UINT widthUV = lRect.Pitch >> 1;
-	byte *pSrcUV = (byte *)lRect.pBits + nPictureSize;
+	byte* pSrcUV = (byte*)lRect.pBits + nPictureSize;
 	byte* dstV = *ppYV12 + nPictureSize;
 	byte* dstU = *ppYV12 + nPictureSize + nPictureSize / 4;
 	// ¸´ÖÆVU·ÖÁ¿
@@ -3324,12 +3325,12 @@ void CIPCPlayer::CopyDxvaFrameYV12(byte **ppYV12, int &nStrideY, int &nWidth, in
 	pSurface->UnlockRect();
 }
 
-void CIPCPlayer::CopyDxvaFrameNV12(byte **ppNV12, int &nStrideY, int &nWidth, int &nHeight, AVFrame *pAvFrameDXVA)
+void CIPCPlayer::CopyDxvaFrameNV12(byte** ppNV12, int& nStrideY, int& nWidth, int& nHeight, AVFrame* pAvFrameDXVA)
 {
 	if (pAvFrameDXVA->format != AV_PIX_FMT_DXVA2_VLD)
 		return;
 
-	IDirect3DSurface9* pSurface = (IDirect3DSurface9 *)pAvFrameDXVA->data[3];
+	IDirect3DSurface9* pSurface = (IDirect3DSurface9*)pAvFrameDXVA->data[3];
 	D3DLOCKED_RECT lRect;
 	D3DSURFACE_DESC SurfaceDesc;
 	pSurface->GetDesc(&SurfaceDesc);
@@ -3340,27 +3341,28 @@ void CIPCPlayer::CopyDxvaFrameNV12(byte **ppNV12, int &nStrideY, int &nWidth, in
 		return;
 	}
 	// Y·ÖÁ¿Í¼Ïñ
-	byte *pSrcY = (byte *)lRect.pBits;
+	byte* pSrcY = (byte*)lRect.pBits;
 	nStrideY = lRect.Pitch;
 	nWidth = SurfaceDesc.Width;
 	nHeight = SurfaceDesc.Height;
 
-	int nPictureSize = lRect.Pitch*SurfaceDesc.Height;
+	int nPictureSize = lRect.Pitch * SurfaceDesc.Height;
 	int nYUVSize = nPictureSize * 3 / 2;
-	*ppNV12 = (byte *)_aligned_malloc(nYUVSize, 32);
+	if (!*ppNV12)
+		*ppNV12 = (byte*)_aligned_malloc(nYUVSize, 32);
 #ifdef _DEBUG
-	ZeroMemory(*ppNV12, nYUVSize);
+	//ZeroMemory(*ppNV12, nYUVSize);
 #endif
 	gpu_memcpy(*ppNV12, lRect.pBits, nYUVSize);
 	pSurface->UnlockRect();
 }
 
-bool CIPCPlayer::LockDxvaFrame(AVFrame *pAvFrameDXVA, byte **ppSrcY, byte **ppSrcUV, int &nPitch)
+bool CIPCPlayer::LockDxvaFrame(AVFrame* pAvFrameDXVA, byte** ppSrcY, byte** ppSrcUV, int& nPitch)
 {
 	if (pAvFrameDXVA->format != AV_PIX_FMT_DXVA2_VLD)
 		return false;
 
-	IDirect3DSurface9* pSurface = (IDirect3DSurface9 *)pAvFrameDXVA->data[3];
+	IDirect3DSurface9* pSurface = (IDirect3DSurface9*)pAvFrameDXVA->data[3];
 	D3DLOCKED_RECT lRect;
 	D3DSURFACE_DESC SurfaceDesc;
 	pSurface->GetDesc(&SurfaceDesc);
@@ -3371,52 +3373,52 @@ bool CIPCPlayer::LockDxvaFrame(AVFrame *pAvFrameDXVA, byte **ppSrcY, byte **ppSr
 		return false;
 	}
 	// Y·ÖÁ¿Í¼Ïñ
-	*ppSrcY = (byte *)lRect.pBits;
+	*ppSrcY = (byte*)lRect.pBits;
 	// UV·ÖÁ¿Í¼Ïñ
 	//(PBYTE)SrcRect.pBits + SrcRect.Pitch * m_pDDraw->m_dwHeight;
-	*ppSrcUV = (byte *)lRect.pBits + lRect.Pitch * pAvFrameDXVA->height;
+	*ppSrcUV = (byte*)lRect.pBits + lRect.Pitch * pAvFrameDXVA->height;
 	nPitch = lRect.Pitch;
 	return true;
 }
 
-void CIPCPlayer::UnlockDxvaFrame(AVFrame *pAvFrameDXVA)
+void CIPCPlayer::UnlockDxvaFrame(AVFrame* pAvFrameDXVA)
 {
 	if (pAvFrameDXVA->format != AV_PIX_FMT_DXVA2_VLD)
 		return;
 
-	IDirect3DSurface9* pSurface = (IDirect3DSurface9 *)pAvFrameDXVA->data[3];
+	IDirect3DSurface9* pSurface = (IDirect3DSurface9*)pAvFrameDXVA->data[3];
 	pSurface->UnlockRect();
 }
 // °ÑYUVC420PÖ¡¸´ÖÆµ½YV12»º´æÖÐ
-void CIPCPlayer::CopyFrameYUV420(byte *pYUV420, int nYUV420Size, AVFrame *pFrame420P)
+void CIPCPlayer::CopyFrameYUV420(byte* pYUV420, int nYUV420Size, AVFrame* pFrame420P)
 {
-	byte *pDest = pYUV420;
+	byte* pDest = pYUV420;
 	int nStride = pFrame420P->width;
 	int nSize = nStride * nStride;
 	int nHalfSize = (nSize) >> 1;
-	byte *pDestY = pDest;										// Y·ÖÁ¿ÆðÊ¼µØÖ·
+	byte* pDestY = pDest;										// Y·ÖÁ¿ÆðÊ¼µØÖ·
 
-	byte *pDestU = pDest + nSize;								// U·ÖÁ¿ÆðÊ¼µØÖ·
+	byte* pDestU = pDest + nSize;								// U·ÖÁ¿ÆðÊ¼µØÖ·
 	int nSizeofU = nHalfSize >> 1;
 
-	byte *pDestV = pDestU + (size_t)(nHalfSize >> 1);			// V·ÖÁ¿ÆðÊ¼µØÖ·
+	byte* pDestV = pDestU + (size_t)(nHalfSize >> 1);			// V·ÖÁ¿ÆðÊ¼µØÖ·
 	int nSizeofV = nHalfSize >> 1;
 
 	// YUV420PµÄUºÍV·ÖÁ¿¶Ôµ÷£¬±ã³ÉÎªYV12¸ñÊ½
 	// ¸´ÖÆY·ÖÁ¿
 	for (int i = 0; i < pFrame420P->height; i++)
-		memcpy_s(pDestY + i * nStride, nSize * 3 / 2 - i*nStride, pFrame420P->data[0] + i * pFrame420P->linesize[0], pFrame420P->width);
+		memcpy_s(pDestY + i * nStride, nSize * 3 / 2 - i * nStride, pFrame420P->data[0] + i * pFrame420P->linesize[0], pFrame420P->width);
 
 	// ¸´ÖÆYUV420PµÄU·ÖÁ¿µ½Ä¿´åµÄYV12µÄU·ÖÁ¿
 	for (int i = 0; i < pFrame420P->height / 2; i++)
-		memcpy_s(pDestU + i * nStride / 2, nSizeofU - i*nStride / 2, pFrame420P->data[1] + i * pFrame420P->linesize[1], pFrame420P->width / 2);
+		memcpy_s(pDestU + i * nStride / 2, nSizeofU - i * nStride / 2, pFrame420P->data[1] + i * pFrame420P->linesize[1], pFrame420P->width / 2);
 
 	// ¸´ÖÆYUV420PµÄV·ÖÁ¿µ½Ä¿´åµÄYV12µÄV·ÖÁ¿
 	for (int i = 0; i < pFrame420P->height / 2; i++)
-		memcpy_s(pDestV + i * nStride / 2, nSizeofV - i*nStride / 2, pFrame420P->data[2] + i * pFrame420P->linesize[2], pFrame420P->width / 2);
+		memcpy_s(pDestV + i * nStride / 2, nSizeofV - i * nStride / 2, pFrame420P->data[2] + i * pFrame420P->linesize[2], pFrame420P->width / 2);
 }
 
-void CIPCPlayer::ProcessYUVFilter(AVFrame *pAvFrame, LONGLONG nTimestamp)
+void CIPCPlayer::ProcessYUVFilter(AVFrame* pAvFrame, LONGLONG nTimestamp)
 {
 	if (m_csYUVFilter.TryLock())
 	{// ÔÚm_pfnYUVFileterÖÐ£¬ÓÃ»§ÐèÒª°ÑYUVÊý¾Ý´¦Àí·Ö£¬ÔÙ·Ö³ÉYUVÊý¾Ý
@@ -3425,8 +3427,8 @@ void CIPCPlayer::ProcessYUVFilter(AVFrame *pAvFrame, LONGLONG nTimestamp)
 			if (pAvFrame->format == AV_PIX_FMT_DXVA2_VLD)
 			{// dxva Ó²½âÂëÖ¡
 				CopyDxvaFrame(m_pYUV, pAvFrame);
-				byte* pU = m_pYUV + pAvFrame->width*pAvFrame->height;
-				byte* pV = m_pYUV + pAvFrame->width*pAvFrame->height / 4;
+				byte* pU = m_pYUV + pAvFrame->width * pAvFrame->height;
+				byte* pV = m_pYUV + pAvFrame->width * pAvFrame->height / 4;
 				m_pfnYUVFilter(this,
 					m_pYUV,
 					pU,
@@ -3440,21 +3442,21 @@ void CIPCPlayer::ProcessYUVFilter(AVFrame *pAvFrame, LONGLONG nTimestamp)
 			}
 			else
 				m_pfnYUVFilter(this,
-				pAvFrame->data[0],
-				pAvFrame->data[1],
-				pAvFrame->data[2],
-				pAvFrame->linesize[0],
-				pAvFrame->linesize[1],
-				pAvFrame->width,
-				pAvFrame->height,
-				nTimestamp,
-				m_pUserYUVFilter);
+					pAvFrame->data[0],
+					pAvFrame->data[1],
+					pAvFrame->data[2],
+					pAvFrame->linesize[0],
+					pAvFrame->linesize[1],
+					pAvFrame->width,
+					pAvFrame->height,
+					nTimestamp,
+					m_pUserYUVFilter);
 		}
 		m_csYUVFilter.Unlock();
 	}
 }
 
-void CIPCPlayer::ProcessYUVCapture(AVFrame *pAvFrame, LONGLONG nTimestamp)
+void CIPCPlayer::ProcessYUVCapture(AVFrame* pAvFrame, LONGLONG nTimestamp)
 {
 	if (m_csCaptureYUV.TryLock())
 	{
@@ -3466,7 +3468,7 @@ void CIPCPlayer::ProcessYUVCapture(AVFrame *pAvFrame, LONGLONG nTimestamp)
 				int nStrideY = 0;
 				int nWidth = 0, nHeight = 0;
 				CopyDxvaFrameNV12(&m_pYUV, nStrideY, nWidth, nHeight, pAvFrame);
-				m_nYUVSize = nStrideY*nHeight * 3 / 2;
+				m_nYUVSize = nStrideY * nHeight * 3 / 2;
 				m_pYUVPtr = shared_ptr<byte>(m_pYUV, _aligned_free);
 				m_pfnCaptureYUV(this, m_pYUV, m_nYUVSize, nStrideY, nStrideY >> 1, nWidth, nHeight, nTimestamp, m_pUserCaptureYUV);
 			}
@@ -3477,7 +3479,7 @@ void CIPCPlayer::ProcessYUVCapture(AVFrame *pAvFrame, LONGLONG nTimestamp)
 				if (!m_pYUV)
 				{
 					m_nYUVSize = nPictureSize * 3 / 2;
-					m_pYUV = (byte *)_aligned_malloc(m_nYUVSize, 32);
+					m_pYUV = (byte*)_aligned_malloc(m_nYUVSize, 32);
 					m_pYUVPtr = shared_ptr<byte>(m_pYUV, _aligned_free);
 				}
 				memcpy(m_pYUV, pAvFrame->data[0], nPictureSize);
@@ -3493,33 +3495,31 @@ void CIPCPlayer::ProcessYUVCapture(AVFrame *pAvFrame, LONGLONG nTimestamp)
 	{
 		if (m_pfnCaptureYUVEx)
 		{
-			if (!m_pYUV)
-			{
-				m_nYUVSize = pAvFrame->width * pAvFrame->height * 3 / 2;
-				m_pYUV = (byte *)av_malloc(m_nYUVSize);
-				m_pYUVPtr = shared_ptr<byte>(m_pYUV, av_free);
-			}
+			//if (!m_pYUV)
+			//{
+			//	m_nYUVSize = pAvFrame->width * pAvFrame->height * 3 / 2;
+			//	m_pYUV = (byte *)_aligned_malloc(m_nYUVSize, 32);
+			//	//*ppNV12 = (byte *)_aligned_malloc(nYUVSize, 32);
+			//	m_pYUVPtr = shared_ptr<byte>(m_pYUV, av_free);
+			//}
 			if (pAvFrame->format == AV_PIX_FMT_DXVA2_VLD)
-			{// dxva Ó²½âÂëÖ¡
-				//CopyDxvaFrameNV12(m_pYUV, pAvFrame);
-				byte *pY = NULL;
-				byte *pUV = NULL;
+			{// dxva Ó²½âÂëÖ¡				
+				int nWidth, nHeight;
 				int nPitch = 0;
-				LockDxvaFrame(pAvFrame, &pY, &pUV, nPitch);
-				byte* pU = m_pYUV + pAvFrame->width*pAvFrame->height;
-				byte* pV = m_pYUV + pAvFrame->width*pAvFrame->height / 4;
+				CopyDxvaFrameNV12(&m_pYUV, nPitch, nWidth, nHeight, pAvFrame);
+				// LockDxvaFrame(pAvFrame, &pY, &pUV, nPitch);
+				byte* pUV = m_pYUV + nPitch * nHeight;
 
 				m_pfnCaptureYUVEx(this,
-					pY,
+					m_pYUV,
 					pUV,
 					NULL,
 					nPitch,
 					nPitch / 2,
-					pAvFrame->width,
-					pAvFrame->height,
+					nWidth,
+					nHeight,
 					nTimestamp,
 					m_pUserCaptureYUVEx);
-				UnlockDxvaFrame(pAvFrame);
 			}
 			else
 			{
@@ -3553,12 +3553,12 @@ void CIPCPlayer::ProcessYUVCapture(AVFrame *pAvFrame, LONGLONG nTimestamp)
 			}
 			if (nConverted > 0)
 				m_pCaptureRGB(this, m_pPixelConvert->pImage, pAvFrame->width, pAvFrame->height, nTimestamp, m_pUserCaptureRGB);*/
-			byte *pRGBBuffer = nullptr;
+			byte* pRGBBuffer = nullptr;
 			int  nRGBBufferSize = 0;
-			if (m_pDxSurface && m_pDxSurface->GetRGBBuffer(&pRGBBuffer,nRGBBufferSize))
+			if (m_pDxSurface && m_pDxSurface->GetRGBBuffer(&pRGBBuffer, nRGBBufferSize))
 				m_pCaptureRGB(this, pRGBBuffer, pAvFrame->width, pAvFrame->height, nTimestamp, m_pUserCaptureRGB);
 		}
-			
+
 		m_csCaptureRGB.Unlock();
 	}
 }
@@ -3568,19 +3568,19 @@ void CIPCPlayer::ProcessYUVCapture(AVFrame *pAvFrame, LONGLONG nTimestamp)
 /// @param [in]		buf			¶ÁÈ¡Êý¾ÝµÄ»º´æ
 /// @param [in]		buf_size	»º´æµÄ³¤¶È
 /// @return			Êµ¼Ê¶ÁÈ¡Êý¾ÝµÄ³¤¶È
-int CIPCPlayer::ReadAvData(void *opaque, uint8_t *buf, int buf_size)
+int CIPCPlayer::ReadAvData(void* opaque, uint8_t* buf, int buf_size)
 {
-	AvQueue *pAvQueue = (AvQueue *)opaque;
-	CIPCPlayer *pThis = (CIPCPlayer *)pAvQueue->pUserData;
+	AvQueue* pAvQueue = (AvQueue*)opaque;
+	CIPCPlayer* pThis = (CIPCPlayer*)pAvQueue->pUserData;
 
 	int nReturnVal = buf_size;
 	int nRemainedLength = 0;
 	pAvQueue->pAvBuffer = buf;
 	if (!pThis->m_pStreamProbe)
 		return 0;
-	int &nDataLength = pThis->m_pStreamProbe->nProbeDataRemained;
-	byte *pProbeBuff = pThis->m_pStreamProbe->pProbeBuff;
-	int &nProbeOffset = pThis->m_pStreamProbe->nProbeOffset;
+	int& nDataLength = pThis->m_pStreamProbe->nProbeDataRemained;
+	byte* pProbeBuff = pThis->m_pStreamProbe->pProbeBuff;
+	int& nProbeOffset = pThis->m_pStreamProbe->nProbeOffset;
 	if (nDataLength > 0)
 	{
 		nRemainedLength = nDataLength - nProbeOffset;
@@ -3604,16 +3604,16 @@ int CIPCPlayer::ReadAvData(void *opaque, uint8_t *buf, int buf_size)
 }
 
 #ifndef _WIN64
-UINT __stdcall CIPCPlayer::ThreadPlayAudioGSJ(void *p)
+UINT __stdcall CIPCPlayer::ThreadPlayAudioGSJ(void* p)
 {
-	CIPCPlayer *pThis = (CIPCPlayer *)p;
+	CIPCPlayer* pThis = (CIPCPlayer*)p;
 	int nAudioFrameInterval = pThis->m_fPlayInterval / 2;
 
 	DWORD nResult = 0;
 	int nTimeSpan = 0;
 	StreamFramePtr FramePtr;
 	int nAudioError = 0;
-	byte *pPCM = nullptr;
+	byte* pPCM = nullptr;
 	shared_ptr<CAudioDecoder> pAudioDecoder = make_shared<CAudioDecoder>();
 	int nPCMSize = 0;
 	int nDecodeSize = 0;
@@ -3638,7 +3638,7 @@ UINT __stdcall CIPCPlayer::ThreadPlayAudioGSJ(void *p)
 		return 0;
 	if (pAudioDecoder->GetCodecType() == CODEC_UNKNOWN)
 	{
-		const IPCFrameHeaderEx *pHeader = FramePtr->FrameHeader();
+		const IPCFrameHeaderEx* pHeader = FramePtr->FrameHeader();
 		nDecodeSize = pHeader->nLength * 2;		//G711 Ñ¹ËõÂÊÎª2±¶
 		switch (pHeader->nType)
 		{
@@ -3767,7 +3767,7 @@ UINT __stdcall CIPCPlayer::ThreadPlayAudioGSJ(void *p)
 		if (pThis->m_pDsBuffer->IsPlaying() //||
 			/*pThis->m_pDsBuffer->WaitForPosNotify()*/)
 		{
-			if (pAudioDecoder->Decode(pPCM, nPCMSize, (byte *)FramePtr->Framedata(pThis->m_nSDKVersion), FramePtr->FrameHeader()->nLength) != 0)
+			if (pAudioDecoder->Decode(pPCM, nPCMSize, (byte*)FramePtr->Framedata(pThis->m_nSDKVersion), FramePtr->FrameHeader()->nLength) != 0)
 			{
 				if (!pThis->m_pDsBuffer->WritePCM(pPCM, nPCMSize, !pThis->m_bIpcStream))
 					pThis->OutputMsg("%s Write PCM Failed.\n", __FUNCTION__);
@@ -3788,16 +3788,16 @@ UINT __stdcall CIPCPlayer::ThreadPlayAudioGSJ(void *p)
 	return 0;
 }
 
-UINT __stdcall CIPCPlayer::ThreadPlayAudioIPC(void *p)
+UINT __stdcall CIPCPlayer::ThreadPlayAudioIPC(void* p)
 {
-	CIPCPlayer *pThis = (CIPCPlayer *)p;
+	CIPCPlayer* pThis = (CIPCPlayer*)p;
 	int nAudioFrameInterval = pThis->m_fPlayInterval / 2;
 
 	DWORD nResult = 0;
 	int nTimeSpan = 0;
 	StreamFramePtr FramePtr;
 	int nAudioError = 0;
-	byte *pPCM = nullptr;
+	byte* pPCM = nullptr;
 	shared_ptr<CAudioDecoder> pAudioDecoder = make_shared<CAudioDecoder>();
 	int nPCMSize = 0;
 	int nDecodeSize = 0;
@@ -3821,7 +3821,7 @@ UINT __stdcall CIPCPlayer::ThreadPlayAudioIPC(void *p)
 		return 0;
 	if (pAudioDecoder->GetCodecType() == CODEC_UNKNOWN)
 	{
-		const IPCFrameHeaderEx *pHeader = FramePtr->FrameHeader();
+		const IPCFrameHeaderEx* pHeader = FramePtr->FrameHeader();
 		nDecodeSize = pHeader->nLength * 2;		//G711 Ñ¹ËõÂÊÎª2±¶
 		switch (pHeader->nType)
 		{
@@ -3943,7 +3943,7 @@ UINT __stdcall CIPCPlayer::ThreadPlayAudioIPC(void *p)
 		dfPlayTimeSpan = GetExactTime();
 		if (pThis->m_pDsBuffer->IsPlaying())
 		{
-			if (pAudioDecoder->Decode(pPCM, nPCMSize, (byte *)FramePtr->Framedata(pThis->m_nSDKVersion), FramePtr->FrameHeader()->nLength) != 0)
+			if (pAudioDecoder->Decode(pPCM, nPCMSize, (byte*)FramePtr->Framedata(pThis->m_nSDKVersion), FramePtr->FrameHeader()->nLength) != 0)
 			{
 				if (!pThis->m_pDsBuffer->WritePCM(pPCM, nPCMSize))
 					pThis->OutputMsg("%s Write PCM Failed.\n", __FUNCTION__);
@@ -4028,15 +4028,15 @@ bool CIPCPlayer::InitialziePlayer()
 struct DxDeallocator
 {
 public:
-	CDxSurfaceEx *&m_pDxSurface;
+	CDxSurfaceEx*& m_pDxSurface;
 #ifndef _WIN64
-	CDirectDraw *&m_pDDraw;
-	DxDeallocator(CDxSurfaceEx *&pDxSurface, CDirectDraw *&pDDraw)
+	CDirectDraw*& m_pDDraw;
+	DxDeallocator(CDxSurfaceEx*& pDxSurface, CDirectDraw*& pDDraw)
 		:m_pDxSurface(pDxSurface), m_pDDraw(pDDraw)
 	{
 	}
 #else
-	DxDeallocator(CDxSurfaceEx *&pDxSurface)
+	DxDeallocator(CDxSurfaceEx*& pDxSurface)
 		: m_pDxSurface(pDxSurface)
 	{
 	}
@@ -4083,15 +4083,15 @@ public:
 #endif
 	}
 };
-UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
+UINT __stdcall CIPCPlayer::ThreadDecode(void* p)
 {
-	CIPCPlayer* pThis = (CIPCPlayer *)p;
+	CIPCPlayer* pThis = (CIPCPlayer*)p;
 #ifdef _DEBUG
 	pThis->OutputMsg("%s Timespan1 of First Frame = %f.\n", __FUNCTION__, TimeSpanEx(pThis->m_dfFirstFrameTime));
 #endif
 
 	DeclareRunTime(5);
-	
+
 #ifdef _DEBUG
 	pThis->OutputMsg("%s \tObject:%d m_nLifeTime = %d.\n", __FUNCTION__, pThis->m_nObjIndex, timeGetTime() - pThis->m_nLifeTime);
 #endif
@@ -4113,7 +4113,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		if ((timeGetTime() - tFirst) > 5000)
 		{// µÈ´ý³¬Ê±
 			//assert(false);
-			pThis->OutputMsg("%s Warning!!!Wait for frame timeout(5s),times %d.\n", __FUNCTION__,++nTimeoutCount);
+			pThis->OutputMsg("%s Warning!!!Wait for frame timeout(5s),times %d.\n", __FUNCTION__, ++nTimeoutCount);
 			break;
 		}
 		if (pThis->m_listVideoCache.size() < 1)
@@ -4137,7 +4137,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 	//		DWORD dfTimeout = 3000;
 	// 		if (!pThis->m_bIpcStream)	// Ö»ÓÐIPCÂëÁ÷²ÅÐèÒª³¤Ê±¼äµÈ´ý
 	// 			dfTimeout = 1000;
-	
+
 	AVCodecID nCodecID = AV_CODEC_ID_NONE;
 	/* ½ûÓÃÌ½²âÂëÁ÷µÄ´úÂë£¬Ì½²âÂëÁ÷»áµ¼ÖÂÍ¼ÏñÑÓÊ±³ÊÏÖ
 	int nDiscardFrames = 0;
@@ -4161,7 +4161,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 			assert(false);
 			return 0;
 		}
-		
+
 		auto itStart = pThis->m_listVideoCache.begin();
 		while (!bProbeSucced && pThis->m_bThreadDecodeRun)
 		{
@@ -4222,7 +4222,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 			assert(false);
 			return 0;
 		}
-		
+
 		// °ÑffmpegµÄÂëÁ÷ID×ªÎªIPCµÄÂëÁ÷ID,²¢ÇÒÖ»Ö§³ÖH264ºÍHEVC
 		// nCodecID = pThis->m_pStreamProbe->nProbeAvCodecID;
 		if (nCodecID != AV_CODEC_ID_H264 &&
@@ -4270,10 +4270,10 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 	}
 	SaveRunTime();
 	CHAR szAdapterID[64] = { 0 };
-	if (!pThis->m_bEnableDDraw && 
+	if (!pThis->m_bEnableDDraw &&
 		(pThis->m_bEnableHaccel ||
-		(g_pSharedMemory &&
-		g_pSharedMemory->bHAccelPreferred)))
+			(g_pSharedMemory &&
+				g_pSharedMemory->bHAccelPreferred)))
 	{
 		// ³¢ÊÔ´ò¿ªÓ²½âÉèÖÃ
 		if (pThis->TryEnableHAccelOnAdapter(szAdapterID, 64))
@@ -4293,7 +4293,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		pThis->m_nVideoWidth = 1280;
 	if (!pThis->m_nVideoHeight)
 		pThis->m_nVideoHeight = 720;
-	
+
 	if (!pThis->InitizlizeDx())
 	{
 		assert(false);
@@ -4313,7 +4313,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 	pThis->m_bD3dShared = pThis->m_bEnableDDraw ? false : pThis->m_bD3dShared;
 #endif
 	SaveRunTime();
-	
+
 
 	if (pThis->m_bD3dShared && pThis->m_pDxSurface)
 	{
@@ -4357,10 +4357,10 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 	if (pThis->m_pStreamProbe)
 		pThis->m_pStreamProbe = nullptr;
 
-	AVPacket *pAvPacket = (AVPacket *)av_malloc(sizeof(AVPacket));
+	AVPacket* pAvPacket = (AVPacket*)av_malloc(sizeof(AVPacket));
 	shared_ptr<AVPacket>AvPacketPtr(pAvPacket, av_free);
 	av_init_packet(pAvPacket);
-	AVFrame *pAvFrame = av_frame_alloc();
+	AVFrame* pAvFrame = av_frame_alloc();
 	shared_ptr<AVFrame>AvFramePtr(pAvFrame, av_free);
 
 	StreamFramePtr FramePtr;
@@ -4398,7 +4398,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 	int nFramesAfterIFrame = 0;		// Ïà¶ÔIÖ¡µÄ±àºÅ,IÖ¡ºóµÄµÚÒ»Ö¡Îª1£¬µÚ¶þÖ¡Îª2ÒÀ´ËÀàÍÆ
 	int nSkipFrames = 0;
 	bool bDecodeSucceed = false;
-	
+
 	pThis->m_tFirstFrameTime = 0;
 	float fLastPlayRate = pThis->m_fPlayRate;		// ¼ÇÂ¼ÉÏÒ»´ÎµÄ²¥·ÅËÙÂÊ£¬µ±²¥·ÅËÙÂÊ·¢Éú±ä»¯Ê±£¬ÐèÒªÖØÖÃÖ¡Í³¼ÆÊý¾Ý
 
@@ -4425,22 +4425,22 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 	SaveRunTime();
 	pThis->m_pDecoder = pDecodec;
 	int nRenderTimes = 0;
-	
+
 	double dfTimeDecodeStart = 0.0f;
 	int dfDecodeTimeSpan = 0;
 	int nAvError = 0;
 	char szAvError[1024] = { 0 };
-	
+
 #ifdef _DEBUG
 	CStat  RenderInterval("RenderInterval", pThis->m_nObjIndex);
-	CStat IFrameStat("I Frame Decode Time",0);		// IÖ¡½âÂëÍ³¼Æ
-	CStat PopupTime("Frame Popup Time",pThis->m_nObjIndex);
+	CStat IFrameStat("I Frame Decode Time", 0);		// IÖ¡½âÂëÍ³¼Æ
+	CStat PopupTime("Frame Popup Time", pThis->m_nObjIndex);
 	CStat TimeDecode("Decode Time", pThis->m_nObjIndex);
 	CStat RenderTime("Frame Render Time", pThis->m_nObjIndex);
 	DWORD dwFrameTimeInput;
 	pThis->OutputMsg("%s Timespan2 of First Frame = %f.\n", __FUNCTION__, TimeSpanEx(pThis->m_dfFirstFrameTime));
 #endif
-	
+
 	while (pThis->m_bThreadDecodeRun)
 	{
 		if (!pThis->m_bIpcStream &&
@@ -4511,7 +4511,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 				continue;
 			}
 			lock.Unlock();
-			pAvPacket->data = (uint8_t *)FramePtr->Framedata(pThis->m_nSDKVersion);
+			pAvPacket->data = (uint8_t*)FramePtr->Framedata(pThis->m_nSDKVersion);
 			pAvPacket->size = FramePtr->FrameHeader()->nLength;
 			pThis->m_tLastFrameTime = FramePtr->FrameHeader()->nTimestamp;
 			av_frame_unref(pAvFrame);
@@ -4530,16 +4530,16 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 				//dfDecodeStartTime = GetExactTime();
 				continue;
 			}
-// 			avcodec_flush_buffers()			
-// 			dfDecodeTimespan = TimeSpanEx(dfDecodeStartTime);
-// 			if (StreamFrame::IsIFrame(FramePtr))			// Í³¼ÆIÖ¡½âÂëÊ±¼ä
-// 				IFrameStat.Stat(dfDecodeTimespan);
-// 			FrameStat.Stat(dfDecodeTimespan);	// Í³¼ÆËùÓÐÖ¡½âÂëÊ±¼ä
-// 			if (fLastPlayRate != pThis->m_fPlayRate)
-// 			{// ²¥·ÅËÙÂÊ·¢Éú±ä»¯£¬ÖØÖÃÍ³¼ÆÊý¾Ý
-// 				IFrameStat.Reset();
-// 				FrameStat.Reset();
-// 			}
+			// 			avcodec_flush_buffers()			
+			// 			dfDecodeTimespan = TimeSpanEx(dfDecodeStartTime);
+			// 			if (StreamFrame::IsIFrame(FramePtr))			// Í³¼ÆIÖ¡½âÂëÊ±¼ä
+			// 				IFrameStat.Stat(dfDecodeTimespan);
+			// 			FrameStat.Stat(dfDecodeTimespan);	// Í³¼ÆËùÓÐÖ¡½âÂëÊ±¼ä
+			// 			if (fLastPlayRate != pThis->m_fPlayRate)
+			// 			{// ²¥·ÅËÙÂÊ·¢Éú±ä»¯£¬ÖØÖÃÍ³¼ÆÊý¾Ý
+			// 				IFrameStat.Reset();
+			// 				FrameStat.Reset();
+			// 			}
 			fLastPlayRate = pThis->m_fPlayRate;
 			fTimeSpan = (TimeSpanEx(dfRenderTime) + dfRenderTimeSpan) * 1000;
 			int nSleepTime = 0;
@@ -4579,7 +4579,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 // 				if (WaitForSingleObject(pThis->m_hInputFrameEvent, 25) == WAIT_TIMEOUT)
 // 					continue;
 // 			}
-		
+
 			bool bPopFrame = false;
 			AutoLockAgent(pThis->m_csVideoCache);
 			if (pThis->m_listVideoCache.size() > 0)
@@ -4595,16 +4595,16 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 				Sleep(10);
 				continue;
 			}
- #ifdef _DEBUG
-// 			PopupTime.Stat((float)MMTimeSpan(FramePtr->FrameHeader()->nTimestamp));
-// 			if (PopupTime.IsFull())
-// 			{
-// 				PopupTime.OutputStat();
-// 				PopupTime.Reset();
-// 			}
+#ifdef _DEBUG
+			// 			PopupTime.Stat((float)MMTimeSpan(FramePtr->FrameHeader()->nTimestamp));
+			// 			if (PopupTime.IsFull())
+			// 			{
+			// 				PopupTime.OutputStat();
+			// 				PopupTime.Reset();
+			// 			}
 			dwFrameTimeInput = FramePtr->FrameHeader()->nTimestamp;
- #endif
-			pAvPacket->data = (uint8_t *)FramePtr->Framedata(pThis->m_nSDKVersion);
+#endif
+			pAvPacket->data = (uint8_t*)FramePtr->Framedata(pThis->m_nSDKVersion);
 			pAvPacket->size = FramePtr->FrameHeader()->nLength;
 			pThis->m_tLastFrameTime = FramePtr->FrameHeader()->nTimestamp;
 			av_frame_unref(pAvFrame);
@@ -4626,31 +4626,31 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 			dfDecodeTimeSpan = TimeSpanEx(dfDecodeStartTime);
 
 #ifdef _DEBUG
-// 			if (nNalType == 5)
-// 			{
-// 				IFrameStat.Stat(dfDecodeTimeSpan);
-// 				if (IFrameStat.IsFull())
-// 				{
-// 					IFrameStat.OutputStat();
-// 					IFrameStat.Reset();
-// 				}
-// 			}
-// 			TimeDecode.Stat(dfDecodeTimeSpan);
-// 			if (TimeDecode.IsFull())
-// 			{
-// 				TimeDecode.OutputStat(25);
-// 				TimeDecode.Reset();
-// 			}
+			// 			if (nNalType == 5)
+			// 			{
+			// 				IFrameStat.Stat(dfDecodeTimeSpan);
+			// 				if (IFrameStat.IsFull())
+			// 				{
+			// 					IFrameStat.OutputStat();
+			// 					IFrameStat.Reset();
+			// 				}
+			// 			}
+			// 			TimeDecode.Stat(dfDecodeTimeSpan);
+			// 			if (TimeDecode.IsFull())
+			// 			{
+			// 				TimeDecode.OutputStat(25);
+			// 				TimeDecode.Reset();
+			// 			}
 #endif
 		}
 #ifdef _DEBUG
-// 		if (pThis->m_bSeekSetDetected)
-// 		{
-// 			int nFrameID = FramePtr->FrameHeader()->nFrameID;
-// 			int nTimeStamp = FramePtr->FrameHeader()->nTimestamp / 1000;
-// 			pThis->OutputMsg("%s First Frame after SeekSet:ID = %d\tTimeStamp = %d.\n", __FUNCTION__, nFrameID, nTimeStamp);
-// 			pThis->m_bSeekSetDetected = false;
-// 		}
+		// 		if (pThis->m_bSeekSetDetected)
+		// 		{
+		// 			int nFrameID = FramePtr->FrameHeader()->nFrameID;
+		// 			int nTimeStamp = FramePtr->FrameHeader()->nTimestamp / 1000;
+		// 			pThis->OutputMsg("%s First Frame after SeekSet:ID = %d\tTimeStamp = %d.\n", __FUNCTION__, nFrameID, nTimeStamp);
+		// 			pThis->m_bSeekSetDetected = false;
+		// 		}
 #endif	
 		if (nGot_picture)
 		{
@@ -4661,7 +4661,7 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 			pThis->m_tCurFrameTimeStamp = FramePtr->FrameHeader()->nTimestamp;
 			pThis->ProcessYUVFilter(pAvFrame, (LONGLONG)pThis->m_nCurVideoFrame);
 			if (!pThis->m_bIpcStream &&
-				1.0f == pThis->m_fPlayRate  &&
+				1.0f == pThis->m_fPlayRate &&
 				pThis->m_bEnableAudio &&
 				pThis->m_hAudioFrameEvent[0] &&
 				pThis->m_hAudioFrameEvent[1])
@@ -4672,22 +4672,22 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 					WaitForMultipleObjects(2, pThis->m_hAudioFrameEvent, TRUE, pThis->m_nDecodeDelay);
 			}
 			dfRenderStartTime = GetExactTime();
-			
-			pThis->RenderFrame(pAvFrame,pDecodec.get());
+
+			pThis->RenderFrame(pAvFrame, pDecodec.get());
 #ifdef _DEBUG
-// 			RenderTime.Stat(MMTimeSpan(dwFrameTimeInput));
-// 			if (RenderTime.IsFull())
-// 			{
-// 				RenderTime.OutputStat();
-// 				RenderTime.Reset();
-// 			}
-			//RenderInterval.Stat(dfDecodeTimeSpan);
-// 			RenderInterval.Stat(TimeSpanEx(dfRenderStartTime));
-// 			if (RenderInterval.IsFull())
-// 			{
-// 				RenderInterval.OutputStat();
-// 				RenderInterval.Reset();
-// 			}
+			// 			RenderTime.Stat(MMTimeSpan(dwFrameTimeInput));
+			// 			if (RenderTime.IsFull())
+			// 			{
+			// 				RenderTime.OutputStat();
+			// 				RenderTime.Reset();
+			// 			}
+						//RenderInterval.Stat(dfDecodeTimeSpan);
+			// 			RenderInterval.Stat(TimeSpanEx(dfRenderStartTime));
+			// 			if (RenderInterval.IsFull())
+			// 			{
+			// 				RenderInterval.OutputStat();
+			// 				RenderInterval.Reset();
+			// 			}
 #endif
 ////////////////////////////////////////////////////////////////////////
 //äÖÈ¾Ê±¼äÍ³¼Æ´úÂë£¬¿ÉÆÁ±Î
@@ -4721,10 +4721,10 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 		dfRenderTimeSpan = TimeSpanEx(dfRenderStartTime);
 		nTimePlayFrame = (int)(TimeSpanEx(dfDecodeStartTime) * 1000);
 		dfRenderTime = GetExactTime();
-// 			if ((nTotalDecodeFrames % 100) == 0)
-// 			{
-// 				pThis->OutputMsg("%s nTotalDecodeFrames = %d\tnRenderTimes = %d.\n", __FUNCTION__,nTotalDecodeFrames, nRenderTimes);
-// 			}
+		// 			if ((nTotalDecodeFrames % 100) == 0)
+		// 			{
+		// 				pThis->OutputMsg("%s nTotalDecodeFrames = %d\tnRenderTimes = %d.\n", __FUNCTION__,nTotalDecodeFrames, nRenderTimes);
+		// 			}
 	}
 	pThis->OutputMsg("%s Object %d Decode Frames:%d.\n", __FUNCTION__, pThis->m_nObjIndex, nTotalDecodeFrames);
 	av_frame_unref(pAvFrame);
@@ -4735,9 +4735,9 @@ UINT __stdcall CIPCPlayer::ThreadDecode(void *p)
 	return 0;
 }
 
-UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
+UINT __stdcall CIPCPlayer::ThreadDecodeCache(void* p)
 {
-	CIPCPlayer* pThis = (CIPCPlayer *)p;
+	CIPCPlayer* pThis = (CIPCPlayer*)p;
 #ifdef _DEBUG
 	pThis->OutputMsg("%s Timespan1 of First Frame = %f.\n", __FUNCTION__, TimeSpanEx(pThis->m_dfFirstFrameTime));
 #endif
@@ -4753,7 +4753,7 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 	// ´´½¨¶àÃ½ÌåÊÂ¼þ
 	//TimerEvent PlayEvent(1000 / pThis->m_nVideoFPS);
 	int nIPCPlayInterval = 1000 / pThis->m_nVideoFPS;
-	
+
 	// µÈ´ýÓÐÐ§µÄÊÓÆµÖ¡Êý¾Ý
 	long tFirst = timeGetTime();
 	int nTimeoutCount = 0;
@@ -4828,7 +4828,7 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 	CHAR szAdapterID[64] = { 0 };
 	if (pThis->m_bEnableHaccel ||
 		(g_pSharedMemory &&
-		g_pSharedMemory->bHAccelPreferred))
+			g_pSharedMemory->bHAccelPreferred))
 	{
 		// ³¢ÊÔÓ²½â
 		if (pThis->m_pDxSurface &&
@@ -4891,10 +4891,10 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 	if (pThis->m_pStreamProbe)
 		pThis->m_pStreamProbe = nullptr;
 
-	AVPacket *pAvPacket = (AVPacket *)av_malloc(sizeof(AVPacket));
+	AVPacket* pAvPacket = (AVPacket*)av_malloc(sizeof(AVPacket));
 	shared_ptr<AVPacket>AvPacketPtr(pAvPacket, av_free);
 	av_init_packet(pAvPacket);
-	AVFrame *pAvFrame = av_frame_alloc();
+	AVFrame* pAvFrame = av_frame_alloc();
 	shared_ptr<AVFrame>AvFramePtr(pAvFrame, av_free);
 
 	StreamFramePtr FramePtr;
@@ -4982,7 +4982,7 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 			int nWaitTime = nIPCPlayInterval;
 			if (nVideoCacheSize > 5)
 			{
-				int nMult = (nVideoCacheSize - 5)*5;
+				int nMult = (nVideoCacheSize - 5) * 5;
 				if (nMult < (nIPCPlayInterval - 5))
 				{
 					nWaitTime = nIPCPlayInterval - nMult;
@@ -4994,7 +4994,7 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 					nWaitTime = 10;
 					pRenderTimer->UpdateInterval(10);
 				}
-					
+
 			}
 			else if (pRenderTimer->nPeriod != nIPCPlayInterval)
 			{
@@ -5009,16 +5009,16 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 #else
 			WaitForSingleObject(pThis->m_hRenderAsyncEvent, nWaitTime);
 #endif
-			
+
 #ifdef _DEBUG
-		if (dfDecodeStartTime != 0.0f)
-			RenderInterval.Stat(TimeSpanEx(dfDecodeStartTime));
-		if (RenderInterval.IsFull())
-		{
-			RenderInterval.OutputStat();
-			RenderInterval.Reset();
-		}
-		dfDecodeStartTime = GetExactTime();
+			if (dfDecodeStartTime != 0.0f)
+				RenderInterval.Stat(TimeSpanEx(dfDecodeStartTime));
+			if (RenderInterval.IsFull())
+			{
+				RenderInterval.OutputStat();
+				RenderInterval.Reset();
+			}
+			dfDecodeStartTime = GetExactTime();
 #endif
 		}
 #ifdef _DEBUG
@@ -5029,7 +5029,7 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 			CacheStat.Reset();
 		}
 #endif
-		
+
 		bool bPopFrame = false;
 		AutoLock(pThis->m_csVideoCache.Get());
 		if (pThis->m_listVideoCache.size() > 0)
@@ -5045,8 +5045,8 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 			if (WaitForSingleObject(pThis->m_hInputFrameEvent, 20) == WAIT_TIMEOUT)
 				continue;
 		}
-		
-		pAvPacket->data = (uint8_t *)FramePtr->Framedata(pThis->m_nSDKVersion);
+
+		pAvPacket->data = (uint8_t*)FramePtr->Framedata(pThis->m_nSDKVersion);
 		pAvPacket->size = FramePtr->FrameHeader()->nLength;
 		pThis->m_tLastFrameTime = FramePtr->FrameHeader()->nTimestamp;
 		av_frame_unref(pAvFrame);
@@ -5072,7 +5072,7 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 			pThis->m_tCurFrameTimeStamp = FramePtr->FrameHeader()->nTimestamp;
 			pThis->ProcessYUVFilter(pAvFrame, (LONGLONG)pThis->m_nCurVideoFrame);
 			if (!pThis->m_bIpcStream &&
-				1.0f == pThis->m_fPlayRate  &&
+				1.0f == pThis->m_fPlayRate &&
 				pThis->m_bEnableAudio &&
 				pThis->m_hAudioFrameEvent[0] &&
 				pThis->m_hAudioFrameEvent[1])
@@ -5084,7 +5084,7 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 			}
 			dfRenderStartTime = GetExactTime();
 			pThis->RenderFrame(pAvFrame);
-			
+
 			pThis->ProcessSnapshotRequire(pAvFrame);
 			pThis->ProcessYUVCapture(pAvFrame, (LONGLONG)pThis->m_nCurVideoFrame);
 			AutoLock(&pThis->m_csFilePlayCallBack);
@@ -5110,15 +5110,15 @@ UINT __stdcall CIPCPlayer::ThreadDecodeCache(void *p)
 	return 0;
 }
 
-UINT __stdcall CIPCPlayer::ThreadAsyncRender(void *p)
+UINT __stdcall CIPCPlayer::ThreadAsyncRender(void* p)
 {
-	CIPCPlayer *pThis = (CIPCPlayer*)p;
+	CIPCPlayer* pThis = (CIPCPlayer*)p;
 
 	if (!pThis->m_hRenderWnd)
 		pThis->OutputMsg("%s Warning!!!A Windows handle is Needed otherwise the video Will not showed..\n", __FUNCTION__);
 
 	int nIPCPlayInterval = 1000 / pThis->m_nVideoFPS;
-	
+
 	if (!pThis->InitizlizeDx())
 	{
 		assert(false);
@@ -5139,7 +5139,7 @@ UINT __stdcall CIPCPlayer::ThreadAsyncRender(void *p)
 	CAVFramePtr pFrame;
 	while (pThis->m_bThreadDecodeRun)
 	{
-		if (WaitForSingleObject(pThis->m_hRenderAsyncEvent, nIPCPlayInterval*2) == WAIT_TIMEOUT)
+		if (WaitForSingleObject(pThis->m_hRenderAsyncEvent, nIPCPlayInterval * 2) == WAIT_TIMEOUT)
 			continue;
 		CAutoLock lock(pThis->m_cslistAVFrame.Get(), false, __FILE__, __FUNCTION__, __LINE__);
 		nFameListSize = pThis->m_listAVFrame.size();
@@ -5152,7 +5152,7 @@ UINT __stdcall CIPCPlayer::ThreadAsyncRender(void *p)
 		lock.Unlock();
 		if (pThis->m_tSyncTimeBase)
 		{
-			do 
+			do
 			{
 				CAutoLock lock(pThis->m_cslistAVFrame.Get());
 				pFrame = pThis->m_listAVFrame.front();
@@ -5179,10 +5179,10 @@ UINT __stdcall CIPCPlayer::ThreadAsyncRender(void *p)
 			pFrame = pThis->m_listAVFrame.front();
 			//pThis->m_listAVFrame.pop_front();
 		}
-		
+
 		if (!pFrame)
 			continue;
-		
+
 		CAVFramePtr pFrame = pThis->m_listAVFrame.front();
 		pThis->m_listAVFrame.pop_front();
 		lock.Unlock();
@@ -5195,9 +5195,9 @@ UINT __stdcall CIPCPlayer::ThreadAsyncRender(void *p)
 	return 0;
 }
 
-UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
+UINT __stdcall CIPCPlayer::ThreadSyncDecode(void* p)
 {
-	CIPCPlayer *pThis = (CIPCPlayer*)p;
+	CIPCPlayer* pThis = (CIPCPlayer*)p;
 	DeclareRunTime(5);
 #ifdef _DEBUG
 	pThis->OutputMsg("%s \tObject:%d  m_nLifeTime = %d.\n", __FUNCTION__, pThis->m_nObjIndex, timeGetTime() - pThis->m_nLifeTime);
@@ -5208,22 +5208,22 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 #endif
 	int nAvError = 0;
 	char szAvError[1024] = { 0 };
-	
+
 	// µÈ´ýÓÐÐ§µÄÊÓÆµÖ¡Êý¾Ý
 	long tFirst = timeGetTime();
-// 	int nTimeoutCount = 0;
-// 	while (pThis->m_bThreadDecodeRun)
-// 	{
-// 		Autolock(&pThis->m_csVideoCache);
-// 		if (pThis->m_listVideoCache.size() < 1)
-// 		{
-// 			lock.Unlock();
-// 			Sleep(20);
-// 			continue;
-// 		}
-// 		else
-// 			break;
-// 	}
+	// 	int nTimeoutCount = 0;
+	// 	while (pThis->m_bThreadDecodeRun)
+	// 	{
+	// 		Autolock(&pThis->m_csVideoCache);
+	// 		if (pThis->m_listVideoCache.size() < 1)
+	// 		{
+	// 			lock.Unlock();
+	// 			Sleep(20);
+	// 			continue;
+	// 		}
+	// 		else
+	// 			break;
+	// 	}
 	SaveRunTime();
 	if (!pThis->m_bThreadDecodeRun)
 	{
@@ -5273,9 +5273,9 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 		pThis->OutputMsg("%s Warning!!!A Windows handle is Needed otherwise the video Will not showed..\n", __FUNCTION__);
 
 	int nIPCPlayInterval = 1000 / pThis->m_nVideoFPS;
-// 	pThis->m_bEnableHaccel = true;
-// 	pThis->m_bD3dShared = true;
-	if (!pThis->m_bAsyncRender && 
+	// 	pThis->m_bEnableHaccel = true;
+	// 	pThis->m_bD3dShared = true;
+	if (!pThis->m_bAsyncRender &&
 		!pThis->InitizlizeDx())
 	{
 		assert(false);
@@ -5293,7 +5293,7 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 #endif
 	pDecodec->SetD3DShared(pThis->m_pDxSurface->GetD3D9(), pThis->m_pDxSurface->GetD3DDevice());
 	pThis->m_pDxSurface->SetD3DShared(true);
-	
+
 	// Ê¹ÓÃµ¥Ïß³Ì½âÂë,¶àÏß³Ì½âÂëÔÚÄ³´Ë±È½ÏÂýµÄCPUÉÏ¿ÉÄÜ»áÌá¸ßÐ§¹û£¬µ«ÏÖÔÚI5 2GHZÒÔÉÏµÄCPUÉÏµÄ¶àÏß³Ì½âÂëÐ§¹û²¢²»Ã÷ÏÔ·´¶ø»áÕ¼ÓÃ¸ü¶àµÄÄÚ´æ
 	pDecodec->SetDecodeThreads(1);
 	// ³õÊ¼»¯½âÂëÆ÷
@@ -5321,10 +5321,10 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 		return 0;
 	}
 
-	AVPacket *pAvPacket = (AVPacket *)av_malloc(sizeof(AVPacket));
+	AVPacket* pAvPacket = (AVPacket*)av_malloc(sizeof(AVPacket));
 	shared_ptr<AVPacket>AvPacketPtr(pAvPacket, av_free);
 	av_init_packet(pAvPacket);
-	AVFrame *pAvFrame = av_frame_alloc();
+	AVFrame* pAvFrame = av_frame_alloc();
 	shared_ptr<AVFrame>AvFramePtr(pAvFrame, av_free);
 
 	StreamFramePtr FramePtr;
@@ -5340,12 +5340,12 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 	double dfRenderTimeSpan = 0.000f;
 	double dfTimeSpan = 0.0f;
 
-// #ifdef _DEBUG
-// 	pThis->m_csVideoCache.Lock();
-// 	TraceMsgA("%s Video cache Size = %d .\n", __FUNCTION__, pThis->m_listVideoCache.size());
-// 	pThis->m_csVideoCache.Unlock();
-// 	pThis->OutputMsg("%s \tObject:%d Start Decoding.\n", __FUNCTION__, pThis->m_nObjIndex);
-// #endif
+	// #ifdef _DEBUG
+	// 	pThis->m_csVideoCache.Lock();
+	// 	TraceMsgA("%s Video cache Size = %d .\n", __FUNCTION__, pThis->m_listVideoCache.size());
+	// 	pThis->m_csVideoCache.Unlock();
+	// 	pThis->OutputMsg("%s \tObject:%d Start Decoding.\n", __FUNCTION__, pThis->m_nObjIndex);
+	// #endif
 
 	int nIFrameTime = 0;
 	bool bDecodeSucceed = false;
@@ -5372,12 +5372,12 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 	int nRenderTimes = 0;
 	CStat  RenderInterval("RenderInterval", pThis->m_nObjIndex);
 	CStat  WaitStat("WaitStat", pThis->m_nObjIndex);
-	DH_FRAME_INFO *pDHFrame = nullptr;
+	DH_FRAME_INFO* pDHFrame = nullptr;
 	double dfLastRenderTime = 0.0f;
 	int nMaxFrameCache = pThis->m_nVideoFPS;
 	if (pThis->m_bPlayOneFrame)
 		nMaxFrameCache *= 4;
-	
+
 	while (pThis->m_bThreadDecodeRun)
 	{
 		pThis->m_csVideoCache.Lock();
@@ -5401,7 +5401,7 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 				time_t nTimeSpan = FramePtr->FrameHeader()->nTimestamp - pThis->m_pSyncPlayer->m_tSyncTimeBase;
 				if (nTimeSpan >= 20)	 // ÒÑ¾­Ô½¹ýÊ±¼äÖá»ùÏß
 				{
-					lock.Unlock();			
+					lock.Unlock();
 					nWaitCount++;
 					Sleep(20);
 					continue;
@@ -5425,18 +5425,18 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 				pThis->m_listVideoCache.pop_front();
 				break;
 			}
-// 			WaitStat.Stat(nWaitCount);
-// 			if (WaitStat.IsFull())
-// 			{
-// 				WaitStat.OutputStat();
-// 				WaitStat.Reset();
-// 			}
+			// 			WaitStat.Stat(nWaitCount);
+			// 			if (WaitStat.IsFull())
+			// 			{
+			// 				WaitStat.OutputStat();
+			// 				WaitStat.Reset();
+			// 			}
 			if (!FramePtr)
 			{
 				Sleep(20);
 				continue;
 			}
-				
+
 		}
 		else
 		{
@@ -5444,16 +5444,16 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 			if (!pThis->m_bAsyncRender)	// ·ÇÒì²½½âÂë²ÅÐèÒªµÈ´ýäÖÈ¾ÊÂ¼þ
 				if (WaitForSingleObject(pThis->m_hRenderAsyncEvent, INFINITE) == WAIT_TIMEOUT)
 					continue;
-			
+
 			//TraceMsgA("%s µ¯³öÒ»Ö¡.\n", __FUNCTION__);
 			FramePtr = pThis->m_listVideoCache.front();
 			pThis->m_listVideoCache.pop_front();
 		}
 		//////////////////////////////////////////////////////////////////////////
-		if (!pThis->m_tFirstFrameTime )
+		if (!pThis->m_tFirstFrameTime)
 			pThis->m_tFirstFrameTime = FramePtr->FrameHeader()->nTimestamp;
 
-		pAvPacket->data = (uint8_t *)FramePtr->Framedata(pThis->m_nSDKVersion);
+		pAvPacket->data = (uint8_t*)FramePtr->Framedata(pThis->m_nSDKVersion);
 		pAvPacket->size = FramePtr->FrameHeader()->nLength;
 		pThis->m_tLastFrameTime = FramePtr->FrameHeader()->nTimestamp;
 		av_frame_unref(pAvFrame);
@@ -5461,7 +5461,7 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 		// ·ÇÒì²½äÖÈ¾ºÍÎÞÍ¬²½²¥·ÅÆ÷µÄÇé¿öÏÂ£¬²Å¿ÉÔÚ½âÂëÏß³ÌÖÐ¸Ä±äÍ¬²½»ù×¼Ê±ÖÓ
 		if (!pThis->m_bAsyncRender && !pThis->m_pSyncPlayer)
 			pThis->m_tSyncTimeBase = FramePtr->FrameHeader()->nTimestamp;
-		
+
 		int nFrameSize = pAvPacket->size;
 		nAvError = pDecodec->Decode(pAvFrame, nGot_picture, pAvPacket);
 		time_t tFrameTimestamp = FramePtr->FrameHeader()->nTimestamp;
@@ -5472,13 +5472,13 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 		if (nAvError < 0)
 		{
 			av_strerror(nAvError, szAvError, 1024);
-			pThis->OutputMsg("%s %s\tFrameSize = %d.\n", __FUNCTION__, szAvError,nFrameSize);
+			pThis->OutputMsg("%s %s\tFrameSize = %d.\n", __FUNCTION__, szAvError, nFrameSize);
 			continue;
 		}
 
 		if (!nGot_picture)
 			continue;
-		
+
 		pThis->m_nDecodePixelFmt = (AVPixelFormat)pAvFrame->format;
 		if (pThis->m_bAsyncRender)
 		{
@@ -5501,13 +5501,13 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 			pThis->RenderFrame(pAvFrame);
 		if (dfLastRenderTime > 0.0f)
 		{
-// 			RenderInterval.Stat(TimeSpanEx(dfLastRenderTime));
-// 			dfLastRenderTime = GetExactTime();
-// 			if (RenderInterval.IsFull())
-// 			{
-// 				RenderInterval.OutputStat();
-// 				RenderInterval.Reset();
-// 			}
+			// 			RenderInterval.Stat(TimeSpanEx(dfLastRenderTime));
+			// 			dfLastRenderTime = GetExactTime();
+			// 			if (RenderInterval.IsFull())
+			// 			{
+			// 				RenderInterval.OutputStat();
+			// 				RenderInterval.Reset();
+			// 			}
 		}
 		else
 			dfLastRenderTime = GetExactTime();
@@ -5515,7 +5515,7 @@ UINT __stdcall CIPCPlayer::ThreadSyncDecode(void *p)
 	av_frame_unref(pAvFrame);
 	SaveRunTime();
 	pThis->m_pDecoder = nullptr;
-	
+
 	return 0;
 }
 

@@ -36,6 +36,7 @@
 //#include "DHStream.hpp"
 #include "DhStreamParser.h"
 #define  Win7MajorVersion	6
+#define  _MaxRendWindows	(16)
 class CIPCPlayer;
 /// @brief 文件帧信息，用于标识每一帧在文件的位置
 struct FileFrameInfo
@@ -1488,7 +1489,7 @@ public:
 	
 	void CopyDxvaFrameYV12(byte **ppYV12, int &nStrideY, int &nWidth, int &nHeight, AVFrame *pAvFrameDXVA);
 	
-	void CopyDxvaFrameNV12(byte **ppNV12, int &nStrideY, int &nWidth, int &nHeight, AVFrame *pAvFrameDXVA);
+	void CopyDxvaFrameNV12(byte **pNV12, int &nStrideY, int &nWidth, int &nHeight, AVFrame *pAvFrameDXVA);
 	
 	bool LockDxvaFrame(AVFrame *pAvFrameDXVA, byte **ppSrcY, byte **ppSrcUV, int &nPitch);
 
